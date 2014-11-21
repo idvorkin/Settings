@@ -23,10 +23,33 @@
           KeyCode::MINUS,    ModifierFlag::CONTROL_L,
           KeyCode::MINUS,    ModifierFlag::COMMAND_L</autogen>
 
+
+        <!-- Make C-1-4  map to D-T which swaps terminal tabs --> 
+        <autogen>__KeyToKey__
+          KeyCode::KEY_1,    ModifierFlag::CONTROL_L,
+          KeyCode::KEY_1,    ModifierFlag::COMMAND_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::KEY_2,    ModifierFlag::CONTROL_L,
+          KeyCode::KEY_2,    ModifierFlag::COMMAND_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::KEY_3,    ModifierFlag::CONTROL_L,
+          KeyCode::KEY_3,    ModifierFlag::COMMAND_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::KEY_4,    ModifierFlag::CONTROL_L,
+          KeyCode::KEY_4,    ModifierFlag::COMMAND_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::KEY_5,    ModifierFlag::CONTROL_L,
+          KeyCode::KEY_5,    ModifierFlag::COMMAND_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::KEY_6,    ModifierFlag::CONTROL_L,
+          KeyCode::KEY_6,    ModifierFlag::COMMAND_L</autogen>
+
         <!-- Make A-T map to D-T which is the command to create a new TAB --> 
         <autogen>__KeyToKey__
           KeyCode::T,    ModifierFlag::OPTION_L,
           KeyCode::T,    ModifierFlag::COMMAND_L</autogen>
+
+
 
       </item>
 </root>
