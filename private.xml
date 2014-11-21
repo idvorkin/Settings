@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<root>
+      <item>
+        <name>My Terminal  Hacks (effective only on Terminal)</name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.termial_goop</identifier>
+        <only>TERMINAL</only>
+        <!-- Do D-* -> C-*  -->
+        <autogen>__KeyToKey__ KeyCode::COMMAND_L, KeyCode::CONTROL_L</autogen>
+        <!-- Except the following TAB, + - -->
+
+        <!-- Switch apps  --> 
+        <autogen>__KeyToKey__
+          KeyCode::TAB,          ModifierFlag::CONTROL_L,
+          KeyCode::TAB,          ModifierFlag::COMMAND_L</autogen>
+        <!-- Font Size Up  --> 
+        <autogen>__KeyToKey__
+          KeyCode::EQUAL,    ModifierFlag::CONTROL_L,
+          KeyCode::EQUAL,    ModifierFlag::COMMAND_L</autogen>
+
+        <!-- Font Size Down  --> 
+        <autogen>__KeyToKey__
+          KeyCode::MINUS,    ModifierFlag::CONTROL_L,
+          KeyCode::MINUS,    ModifierFlag::COMMAND_L</autogen>
+
+        <!-- Make A-T map to D-T which is the command to create a new TAB --> 
+        <autogen>__KeyToKey__
+          KeyCode::T,    ModifierFlag::OPTION_L,
+          KeyCode::T,    ModifierFlag::COMMAND_L</autogen>
+
+      </item>
+</root>
