@@ -4,7 +4,7 @@
         <name>Fix A-T C-T differences</name>
         <appendix>See the private.xml</appendix>
         <identifier>private.fixing-alt-tab</identifier>
-        <except>RDC</except>
+        <not>REMOTEDESKTOPCONNECTION</not>
         <!-- Make A-TAB switch apps (NOTE: Using Option-R to break loop with the next command) --> 
         <autogen>__KeyToKey__
           KeyCode::TAB,          ModifierFlag::OPTION_L,
