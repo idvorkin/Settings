@@ -1,6 +1,21 @@
 <?xml version="1.0"?>
 <root>
+      <item> 
+        <name>Fix A-T C-T differences</name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.fixing-alt-tab</identifier>
+        <except>RDC</except>
+        <!-- Make A-TAB switch apps (NOTE: Using Option-R to break loop with the next command) --> 
+        <autogen>__KeyToKey__
+          KeyCode::TAB,          ModifierFlag::OPTION_L,
+          KeyCode::TAB,          ModifierFlag::COMMAND_R</autogen>
+        <!-- Make C-TAB switch tabs--> 
+        <autogen>__KeyToKey__
+          KeyCode::TAB,          ModifierFlag::COMMAND_L,
+          KeyCode::TAB,          ModifierFlag::CONTROL_L</autogen>
+      </item> 
       <item>
+
         <name>My Terminal  Hacks (effective only on Terminal)</name>
         <appendix>See the private.xml</appendix>
         <identifier>private.termial_goop</identifier>
@@ -22,6 +37,11 @@
         <autogen>__KeyToKey__
           KeyCode::MINUS,    ModifierFlag::CONTROL_L,
           KeyCode::MINUS,    ModifierFlag::COMMAND_L</autogen>
+
+        <!-- Paste (C-V) --> 
+        <autogen>__KeyToKey__
+          KeyCode::V,    ModifierFlag::CONTROL_L,
+          KeyCode::V,    ModifierFlag::COMMAND_L</autogen>
 
 
         <!-- Make C-1-4  map to D-T which swaps terminal tabs --> 
