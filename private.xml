@@ -14,8 +14,8 @@
           KeyCode::TAB,          ModifierFlag::COMMAND_L,
           KeyCode::TAB,          ModifierFlag::CONTROL_L</autogen>
       </item> 
-      <item>
 
+      <item>
         <name>My Terminal  Hacks (effective only on Terminal)</name>
         <appendix>See the private.xml</appendix>
         <identifier>private.termial_goop</identifier>
@@ -70,6 +70,27 @@
           KeyCode::T,    ModifierFlag::COMMAND_L</autogen>
 
 
+      <!-- CTRL2CAP in RDP,  OPTION2CAP on MAC 
+            1) Use Seil to Map CAPS -> F19 
+            2) Except RDP Map F19- -> D-*
+            2) Only  RDP Map F19- -> C-*
 
+      --> 
+      </item> 
+      <item>
+        <name>CTRL2CAP RDP </name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.ctrl2capRDP</identifier>
+        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
+          <only>REMOTEDESKTOPCONNECTION</only>
+      </item>
+
+      <item>
+        <name>CTRL2COMMAND (Not RDP) </name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.ctrl2command </identifier>
+
+        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::COMMAND_L</autogen>
+          <not>REMOTEDESKTOPCONNECTION</not>
       </item>
 </root>
