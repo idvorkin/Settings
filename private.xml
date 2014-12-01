@@ -69,10 +69,18 @@
           KeyCode::T,    ModifierFlag::OPTION_L,
           KeyCode::T,    ModifierFlag::COMMAND_L</autogen>
 
-        <!-- Let some keys through  D-SPACE--> 
+        <!-- Let some keys through  D-SPACE, D-LEFT, D-RIGHT --> 
         <autogen>__KeyToKey__
           KeyCode::SPACE,    ModifierFlag::CONTROL_L,
           KeyCode::SPACE,    ModifierFlag::COMMAND_L</autogen>
+
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_LEFT,    ModifierFlag::CONTROL_L,
+          KeyCode::CURSOR_LEFT,    ModifierFlag::COMMAND_L</autogen>
+
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_LEFT,    ModifierFlag::CONTROL_L,
+          KeyCode::CURSOR_LEFT,    ModifierFlag::COMMAND_L</autogen>
 
       </item> 
 
