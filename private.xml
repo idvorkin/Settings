@@ -8,30 +8,22 @@
 
       --> 
       <item>
-        <name>CTRL2CAP RDP </name>
-        <appendix>See the private.xml</appendix>
-        <identifier>private.ctrl2capRDP</identifier>
-        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
-          <only>REMOTEDESKTOPCONNECTION</only>
-          <only>TERMINAL</only>
-      </item>
-      <item>
-        <name>CTRL2CAP Terminal  </name>
-        <appendix>See the private.xml</appendix>
-        <identifier>private.ctrl2capTerminal</identifier>
-        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
-          <only>TERMINAL</only>
-      </item>
-
-      <item>
         <name>CTRL2COMMAND (Not RDP AND  Not Terminal) </name>
         <appendix>See the private.xml</appendix>
         <identifier>private.ctrl2command </identifier>
 
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::COMMAND_L</autogen>
-          <not>REMOTEDESKTOPCONNECTION</not>
-          <not>TERMINAL</not>
+          <not>TERMINAL, REMOTEDESKTOPCONNECTION </not>
       </item>
+
+      <item>
+        <name>CTRL2CAP Terminal AND RDP  </name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.ctrl2capTerminal</identifier>
+        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
+          <only>TERMINAL, REMOTEDESKTOPCONNECTION</only>
+      </item>
+
       <item> 
         <name>Fix A-T C-T differences</name>
         <appendix>See the private.xml</appendix>
