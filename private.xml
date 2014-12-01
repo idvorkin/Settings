@@ -69,6 +69,12 @@
           KeyCode::T,    ModifierFlag::OPTION_L,
           KeyCode::T,    ModifierFlag::COMMAND_L</autogen>
 
+        <!-- Let some keys through  D-SPACE--> 
+        <autogen>__KeyToKey__
+          KeyCode::SPACE,    ModifierFlag::CONTROL_L,
+          KeyCode::SPACE,    ModifierFlag::COMMAND_L</autogen>
+
+      </item> 
 
       <!-- CTRL2CAP in RDP,  OPTION2CAP on MAC 
             1) Use Seil to Map CAPS -> F19 
@@ -76,7 +82,6 @@
             2) Only  RDP Map F19- -> C-*
 
       --> 
-      </item> 
       <item>
         <name>CTRL2CAP RDP </name>
         <appendix>See the private.xml</appendix>
