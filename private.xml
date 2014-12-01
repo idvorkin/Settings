@@ -1,5 +1,37 @@
 <?xml version="1.0"?>
 <root>
+
+      <!-- CTRL2CAP in RDP,  OPTION2CAP on MAC 
+            1) Use Seil to Map CAPS -> F19 
+            2) Except RDP Map F19- -> D-*
+            2) Only  RDP Map F19- -> C-*
+
+      --> 
+      <item>
+        <name>CTRL2CAP RDP </name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.ctrl2capRDP</identifier>
+        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
+          <only>REMOTEDESKTOPCONNECTION</only>
+          <only>TERMINAL</only>
+      </item>
+      <item>
+        <name>CTRL2CAP Terminal  </name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.ctrl2capTerminal</identifier>
+        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
+          <only>TERMINAL</only>
+      </item>
+
+      <item>
+        <name>CTRL2COMMAND (Not RDP AND  Not Terminal) </name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.ctrl2command </identifier>
+
+        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::COMMAND_L</autogen>
+          <not>REMOTEDESKTOPCONNECTION</not>
+          <not>TERMINAL</not>
+      </item>
       <item> 
         <name>Fix A-T C-T differences</name>
         <appendix>See the private.xml</appendix>
@@ -21,6 +53,7 @@
         <identifier>private.termial_goop</identifier>
         <only>TERMINAL</only>
         <!-- Do D-* -> C-*  -->
+        <!-- Note CAPS->CTRL done via Siel Mapping  -->
         <autogen>__KeyToKey__ KeyCode::COMMAND_L, KeyCode::CONTROL_L</autogen>
         <!-- Except the following TAB, + - -->
 
@@ -84,26 +117,4 @@
 
       </item> 
 
-      <!-- CTRL2CAP in RDP,  OPTION2CAP on MAC 
-            1) Use Seil to Map CAPS -> F19 
-            2) Except RDP Map F19- -> D-*
-            2) Only  RDP Map F19- -> C-*
-
-      --> 
-      <item>
-        <name>CTRL2CAP RDP </name>
-        <appendix>See the private.xml</appendix>
-        <identifier>private.ctrl2capRDP</identifier>
-        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
-          <only>REMOTEDESKTOPCONNECTION</only>
-      </item>
-
-      <item>
-        <name>CTRL2COMMAND (Not RDP) </name>
-        <appendix>See the private.xml</appendix>
-        <identifier>private.ctrl2command </identifier>
-
-        <autogen>__KeyToKey__ KeyCode::F19, KeyCode::COMMAND_L</autogen>
-          <not>REMOTEDESKTOPCONNECTION</not>
-      </item>
 </root>
