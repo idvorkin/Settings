@@ -1,7 +1,25 @@
 
 " Very cool this is the xvim rc
-nmap C-]  :XCMenuCmd Jump To Definition
-nmap C-T  :XCMenuCmd Go Back
+map C-]  :XCMenuCmd Jump To Definition
+map C-T  :XCMenuCmd Go Back
 
-nmap D-]  :XCMenuCmd Jump To Definition
-nmap D-T  :XCMenuCmd Go Back
+map D-]  :XCMenuCmd Jump To Definition
+map D-T  :XCMenuCmd Go Back
+
+"Test repeat
+nmap ;tr :xcmenucmd Test Again<cr>
+" Test all
+nmap ;ta :xcmenucmd Test<cr>
+
+"Remap next and prev issue.
+nmap ;cn :ni<cr>
+nmap ;cp :pi<cr>
+
+nmap ;hda :xcmenucmd Hide Debug Area<cr>
+
+" Handy UX references
+"  http://stackoverflow.com/questions/6710957/xcode-4-keyboard-shortcut-for-switching-assistant-editor-to-tracking-automatic
+
+" Other useful commands:
+" :ni next issue // should really be cn and :help
+" :pi prev issue
