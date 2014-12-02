@@ -1,0 +1,7 @@
+
+" Very cool this is the xvim rc
+nmap C-]  :XCMenuCmd Jump To Definition
+nmap C-T  :XCMenuCmd Go Back
+
+nmap D-]  :XCMenuCmd Jump To Definition
+nmap D-T  :XCMenuCmd Go Back
