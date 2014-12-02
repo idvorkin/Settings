@@ -6,8 +6,8 @@ map C-T  :XCMenuCmd Go Back
 map D-]  :XCMenuCmd Jump To Definition
 map D-T  :XCMenuCmd Go Back
 
-"Test repeat
-nmap ;tr :xcmenucmd Test Again<cr>
+"Test last 
+nmap ;tl :xcmenucmd Test Again<cr>
 " Test all
 nmap ;ta :xcmenucmd Test<cr>
 
