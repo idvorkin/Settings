@@ -1,0 +1,197 @@
+" Common things in all of my vimrc's
+"
+set nohls
+set ignorecase
+set noincsearch
+set guioptions-=T
+set guioptions-=m
+set guifont=consolas
+set sw=4
+set ts=4
+set expandtab
+set cindent
+set laststatus=2
+runtime macros/matchit.vim
+syntax  on 
+:ca lcdb lcd %:p:h
+" Requires pygments and clippaste.
+:ca pyHTML !c:\python25\scripts\pygmentize -O full -l python -f html \| c:\hg\py\misc\clippaste.py - 
+:ca reHTML !c:\hg\py\misc\clippaste.py - 
+
+func! ReToClip()
+    " Call VST
+    :Vst
+    " Wait for new window to pop up
+    :sleep 1 
+    " Copy to clipboard
+    :%!c:\hg_resin\py\misc\clippaste.py - 
+    " exit
+    :q!
+endfunc
+
+
+let g:pyindent_open_paren = '&sw * 2'
+let g:pyindent_nested_paren = '&sw'
+let g:pyindent_continue = '&sw * 2'
+filetype plugin on
+filetype indent on
+:colo darkblue
+
+
+set tags=./tags,../tags,../../tags,../../../tags,c:\Python25\tags
+set grepprg=c:/hg/py/misc/indexserver.py 
+"c:/hg_resin/py/misc/indexserver.py 
+
+function! TitlePrefix(prefix)
+let  g:TitlePrefix=a:prefix
+:auto! BufEnter * let &titlestring = g:TitlePrefix."||".expand("%:p")
+let &titlestring = g:TitlePrefix."||".expand("%:p")
+endfunction
+
+" TPS crap.
+" find number in a line of xml.
+:cab only_number %s;.*>\(\d\+.\d\+\)<.*;\1;g
+:cab to_excel  %s;\( \\|,\);\t;g
+
+function! IOMeterIt()
+:set nowrap
+:set expandtab
+:cab to_iometer  g!/^\(MANAGER\\|ALL\)/d
+:cab excel_iometer  %s;,;\t;g
+":expand("to_iometer")
+":excel_iometer
+:%s;,;\t;g
+" copy title to b
+:g/'Target Type/yank b
+" remove all non manager/all lines.
+:g!/^MANAGER\|^ALL/d
+" Add a blank line before the line saying ALL
+:g/ALL/-pu=' '
+" Add a blank line at the end to make sure we can sort between the lines.
+:$pu=' '
+" sort all the VM's
+:g/ALL/,/^ $/-!sort
+" put title on top
+:0pu b 
+" copy buffer to clipboard
+:%yank *
+endfunction
+function! IOMeterReverseIt()
+call IOMeterIt()
+" reverse ordering
+g/ALL/,/^ /m0
+" move title to top
+:g/'Target Type/m 0 
+:%yank *
+
+endfunction
+
+
+function! NuInrange() range 
+" clever trick to get range into python.
+:exec(a:firstline.','.a:lastline. 'py import vim; start = int(vim.current.range.start); end = int(vim.current.range.end)')
+:py << EOF
+b = vim.current.buffer
+for x in range(1+end-start):
+    iLine = start+x
+    b[iLine] = '%03d %s'%(x+1,b[iLine])
+
+EOF
+endfunction
+
+:cab getNodesToMac %s/.*\(0003[^ ]*\).*/\1/
+:cab time :r! time /T
+
+
+" Useful ideas in 
+
+
+function! FixHiNodes()
+:g/at kicked at/d
+:g!/kicked\|20000/d
+:g/ERROR/d
+:g/^000/j
+endfunction
+
+function! FixCallStacks()
+:%s;\[NLN\];\r;g
+:%s;\[TAB\];\t;g
+endfunction
+
+function! StripPerfCounterTags()
+%s;\(\\.*\)<.*>;\1;
+%s;<.*>;;
+endfunction
+
+function! RemoveAsciiFromQuotes()
+    " See charector under cursor - 
+    "   ga
+    " Search for non unicode charecters
+    " /[^\x00-\x7F]
+
+    " Replace hypens
+	:%s/\%x97/-/g
+    " Replace smart quotes
+	:%s/\%x93/"/g
+	:%s/\%x94/"/g
+endfunction
+
+":compiler build
+" Make 2 or more spaces between words an error.
+"match Error /\> \{2,}\</ 
+"
+autocmd FileType python set omnifunc=pythoncomplete#Complete
+autocmd FileType python compiler pylint
+
+" Setting up vundle
+"  git clone https://github.com/gmarik/vundle.git %USERPROFILE%/vimfiles/bundle/vundle
+"  Installing Vundles: 
+"   BundleInstall
+set rtp+=~/vimfiles/bundle/vundle/
+call vundle#rc()
+
+" Replace content with return from wget.
+"
+:cab wg %!c:\bin_drop\wget --quiet --output-document - 
+" JS Beautify
+"     https://coderwall.com/p/m2kp5q/invoke-js-beautify-in-vim
+:cab jsb %!js-beautify -j -q -B -f -<CR>
+
+
+
+
+ " let Vundle manage Vundle
+ " required! 
+" Bundle 'gmarik/vundle.vim'
+
+ " My Bundles here:
+ 
+ "
+ " original repos on github
+Bundle 'tpope/vim-fugitive'
+Bundle 'leafgarland/typescript-vim'
+Bundle 'nathanaelkane/vim-indent-guides'
+Bundle 'tomtom/tcomment_vim'
+Bundle 'mhinz/vim-startify'
+Bundle 'bling/vim-airline'
+Bundle 'chrisbra/csv.vim'
+Bundle 'altercation/vim-colors-solarized'
+Bundle 'vim-scripts/ZoomWin'
+" change font size \\++
+Bundle 'drmikehenry/vim-fontsize'
+ Bundle 'plasticboy/vim-markdown'
+Bundle 'elzr/vim-json'
+Bundle 'PProvost/vim-ps1'
+Bundle 'scrooloose/syntastic'
+Bundle 'othree/javascript-libraries-syntax.vim'
+Bundle "pangloss/vim-javascript"
+Bundle "kien/ctrlp.vim"
+Bundle "scrooloose/nerdtree"
+Bundle "rking/ag.vim"
+
+" Removing signifiy to try to get Syntastic working
+" Need to figure out when to use which, my preference will be to have
+" syntastic win
+" Bundle "mhinz/vim-signify"
+let g:syntastic_javascript_jshint_exec='C:\Chocolatey\lib\nodejs.commandline.0.10.33\tools\jshint.cmd'
+"

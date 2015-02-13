@@ -1,0 +1,20 @@
+1) Setup Ninite to install everything
+2) Install HG (via TortoiseHG)
+2a) Run script from blog 
+ Set-ItemProperty -path "HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layout" -name "Scancode Map" -Value ([byte[]](0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x1d,0x00,0x3a,0x00,0x00,0x00,0x00,0x00))
+
+3) Setup dropbox Paths
+	mklink /d \dropbox %USERPROFILE%\dropbox
+	mklink /d \bin_drop %USERPROFILE%\dropbox\bin_drop
+
+4) Setup Vim Paths
+	mklink /d %USERPROFILE%\vimfiles c:\hg\vim\vimfiles
+	mklink %USERPROFILE%\_vimrc c:\hg\vim\default_vimrc
+5) Setup Mercurial Path
+	mklink %USERPROFILE%\Mercurial.ini c:\hg\hg\Mercurial.ini
+    mklink %ProgramFiles%\TortoiseHg\mercurial.ini" c:\hg\hg\mercurial.ini
+
+
+7) Add other dot files
+    cd \hg\dotfiles
+    setup.bat
