@@ -1,12 +1,10 @@
-mklink %USERPROFILE%\pyreadlineconfig.ini %CD%\pyreadlineconfig.ini
 
 REM Setup dropbox Paths
         mklink /d \dropbox %USERPROFILE%\dropbox
         mklink /d \bin_drop %USERPROFILE%\dropbox\bin_drop
 
 REM Setup Vim Paths
-        mklink /d %USERPROFILE%\vimfiles c:\hg\vim\vimfiles
-        mklink %USERPROFILE%\_vimrc c:\hg\vim\default_vimrc
+        mklink %USERPROFILE%\_vimrc c:\gits\settings\default_vimrc
 REM Setup Mercurial Path
         mklink %USERPROFILE%\Mercurial.ini c:\hg\hg\Mercurial.ini
 
