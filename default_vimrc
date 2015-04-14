@@ -39,8 +39,6 @@ filetype indent on
 
 
 set tags=./tags,../tags,../../tags,../../../tags,c:\Python25\tags
-set grepprg=c:/hg/py/misc/indexserver.py 
-"c:/hg_resin/py/misc/indexserver.py 
 
 function! TitlePrefix(prefix)
 let  g:TitlePrefix=a:prefix
