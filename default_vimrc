@@ -188,6 +188,7 @@ Bundle "pangloss/vim-javascript"
 Bundle "kien/ctrlp.vim"
 Bundle "scrooloose/nerdtree"
 Bundle "rking/ag.vim"
+Bundle "OrangeT/vim-csharp.git"
 
 " Removing signifiy to try to get Syntastic working
 " Need to figure out when to use which, my preference will be to have
