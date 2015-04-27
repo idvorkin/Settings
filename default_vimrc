@@ -132,6 +132,8 @@ function! RemoveAsciiFromQuotes()
     " Replace smart quotes
 	:%s/\%x93/"/g
 	:%s/\%x94/"/g
+    " Replace apostrophy
+	:%s/\%x92/'/g
 endfunction
 
 ":compiler build
