@@ -26,14 +26,17 @@ REM Setup choco stuff
     @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex (new-object Net.WebClient).DownloadString('http://psget.net/GetPsGet.ps1')"
 
 REM test a current machine with choco list -localonly
-    cinst git
-    cinst nodejs
-    cinst ag
-    cinst conemu
-    cinst gvim
-    cinst nunit
-    cinst nuget
-    cinst repo
+    cinst git -y
+    cinst nodejs -y
+    cinst ag -y
+    cinst conemu -y
+    cinst gvim -y
+    cinst nunit -y
+    cinst nuget -y
+    cinst repo -y
+    cinst googlechrome -y
+    cinst vim -y
+    cinst linqpad -y
 
 REM Install PS-Get
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git –force"
