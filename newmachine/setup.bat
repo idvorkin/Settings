@@ -8,6 +8,9 @@ REM Setup Vim Paths
 REM Setup Mercurial Path
         mklink %USERPROFILE%\Mercurial.ini c:\hg\hg\Mercurial.ini
 
+REM Setup Vim Paths
+        mklink %USERPROFILE%\_vsvimrc c:\gits\settings\_vsvimrc
+
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 
         mklink %USERPROFILE%\Documents\AutoHotkey.ahk c:\hg\autohotkey\AutoHotkey.ahk

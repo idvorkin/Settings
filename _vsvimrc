@@ -1,0 +1,6 @@
+"  Don't be afraid to add links to resharper commadns.
+" https://www.jetbrains.com/resharper/help/Configuring_Keyboard_Shortcuts.html
+"
+nmap <C-]> :vsc Edit.GoToDefinition<CR>
+nmap <C-T> :vsc View.NavigateBackwards<CR>
+nmap <C-P> :vsc Resharper.Rsharper_GotoType<CR>
