@@ -39,8 +39,6 @@ filetype indent on
 
 
 set tags=./tags,../tags,../../tags,../../../tags,c:\Python25\tags
-set grepprg=c:/hg/py/misc/indexserver.py 
-"c:/hg_resin/py/misc/indexserver.py 
 
 function! TitlePrefix(prefix)
 let  g:TitlePrefix=a:prefix
@@ -134,6 +132,8 @@ function! RemoveAsciiFromQuotes()
     " Replace smart quotes
 	:%s/\%x93/"/g
 	:%s/\%x94/"/g
+    " Replace apostrophy
+	:%s/\%x92/'/g
 endfunction
 
 ":compiler build
@@ -188,6 +188,7 @@ Bundle "pangloss/vim-javascript"
 Bundle "kien/ctrlp.vim"
 Bundle "scrooloose/nerdtree"
 Bundle "rking/ag.vim"
+Bundle "OrangeT/vim-csharp.git"
 
 " Removing signifiy to try to get Syntastic working
 " Need to figure out when to use which, my preference will be to have

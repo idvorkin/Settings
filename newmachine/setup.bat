@@ -8,6 +8,9 @@ REM Setup Vim Paths
 REM Setup Mercurial Path
         mklink %USERPROFILE%\Mercurial.ini c:\hg\hg\Mercurial.ini
 
+REM Setup Vim Paths
+        mklink %USERPROFILE%\_vsvimrc c:\gits\settings\_vsvimrc
+
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 
         mklink %USERPROFILE%\Documents\AutoHotkey.ahk c:\hg\autohotkey\AutoHotkey.ahk
@@ -26,14 +29,19 @@ REM Setup choco stuff
     @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex (new-object Net.WebClient).DownloadString('http://psget.net/GetPsGet.ps1')"
 
 REM test a current machine with choco list -localonly
-    cinst git
-    cinst nodejs
-    cinst ag
-    cinst conemu
-    cinst gvim
-    cinst nunit
-    cinst nuget
-    cinst repo
+    cinst git -y
+    cinst nodejs -y
+    cinst ag -y
+    cinst conemu -y
+    cinst gvim -y
+    cinst nunit -y
+    cinst nuget -y
+    cinst repo -y
+    cinst googlechrome -y
+    cinst vim -y
+    cinst linqpad -y
+    cinst git-credential-winstore -y
+    cinst nuget.commandline -y
 
 REM Install Posh-Git
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
