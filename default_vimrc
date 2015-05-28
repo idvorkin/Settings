@@ -136,6 +136,29 @@ function! RemoveAsciiFromQuotes()
 	:%s/\%x92/'/g
 endfunction
 
+function! FirstPersonToThirdPerson()
+
+    " Trim the whitespace off the ends
+    :%s;\s\+$;;
+
+    " Add a period to the end if it's not there.
+    :g!/\.$/s;$;.;
+
+    " do a bunch of replaces.
+    :%s;^I;You;
+    :%s;\. ^I;You;g
+    :%s; I ; you ;g
+    :%s; am ; are ;g
+    :%s; me\([ \.,$]\); you\1;g
+    :%s; me\([ \.,$]\); you\1;g
+    :%s; mine\([ \.,$]\); yours\1;g
+    :%s;^Me ;You ;g
+    :%s; myself\([ \.,$]\); yourself\1;g
+    :%s; my ; your ;g
+    :%s;^My ;Your ;g
+    :%s;^\.$;
+endfunction
+
 ":compiler build
 " Make 2 or more spaces between words an error.
 "match Error /\> \{2,}\</ 
