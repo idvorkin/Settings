@@ -129,6 +129,8 @@ function! RemoveAsciiFromQuotes()
 
     " Replace hypens
 	:%s/\%x97/-/g
+	:%s/\%x96/-/g
+
     " Replace smart quotes
 	:%s/\%x93/"/g
 	:%s/\%x94/"/g
