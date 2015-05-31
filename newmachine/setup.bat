@@ -43,5 +43,5 @@ REM test a current machine with choco list -localonly
     cinst git-credential-winstore -y
     cinst nuget.commandline -y
 
-REM Install PS-Get
-@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git –force"
+REM Install Posh-Git
+@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
