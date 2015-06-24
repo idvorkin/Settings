@@ -27,3 +27,5 @@ Enable-GitColors
 
 Pop-Location
 
+function Restart-Explorer {Get-Process | where name -eq explorer  |kill ; explorer}
+function Zach-Age {((get-date) - (get-date 4/22/2010)).TotalDays/7}
