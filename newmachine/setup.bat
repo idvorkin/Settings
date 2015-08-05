@@ -28,6 +28,10 @@ REM Setup choco stuff
     REM
     @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex (new-object Net.WebClient).DownloadString('http://psget.net/GetPsGet.ps1')"
 
+REM Map Ctrl2Cap  -- More Info:  http://luvit.me/1MN7TCQ
+    @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Set-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layout' -name 'Scancode Map' -Value ([byte[]](0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x1d,0x00,0x3a,0x00,0x00,0x00,0x00,0x00))"
+
+
 REM test a current machine with choco list -localonly
     cinst git -y
     cinst nodejs -y
@@ -45,3 +49,11 @@ REM test a current machine with choco list -localonly
 
 REM Install Posh-Git
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
+
+REM Install Repos I use.
+cd /d c:\gits
+git clone https://github.com/gmarik/vundle.git %USERPROFILE%/vimfiles/bundle/vundle
+git clone https://github.com/idvorkin/onom
+git clone  https://github.com/idvorkin/Vim-Keybindings-For-Onenote
+git clone https://github.com/idvorkin/LinqpadSnippets
+git clone https://github.com/idvorkin/linqpadDataExplore
