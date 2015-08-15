@@ -2,7 +2,7 @@
 <root>
 
       <!-- CTRL2CAP in RDP,  OPTION2CAP on MAC 
-            1) Use Seil to Map CAPS -> F19 
+            1) Use Seil to Map CAPS -> F19  (KeyCode 80)
             2) Except RDP Map F19- -> D-*
             2) Only  RDP Map F19- -> C-*
 
