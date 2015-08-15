@@ -12,7 +12,16 @@ git config --global push.default simple
 ln ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
 ln ~/settings/_vsvimrc ~/.vsvimrc 
 ln ~/settings/private.xml  ~/.vimrc 
+
+# Setup vundle
 git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle
+# setup xcode
+cd ~/gits
+git clone https://github.com/XVimProject/XVim.git 
+cd XVim
+make
+
+cd ~/gits
 
 # 
 
