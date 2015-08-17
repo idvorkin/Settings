@@ -49,6 +49,7 @@ REM test a current machine with choco list -localonly
     cinst autohotkey -y
     choco install visualstudio2015community -y
     choco install resharper -y
+    cinst markdownpad2
 
 REM Install Posh-Git
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
