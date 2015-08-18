@@ -10,8 +10,7 @@ git config --global push.default simple
 
 # in seil map caps -> F19 (Keycode: 80) 
 ln ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
-ln ~/settings/_vsvimrc ~/.vsvimrc 
-ln ~/settings/private.xml  ~/.vimrc 
+ln ~/settings/default_vimrc ~/.vimrc 
 
 # Setup vundle
 git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle
