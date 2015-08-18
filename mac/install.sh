@@ -1,6 +1,8 @@
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 
-brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag macvim
-brew cask install google-chrome  iterm2	      karabiner	     seil	    skype
+# looks like brew is just for command line stuff.
+brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag 
+# Looks like we need CASK to do things that are findable.
+brew cask install google-chrome  iterm2	      karabiner	     seil	    skype macvim
 
 # shared git stetup
 
@@ -27,4 +29,8 @@ cd ~/gits
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 
 # Update .zshrc with set -o vi 
+
+# Add ctags for vim
+brew install ctags --HEAD
+# /usr/local/bin/ctags -R --langmap=ObjectiveC:.m.h
 
