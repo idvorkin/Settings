@@ -1,5 +1,5 @@
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 
-brew install brew-cask	cask		emacs		fish		libevent	openssl		tmux		vim ag
+brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag macvim
 brew cask install google-chrome  iterm2	      karabiner	     seil	    skype
 
 # shared git stetup
@@ -23,5 +23,8 @@ make
 
 cd ~/gits
 
-# 
+#oh my zsh setup - from not fish.
+sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+
+# Update .zshrc with set -o vi 
 

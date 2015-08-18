@@ -109,4 +109,23 @@
 
       </item> 
 
+      <item>
+        <name>Vim Remap for XCode</name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.vimXCode</identifier>
+        <!-- C-F and C-B are handled by XCode, but I'm hitting M-F, M-B via Caps Lock --> 
+        <autogen>__KeyToKey__
+          KeyCode::F,    ModifierFlag::COMMAND_L,
+          KeyCode::F,    ModifierFlag::CONTROL_L</autogen>
+
+        <autogen>__KeyToKey__
+          KeyCode::B,    ModifierFlag::COMMAND_L,
+          KeyCode::B,    ModifierFlag::CONTROL_L</autogen>
+
+        <!-- C-P for open quickly --> 
+        <autogen>__KeyToKey__
+          KeyCode::P,    ModifierFlag::COMMAND_L,
+          KeyCode::O,    ModifierFlag::COMMAND_L | ModifierFlag::SHIFT_L </autogen>
+      </item>
+
 </root>
