@@ -38,7 +38,8 @@ filetype indent on
 :colo darkblue
 
 
-set tags=./tags,../tags,../../tags,../../../tags,c:\Python25\tags
+
+set tags=tags;/
 
 function! TitlePrefix(prefix)
 let  g:TitlePrefix=a:prefix
