@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <root>
 
+    <!-- All keycodes  
+         https://github.com/tekezo/Karabiner/blob/master/src/bridge/generator/keycode/data/KeyCode.data 
+    -->
+
       <!-- CTRL2CAP in RDP,  OPTION2CAP on MAC 
             1) Use Seil to Map CAPS -> F19  (KeyCode 80)
             2) Except RDP Map F19- -> D-*
@@ -126,6 +130,16 @@
         <autogen>__KeyToKey__
           KeyCode::P,    ModifierFlag::COMMAND_L,
           KeyCode::O,    ModifierFlag::COMMAND_L | ModifierFlag::SHIFT_L </autogen>
+
+        <!-- C-] Jump to Definition --> 
+        <autogen>__KeyToKey__
+          KeyCode::BRACKET_RIGHT,    ModifierFlag::COMMAND_L,
+          KeyCode::J,    ModifierFlag::COMMAND_L | ModifierFlag::CONTROL_L </autogen>
+
+        <!-- C-T Jump Back --> 
+        <autogen>__KeyToKey__
+          KeyCode::T,    ModifierFlag::COMMAND_L,
+          KeyCode::CURSOR_LEFT,    ModifierFlag::COMMAND_L | ModifierFlag::CONTROL_L </autogen>
       </item>
 
 </root>
