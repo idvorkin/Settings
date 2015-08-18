@@ -17,7 +17,7 @@
         <identifier>private.ctrl2command </identifier>
 
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::COMMAND_L</autogen>
-          <not>TERMINAL, REMOTEDESKTOPCONNECTION </not>
+          <not>TERMINAL, REMOTEDESKTOPCONNECTION,VI </not>
       </item>
 
       <item>
@@ -25,7 +25,7 @@
         <appendix>See the private.xml</appendix>
         <identifier>private.ctrl2capTerminal</identifier>
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
-          <only>TERMINAL, REMOTEDESKTOPCONNECTION</only>
+          <only>TERMINAL, REMOTEDESKTOPCONNECTION,VI </only>
       </item>
 
       <item> 
@@ -47,7 +47,7 @@
         <name>My Terminal  Hacks (effective only on Terminal)</name>
         <appendix>See the private.xml</appendix>
         <identifier>private.termial_goop</identifier>
-        <only>TERMINAL</only>
+        <only>TERMINAL, VI </only>
         <!-- Do D-* -> C-*  -->
         <!-- Note CAPS->CTRL done via Siel Mapping  -->
         <autogen>__KeyToKey__ KeyCode::COMMAND_L, KeyCode::CONTROL_L</autogen>
