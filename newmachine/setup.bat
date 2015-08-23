@@ -11,6 +11,12 @@ REM Setup Mercurial Path
 REM Setup Vim Paths
         mklink %USERPROFILE%\_vsvimrc c:\gits\settings\_vsvimrc
 
+REM Setup Clink
+        set TARGETFILE=clink_inputrc
+        set TARGETDIR=%USERPROFILE%\AppData\lock\clink\%TARGETFILE%
+        del  %TARGET%
+        mklink %TARGET% c:\gits\settings\clink_inputrc
+
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 
         mklink %USERPROFILE%\Documents\AutoHotkey.ahk c:\hg\autohotkey\AutoHotkey.ahk
