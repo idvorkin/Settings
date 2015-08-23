@@ -54,7 +54,8 @@ filetype indent on
 :colo darkblue
 
 
-set tags=./tags,../tags,../../tags,../../../tags,c:\Python25\tags
+
+set tags=tags;/
 
 function! TitlePrefix(prefix)
 let  g:TitlePrefix=a:prefix
@@ -230,6 +231,7 @@ Bundle "kien/ctrlp.vim"
 Bundle "scrooloose/nerdtree"
 Bundle "rking/ag.vim"
 Bundle "OrangeT/vim-csharp.git"
+Bundle "keith/swift.vim"
 
 " Removing signifiy to try to get Syntastic working
 " Need to figure out when to use which, my preference will be to have
