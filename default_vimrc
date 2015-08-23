@@ -29,6 +29,22 @@ func! ReToClip()
     :q!
 endfunc
 
+" from:http://stackoverflow.com/questions/114431/fast-word-count-function-in-vim
+" Add wordcount to statuline: 
+
+function! WordCount()
+  let s:old_status = v:statusmsg
+  let position = getpos(".")
+  exe "silent normal g\<c-g>"
+  if v:statusmsg != '--No lines in buffer--'
+      let s:word_count = str2nr(split(v:statusmsg)[11])
+      let v:statusmsg = s:old_status
+  end 
+  call setpos('.', position)
+  return s:word_count
+endfunction
+:ca setwordcount set statusline=wc:%{WordCount()} 
+
 
 let g:pyindent_open_paren = '&sw * 2'
 let g:pyindent_nested_paren = '&sw'
