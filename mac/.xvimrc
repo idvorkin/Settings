@@ -1,2 +1,2 @@
-cmap :make  :xcmenucmd Build<CR>
-cmap :run  :xcmenucmd run<CR>
+map 'dt :xccmd toggleBreakpointAtCurrentLine<CR>
+map 'ds :xccmd Detach<CR>
