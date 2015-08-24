@@ -1,0 +1,6 @@
+How to force RGB in Mac OS X
+Download the patch-edid.rb script from the forums thread above and put it in your home directory.
+Connect only the external monitor(s) in question (I closed my MacBook lid, for example). The script will make override files for any connected monitor.
+Type “ruby patch-edid.rb” in Terminal.
+A new folder will be created in your home directory. Move it into the “/System/Library/Displays/Overrides” folder. If Finder tells you that you are overwriting an existing folder, consider backing it up first.
+Restart your computer, enjoy your monitor.
