@@ -13,9 +13,9 @@ REM Setup Vim Paths
 
 REM Setup Clink
         set TARGETFILE=clink_inputrc
-        set TARGETDIR=%USERPROFILE%\AppData\lock\clink\%TARGETFILE%
+        set TARGET=%USERPROFILE%\AppData\local\clink\%TARGETFILE%
         del  %TARGET%
-        mklink %TARGET% c:\gits\settings\clink_inputrc
+        mklink %TARGET% c:\gits\settings\%TARGETFILE%
 
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 
