@@ -8,6 +8,9 @@
 " Other useful commands:
 " :ni next issue // should really be cn and :help
 " :pi prev issue
-" Very cool this is the xvim rc
-map 'dt :xccmd toggleBreakpointAtCurrentLine<CR>
-map 'ds :xccmd Detach<CR>
+"
+" Mapped commands
+nmap 'dt :xccmd toggleBreakpointAtCurrentLine<CR>
+nmap 'dc :xcmenucmd Continue<CR>
+nmap 'ds :xcmenucmd Detach<CR>
+nmap 'du :xcmenucmd Test<CR>
