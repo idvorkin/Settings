@@ -231,6 +231,7 @@ Bundle "kien/ctrlp.vim"
 Bundle "scrooloose/nerdtree"
 Bundle "rking/ag.vim"
 Bundle "OrangeT/vim-csharp.git"
+Bundle "lukaszkorecki/workflowish"
 Bundle "keith/swift.vim"
 
 
