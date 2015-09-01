@@ -1,0 +1,13 @@
+" Handy UX references
+"  http://stackoverflow.com/questions/6710957/xcode-4-keyboard-shortcut-for-switching-assistant-editor-to-tracking-automatic
+"
+
+" Possible xccmd items.
+"https://github.com/XVimProject/XVim/blob/master/Documents/Developers/MenuActionList.txt
+
+" Other useful commands:
+" :ni next issue // should really be cn and :help
+" :pi prev issue
+" Very cool this is the xvim rc
+map 'dt :xccmd toggleBreakpointAtCurrentLine<CR>
+map 'ds :xccmd Detach<CR>

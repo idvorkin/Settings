@@ -11,6 +11,12 @@ REM Setup Mercurial Path
 REM Setup Vim Paths
         mklink %USERPROFILE%\_vsvimrc c:\gits\settings\_vsvimrc
 
+REM Setup Clink
+        set TARGETFILE=clink_inputrc
+        set TARGET=%USERPROFILE%\AppData\local\clink\%TARGETFILE%
+        del  %TARGET%
+        mklink %TARGET% c:\gits\settings\%TARGETFILE%
+
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 
         mklink %USERPROFILE%\Documents\AutoHotkey.ahk c:\hg\autohotkey\AutoHotkey.ahk
@@ -51,6 +57,7 @@ REM test a current machine with choco list -localonly
     choco install resharper -y
     cinst markdownpad2
     cinst windirstat -y
+    choco install f.lux -y
 
 REM Install Posh-Git
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
