@@ -214,6 +214,7 @@ Bundle "kien/ctrlp.vim"
 Bundle "scrooloose/nerdtree"
 Bundle "rking/ag.vim"
 Bundle "OrangeT/vim-csharp.git"
+Bundle "lukaszkorecki/workflowish"
 
 " Removing signifiy to try to get Syntastic working
 " Need to figure out when to use which, my preference will be to have
