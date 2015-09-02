@@ -244,3 +244,18 @@ map ,x :exe "!xed -l " . line(".") . " %" <cr>
 " Bundle "mhinz/vim-signify"
 let g:syntastic_javascript_jshint_exec='C:\Chocolatey\lib\nodejs.commandline.0.10.33\tools\jshint.cmd'
 "
+"WOFL Helpers
+" set ft=workflowish
+" HELP @ https://github.com/lukaszkorecki/workflowish"
+
+func! OneNoteToWafl()
+  " Tabs to spaces
+  %s;\t;  ;g
+  " Dots to *'s 
+  %s/\%u2022/*/g
+  %s/\%u25cb/*/g
+  %s/\%u00b7/*/g
+endfunc
+" I don't know why ftplugin isnt working, so setting it manually for now.
+autocmd BufNewFile,BufRead *.wofl set filetype=workflowish
+
