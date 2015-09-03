@@ -37,6 +37,11 @@ REM Setup choco stuff
 REM Map Ctrl2Cap  -- More Info:  http://luvit.me/1MN7TCQ
     @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Set-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layout' -name 'Scancode Map' -Value ([byte[]](0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x1d,0x00,0x3a,0x00,0x00,0x00,0x00,0x00))"
 
+REM Shared with Mac/install.sh
+git config --global user.email "idvorkin@gmail.com"
+git config --global user.name "Igor Dvorkin"
+git config --global push.default simpleM
+
 
 REM test a current machine with choco list -localonly
     cinst git -y
