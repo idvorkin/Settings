@@ -5,7 +5,6 @@ set ignorecase
 set noincsearch
 set guioptions-=T
 set guioptions-=m
-set guifont=consolas
 set sw=4
 set ts=4
 set expandtab
@@ -52,8 +51,6 @@ let g:pyindent_continue = '&sw * 2'
 filetype plugin on
 filetype indent on
 :colo darkblue
-
-
 
 set tags=tags;/
 
@@ -243,4 +240,11 @@ map ,x :exe "!xed -l " . line(".") . " %" <cr>
 " syntastic win
 " Bundle "mhinz/vim-signify"
 let g:syntastic_javascript_jshint_exec='C:\Chocolatey\lib\nodejs.commandline.0.10.33\tools\jshint.cmd'
+
+" Set font-size default to be a decent size.
+if ( has("win32") || has("win64") || has("win16") ) 
+    " TBD: Get smart about first run vs reload - but can do that later.
+    let defaultFont="Consolas:h14:cANSI"
+    exec "set guifont=".defaultFont
+endif
 "
