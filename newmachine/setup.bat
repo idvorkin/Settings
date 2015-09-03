@@ -74,3 +74,4 @@ git clone https://github.com/idvorkin/onom
 git clone  https://github.com/idvorkin/Vim-Keybindings-For-Onenote
 git clone https://github.com/idvorkin/LinqpadSnippets
 git clone https://github.com/idvorkin/linqpadDataExplore
+get clone https://idvorkin@bitbucket.org/idvorkin/igor2.git
