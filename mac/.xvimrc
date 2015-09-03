@@ -12,5 +12,8 @@
 " Mapped commands
 nmap 'dt :xccmd toggleBreakpointAtCurrentLine<CR>
 nmap 'dc :xcmenucmd Continue<CR>
-nmap 'ds :xcmenucmd Detach<CR>
+nmap 'dd :xcmenucmd Detach<CR>
 nmap 'du :xcmenucmd Test<CR>
+nmap 'dr :xcmenucmd Run<CR>
+nmap 'dn :xcmenucmd Step Over<CR>
+nmap 'ds :xcmenucmd Step Into<CR>
