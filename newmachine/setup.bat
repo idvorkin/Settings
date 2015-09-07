@@ -69,7 +69,7 @@ REM Install Posh-Git
 
 REM Install Repos I use.
 cd /d c:\gits
-git clone https://github.com/gmarik/vundle.git %USERPROFILE%/vimfiles/bundle/vundle
+git clone  https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
 git clone https://github.com/idvorkin/onom
 git clone  https://github.com/idvorkin/Vim-Keybindings-For-Onenote
 git clone https://github.com/idvorkin/LinqpadSnippets
