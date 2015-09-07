@@ -1,10 +1,5 @@
-":set foldmethod='indent'
 " Common things in all of my vimrc's
-
-"  Required for vundle: https://github.com/VundleVim/Vundle.vim/blob/master/README.md
-filetype off
 set nocompatible 
-
 set nohls
 set ignorecase
 set noincsearch
@@ -132,59 +127,47 @@ autocmd FileType python compiler pylint
 "     https://coderwall.com/p/m2kp5q/invoke-js-beautify-in-vim
 :cab jsb %!js-beautify -j -q -B -f -<CR>
 
-" Setting up vundle
-"  git clone  https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
-set nocompatible              " be iMproved, required
-filetype off                  " required
-" set the runtime path to include Vundle and initialize
-set rtp+=~/vimfiles/bundle/Vundle
-call vundle#begin()
-Bundle 'VundleVim/Vundle.vim'
-Bundle 'tpope/vim-fugitive'
-Bundle 'leafgarland/typescript-vim'
-Bundle 'nathanaelkane/vim-indent-guides'
-Bundle 'tomtom/tcomment_vim'
-Bundle 'mhinz/vim-startify'
-Bundle 'bling/vim-airline'
-Bundle 'chrisbra/csv.vim'
-Bundle 'altercation/vim-colors-solarized'
-Bundle 'vim-scripts/ZoomWin'
-" change font size \\++
-Bundle 'drmikehenry/vim-fontsize'
- Bundle 'plasticboy/vim-markdown'
-Bundle 'elzr/vim-json'
-Bundle 'PProvost/vim-ps1'
-Bundle 'scrooloose/syntastic'
-Bundle 'othree/javascript-libraries-syntax.vim'
-Bundle "pangloss/vim-javascript"
-Bundle "kien/ctrlp.vim"
-Bundle "scrooloose/nerdtree"
-Bundle "rking/ag.vim"
-Bundle "OrangeT/vim-csharp.git"
-Bundle "lukaszkorecki/workflowish"
-Bundle "keith/swift.vim"
+"  Vundle setup
+    " Instructions @  https://github.com/VundleVim/Vundle.vim/blob/master/README.md
+    " git clone https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
+    filetype off                  
+    set rtp+=~/vimfiles/bundle/Vundle
+    call vundle#begin()
 
-" Removing signifiy to try to get Syntastic working
-" Need to figure out when to use which, my preference will be to have
-" syntastic win
-" Bundle "mhinz/vim-signify"
+    Bundle 'VundleVim/Vundle.vim'
+    Bundle 'tpope/vim-fugitive'
+    Bundle 'leafgarland/typescript-vim'
+    Bundle 'nathanaelkane/vim-indent-guides'
+    Bundle 'tomtom/tcomment_vim'
+    Bundle 'mhinz/vim-startify'
+    Bundle 'bling/vim-airline'
+    Bundle 'chrisbra/csv.vim'
+    Bundle 'altercation/vim-colors-solarized'
+    Bundle 'vim-scripts/ZoomWin'
+    " change font size \\++
+    Bundle 'drmikehenry/vim-fontsize'
+    Bundle 'plasticboy/vim-markdown'
+    Bundle 'elzr/vim-json'
+    Bundle 'PProvost/vim-ps1'
+    Bundle 'scrooloose/syntastic'
+    Bundle 'othree/javascript-libraries-syntax.vim'
+    Bundle "pangloss/vim-javascript"
+    Bundle "kien/ctrlp.vim"
+    Bundle "scrooloose/nerdtree"
+    Bundle "rking/ag.vim"
+    Bundle "OrangeT/vim-csharp.git"
+    Bundle "lukaszkorecki/workflowish"
+    Bundle "keith/swift.vim"
 
-" All of your Plugins must be added before the following line
+    " Removing signifiy to try to get Syntastic working
+    " Need to figure out when to use which, my preference will be to have
+    " syntastic win
+    " Bundle "mhinz/vim-signify"
+
+    " All of your Plugins must be added before the following line
 call vundle#end()            " required
+
 filetype plugin indent on    " required
-
-" To ignore plugin indent changes, instead use:
-"filetype plugin on
-"
-" Brief help
-" :PluginList       - lists configured plugins
-" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
-" :PluginSearch foo - searches for foo; append `!` to refresh local cache
-" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
-"
-" see :h vundle for more details or wiki for FAQ
-" Put your non-Plugin stuff after this line
-
 
 " Open XCode IDE - TBD make this per MAC Only
 map ,x :exe "!xed -l " . line(".") . " %" <cr> 
@@ -210,3 +193,4 @@ func! OneNoteToWafl()
     %s/\%u00b7/*/g
 endfunc
 
+" vim:foldmethod=indent:
