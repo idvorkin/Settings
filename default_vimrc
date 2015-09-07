@@ -1,5 +1,10 @@
+::foldmethod='indent'
 " Common things in all of my vimrc's
-"
+
+"  Required for vundle: https://github.com/VundleVim/Vundle.vim/blob/master/README.md
+filetype off
+set nocompatible 
+
 set nohls
 set ignorecase
 set noincsearch
@@ -32,32 +37,30 @@ endfunc
 " Add wordcount to statuline: 
 
 function! WordCount()
-  let s:old_status = v:statusmsg
-  let position = getpos(".")
-  exe "silent normal g\<c-g>"
-  if v:statusmsg != '--No lines in buffer--'
-      let s:word_count = str2nr(split(v:statusmsg)[11])
-      let v:statusmsg = s:old_status
-  end 
-  call setpos('.', position)
-  return s:word_count
+    let s:old_status = v:statusmsg
+    let position = getpos(".")
+    exe "silent normal g\<c-g>"
+    if v:statusmsg != '--No lines in buffer--'
+        let s:word_count = str2nr(split(v:statusmsg)[11])
+        let v:statusmsg = s:old_status
+    end 
+    call setpos('.', position)
+    return s:word_count
 endfunction
 :ca setwordcount set statusline=wc:%{WordCount()} 
-
 
 let g:pyindent_open_paren = '&sw * 2'
 let g:pyindent_nested_paren = '&sw'
 let g:pyindent_continue = '&sw * 2'
-filetype plugin on
-filetype indent on
+
 :colo darkblue
 
 set tags=tags;/
 
 function! TitlePrefix(prefix)
-let  g:TitlePrefix=a:prefix
-:auto! BufEnter * let &titlestring = g:TitlePrefix."||".expand("%:p")
-let &titlestring = g:TitlePrefix."||".expand("%:p")
+    let  g:TitlePrefix=a:prefix
+    :auto! BufEnter * let &titlestring = g:TitlePrefix."||".expand("%:p")
+    let &titlestring = g:TitlePrefix."||".expand("%:p")
 endfunction
 
 " TPS crap.
@@ -65,74 +68,14 @@ endfunction
 :cab only_number %s;.*>\(\d\+.\d\+\)<.*;\1;g
 :cab to_excel  %s;\( \\|,\);\t;g
 
-function! IOMeterIt()
-:set nowrap
-:set expandtab
-:cab to_iometer  g!/^\(MANAGER\\|ALL\)/d
-:cab excel_iometer  %s;,;\t;g
-":expand("to_iometer")
-":excel_iometer
-:%s;,;\t;g
-" copy title to b
-:g/'Target Type/yank b
-" remove all non manager/all lines.
-:g!/^MANAGER\|^ALL/d
-" Add a blank line before the line saying ALL
-:g/ALL/-pu=' '
-" Add a blank line at the end to make sure we can sort between the lines.
-:$pu=' '
-" sort all the VM's
-:g/ALL/,/^ $/-!sort
-" put title on top
-:0pu b 
-" copy buffer to clipboard
-:%yank *
-endfunction
-function! IOMeterReverseIt()
-call IOMeterIt()
-" reverse ordering
-g/ALL/,/^ /m0
-" move title to top
-:g/'Target Type/m 0 
-:%yank *
-
-endfunction
-
-
-function! NuInrange() range 
-" clever trick to get range into python.
-:exec(a:firstline.','.a:lastline. 'py import vim; start = int(vim.current.range.start); end = int(vim.current.range.end)')
-:py << EOF
-b = vim.current.buffer
-for x in range(1+end-start):
-    iLine = start+x
-    b[iLine] = '%03d %s'%(x+1,b[iLine])
-
-EOF
-endfunction
-
-:cab getNodesToMac %s/.*\(0003[^ ]*\).*/\1/
-:cab time :r! time /T
-
-
-" Useful ideas in 
-
-
-function! FixHiNodes()
-:g/at kicked at/d
-:g!/kicked\|20000/d
-:g/ERROR/d
-:g/^000/j
-endfunction
-
 function! FixCallStacks()
-:%s;\[NLN\];\r;g
-:%s;\[TAB\];\t;g
+    :%s;\[NLN\];\r;g
+    :%s;\[TAB\];\t;g
 endfunction
 
 function! StripPerfCounterTags()
-%s;\(\\.*\)<.*>;\1;
-%s;<.*>;;
+    %s;\(\\.*\)<.*>;\1;
+    %s;<.*>;;
 endfunction
 
 function! RemoveAsciiFromQuotes()
@@ -182,13 +125,6 @@ endfunction
 autocmd FileType python set omnifunc=pythoncomplete#Complete
 autocmd FileType python compiler pylint
 
-" Setting up vundle
-"  git clone https://github.com/gmarik/vundle.git %USERPROFILE%/vimfiles/bundle/vundle
-"  Installing Vundles: 
-"   BundleInstall
-set rtp+=~/vimfiles/bundle/vundle/
-call vundle#rc()
-
 " Replace content with return from wget.
 "
 :cab wg %!c:\bin_drop\wget --quiet --output-document - 
@@ -196,17 +132,14 @@ call vundle#rc()
 "     https://coderwall.com/p/m2kp5q/invoke-js-beautify-in-vim
 :cab jsb %!js-beautify -j -q -B -f -<CR>
 
-
-
-
- " let Vundle manage Vundle
- " required! 
-" Bundle 'gmarik/vundle.vim'
-
- " My Bundles here:
- 
- "
- " original repos on github
+" Setting up vundle
+"  git clone  https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
+set nocompatible              " be iMproved, required
+filetype off                  " required
+" set the runtime path to include Vundle and initialize
+set rtp+=~/vimfiles/bundle/Vundle
+call vundle#begin()
+Bundle 'VundleVim/Vundle.vim'
 Bundle 'tpope/vim-fugitive'
 Bundle 'leafgarland/typescript-vim'
 Bundle 'nathanaelkane/vim-indent-guides'
@@ -231,14 +164,31 @@ Bundle "OrangeT/vim-csharp.git"
 Bundle "lukaszkorecki/workflowish"
 Bundle "keith/swift.vim"
 
-
-" Open XCode IDE - TBD make this per MAC Only
-map ,x :exe "!xed -l " . line(".") . " %" <cr> 
-
 " Removing signifiy to try to get Syntastic working
 " Need to figure out when to use which, my preference will be to have
 " syntastic win
 " Bundle "mhinz/vim-signify"
+
+" All of your Plugins must be added before the following line
+call vundle#end()            " required
+filetype plugin indent on    " required
+
+" To ignore plugin indent changes, instead use:
+"filetype plugin on
+"
+" Brief help
+" :PluginList       - lists configured plugins
+" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
+" :PluginSearch foo - searches for foo; append `!` to refresh local cache
+" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
+"
+" see :h vundle for more details or wiki for FAQ
+" Put your non-Plugin stuff after this line
+
+
+" Open XCode IDE - TBD make this per MAC Only
+map ,x :exe "!xed -l " . line(".") . " %" <cr> 
+
 let g:syntastic_javascript_jshint_exec='C:\Chocolatey\lib\nodejs.commandline.0.10.33\tools\jshint.cmd'
 
 " Set font-size default to be a decent size.
@@ -249,17 +199,14 @@ if ( has("win32") || has("win64") || has("win16") )
 endif
 "
 "WOFL Helpers
-" set ft=workflowish
 " HELP @ https://github.com/lukaszkorecki/workflowish"
 
 func! OneNoteToWafl()
-  " Tabs to spaces
-  %s;\t;  ;g
-  " Dots to *'s 
-  %s/\%u2022/*/g
-  %s/\%u25cb/*/g
-  %s/\%u00b7/*/g
+    " Tabs to spaces
+    %s;\t;  ;g
+    " Dots to *'s 
+    %s/\%u2022/*/g
+    %s/\%u25cb/*/g
+    %s/\%u00b7/*/g
 endfunc
-" I don't know why ftplugin isnt working, so setting it manually for now.
-autocmd BufNewFile,BufRead *.wofl set filetype=workflowish
 
