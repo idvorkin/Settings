@@ -11,6 +11,9 @@ REM Setup Mercurial Path
 REM Setup Vim Paths
         mklink %USERPROFILE%\_vsvimrc c:\gits\settings\_vsvimrc
 
+REM GITS directory alias
+        mklink /d c:\gits %USERPROFILE%\gits
+
 REM Setup Clink
         set TARGETFILE=clink_inputrc
         set TARGET=%USERPROFILE%\AppData\local\clink\%TARGETFILE%
