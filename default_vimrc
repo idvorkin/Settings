@@ -1,5 +1,4 @@
 ":set foldmethod='indent'
-
 " Common things in all of my vimrc's
 
 "  Required for vundle: https://github.com/VundleVim/Vundle.vim/blob/master/README.md
