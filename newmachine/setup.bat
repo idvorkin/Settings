@@ -68,7 +68,9 @@ REM test a current machine with choco list -localonly
     choco install resharper -y
     cinst markdownpad2 -y
     cinst windirstat -y
+    cinst slack -y
     choco install f.lux -y
+    choco install procexp -y
 
 REM Install Posh-Git
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
