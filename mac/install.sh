@@ -1,8 +1,10 @@
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 
 # looks like brew is just for command line stuff.
 brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git
+# Install cask
+brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable.
-brew cask install google-chrome  iterm2	      karabiner	     seil	    skype macvim
+cask install google-chrome  iterm2	      karabiner	     seil	    skype macvim
 
 # shared git stetup
 
@@ -14,9 +16,9 @@ git config --global credential.helper osxkeychain
 git config --global core.editor /usr/bin/vim
 
 # in seil map caps -> F19 (Keycode: 80) 
-ln ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
-ln ~/settings/default_vimrc ~/.vimrc 
-ln ~/settings/mac/.xvimrc ~/.xvimrc 
+ln -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
+ln -f ~/settings/default_vimrc ~/.vimrc 
+ln -f ~/settings/mac/.xvimrc ~/.xvimrc 
 
 # Setup vundle
 git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle
