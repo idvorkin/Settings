@@ -16,4 +16,7 @@ $cli set private.vimXCode 1
 /bin/echo -n .
 $cli set private.fixing-alt-tab 1
 /bin/echo -n .
+$cli set private.FlipScrollMsUsbTrackball 1
+/bin/echo -n .
+
 /bin/echo

@@ -1,3 +1,11 @@
+REM First Run As Admin - Install Chocolatey
+    @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
+REM Second Run As Admin - Install Git
+    cinst git -y
+REM Third Run As Admin 
+    mkdir c:\gits\ && cd /d c:\gits && git clone https://github.com/idvorkin/settings
+REM Fourth Run As Admin -- c:\gits\settings\newmachine\setup.bat
+
 
 REM Setup dropbox Paths
         mklink /d \dropbox %USERPROFILE%\dropbox
@@ -31,7 +39,6 @@ REM Setup Auto Hot Key Path
         mklink %USERPROFILE%\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1 c:\gits\settings\Microsoft.PowerShell_profile.ps1
 
 REM Setup choco stuff
-    @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
 
     REM Install PSGet
     REM
@@ -43,7 +50,7 @@ REM Map Ctrl2Cap  -- More Info:  http://luvit.me/1MN7TCQ
 REM Shared with Mac/install.sh
 git config --global user.email "idvorkin@gmail.com"
 git config --global user.name "Igor Dvorkin"
-git config --global push.default simpleM
+git config --global push.default simple
 
 
 REM test a current machine with choco list -localonly
@@ -51,7 +58,6 @@ REM test a current machine with choco list -localonly
     cinst nodejs -y
     cinst ag -y
     cinst conemu -y
-    cinst gvim -y
     cinst nunit -y
     cinst nuget -y
     cinst repo -y
@@ -63,9 +69,11 @@ REM test a current machine with choco list -localonly
     cinst autohotkey -y
     choco install visualstudio2015community -y
     choco install resharper -y
-    cinst markdownpad2
+    cinst markdownpad2 -y
     cinst windirstat -y
+    cinst slack -y
     choco install f.lux -y
+    choco install procexp -y
 
 REM Install Posh-Git
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"

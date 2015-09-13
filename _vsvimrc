@@ -4,3 +4,12 @@
 nmap <C-]> :vsc Edit.GoToDefinition<CR>
 nmap <C-T> :vsc View.NavigateBackwards<CR>
 nmap <C-P> :vsc Resharper.Rsharper_GotoType<CR>
+" Sync with mac/.xvimrc
+nmap 'dt :vsc Debug.ToggleBreakPoint<CR>
+nmap 'dd :vsc Debug.StopDebugging<CR>
+nmap 'dr :vsc Debug.Start<CR>
+" TBD: Consider Implementing these others
+nmap 'dc :xcmenucmd Continue<CR>
+nmap 'du :xcmenucmd Test<CR>
+nmap 'dn :xcmenucmd Step Over<CR>
+nmap 'ds :xcmenucmd Step Into<CR>

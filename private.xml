@@ -142,4 +142,23 @@
           KeyCode::CURSOR_LEFT,    ModifierFlag::COMMAND_L | ModifierFlag::CONTROL_L </autogen>
       </item>
 
+      <!-- Direction from:
+            http://apple.stackexchange.com/questions/116617/how-to-separate-mouse-and-trackpad-settings
+       --> 
+  <devicevendordef>
+        <vendorname>Microsoft</vendorname>
+        <vendorid>0x045e</vendorid>
+  </devicevendordef>
+  <deviceproductdef>
+        <productname>MsUsbTrackBall</productname>
+        <productid>0x0024</productid>
+  </deviceproductdef>
+  <item>
+        <name>Reverse Scroll direction for usb trackball </name>
+        <identifier>private.FlipScrollMsUsbTrackball</identifier>
+        <device_only>DeviceVendor::Microsoft, DeviceProduct::MsUsbTrackBall</device_only>
+        <autogen>__FlipScrollWheel__ Option::FLIPSCROLLWHEEL_VERTICAL</autogen>
+  </item>
+
+
 </root>
