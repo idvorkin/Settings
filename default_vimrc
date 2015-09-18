@@ -48,9 +48,6 @@ let g:pyindent_open_paren = '&sw * 2'
 let g:pyindent_nested_paren = '&sw'
 let g:pyindent_continue = '&sw * 2'
 
-" Other schemes I liek
-":colo DarkBlue
-:colo Tomorrow-Night-Blue
 
 set tags=tags;/
 
@@ -197,5 +194,9 @@ func! OneNoteToWafl()
     %s/\%u25cb/*/g
     %s/\%u00b7/*/g
 endfunc
+
+" Other schemes I liek
+":colo DarkBlue
+:colo Tomorrow-Night-Blue
 
 " vim:foldmethod=indent:

@@ -16,19 +16,16 @@ git config --global credential.helper osxkeychain
 git config --global core.editor /usr/bin/vim
 
 # in seil map caps -> F19 (Keycode: 80) 
-ln -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
-ln -f ~/settings/default_vimrc ~/.vimrc 
-ln -f ~/settings/mac/.xvimrc ~/.xvimrc 
+ln -s -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
+ln -s -f ~/settings/default_vimrc ~/.vimrc 
+ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc 
 
 # Setup vundle
 git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle
 # setup xcode
-cd ~/gits
-git clone https://github.com/XVimProject/XVim.git 
-cd XVim
+git clone https://github.com/XVimProject/XVim.git  ~/gits/XVim
+cd ~/gits/XVim
 make
-
-cd ~/gits
 
 #oh my zsh setup - from not fish.
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
