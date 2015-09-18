@@ -71,6 +71,8 @@ REM test a current machine with choco list -localonly
     cinst slack -y
     choco install f.lux -y
     choco install procexp -y
+    choco install paint.net -y
+    cinst -y clink
 
 REM Install Posh-Git
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
@@ -83,3 +85,7 @@ git clone  https://github.com/idvorkin/Vim-Keybindings-For-Onenote
 git clone https://github.com/idvorkin/LinqpadSnippets
 git clone https://github.com/idvorkin/linqpadDataExplore
 git clone https://idvorkin@bitbucket.org/idvorkin/igor2.git
+
+
+clink autorun -i
+
