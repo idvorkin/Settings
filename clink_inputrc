@@ -1,3 +1,2 @@
 # Swap edit modes using C-A-J
 set editing-mode vi
-set keymap vi-command

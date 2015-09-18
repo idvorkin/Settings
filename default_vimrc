@@ -48,7 +48,9 @@ let g:pyindent_open_paren = '&sw * 2'
 let g:pyindent_nested_paren = '&sw'
 let g:pyindent_continue = '&sw * 2'
 
-:colo darkblue
+" Other schemes I liek
+":colo DarkBlue
+:colo Tomorrow-Night-Blue
 
 set tags=tags;/
 
@@ -159,6 +161,8 @@ autocmd FileType python compiler pylint
     Bundle "OrangeT/vim-csharp.git"
     Bundle "lukaszkorecki/workflowish"
     Bundle "keith/swift.vim"
+    " http://vimcolors.com/?page=11
+    Bundle 'flazz/vim-colorschemes'
 
     " Removing signifiy to try to get Syntastic working
     " Need to figure out when to use which, my preference will be to have
