@@ -130,6 +130,7 @@ autocmd FileType python compiler pylint
 "  Vundle setup
     " Instructions @  https://github.com/VundleVim/Vundle.vim/blob/master/README.md
     " git clone https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
+    " MAC - $ git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim 
     filetype off                  
     set rtp+=~/vimfiles/bundle/Vundle
     call vundle#begin()
