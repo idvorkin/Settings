@@ -55,6 +55,8 @@ git config --global user.email "idvorkin@gmail.com"
 git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 
+REM Setup policy execution policy
+powershell Set-ExecutionPolicy RemoteSigned
 
 REM test a current machine with choco list -localonly
 powershell .\install_packages.ps1
