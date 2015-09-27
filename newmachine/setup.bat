@@ -23,10 +23,13 @@ REM GITS directory alias
         mklink /d c:\gits %USERPROFILE%\gits
 
 REM Setup Clink
+
         set TARGETFILE=clink_inputrc
         set TARGET=%USERPROFILE%\AppData\local\clink\%TARGETFILE%
         del  %TARGET%
-        mklink %TARGET% c:\gits\settings\%TARGETFILE%
+REM clink doesn't yet support links, so set this as a copy for now.
+REM        mklink %TARGET% c:\gits\settings\%TARGETFILE%
+        copy      %TARGET% c:\gits\settings\%TARGETFILE%
 
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 
