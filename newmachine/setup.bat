@@ -23,10 +23,13 @@ REM GITS directory alias
         mklink /d c:\gits %USERPROFILE%\gits
 
 REM Setup Clink
+
         set TARGETFILE=clink_inputrc
         set TARGET=%USERPROFILE%\AppData\local\clink\%TARGETFILE%
         del  %TARGET%
-        mklink %TARGET% c:\gits\settings\%TARGETFILE%
+REM clink doesn't yet support links, so set this as a copy for now.
+REM        mklink %TARGET% c:\gits\settings\%TARGETFILE%
+        copy      %TARGET% c:\gits\settings\%TARGETFILE%
 
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 
@@ -52,6 +55,8 @@ git config --global user.email "idvorkin@gmail.com"
 git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 
+REM Setup policy execution policy
+powershell Set-ExecutionPolicy RemoteSigned
 
 REM test a current machine with choco list -localonly
 powershell .\install_packages.ps1

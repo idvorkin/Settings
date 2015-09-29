@@ -21,6 +21,7 @@ f.lux
 procexp 
 paint.net 
 clink
+sharex
 "@.split()
 
 foreach ($package in $packages | ? {$_ -ne ""}) 
