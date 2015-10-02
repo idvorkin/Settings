@@ -22,6 +22,12 @@ REM Setup Vim Paths
 REM GITS directory alias
         mklink /d c:\gits %USERPROFILE%\gits
 
+REM Setup Pull All
+        set TARGETFILE=pullall.bat
+        set TARGET=c:\gits\%TARGETFILE%
+        del  %TARGET%
+        mklink %TARGET% c:\gits\settings\newmachine\%TARGETFILE% 
+
 REM Setup Clink
 
         set TARGETFILE=clink_inputrc
