@@ -35,7 +35,7 @@ REM Setup Clink
         del  %TARGET%
 REM clink doesn't yet support links, so set this as a copy for now.
 REM        mklink %TARGET% c:\gits\settings\%TARGETFILE%
-        copy      %TARGET% c:\gits\settings\%TARGETFILE%
+        copy      c:\gits\settings\%TARGETFILE% %TARGET%
 
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 

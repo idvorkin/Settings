@@ -30,3 +30,8 @@ foreach ($package in $packages | ? {$_ -ne ""})
     cinst  -y $package
 }
 
+foreach ($package in $packages | ? {$_ -ne ""}) 
+{
+    echo "Installing: $package" 
+    cup  -y $package
+}
