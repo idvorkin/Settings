@@ -2,7 +2,6 @@ $packages = @"
 git 
 nodejs 
 ag 
-conemu 
 nunit 
 nuget 
 repo 
@@ -23,6 +22,9 @@ paint.net
 clink
 sharex
 "@.split()
+
+# Make sure conemu is the last thing, as it needs to close the window.
+$packages += "conemu"
 
 foreach ($package in $packages | ? {$_ -ne ""}) 
 {
