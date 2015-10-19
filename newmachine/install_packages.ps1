@@ -21,6 +21,7 @@ procexp
 paint.net 
 clink
 sharex
+skype
 "@.split()
 
 # Make sure conemu is the last thing, as it needs to close the window.
