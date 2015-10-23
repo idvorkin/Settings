@@ -6,6 +6,10 @@ brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable.
 cask install google-chrome  iterm2	      karabiner	     seil	    skype 
 
+# window manager -- pretty cool 
+# https://www.spectacleapp.com/
+brew cask install spectacle
+
 brew linkapps macvim
 # shared git stetup
 
