@@ -1,9 +1,16 @@
 "  Don't be afraid to add links to resharper commadns.
 " https://www.jetbrains.com/resharper/help/Configuring_Keyboard_Shortcuts.html
-"
+" https://www.jetbrains.com/resharper/help/Reference__Keyboard_Shortcuts.html
+" http://stackoverflow.com/questions/24022887/can-vsvim-map-keys-to-resharper-resharper-extendselection
 nmap <C-]> :vsc Edit.GoToDefinition<CR>
-nmap <C-T> :vsc View.NavigateBackwards<CR>
-nmap <C-P> :vsc Resharper.Rsharper_GotoType<CR>
+nmap <C-T> :vsc View.NavigateBackward<CR>
+nmap <C-P> :vsc Resharper.Resharper_GotoType<CR>
+
+" can't use ab so map 'ag instead
+nmap 'agu :vsc Resharper.Resharper_GotoUsage<CR>
+nmap 'aga :vsc Resharper.Resharper_NavigateTo<CR>
+nmap 'agd :vsc Resharper.Resharper_GotoInheritors<CR>
+
 " Sync with mac/.xvimrc
 nmap 'dt :vsc Debug.ToggleBreakPoint<CR>
 nmap 'dd :vsc Debug.StopDebugging<CR>

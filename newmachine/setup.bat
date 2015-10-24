@@ -20,7 +20,7 @@ REM Setup Vim Paths
         mklink %USERPROFILE%\_vsvimrc c:\gits\settings\_vsvimrc
 
 REM GITS directory alias
-        mklink /d c:\gits %USERPROFILE%\gits
+        mklink /d %USERPROFILE%\gits c:\gits
 
 REM Setup Pull All
         set TARGETFILE=pullall.bat
