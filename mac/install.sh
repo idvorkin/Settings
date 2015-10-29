@@ -4,7 +4,7 @@ brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macv
 # Install cask
 brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable.
-cask install google-chrome  iterm2	      karabiner	     seil	    skype 
+brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle
 
 brew linkapps macvim
 # shared git stetup
