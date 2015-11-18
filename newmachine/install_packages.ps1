@@ -21,7 +21,11 @@ procexp
 paint.net 
 clink
 sharex
+ctags
 skype
+github
+sourcetree
+calibre
 "@.split()
 
 # Make sure conemu is the last thing, as it needs to close the window.
