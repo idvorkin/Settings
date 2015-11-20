@@ -198,7 +198,7 @@ func! OneNoteToWafl()
 endfunc
 
 func! MarkDownWordToLink()
-    normal ywi[ui(A) i[http://www.pa.com]
+    normal ywi[ea](http://www.pi.com)
 endfunc
 " Other schemes I liek
 "
