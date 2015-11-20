@@ -26,6 +26,7 @@ skype
 github
 sourcetree
 calibre
+pretzel
 "@.split()
 
 # Make sure conemu is the last thing, as it needs to close the window.
