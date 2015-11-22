@@ -2,7 +2,7 @@
 # doesn't exist - alcatraz install package
 
 # but go to alcatraz. in UX
-# Windows -> Package Manager -> 
-    # ZoomWin
+# Windows -> Package Manager -> Use built in search
+    # AdjustFontSize
     # XVim
 
