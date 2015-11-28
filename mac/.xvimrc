@@ -5,11 +5,16 @@
 " Possible xccmd items.
 "https://github.com/XVimProject/XVim/blob/master/Documents/Developers/MenuActionList.txt
 
+" Jump through compiler warnings
+nmap 'cn :xcmenucmd Jump To Next Issue <cr> 
+nmap 'cp :xcmenucmd Jump To Previous Issue <cr> 
 " Other useful commands:
 " :ni next issue // should really be cn and :help
 " :pi prev issue
 "
-" Mapped commands
+"
+" Debugging commands
+" 
 nmap 'dt :xccmd toggleBreakpointAtCurrentLine<CR>
 nmap 'dc :xcmenucmd Continue<CR>
 nmap 'dd :xcmenucmd Detach<CR>
@@ -17,3 +22,10 @@ nmap 'du :xcmenucmd Test<CR>
 nmap 'dr :xcmenucmd Run<CR>
 nmap 'dn :xcmenucmd Step Over<CR>
 nmap 'ds :xcmenucmd Step Into<CR>
+
+" 
+" useful in playground
+" nmap 'zo :xcmenucmd Show Result for Current Line<CR>
+" Weird Show seems to toggle
+nmap 'pt :xcmenucmd Show Result for Current Line<CR>
+nmap 'pr :xcmenucmd Execute Playground<CR>

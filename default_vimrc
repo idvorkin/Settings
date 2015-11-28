@@ -197,7 +197,11 @@ func! OneNoteToWafl()
     %s/\%u00b7/*/g
 endfunc
 
+func! MarkDownWordToLink()
+    normal ywi[ea](http://www.pi.com)
+endfunc
 " Other schemes I liek
+"
 if has ("gui-running")
     :colo Tomorrow-Night-Blue
 else

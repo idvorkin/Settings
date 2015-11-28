@@ -74,7 +74,7 @@ REM Install Repos I use.
 cd /d c:\gits
 git clone  https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
 git clone https://github.com/idvorkin/onom
-git clone  https://github.com/idvorkin/Vim-Keybindings-For-Onenote
+git clone https://github.com/idvorkin/Vim-Keybindings-For-Onenote
 git clone https://github.com/idvorkin/LinqpadSnippets
 git clone https://github.com/idvorkin/linqpadDataExplore
 git clone https://github.com/idvorkin/idvorkin.github.io

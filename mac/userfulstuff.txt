@@ -1,0 +1,23 @@
+
+Have Dock AutoHide: 
+    preferences-> dock->autohide
+
+Track pad help
+    preferences-> trackpad
+
+
+Right Click
+  
+    2 fingers
+    c-click
+
+XCODE:
+    Circle->Circle -> Show associated file.
+    Can then drag a control to associated controller to add outlets and callbacks.
+    Chevron/i/ is a table cell property.
+
+
+Images:
+    Look @ SDWebImages
+    NSDATA => Binary Data
+

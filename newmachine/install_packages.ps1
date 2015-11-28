@@ -25,7 +25,9 @@ ctags
 skype
 github
 sourcetree
+calibre
 pretzel
+virtualbox
 "@.split()
 
 # Make sure conemu is the last thing, as it needs to close the window.
