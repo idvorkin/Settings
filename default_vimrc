@@ -168,6 +168,10 @@ autocmd FileType python compiler pylint
     Bundle 'dhruvasagar/vim-table-mode'
     Bundle 'atelierbram/vim-colors_atelier-schemes'
     Bundle 'scrooloose/nerdcommenter'
+    Bundle 'Shougo/unite.vim'
+    Bundle 'Shougo/neomru.vim'
+    "http://vimawesome.com/plugin/unite-outline-shouldve-said-no 
+    Bundle 'Shougo/unite-outline'
     " Removing signifiy to try to get Syntastic working
     " Need to figure out when to use which, my preference will be to have
     " syntastic win
