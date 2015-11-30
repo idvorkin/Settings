@@ -31,7 +31,8 @@ endfunc
 " from:http://stackoverflow.com/questions/114431/fast-word-count-function-in-vim
 " Add wordcount to statuline: 
 
-function! WordCount()
+function! W0rdCount() 
+    " Making name a w0rd so not picked up in completion with setWordCountToTitle
     let s:old_status = v:statusmsg
     let position = getpos(".")
     exe "silent normal g\<c-g>"
@@ -42,7 +43,10 @@ function! WordCount()
     call setpos('.', position)
     return s:word_count
 endfunction
-:ca setwordcount set statusline=wc:%{WordCount()} 
+
+function! WordCountToTitle()
+    exec ":set statusline=wc:%{W0rdCount()}"
+endfunction
 
 let g:pyindent_open_paren = '&sw * 2'
 let g:pyindent_nested_paren = '&sw'
