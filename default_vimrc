@@ -1,4 +1,5 @@
 " Common  things in all of my vimrc's
+"  File in git:  ~/gits/settings/default_vimrc
 set nocompatible 
 set nohls
 set ignorecase
@@ -180,6 +181,12 @@ autocmd FileType python compiler pylint
     " All of your Plugins must be added before the following line
 call vundle#end()            " required
 
+
+" Setup Unite
+    :cnoremap :ls :Unite buffer
+    :nnoremap <C-P> :Unite -start-insert file buffer neomru/file neomru/directory<cr> 
+" End Setup
+
 filetype plugin indent on    " required
 
 " Open XCode IDE - TBD make this per MAC Only
@@ -207,7 +214,8 @@ func! OneNoteToWafl()
 endfunc
 
 func! MarkDownWordToLink()
-    normal ywi[ea](http://www.pi.com)
+    " cool yiw takes the word, and jumps you to the beginning of it.
+    normal yiwi[ea](http://www.pa.com)
 endfunc
 " Other schemes I liek
 "
