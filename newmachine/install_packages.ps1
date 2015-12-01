@@ -28,6 +28,7 @@ sourcetree
 calibre
 pretzel
 virtualbox
+teamviewer
 "@.split()
 
 # Make sure conemu is the last thing, as it needs to close the window.
