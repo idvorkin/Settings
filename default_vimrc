@@ -219,7 +219,7 @@ endfunc
 "   add these only to markdown/html; checkboxopen, checkboxdone
 "   Perhaps be clever and alternate between open and done like in OneNote via C-1
 "       
-:iab _mc_ &#x2610; 
+:iab _mc_ &#x2610;
 :iab _mcd_ &#x2611;
 
 func! MarkDownWordToLink()
