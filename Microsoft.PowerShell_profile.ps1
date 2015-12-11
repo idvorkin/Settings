@@ -27,6 +27,28 @@ Enable-GitColors
 
 Pop-Location
 
-function Restart-Explorer {Get-Process | where name -eq explorer  |kill ; explorer}
+function Restart-Explorer {
+    Get-Process | where name -eq explorer  |kill ; explorer
+    Add-Type -Name ConsoleUtils -Namespace WPIA -MemberDefinition @'
+    [DllImport("user32.dll")]
+            public static extern int FindWindow(string lpClassName,string lpWindowName);
+            [DllImport("user32.dll")]
+            public static extern int SendMessage(int hWnd, uint Msg, int wParam, int lParam);
+                
+            public const int WM_SYSCOMMAND = 0x0112;
+            public const int SC_CLOSE = 0xF060;
+'@
+    # When explorer restarts, it opens a new file explorer window - wait a few seconds for it to pop up before closing it.
+    for ($i = 0; $i -lt 10 ; $i++)
+    {
+        start-sleep -s 1
+        [int]$handle = [WPIA.ConsoleUtils]::FindWindow('CabinetWClass','File Explorer')
+        if ($handle -gt 0)
+        {
+            [void][WPIA.ConsoleUtils]::SendMessage($handle, [WPIA.ConsoleUtils]::WM_SYSCOMMAND, [WPIA.ConsoleUtils]::SC_CLOSE, 0)
+            break;
+        }  
+    }
+}
 function Kill-GitGui {Get-Process | where name -eq wish  |kill }
 function Zach-Age {((get-date) - (get-date 4/22/2010)).TotalDays/7}
