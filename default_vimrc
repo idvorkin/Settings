@@ -226,6 +226,25 @@ func! MarkDownWordToLink()
     " cool yiw takes the word, and jumps you to the beginning of it.
     normal yiwi[ea](http://www.pa.com)
 endfunc
+
+func! JsToSingleLineClipBoard()
+    " Creating a bookmarklet requires all JS to be on a single line.
+    " Make it a single line and put it on global clipboard to paste into JS
+    " console.
+
+    " NOTE: when creating bookmarklets, you'll need to terminate all lines
+    " with a ';' and only use inline comments, and end with void();
+
+    " NOTE: when making it the bookmark, you need to start with javascript:
+
+    " Join all to one line.
+    exec ":%j"
+    " Copy to Clipboard
+    normal "*yy
+    " Undo
+    normal u
+endfunc
+
 " Other schemes I liek
 "
 if has ("gui-running")
