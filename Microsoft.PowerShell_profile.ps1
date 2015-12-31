@@ -52,3 +52,9 @@ function Restart-Explorer {
 }
 function Kill-GitGui {Get-Process | where name -eq wish  |kill }
 function Zach-Age {((get-date) - (get-date 4/22/2010)).TotalDays/7}
+function Flatten-Big-Files {
+    # downloaded movies tend to nest subdirectories and have junk, pull files down to parent director
+    # 1) Recurse subdirectories
+    # 2) Move movies files to root
+    gci -R | ? {$_.Length -gt 10mb -and -not ($_.IsContainer) } | % {Move-Item $_.PSPath . }
+}
