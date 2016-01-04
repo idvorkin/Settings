@@ -50,8 +50,9 @@ nunit
 nuget 
 linqpad 
 visualstudio2015community 
-resharper 
 "@.split()
+
+# resharper  -- DO NOT INSTALL RESHARPER, as only have license for resharper 9, and so far 10 isn't good enough better.
 
 # Remote Assistance
 $packages += "teamviewer"
