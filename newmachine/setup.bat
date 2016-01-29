@@ -60,6 +60,10 @@ REM Shared with Mac/install.sh
 git config --global user.email "idvorkin@gmail.com"
 git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
+git config --global alias.co checkout
+git config --global alias.br branch
+git config --global alias.ci commit
+git config --global alias.st status
 
 REM Setup policy execution policy
 powershell Set-ExecutionPolicy RemoteSigned

@@ -31,3 +31,4 @@ function installsilently($url, $name) {
 
 # INSTALL VS Extenaions
 installsilently http://visualstudiogallery.msdn.microsoft.com/59ca71b3-a4a3-46ca-8fe1-0e90e3f79329/file/6390/49/VsVim.vsix VsVim.vsix
+installsilently https://visualstudiogallery.msdn.microsoft.com/f1cc3f3e-c300-40a7-8797-c509fb8933b9
