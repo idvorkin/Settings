@@ -2,7 +2,7 @@
 " https://www.jetbrains.com/resharper/help/Configuring_Keyboard_Shortcuts.html
 " https://www.jetbrains.com/resharper/help/Reference__Keyboard_Shortcuts.html
 " http://stackoverflow.com/questions/24022887/can-vsvim-map-keys-to-resharper-resharper-extendselection
-nmap <C-]> :vsc Edit.GoToDefinition<CR>
+nmap <C-]> :vsc Resharper.ReSharper_GotoImplementation<CR>
 nmap <C-T> :vsc View.NavigateBackward<CR>
 nmap <C-P> :vsc Resharper.Resharper_GotoType<CR>
 
