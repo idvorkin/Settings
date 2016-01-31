@@ -1,10 +1,11 @@
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 
 # looks like brew is just for command line stuff.
-brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macvim
+brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macvim wget
 # Install cask
 brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable. 
-brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree virtualbox vagrant
+brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree virtualbox vagrant macdown
+
 
 # window manager -- pretty cool 
 # https://www.spectacleapp.com/
