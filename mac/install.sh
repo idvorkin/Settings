@@ -3,8 +3,8 @@ ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/
 brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macvim
 # Install cask
 brew install caskroom/cask/brew-cask
-# Looks like we need CASK to do things that are findable.
-brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree
+# Looks like we need CASK to do things that are findable. 
+brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree virtualbox vagrant
 
 # window manager -- pretty cool 
 # https://www.spectacleapp.com/

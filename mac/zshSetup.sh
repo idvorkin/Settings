@@ -2,6 +2,7 @@
 #
 echo Copy below line to paste on plugics
 echo plugins=\(git osx lol quote vi-mode web-search wd\)
+echo bindkey -v 
 read
 vi  ~/.zshrc
 echo copy below line to add to /etc/shells
