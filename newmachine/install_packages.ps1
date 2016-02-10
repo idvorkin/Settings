@@ -4,15 +4,18 @@ skype
 slack 
 nodejs 
 repo 
-markdownpad2 
 virtualbox
 "@.split()
 
 # Drawing  Tools
 $packages += "paint.net"
 
-# Static Blog (Jekyll for windows)
-$packages += "pretzel"
+# Static Blog and markdown (Jekyll for windows)
+$packages += @"
+pretzel
+haroopad
+markdownpad2 
+"@.split()
 
 #Misc windows utilities
 $packages += @"
