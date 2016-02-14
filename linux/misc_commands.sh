@@ -5,4 +5,4 @@ dpkg-query -W --showformat='${Installed-Size;10}\t${Package}\n' | sort -k1,1n
 
 # Mount the host filesystem in ~/etc/rc.d
 # mount -t vboxsf share /home/ubuntu/host
-sudo mount -t vboxsf -o rw,uid=1000,gid=1000 share ~/host
+sudo mount -t vboxsf -o rw,uid=1000,gid=1000 linux ~/host

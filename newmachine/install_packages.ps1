@@ -4,7 +4,6 @@ skype
 slack 
 nodejs 
 repo 
-virtualbox
 "@.split()
 
 # Drawing  Tools
@@ -15,6 +14,12 @@ $packages += @"
 pretzel
 haroopad
 markdownpad2 
+"@.split()
+
+#VM Management
+$packages += @"
+virtualbox
+vagrant
 "@.split()
 
 #Misc windows utilities
