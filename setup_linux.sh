@@ -8,7 +8,7 @@
 
 
 # assume already cloned settings.
-sudo apt-get install virtualbox-guest-additions-iso vim-gnome vim git zsh ruby curl ruby-dev zlib1g-dev nodejs qbittorrent
+sudo apt-get install virtualbox-guest-additions-iso vim-gnome vim git zsh ruby curl ruby-dev zlib1g-dev nodejs qbittorrent silversearcher-ag git-gui tmux
 mkdir ~/gits
 ln -s ~/settings ~/gits/settings
 git clone https://github.com/idvorkin/idvorkin.github.io ~/gits/idvorkin.github.io
@@ -22,6 +22,5 @@ sudo gem install bundler
 
 cd ~/gits/idvorkin.github.io
 bundle install
-
 
 # Misc 
