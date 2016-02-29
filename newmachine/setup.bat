@@ -30,12 +30,10 @@ REM Setup Pull All
 
 REM Setup Clink
 
-        set TARGETFILE=clink_inputrc
-        set TARGET=%USERPROFILE%\AppData\local\clink\%TARGETFILE%
-        del  %TARGET%
+
+        del %USERPROFILE%\_inputrc 
 REM clink doesn't yet support links, so set this as a copy for now.
-REM        mklink %TARGET% c:\gits\settings\%TARGETFILE%
-        copy      c:\gits\settings\%TARGETFILE% %TARGET%
+        copy c:\gits\settings\clink_inputrc  %USERPROFILE%\_inputrc 
 
 REM Setup Auto Hot Key Path
         del %USERPROFILE%\Documents\AutoHotkey.ahk 
