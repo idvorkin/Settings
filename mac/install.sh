@@ -42,6 +42,9 @@ sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/i
 brew install ctags --HEAD
 # /usr/local/bin/ctags -R --langmap=ObjectiveC:.m.h
 
+# Jekyll
+# gem install sudo gem install -n /usr/local/bin/ jekyll jekyll-paginate
+
 #Alacatraz
 curl -fsSL https://raw.github.com/supermarin/Alcatraz/master/Scripts/install.sh | sh
 
