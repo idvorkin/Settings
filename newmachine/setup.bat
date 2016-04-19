@@ -58,6 +58,7 @@ git config --global user.email "idvorkin@gmail.com"
 git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 git config --global alias.co checkout
+git config --global alias.com "checkout master"
 git config --global alias.br branch
 git config --global alias.ci commit
 git config --global alias.st status
@@ -84,8 +85,10 @@ powershell .\install_packages.ps1
 REM Install Posh-Git
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
 
+REM To view git branch from clink 
+REM gitshowbranch /i
+
 REM Install Repos I use.
-cd /d c:\gits
 git clone  https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
 git clone https://github.com/idvorkin/onom
 git clone https://github.com/idvorkin/Vim-Keybindings-For-Onenote
