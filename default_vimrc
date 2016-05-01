@@ -142,6 +142,9 @@ autocmd FileType python compiler pylint
 
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'tpope/vim-fugitive'
+    Bundle 'junegunn/limelight.vim'
+    Bundle 'reedes/vim-pencil'
+    Bundle 'junegunn/goyo.vim'
     Bundle 'leafgarland/typescript-vim'
     Bundle 'nathanaelkane/vim-indent-guides'
     Bundle 'tomtom/tcomment_vim'
