@@ -141,6 +141,8 @@ autocmd FileType python compiler pylint
     call vundle#begin()
 
     Bundle 'VundleVim/Vundle.vim'
+    Bundle 'mattn/webapi-vim'
+    Bundle 'christoomey/vim-quicklink'
     Bundle 'tpope/vim-fugitive'
     Bundle 'junegunn/limelight.vim'
     Bundle 'reedes/vim-pencil'
@@ -255,5 +257,7 @@ if has ("gui-running")
 else
     :colo darkblue
 endif
+
+let g:vim_markdown_frontmatter = 1
 
 " vim:foldmethod=indent:
