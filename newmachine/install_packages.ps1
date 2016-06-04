@@ -37,6 +37,12 @@ $packages += "sharex"
 # Dim screen brightness in the evening.
 $packages += "flux"
 
+# Diagnostic utilities
+$packages += @"
+hdtune
+cpu-z
+"@.split()
+
 #Command Line tooling 
 $packages += @"
 vim 
