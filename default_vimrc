@@ -220,6 +220,19 @@ func! OneNoteToWafl()
     %s/\%u00b7/*/g
 endfunc
 
+func! WriteOn()
+    :Goyo
+    :PencilHard
+    :LimeLight
+endfunc
+
+func! WriteOff()
+    :Goyo
+    :PencilOff
+    :LimeLight!
+endfunc
+    
+
 " TBD  Checkbox processing
 "   add these only to markdown/html; checkboxopen, checkboxdone
 "   Perhaps be clever and alternate between open and done like in OneNote via C-1
