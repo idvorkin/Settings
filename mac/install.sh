@@ -4,7 +4,7 @@ brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macv
 # Install cask
 brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable. 
-brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree virtualbox vagrant macdown the-unarchiver
+brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree virtualbox vagrant macdown the-unarchiver anaconda
 
 
 # window manager -- pretty cool 
@@ -31,7 +31,7 @@ git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle
 # setup xcode
 git clone https://github.com/XVimProject/XVim.git  ~/gits/XVim
 cd ~/gits/XVim
-make
+#make
 
 #oh my zsh setup - from not fish.
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"

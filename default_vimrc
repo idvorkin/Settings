@@ -149,6 +149,7 @@ autocmd FileType python compiler pylint
     Bundle 'nathanaelkane/vim-indent-guides'
     Bundle 'tomtom/tcomment_vim'
     Bundle 'mhinz/vim-startify'
+    Bundle 'tpope/vim-surround'
     Bundle 'bling/vim-airline'
     Bundle 'chrisbra/csv.vim'
     Bundle 'altercation/vim-colors-solarized'
