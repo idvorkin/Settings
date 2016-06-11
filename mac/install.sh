@@ -25,6 +25,7 @@ git config --global core.editor /usr/bin/vim
 ln -s -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
 ln -s -f ~/settings/default_vimrc ~/.vimrc 
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc 
+ln -s -f ~/settings/mac/.inputrc ~/.inputrc 
 
 # Setup vundle
 git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle
