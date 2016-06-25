@@ -224,13 +224,13 @@ endfunc
 func! WriteOn()
     :Goyo
     :PencilHard
-    :LimeLight
+    :Limelight
 endfunc
 
 func! WriteOff()
     :Goyo
     :PencilOff
-    :LimeLight!
+    :Limelight!
 endfunc
     
 
