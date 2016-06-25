@@ -223,7 +223,7 @@ endfunc
 
 func! WriteOn()
     :Goyo
-    :PencilHard
+    :PencilSoft
     :Limelight
 endfunc
 
