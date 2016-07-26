@@ -26,6 +26,7 @@ ln -s -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private
 ln -s -f ~/settings/default_vimrc ~/.vimrc 
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc 
 ln -s -f ~/settings/mac/.inputrc ~/.inputrc 
+ln -s -f ~/settings/shared/ctags ~/.ctagsrc 
 
 # Setup vundle
 git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle
