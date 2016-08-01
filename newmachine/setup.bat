@@ -87,5 +87,6 @@ git clone https://github.com/idvorkin/Vim-Keybindings-For-Onenote
 git clone https://github.com/idvorkin/LinqpadSnippets
 git clone https://github.com/idvorkin/linqpadDataExplore
 git clone https://github.com/idvorkin/idvorkin.github.io
+git clone https://github.com/idvorkin/jupyter
 git clone https://idvorkin@bitbucket.org/idvorkin/igor2.git
 
