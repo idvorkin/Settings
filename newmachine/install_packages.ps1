@@ -27,6 +27,8 @@ $packages += @"
 autohotkey 
 windirstat 
 procexp 
+wget
+curl
 "@.split()
 
 # Snipping tool
@@ -37,7 +39,6 @@ $packages += "flux"
 
 #Command Line tooling 
 $packages += @"
-clink
 vim 
 ctags
 ag 

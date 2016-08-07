@@ -141,11 +141,17 @@ autocmd FileType python compiler pylint
     call vundle#begin()
 
     Bundle 'VundleVim/Vundle.vim'
+    Bundle 'mattn/webapi-vim'
+    Bundle 'christoomey/vim-quicklink'
     Bundle 'tpope/vim-fugitive'
+    Bundle 'junegunn/limelight.vim'
+    Bundle 'reedes/vim-pencil'
+    Bundle 'junegunn/goyo.vim'
     Bundle 'leafgarland/typescript-vim'
     Bundle 'nathanaelkane/vim-indent-guides'
     Bundle 'tomtom/tcomment_vim'
     Bundle 'mhinz/vim-startify'
+    Bundle 'tpope/vim-surround'
     Bundle 'bling/vim-airline'
     Bundle 'chrisbra/csv.vim'
     Bundle 'altercation/vim-colors-solarized'
@@ -216,6 +222,19 @@ func! OneNoteToWafl()
     %s/\%u00b7/*/g
 endfunc
 
+func! WriteOn()
+    :Goyo
+    :PencilSoft
+    :Limelight
+endfunc
+
+func! WriteOff()
+    :Goyo
+    :PencilOff
+    :Limelight!
+endfunc
+    
+
 " TBD  Checkbox processing
 "   add these only to markdown/html; checkboxopen, checkboxdone
 "   Perhaps be clever and alternate between open and done like in OneNote via C-1
@@ -253,5 +272,7 @@ if has ("gui-running")
 else
     :colo darkblue
 endif
+
+let g:vim_markdown_frontmatter = 1
 
 " vim:foldmethod=indent:
