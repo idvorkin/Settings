@@ -194,6 +194,7 @@ call vundle#end()            " required
 
 " Setup Unite
     :cab ls :Unite buffer
+    :cab UFR :Unite -start-insert file neomru/file neomru/directory file_rec 
     :nnoremap <C-P> :Unite -start-insert file buffer neomru/file neomru/directory<cr> 
 " End Setup
 
