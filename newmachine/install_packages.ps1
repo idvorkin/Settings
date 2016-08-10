@@ -29,6 +29,7 @@ windirstat
 procexp 
 wget
 curl
+7zip
 "@.split()
 
 # Snipping tool
