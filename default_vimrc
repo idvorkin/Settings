@@ -142,6 +142,8 @@ autocmd FileType python compiler pylint
 
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'mattn/webapi-vim'
+    Bundle 'tpope/vim-liquid'
+    Bundle 'parkr/vim-jekyll'
     Bundle 'christoomey/vim-quicklink'
     Bundle 'tpope/vim-fugitive'
     Bundle 'junegunn/limelight.vim'
