@@ -77,7 +77,11 @@ $packages += "teamviewer"
 $packages += "shotcut"
 
 # DVD -> ISO
-$packages += "makemkv"
+$packages += @"
+makemkv
+handbrake
+imagemagick
+"@.split()
 
 # Ebooks
 $packages += "calibre"
