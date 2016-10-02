@@ -17,7 +17,7 @@
         <identifier>private.ctrl2command </identifier>
 
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::COMMAND_L</autogen>
-          <not>TERMINAL, REMOTEDESKTOPCONNECTION,VI </not>
+        <not>TERMINAL, REMOTEDESKTOPCONNECTION,VI, VIRTUALMACHINE </not>
       </item>
 
       <item>
@@ -25,7 +25,7 @@
         <appendix>See the private.xml</appendix>
         <identifier>private.ctrl2capTerminal</identifier>
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
-          <only>TERMINAL, REMOTEDESKTOPCONNECTION,VI </only>
+          <only>TERMINAL, REMOTEDESKTOPCONNECTION,VI, VIRTUALMACHINE </only>
       </item>
 
       <item> 

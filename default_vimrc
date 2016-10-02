@@ -175,6 +175,8 @@ autocmd FileType python compiler pylint
     Bundle 'flazz/vim-colorschemes'
     Bundle 'dhruvasagar/vim-table-mode'
     Bundle 'atelierbram/vim-colors_atelier-schemes'
+    " Comment \cc
+    " Uncomment \cu
     Bundle 'scrooloose/nerdcommenter'
     Bundle 'Shougo/unite.vim'
     Bundle 'Shougo/neomru.vim'
