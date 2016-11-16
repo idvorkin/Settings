@@ -60,12 +60,24 @@ sourcetree
 
 
 #dot net development
+# Other good packages (NCrunch)
 $packages += @"
 nuget.commandline 
 nunit 
 nuget 
 linqpad 
+"@.split()
+
+
+$packages += @"
+maven
+intellijidea-community
+"@.split()
+
+# These packages are often installable, but something is goofy right now with them.
+$install_these_packages_manually_for_now += @"
 visualstudio2015community 
+eclipse-java-neon
 "@.split()
 
 # resharper  -- DO NOT INSTALL RESHARPER, as only have license for resharper 9, and so far 10 isn't good enough better.
