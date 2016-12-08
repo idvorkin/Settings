@@ -2,6 +2,10 @@
 :nmap O :tabopen  
 :nmap J :tprevious  <CR>
 :nmap K :tnext <CR> 
+:nmap x :tclose <CR> 
+
+" Hym not sure why that doesn't work.
+" :ab sodot :source ~/.vimperatorrc
 
 " Acually I should do this  vimium 
 " :nab gs :viewsource
