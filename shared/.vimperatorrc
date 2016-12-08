@@ -1,0 +1,10 @@
+" Match vimium settings
+:nmap O :tabopen  
+:nmap J :tprevious  <CR>
+:nmap K :tnext <CR> 
+
+" Acually I should do this  vimium 
+" :nab gs :viewsource
+
+" vim: ft=vim  ts=4 sw=4 sts=0 et fdm=marker fdc=3
+
