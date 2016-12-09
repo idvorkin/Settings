@@ -41,6 +41,16 @@
         <autogen>__KeyToKey__
           KeyCode::TAB,          ModifierFlag::COMMAND_L,
           KeyCode::TAB,          ModifierFlag::CONTROL_L</autogen>
+
+       <!-- On mac A right arrow is forward word, map to Mac to be same as windows -->
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_LEFT ,          ModifierFlag::COMMAND_L,
+          KeyCode::CURSOR_LEFT,          ModifierFlag::OPTION_L </autogen>
+
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_RIGHT ,          ModifierFlag::COMMAND_L,
+          KeyCode::CURSOR_RIGHT,          ModifierFlag::OPTION_L</autogen>
+
       </item> 
 
       <item>

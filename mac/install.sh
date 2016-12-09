@@ -5,6 +5,7 @@ brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macv
 brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable. 
 brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree virtualbox vagrant macdown the-unarchiver anaconda
+brew cask install visual-studio-code
 
 
 # window manager -- pretty cool 
