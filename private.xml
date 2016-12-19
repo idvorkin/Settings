@@ -51,6 +51,14 @@
           KeyCode::CURSOR_RIGHT ,          ModifierFlag::COMMAND_L,
           KeyCode::CURSOR_RIGHT,          ModifierFlag::OPTION_L</autogen>
 
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_LEFT ,          ModifierFlag::CONTROL_R,
+          KeyCode::CURSOR_LEFT,          ModifierFlag::OPTION_L </autogen>
+
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_RIGHT ,          ModifierFlag::CONTROL_R,
+          KeyCode::CURSOR_RIGHT,          ModifierFlag::OPTION_L</autogen>
+
       </item> 
 
       <item>
@@ -155,18 +163,34 @@
       <!-- Direction from:
             http://apple.stackexchange.com/questions/116617/how-to-separate-mouse-and-trackpad-settings
        --> 
-  <devicevendordef>
-        <vendorname>Microsoft</vendorname>
-        <vendorid>0x045e</vendorid>
-  </devicevendordef>
-  <deviceproductdef>
-        <productname>MsUsbTrackBall</productname>
-        <productid>0x0024</productid>
-  </deviceproductdef>
+    <!--
+      <devicevendordef>
+            <vendorname>Microsoft</vendorname>
+            <vendorid>0x045e</vendorid>
+      </devicevendordef>
+      <deviceproductdef>
+            <productname>MsUsbTrackBall</productname>
+            <productid>0x0024</productid>
+      </deviceproductdef>
+        <device_only>DeviceVendor::Microsoft, DeviceProduct::MsUsbTrackBall</device_only>
+    -->
+
   <item>
         <name>Reverse Scroll direction for usb trackball </name>
         <identifier>private.FlipScrollMsUsbTrackball</identifier>
-        <device_only>DeviceVendor::Microsoft, DeviceProduct::MsUsbTrackBall</device_only>
+        <device_only>DeviceVendor::LOGITECH, DeviceProduct::LOGITECH_UNIFYING_0xc52b</device_only>
+        <autogen>__FlipScrollWheel__ Option::FLIPSCROLLWHEEL_VERTICAL</autogen>
+  </item>
+
+  <!--
+    Uninstall logitech control center and just use the front nad back buttons.
+    https://github.com/tekezo/Karabiner/issues/329
+  --> 
+
+  <item>
+        <name>Map Front/Back Buttons trackball </name>
+        <identifier>private.MapFrontBackButtons</identifier>
+        <device_only>DeviceVendor::LOGITECH, DeviceProduct::LOGITECH_UNIFYING_0xc52b</device_only>
         <autogen>__FlipScrollWheel__ Option::FLIPSCROLLWHEEL_VERTICAL</autogen>
   </item>
 
