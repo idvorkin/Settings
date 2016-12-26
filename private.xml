@@ -194,5 +194,13 @@
         <autogen>__FlipScrollWheel__ Option::FLIPSCROLLWHEEL_VERTICAL</autogen>
   </item>
 
+  <item>
+        <name>Map W-K to insert hyperlink </name>
+        <only>OUTLOOK</only>
+        <identifier>private.LockKeyboard W-L </identifier>
+        <autogen>__KeyToKey__
+          KeyCode::K,          ModifierFlag::COMMAND_L,
+          KeyCode::K,          ModifierFlag::COMMAND_L | ModifierFlag::CONTROL_R </autogen>
+  </item>
 
 </root>
