@@ -271,6 +271,15 @@ func! JsToSingleLineClipBoard()
     normal u
 endfunc
 
+if $TERM_PROGRAM =~ "iTerm"
+    " No idea what these first two things are for - seem to be something
+    " only needed in tmux (as opposed to just iTerm) - Groan, what a mess.
+    " http://www.linuxquestions.org/questions/slackware-14/tip-24-bit-true-color-terminal-tmux-vim-4175582631/
+    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+    set termguicolors
+endif
+
 " Other schemes I liek
 "
 if has ("gui-running")
@@ -278,6 +287,8 @@ if has ("gui-running")
 else
     :colo darkblue
 endif
+
+
 
 let g:vim_markdown_frontmatter = 1
 
