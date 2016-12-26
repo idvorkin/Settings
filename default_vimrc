@@ -190,6 +190,8 @@ autocmd FileType python compiler pylint
     " Replacing CtrlP with Unite
     " Bundle "kien/ctrlp.vim"
 
+    Plugin 'kchmck/vim-coffee-script'
+    
     " All of your Plugins must be added before the following line
 call vundle#end()            " required
 
