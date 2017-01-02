@@ -71,6 +71,11 @@
         <autogen>__KeyToKey__ KeyCode::COMMAND_L, KeyCode::CONTROL_L</autogen>
         <!-- Except the following TAB, + - -->
 
+        <!-- Let hammerspoon key through - C-; --> 
+        <autogen>__KeyToKey__
+          KeyCode::SEMICOLON,         ModifierFlag::CONTROL_L,
+          KeyCode::SEMICOLON,         ModifierFlag::COMMAND_L</autogen>
+
         <!-- Switch apps  --> 
         <autogen>__KeyToKey__
           KeyCode::TAB,          ModifierFlag::CONTROL_L,
