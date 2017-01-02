@@ -1,7 +1,14 @@
+wm = require "win"
+hs.alert.show("Start Load")
+
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "R", function()
   hs.notify.new({title="Hammerspoon", informativeText="Hello World"}):send()
   hs.alert.show("Hello World!")
 
+end)
+-- Lock the machine 
+hs.hotkey.bind({"ctrl","cmd", "alt"}, "L", function()
+    hs.caffeinate.lockScreen()
 end)
 
 
@@ -18,8 +25,6 @@ function reloadConfig(files)
     end
 end
 local myWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig):start()
-hs.alert.show("Config loaded")
-
 
 local mouseCircle = nil
 local mouseCircleTimer = nil
@@ -45,3 +50,46 @@ function mouseHighlight()
         mouseCircleTimer = hs.timer.doAfter(3, function() mouseCircle:delete() end)
 end
 hs.hotkey.bind({"cmd","alt","control"}, "D", mouseHighlight)
+
+-- Play with a command mode!
+---------------------------------------
+k = hs.hotkey.modal.new('cmd', ';')
+function k:entered() hs.alert'Entered mode' end
+function k:exited() hs.alert'Exited mode' end
+k:bind('', 'escape', function() k:exit() end)
+k:bind('cmd', ';', function() k:exit() end)
+
+k:bind('', 'J', 'throwLeft',function() 
+        wm.throwLeft()
+        k:exit()
+end)
+k:bind('', 'H', 'left half',function() 
+        k:exit()
+        wm.leftHalf()
+end)
+k:bind('', 'L', 'right half',function() 
+        k:exit()
+        wm.rightHalf()
+end)
+
+k:bind('', 'K', 'throw right',function() 
+        k:exit()
+        wm.throwRight()
+end)
+
+k:bind('', 'R', 'reload',function() 
+        k:exit()
+        hs.reload()
+end)
+
+k:bind('', 'F', 'winHint',function() 
+        k:exit()
+        hs.hints.windowHints()
+end)
+
+k:bind('', 'C', 'center',function() 
+        k:exit()
+        wm.maximizeWindow()
+end)
+
+hs.alert.show("Config loaded")

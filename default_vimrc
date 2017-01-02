@@ -190,6 +190,8 @@ autocmd FileType python compiler pylint
     " Bundle "kien/ctrlp.vim"
 
     Plugin 'kchmck/vim-coffee-script'
+    Plugin 'aklt/plantuml-syntax'
+    Plugin 'scrooloose/vim-slumlord'
     
     " All of your Plugins must be added before the following line
 call vundle#end()            " required

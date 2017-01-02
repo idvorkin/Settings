@@ -1,6 +1,6 @@
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 
 # looks like brew is just for command line stuff.
-brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macvim wget ncdu
+brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macvim wget ncdu graphviz
 
 # Install cask
 brew install caskroom/cask/brew-cask
