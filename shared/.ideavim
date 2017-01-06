@@ -1,6 +1,10 @@
 " vim: set ft=vim: 
 
+" Hymn why doesn't D-P work (maybe remap w/carabiner?)
 :map <C-P> :action GotoSymbol<CR>
+:map <D-P> :action GotoSymbol<CR>
+:map <C-F> :action EditorPageDown<CR>
+:map <D-F> :action EditorPageDown<CR>
 
 " :actionlist
 " Display Hidden Charectors
