@@ -1,0 +1,7 @@
+" vim: set ft=vim: 
+
+:map <C-P> :action GotoSymbol<CR>
+
+" :actionlist
+" Display Hidden Charectors
+"	:http://stackoverflow.com/questions/9868796/how-to-display-hidden-characters-by-default-zero-width-space-ie-8203

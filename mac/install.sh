@@ -33,6 +33,7 @@ ln -s -f ~/settings/mac/hammerspoon/init.lua ~/.hammerspoon/init.lua
 ln -s -f ~/settings/shared/ctags ~/.ctagsrc 
 ln -s -f ~/settings/shared/.tmux.conf ~/.tmux.conf
 ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc
+ln -s -f ~/settings/shared/.ideavim ~/.ideavim
 
 # Setup vundle
 git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle
