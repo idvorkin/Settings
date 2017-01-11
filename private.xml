@@ -11,6 +11,16 @@
             2) Only  RDP Map F19- -> C-*
 
       --> 
+      <appdef>
+        <appname>IntelliJ_IDEA</appname>
+        <!--
+            Please modify bundle identifier for your environment.
+            You can confirm it by EventViewer.
+            https://pqrs.org/osx/karabiner/xml.html.en#appdef-steps
+        -->
+        <equal>com.jetbrains.intellij</equal>
+      </appdef>
+      
       <item>
         <name>CTRL2COMMAND (Not RDP AND  Not Terminal) </name>
         <appendix>See the private.xml</appendix>
@@ -26,6 +36,23 @@
         <identifier>private.ctrl2capTerminal</identifier>
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
           <only>TERMINAL, REMOTEDESKTOPCONNECTION,VI, VIRTUALMACHINE </only>
+      </item>
+
+      <item> 
+        <name>Vim Keys in Intelli-J</name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.fixing-intellij</identifier>
+        <only>IntelliJ_IDEA </only>
+        <autogen>__KeyToKey__
+          KeyCode::F,          ModifierFlag::COMMAND_L,
+          KeyCode::F,          ModifierFlag::CONTROL_L</autogen>
+        <!-- Make C-TAB switch tabs--> 
+        <autogen>__KeyToKey__
+          KeyCode::B,          ModifierFlag::COMMAND_L,
+          KeyCode::B,          ModifierFlag::CONTROL_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::P,          ModifierFlag::COMMAND_L,
+          KeyCode::P,          ModifierFlag::CONTROL_L</autogen>
       </item>
 
       <item> 
