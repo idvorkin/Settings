@@ -209,4 +209,19 @@
           KeyCode::K,          ModifierFlag::COMMAND_L | ModifierFlag::CONTROL_R </autogen>
   </item>
 
+    <vkopenurldef>
+        <name>KeyCode::VK_OPEN_URL_LOCK_SCREEN</name>
+        <url type="shell">
+            <![CDATA[open -a ScreenSaverEngine ]]>
+        </url>
+      </vkopenurldef>
+
+  <item>
+        <name>Lock via Win-Lock</name>
+        <identifier>private.Lock desktop W-L </identifier>
+        <autogen>__KeyToKey__
+          KeyCode::L,          ModifierFlag::COMMAND_L | ModifierFlag::SHIFT_L,
+          KeyCode::VK_OPEN_URL_LOCK_SCREEN </autogen>
+  </item>
+
 </root>
