@@ -142,9 +142,6 @@ autocmd FileType python compiler pylint
 
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'mattn/webapi-vim'
-    Bundle 'tpope/vim-liquid'
-    Bundle 'parkr/vim-jekyll'
-    Bundle 'christoomey/vim-quicklink'
     Bundle 'tpope/vim-fugitive'
     Bundle 'junegunn/limelight.vim'
     Bundle 'reedes/vim-pencil'
@@ -159,7 +156,13 @@ autocmd FileType python compiler pylint
     Bundle 'vim-scripts/ZoomWin'
     " change font size \\++
     Bundle 'drmikehenry/vim-fontsize'
+
+    " Markdown stuff
     Bundle 'plasticboy/vim-markdown'
+    Bundle 'tpope/vim-liquid'
+    Bundle 'parkr/vim-jekyll'
+    Bundle 'christoomey/vim-quicklink'
+
     Bundle 'elzr/vim-json'
     Bundle 'PProvost/vim-ps1'
     Bundle 'scrooloose/syntastic'
