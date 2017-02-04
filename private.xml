@@ -21,6 +21,11 @@
         <equal>com.microsoft.VSCode</equal>
       </appdef>
 
+      <appdef>
+        <appname>OneNote</appname>
+        <equal>com.microsoft.onenote.mac</equal>
+      </appdef>
+
       <item>
         <name>CTRL2COMMAND (Not RDP AND  Not Terminal) </name>
         <appendix>See the private.xml</appendix>
@@ -36,6 +41,26 @@
         <identifier>private.ctrl2capTerminal</identifier>
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
           <only>TERMINAL, REMOTEDESKTOPCONNECTION,VI, VIRTUALMACHINE </only>
+      </item>
+
+      <item> 
+        <name>OneNote Maps </name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.fixingonenote</identifier>
+        <only>OneNote</only>
+        <!-- Headings -->
+        <autogen>__KeyToKey__
+          KeyCode::1,          ModifierFlag::CONTROL_L | ModifierFlag::OPTION_L,
+          KeyCode::1,          ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L </autogen>
+        <autogen>__KeyToKey__
+          KeyCode::2,          ModifierFlag::CONTROL_L | ModifierFlag::OPTION_L,
+          KeyCode::2,          ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L </autogen>
+        <autogen>__KeyToKey__
+          KeyCode::3,          ModifierFlag::CONTROL_L | ModifierFlag::OPTION_L,
+          KeyCode::3,          ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L </autogen>
+        <autogen>__KeyToKey__
+          KeyCode::4,          ModifierFlag::CONTROL_L | ModifierFlag::OPTION_L,
+          KeyCode::4,          ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L </autogen>
       </item>
 
       <item> 
