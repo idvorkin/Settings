@@ -13,14 +13,14 @@
       --> 
       <appdef>
         <appname>IntelliJ_IDEA</appname>
-        <!--
-            Please modify bundle identifier for your environment.
-            You can confirm it by EventViewer.
-            https://pqrs.org/osx/karabiner/xml.html.en#appdef-steps
-        -->
         <equal>com.jetbrains.intellij</equal>
       </appdef>
       
+      <appdef>
+        <appname>VSCode</appname>
+        <equal>com.microsoft.VSCode</equal>
+      </appdef>
+
       <item>
         <name>CTRL2COMMAND (Not RDP AND  Not Terminal) </name>
         <appendix>See the private.xml</appendix>
@@ -36,6 +36,20 @@
         <identifier>private.ctrl2capTerminal</identifier>
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
           <only>TERMINAL, REMOTEDESKTOPCONNECTION,VI, VIRTUALMACHINE </only>
+      </item>
+
+      <item> 
+        <name>Vim Keys in VSCode</name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.fixingvscode</identifier>
+        <only>VSCode</only>
+        <!-- C-F and C-B -->
+        <autogen>__KeyToKey__
+          KeyCode::F,          ModifierFlag::COMMAND_L,
+          KeyCode::F,          ModifierFlag::CONTROL_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::B,          ModifierFlag::COMMAND_L,
+          KeyCode::B,          ModifierFlag::CONTROL_L</autogen>
       </item>
 
       <item> 
