@@ -58,3 +58,9 @@ function Flatten-Big-Files {
     # 2) Move movies files to root
     gci -R | ? {$_.Length -gt 10mb -and -not ($_.IsContainer) } | % {Move-Item $_.PSPath . }
 }
+
+# Chocolatey profile
+$ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+if (Test-Path($ChocolateyProfile)) {
+  Import-Module "$ChocolateyProfile"
+}
