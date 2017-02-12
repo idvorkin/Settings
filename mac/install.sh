@@ -1,10 +1,12 @@
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 
 # looks like brew is just for command line stuff.
-brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macvim wget ncdu
+brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macvim wget ncdu graphviz
+
 # Install cask
 brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable. 
 brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree virtualbox vagrant macdown the-unarchiver anaconda
+brew cask install visual-studio-code hammerspoon
 
 
 # window manager -- pretty cool 
@@ -26,7 +28,12 @@ ln -s -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private
 ln -s -f ~/settings/default_vimrc ~/.vimrc 
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc 
 ln -s -f ~/settings/mac/.inputrc ~/.inputrc 
+mkdir ~/.hammerspoon
+ln -s -f ~/settings/mac/hammerspoon/init.lua ~/.hammerspoon/init.lua
 ln -s -f ~/settings/shared/ctags ~/.ctagsrc 
+ln -s -f ~/settings/shared/.tmux.conf ~/.tmux.conf
+ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc
+ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
 
 # Setup vundle
 git clone https://github.com/gmarik/vundle.git ~/vimfiles/bundle/vundle

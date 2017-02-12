@@ -1,0 +1,13 @@
+" Match vimium settings
+:nmap O :tabopen  
+:nmap J :tprevious  <CR>
+:nmap K :tnext <CR> 
+:nmap x :tabclose <CR> 
+
+" Hym not sure why that doesn't work.
+" :ab sodot :source ~/.vimperatorrc
+
+" Acually I should do this  vimium 
+" :nab gs :viewsource
+
+" vim: ft=vim  ts=4 sw=4 sts=0 et fdm=marker fdc=3

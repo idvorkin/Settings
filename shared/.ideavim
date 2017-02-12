@@ -1,0 +1,10 @@
+" vim: set ft=vim: 
+
+" Hymn why doesn't D-P work (maybe remap w/carabiner?)
+:map <C-P> :action GotoSymbol<CR>
+:map <C-S-P> :action GotoFile<CR>
+
+
+" :actionlist
+" Display Hidden Charectors
+"	:http://stackoverflow.com/questions/9868796/how-to-display-hidden-characters-by-default-zero-width-space-ie-8203

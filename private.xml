@@ -11,6 +11,21 @@
             2) Only  RDP Map F19- -> C-*
 
       --> 
+      <appdef>
+        <appname>IntelliJ_IDEA</appname>
+        <equal>com.jetbrains.intellij</equal>
+      </appdef>
+      
+      <appdef>
+        <appname>VSCode</appname>
+        <equal>com.microsoft.VSCode</equal>
+      </appdef>
+
+      <appdef>
+        <appname>OneNote</appname>
+        <equal>com.microsoft.onenote.mac</equal>
+      </appdef>
+
       <item>
         <name>CTRL2COMMAND (Not RDP AND  Not Terminal) </name>
         <appendix>See the private.xml</appendix>
@@ -29,6 +44,57 @@
       </item>
 
       <item> 
+        <name>OneNote Maps </name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.fixingonenote</identifier>
+        <only>OneNote</only>
+        <!-- Headings -->
+        <autogen>__KeyToKey__
+          KeyCode::1,          ModifierFlag::CONTROL_L | ModifierFlag::OPTION_L,
+          KeyCode::1,          ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L </autogen>
+        <autogen>__KeyToKey__
+          KeyCode::2,          ModifierFlag::CONTROL_L | ModifierFlag::OPTION_L,
+          KeyCode::2,          ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L </autogen>
+        <autogen>__KeyToKey__
+          KeyCode::3,          ModifierFlag::CONTROL_L | ModifierFlag::OPTION_L,
+          KeyCode::3,          ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L </autogen>
+        <autogen>__KeyToKey__
+          KeyCode::4,          ModifierFlag::CONTROL_L | ModifierFlag::OPTION_L,
+          KeyCode::4,          ModifierFlag::COMMAND_L | ModifierFlag::OPTION_L </autogen>
+      </item>
+
+      <item> 
+        <name>Vim Keys in VSCode</name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.fixingvscode</identifier>
+        <only>VSCode</only>
+        <!-- C-F and C-B -->
+        <autogen>__KeyToKey__
+          KeyCode::F,          ModifierFlag::COMMAND_L,
+          KeyCode::F,          ModifierFlag::CONTROL_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::B,          ModifierFlag::COMMAND_L,
+          KeyCode::B,          ModifierFlag::CONTROL_L</autogen>
+      </item>
+
+      <item> 
+        <name>Vim Keys in Intelli-J</name>
+        <appendix>See the private.xml</appendix>
+        <identifier>private.fixing-intellij</identifier>
+        <only>IntelliJ_IDEA </only>
+        <autogen>__KeyToKey__
+          KeyCode::F,          ModifierFlag::COMMAND_L,
+          KeyCode::F,          ModifierFlag::CONTROL_L</autogen>
+        <!-- Make C-TAB switch tabs--> 
+        <autogen>__KeyToKey__
+          KeyCode::B,          ModifierFlag::COMMAND_L,
+          KeyCode::B,          ModifierFlag::CONTROL_L</autogen>
+        <autogen>__KeyToKey__
+          KeyCode::P,          ModifierFlag::COMMAND_L,
+          KeyCode::P,          ModifierFlag::CONTROL_L</autogen>
+      </item>
+
+      <item> 
         <name>Fix A-T C-T differences</name>
         <appendix>See the private.xml</appendix>
         <identifier>private.fixing-alt-tab</identifier>
@@ -41,6 +107,24 @@
         <autogen>__KeyToKey__
           KeyCode::TAB,          ModifierFlag::COMMAND_L,
           KeyCode::TAB,          ModifierFlag::CONTROL_L</autogen>
+
+       <!-- On mac A right arrow is forward word, map to Mac to be same as windows -->
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_LEFT ,          ModifierFlag::COMMAND_L,
+          KeyCode::CURSOR_LEFT,          ModifierFlag::OPTION_L </autogen>
+
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_RIGHT ,          ModifierFlag::COMMAND_L,
+          KeyCode::CURSOR_RIGHT,          ModifierFlag::OPTION_L</autogen>
+
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_LEFT ,          ModifierFlag::CONTROL_R,
+          KeyCode::CURSOR_LEFT,          ModifierFlag::OPTION_L </autogen>
+
+        <autogen>__KeyToKey__
+          KeyCode::CURSOR_RIGHT ,          ModifierFlag::CONTROL_R,
+          KeyCode::CURSOR_RIGHT,          ModifierFlag::OPTION_L</autogen>
+
       </item> 
 
       <item>
@@ -52,6 +136,11 @@
         <!-- Note CAPS->CTRL done via Siel Mapping  -->
         <autogen>__KeyToKey__ KeyCode::COMMAND_L, KeyCode::CONTROL_L</autogen>
         <!-- Except the following TAB, + - -->
+
+        <!-- Let hammerspoon key through - C-; --> 
+        <autogen>__KeyToKey__
+          KeyCode::SEMICOLON,         ModifierFlag::CONTROL_L,
+          KeyCode::SEMICOLON,         ModifierFlag::COMMAND_L</autogen>
 
         <!-- Switch apps  --> 
         <autogen>__KeyToKey__
@@ -117,6 +206,7 @@
         <name>Vim Remap for XCode</name>
         <appendix>See the private.xml</appendix>
         <identifier>private.vimXCode</identifier>
+        <only>XCODE</only>
         <!-- C-F and C-B are handled by XCode, but I'm hitting M-F, M-B via Caps Lock --> 
         <autogen>__KeyToKey__
           KeyCode::F,    ModifierFlag::COMMAND_L,
@@ -145,20 +235,59 @@
       <!-- Direction from:
             http://apple.stackexchange.com/questions/116617/how-to-separate-mouse-and-trackpad-settings
        --> 
-  <devicevendordef>
-        <vendorname>Microsoft</vendorname>
-        <vendorid>0x045e</vendorid>
-  </devicevendordef>
-  <deviceproductdef>
-        <productname>MsUsbTrackBall</productname>
-        <productid>0x0024</productid>
-  </deviceproductdef>
+    <!--
+      <devicevendordef>
+            <vendorname>Microsoft</vendorname>
+            <vendorid>0x045e</vendorid>
+      </devicevendordef>
+      <deviceproductdef>
+            <productname>MsUsbTrackBall</productname>
+            <productid>0x0024</productid>
+      </deviceproductdef>
+        <device_only>DeviceVendor::Microsoft, DeviceProduct::MsUsbTrackBall</device_only>
+    -->
+
   <item>
         <name>Reverse Scroll direction for usb trackball </name>
         <identifier>private.FlipScrollMsUsbTrackball</identifier>
-        <device_only>DeviceVendor::Microsoft, DeviceProduct::MsUsbTrackBall</device_only>
+        <device_only>DeviceVendor::LOGITECH, DeviceProduct::LOGITECH_UNIFYING_0xc52b</device_only>
         <autogen>__FlipScrollWheel__ Option::FLIPSCROLLWHEEL_VERTICAL</autogen>
   </item>
 
+  <!--
+    Uninstall logitech control center and just use the front nad back buttons.
+    https://github.com/tekezo/Karabiner/issues/329
+  --> 
+
+  <item>
+        <name>Map Front/Back Buttons trackball </name>
+        <identifier>private.MapFrontBackButtons</identifier>
+        <device_only>DeviceVendor::LOGITECH, DeviceProduct::LOGITECH_UNIFYING_0xc52b</device_only>
+        <autogen>__FlipScrollWheel__ Option::FLIPSCROLLWHEEL_VERTICAL</autogen>
+  </item>
+
+  <item>
+        <name>Map W-K to insert hyperlink </name>
+        <only>OUTLOOK</only>
+        <identifier>private.LockKeyboard W-L </identifier>
+        <autogen>__KeyToKey__
+          KeyCode::K,          ModifierFlag::COMMAND_L,
+          KeyCode::K,          ModifierFlag::COMMAND_L | ModifierFlag::CONTROL_R </autogen>
+  </item>
+
+    <vkopenurldef>
+        <name>KeyCode::VK_OPEN_URL_LOCK_SCREEN</name>
+        <url type="shell">
+            <![CDATA[open -a ScreenSaverEngine ]]>
+        </url>
+      </vkopenurldef>
+
+  <item>
+        <name>Lock via Win-Lock</name>
+        <identifier>private.Lock desktop W-L </identifier>
+        <autogen>__KeyToKey__
+          KeyCode::L,          ModifierFlag::COMMAND_L | ModifierFlag::SHIFT_L,
+          KeyCode::VK_OPEN_URL_LOCK_SCREEN </autogen>
+  </item>
 
 </root>
