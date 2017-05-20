@@ -1,10 +1,11 @@
 $packages = @"
 googlechrome 
 skype
-slack 
 nodejs 
-repo 
 "@.split()
+
+# no longer installed:
+# slack 
 
 # Drawing  Tools
 $packages += "paint.net"
@@ -12,8 +13,6 @@ $packages += "paint.net"
 # Static Blog and markdown (Jekyll for windows)
 $packages += @"
 pretzel
-haroopad
-markdownpad2 
 "@.split()
 
 #VM Management
