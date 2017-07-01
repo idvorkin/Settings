@@ -84,6 +84,11 @@ eclipse-java-neon
 # Remote Assistance
 $packages += "teamviewer"
 
+# python packages
+$packages += "
+anaconda3
+@".split()
+
 #Video Editor
 $packages += "shotcut"
 
