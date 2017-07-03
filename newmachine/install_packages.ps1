@@ -99,6 +99,9 @@ handbrake
 imagemagick
 "@.split()
 
+# iphone /ios not actually in chocolatey. 
+# CopyTrans
+
 # Ebooks
 $packages += "calibre"
 
