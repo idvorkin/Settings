@@ -25,6 +25,7 @@ git config --global core.editor /usr/bin/vim
 
 # in seil map caps -> F19 (Keycode: 80) 
 ln -s -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
+ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
 ln -s -f ~/settings/default_vimrc ~/.vimrc 
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc 
 ln -s -f ~/settings/mac/.inputrc ~/.inputrc 
