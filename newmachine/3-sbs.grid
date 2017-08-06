@@ -5,6 +5,8 @@
 ;   W-5: 2/3 maximize rigth
 ;   Or middle button drag.
 ;  
+; I've been doing this on a clone of the original gridmove
+; https://github.com/mr-rak/GridMove/
 
 [Groups]
 

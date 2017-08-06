@@ -41,6 +41,10 @@
         <identifier>private.ctrl2capTerminal</identifier>
         <autogen>__KeyToKey__ KeyCode::F19, KeyCode::CONTROL_L</autogen>
           <only>TERMINAL, REMOTEDESKTOPCONNECTION,VI, VIRTUALMACHINE </only>
+        <!-- Let hammerspoon key through - C-; --> 
+        <autogen>__KeyToKey__
+          KeyCode::SEMICOLON,         ModifierFlag::CONTROL_L,
+          KeyCode::SEMICOLON,         ModifierFlag::COMMAND_L</autogen>
       </item>
 
       <item> 
@@ -111,10 +115,11 @@
       </item> 
 
       <item> 
-          <name>Fix c-arrows </name>
+          <name>Fix c-arrows  (NOT VM) </name>
           <appendix>See the private.xml</appendix>
           <identifier>private.c-arrows</identifier>
           <not>REMOTEDESKTOPCONNECTION</not>
+          <not>VIRTUALMACHINE</not>
 
           <!-- On mac A right arrow is forward word, map to Mac to be same as windows -->
           <autogen>__KeyToKey__
