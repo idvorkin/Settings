@@ -1,6 +1,5 @@
 $packages = @"
 googlechrome 
-skype
 nodejs 
 "@.split()
 
@@ -45,6 +44,7 @@ cpu-z
 
 #Command Line tooling 
 $packages += @"
+visualstudiocode
 vim 
 ctags
 ag 
@@ -53,7 +53,6 @@ ag
 #Git tools
 $packages += @"
 git 
-git-credential-winstore 
 sourcetree
 "@.split()
 
@@ -75,7 +74,7 @@ intellijidea-community
 
 # These packages are often installable, but something is goofy right now with them.
 $install_these_packages_manually_for_now += @"
-visualstudio2015community 
+visualstudio2017community 
 eclipse-java-neon
 "@.split()
 
