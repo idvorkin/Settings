@@ -48,6 +48,7 @@ visualstudiocode
 vim 
 ctags
 ag 
+plantuml
 "@.split()
 
 #Git tools
