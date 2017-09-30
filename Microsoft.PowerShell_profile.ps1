@@ -3,10 +3,23 @@ Push-Location (Split-Path -Path $MyInvocation.MyCommand.Definition -Parent)
 # Load posh-git module from current directory
 Import-Module posh-git
 
+# load Z
+# https://github.com/JannesMeyer/z.ps
+
 # If module is installed in a default location ($env:PSModulePath),
 # use this instead (see about_Modules for more information):
 # Import-Module posh-git
 
+Import-Module z
+Set-Alias z Search-NavigationHistory
+function Prompt {
+	Update-NavigationHistory $pwd.Path
+}
+
+
+# ps-readline for vi support in powershell.
+Import-Module PSReadLine  
+Set-PSReadlineOption -EditMode vi
 
 # Set up a simple prompt, adding the git prompt parts inside git repos
 function global:prompt {
