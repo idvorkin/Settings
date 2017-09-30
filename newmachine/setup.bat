@@ -19,15 +19,6 @@ REM Setup Mercurial Path
         mklink %USERPROFILE%\_vsvimrc c:\gits\settings\_vsvimrc
         mklink %USERPROFILE%\.ctagsrc c:\gits\settings\shared\ctags
 
-REM Powershell helpers - z (jmp on unix) 
-REM https://github.com/JannesMeyer/z.ps
-
-mkdir "%USERPROFILE%\My Documents\WindowsPowerShell\Modules"
-pushd "%USERPROFILE%\My Documents\WindowsPowerShell\Modules"
-git clone https://github.com/JannesMeyer/z.ps.git z
-popd
-
-
 REM GITS directory alias
         mklink /d %USERPROFILE%\gits c:\gits
 
@@ -62,11 +53,6 @@ REM Setup choco stuff
 REM Map Ctrl2Cap  -- More Info:  http://luvit.me/1MN7TCQ
     @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Set-ItemProperty -path 'HKLM:\SYSTEM\CurrentControlSet\Control\Keyboard Layout' -name 'Scancode Map' -Value ([byte[]](0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x1d,0x00,0x3a,0x00,0x00,0x00,0x00,0x00))"
 
-REM Install latest version of ps-readline
-REM Install-Module PSReadline 
-@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module PSReadline"
-
-
 REM Shared with Mac/install.sh
 REM Useful, write current linspect to the command line
 REM <linespec>w !bash
@@ -95,12 +81,6 @@ PROMPT=$E[32m$E]9;8;"USERNAME"$E\@$E]9;8;"COMPUTERNAME"$E\$S$E[92m$P$E[90m {git}
 REM Setup policy execution policy
 powershell Set-ExecutionPolicy RemoteSigned
 
-REM test a current machine with choco list -localonly
-powershell .\install_packages.ps1
-
-REM Install Posh-Git
-@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
-
 REM To view git branch from clink 
 REM gitshowbranch /i
 
@@ -113,4 +93,13 @@ git clone https://github.com/idvorkin/linqpadDataExplore
 git clone https://github.com/idvorkin/idvorkin.github.io
 git clone https://github.com/idvorkin/jupyter
 git clone https://idvorkin@bitbucket.org/idvorkin/igor2.git
+
+REM Install PowerShell modules, initialized in profile
+@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module z -force"
+@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
+@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module PSReadline -force"
+
+REM test a current machine with choco list -localonly
+powershell .\install_packages.ps1
+
 
