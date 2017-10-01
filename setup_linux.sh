@@ -6,12 +6,21 @@
 # 4) Setup Pia Proxy
 # 5) Insert Guest Disk and Install it.
 
+# Version of node included is **old** so get the latest node 8.
+# https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
+
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+sudo apt-get install -y nodejs build-essentials.
+
+sudo apt-get install virtualbox-guest-additions-iso vim-gnome vim git zsh ruby curl ruby-dev zlib1g-dev bittorrent silversearcher-ag git-gui tmux
+
 
 # assume already cloned settings.
-sudo apt-get install virtualbox-guest-additions-iso vim-gnome vim git zsh ruby curl ruby-dev zlib1g-dev nodejs qbittorrent silversearcher-ag git-gui tmux
 mkdir ~/gits
+git clone https://github.com/idvorkin/settings ~/gits/settings
 ln -s ~/settings ~/gits/settings
 git clone https://github.com/idvorkin/idvorkin.github.io ~/gits/idvorkin.github.io
+
 
 #Setup OhMyZSH
 wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh
@@ -23,4 +32,6 @@ sudo gem install bundler
 cd ~/gits/idvorkin.github.io
 bundle install
 
-# Misc 
+# Setup HomeBridge
+# wink3 package - https://www.npmjs.com/package/homebridge-wink3
+# homebridge package - https://github.com/nfarina/homebridge
