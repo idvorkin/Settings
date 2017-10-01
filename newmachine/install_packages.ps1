@@ -9,11 +9,6 @@ nodejs
 # Drawing  Tools
 $packages += "paint.net"
 
-# Static Blog and markdown (Jekyll for windows)
-$packages += @"
-pretzel
-"@.split()
-
 #VM Management
 $packages += @"
 virtualbox
@@ -25,8 +20,6 @@ $packages += @"
 autohotkey 
 windirstat 
 procexp 
-wget
-curl
 7zip
 "@.split()
 
@@ -97,6 +90,13 @@ $packages += @"
 makemkv
 handbrake
 imagemagick
+"@.split()
+
+# Network tools
+$packages += @"
+nmap
+wget
+curl
 "@.split()
 
 # iphone /ios not actually in chocolatey. 
