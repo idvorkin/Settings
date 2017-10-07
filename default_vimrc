@@ -180,9 +180,10 @@ autocmd FileType python compiler pylint
     " Comment \cc
     " Uncomment \cu
     Bundle 'scrooloose/nerdcommenter'
-    Bundle 'Shougo/unite.vim'
-    Bundle 'Shougo/neomru.vim'
+    " Bundle 'Shougo/unite.vim'
+    Bundle 'Shougo/denite.nvim'
     "http://vimawesome.com/plugin/unite-outline-shouldve-said-no 
+    Bundle 'Shougo/neomru.vim'
     Bundle 'Shougo/unite-outline'
     " Removing signifiy to try to get Syntastic working
     " Need to figure out when to use which, my preference will be to have
@@ -201,9 +202,14 @@ call vundle#end()            " required
 
 
 " Setup Unite
-    :cab ls :Unite buffer
-    :cab UFR :Unite -start-insert file neomru/file neomru/directory file_rec 
-    :nnoremap <C-P> :Unite -start-insert file buffer neomru/file neomru/directory<cr> 
+    :cab ls :Denite buffer
+    :cab UFR :Denite -start-insert file file_mru directory_mru file_rec 
+    :nnoremap <C-P> :Denite file buffer file_mru directory_mru<cr> 
+    call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>', 'noremap')
+    call denite#custom#map('insert', '<C-n>', '<denite:move_to_next_line>', 'noremap')
+    call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
+    call denite#custom#map('insert', '<C-p>', '<denite:move_to_previous_line>', 'noremap')
+
 " End Setup
 
 filetype plugin indent on    " required
