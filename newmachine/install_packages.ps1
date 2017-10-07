@@ -77,9 +77,12 @@ eclipse-java-neon
 # Remote Assistance
 $packages += "teamviewer"
 
-# python packages
+# programming language python and ruby.
+# gem install activesupport github-pages wdm jekyll bundler
 $packages += "
 anaconda3
+ruby
+ruby2-devkit
 @".split()
 
 #Video Editor
