@@ -102,4 +102,13 @@ REM Install PowerShell modules, initialized in profile
 REM test a current machine with choco list -localonly
 powershell .\install_packages.ps1
 
+REM Setup gvim w/python -- still done manually. 
+REM gvim is statically linked to a python version, which must be in path. Only the dll is  need so we can 
+REM 1) Install py35 via conda
+REM     conda create -n py35 python=3.5 anaconda
+REM 2) Find it 
+REM      C:\Users\idvor\Anaconda3\envs\py35\python35.dll  
+REM 3) Copy it to the vim directoy, so it's in path.
+REM      copy python35.dll "C:\Program Files (x86)\vim\vim80\python35.dll"
+
 

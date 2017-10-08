@@ -82,7 +82,7 @@ $packages += "teamviewer"
 $packages += "
 anaconda3
 ruby
-ruby2-devkit
+ruby2.devkit
 @".split()
 
 #Video Editor
