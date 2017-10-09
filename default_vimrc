@@ -143,6 +143,9 @@ autocmd FileType python compiler pylint
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'mattn/webapi-vim'
     Bundle 'tpope/vim-fugitive'
+    Bundle 'Ron89/thesaurus_query.vim'
+    " 
+    :noremap  <Leader>tr :ThesaurusQueryReplaceCurrentWord<CR>
     Bundle 'junegunn/limelight.vim'
     Bundle 'reedes/vim-pencil'
     Bundle 'junegunn/goyo.vim'
