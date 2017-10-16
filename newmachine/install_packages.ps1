@@ -93,6 +93,7 @@ $packages += @"
 makemkv
 handbrake
 imagemagick
+youtube-dl
 "@.split()
 
 # Network tools
