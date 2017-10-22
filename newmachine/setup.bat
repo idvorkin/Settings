@@ -7,10 +7,6 @@ REM Third Run As Admin
 REM Fourth Run As Admin -- c:\gits\settings\newmachine\setup.bat
 
 
-REM Setup dropbox Paths
-        mklink /d \dropbox %USERPROFILE%\dropbox
-        mklink /d \bin_drop %USERPROFILE%\dropbox\bin_drop
-
 REM Setup Vim Paths
         mklink %USERPROFILE%\_vimrc c:\gits\settings\default_vimrc
 REM Setup Mercurial Path
