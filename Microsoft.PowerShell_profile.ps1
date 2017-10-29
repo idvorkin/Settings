@@ -15,6 +15,10 @@ $GitPromptSettings.DefaultPromptSuffix = '`n$(''>'' * ($nestedPromptLevel + 1)) 
 
 Pop-Location
 
+function Convert-Mov-To-Mp4 ($infile, $outfile) {
+    ffmpeg -i $infile -qscale 0 $outfile
+}
+
 function Restart-Explorer {
     Get-Process | where name -eq explorer  |kill ; explorer
     Add-Type -Name ConsoleUtils -Namespace WPIA -MemberDefinition @'
