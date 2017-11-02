@@ -41,6 +41,8 @@ visualstudiocode
 vim 
 ctags
 ag 
+ripgrep
+fzf
 plantuml
 "@.split()
 
