@@ -51,6 +51,21 @@ function Flatten-Big-Files {
     gci -R | ? {$_.Length -gt 10mb -and -not ($_.IsContainer) } | % {Move-Item $_.PSPath . }
 }
 
+function Reload-Profile {
+    . $profile
+}
+function Activate-Window($process) {
+    $sig = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
+    Add-Type -MemberDefinition $sig -name NativeMethods -namespace Win32
+    $hwnd = @(Get-Process $process)[0].MainWindowHandle
+    # Minimize window
+    [Win32.NativeMethods]::ShowWindowAsync($hwnd, 2)
+    [Win32.NativeMethods]::ShowWindowAsync($hwnd, 4)
+    # Restore window
+# [Win32.NativeMethods]::SwitchToThisWindow($hwnd,0)
+}
+set-alias aw Activate-Window
+
 # Chocolatey profile
 $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
 if (Test-Path($ChocolateyProfile)) {
