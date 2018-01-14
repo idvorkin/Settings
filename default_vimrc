@@ -92,6 +92,8 @@ function! RemoveAsciiFromQuotes()
 	:%s/\%x94/"/g
     " Replace apostrophy
 	:%s/\%x92/'/g
+    " Replace apostrphy in bear
+	:%s/\%xe2\%x80\%x99/'/g
 endfunction
 
 function! FirstPersonToThirdPerson()
@@ -160,8 +162,10 @@ autocmd FileType python compiler pylint
     " change font size \\++
     Bundle 'drmikehenry/vim-fontsize'
 
+
     " Markdown stuff
-  Plugin 'godlygeek/tabular'
+    Bundle 'godlygeek/tabular'
+    Bundle 'mzlogin/vim-markdown-toc'
     Bundle 'plasticboy/vim-markdown'
     Bundle 'tpope/vim-liquid'
     Bundle 'parkr/vim-jekyll'
