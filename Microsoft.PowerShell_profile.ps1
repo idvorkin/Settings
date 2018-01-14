@@ -56,3 +56,7 @@ $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
 if (Test-Path($ChocolateyProfile)) {
   Import-Module "$ChocolateyProfile"
 }
+
+# Helpful jekyll commands.
+function Jekyll-Serve {Start-Process bundle "exec jekyll serve --incremental"} 
+function Jekyll-Build {bundle exec jekyll build}
