@@ -96,6 +96,7 @@ makemkv
 handbrake
 imagemagick
 youtube-dl
+vlc
 "@.split()
 
 # Network tools
