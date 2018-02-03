@@ -77,7 +77,7 @@ function! StripPerfCounterTags()
     %s;<.*>;;
 endfunction
 
-function! RemoveAsciiFromQuotes()
+function! FixMojiBake()
     " See charector under cursor - 
     "   ga
     " Search for non unicode charecters
@@ -90,10 +90,12 @@ function! RemoveAsciiFromQuotes()
     " Replace smart quotes
 	:%s/\%x93/"/g
 	:%s/\%x94/"/g
-    " Replace apostrophy
+    "
+
+    " Replace apostrophe
 	:%s/\%x92/'/g
-    " Replace apostrphy in bear
-	:%s/\%xe2\%x80\%x99/'/g
+    " Replace apostrophe in bear
+	:%s/\%xe2\%x80/'/g
 endfunction
 
 function! FirstPersonToThirdPerson()
@@ -204,6 +206,7 @@ autocmd FileType python compiler pylint
     Plugin 'kchmck/vim-coffee-script'
     Plugin 'aklt/plantuml-syntax'
     Plugin 'scrooloose/vim-slumlord'
+    Plugin 'airblade/vim-gitgutter'
     
     " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -230,7 +233,7 @@ let g:syntastic_javascript_jshint_exec='C:\Chocolatey\lib\nodejs.commandline.0.1
 " Set font-size default to be a decent size.
 if ( has("win32") || has("win64") || has("win16") ) 
     " TBD: Get smart about first run vs reload - but can do that later.
-    let defaultFont="Consolas:h14:cANSI"
+    let defaultFont="Consolas:h14"
     exec "set guifont=".defaultFont
 endif
 "
