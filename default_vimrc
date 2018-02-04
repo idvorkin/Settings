@@ -166,9 +166,16 @@ autocmd FileType python compiler pylint
 
 
     " Markdown stuff
+    " *******************************
     Bundle 'godlygeek/tabular'
     Bundle 'mzlogin/vim-markdown-toc'
+    " :GenTocGFM
+    " :UpdateToc
+
     Bundle 'plasticboy/vim-markdown'
+    " :TOC - Generate a toc sidebar
+    " ]] Next Header
+    " [[ Prev Header
     Bundle 'tpope/vim-liquid'
     Bundle 'parkr/vim-jekyll'
     Bundle 'christoomey/vim-quicklink'
@@ -206,7 +213,10 @@ autocmd FileType python compiler pylint
     Plugin 'kchmck/vim-coffee-script'
     Plugin 'aklt/plantuml-syntax'
     Plugin 'scrooloose/vim-slumlord'
+
     Plugin 'airblade/vim-gitgutter'
+    " ]c -> Next hunk
+    " ]c -> Prev hunk
     
     " All of your Plugins must be added before the following line
 call vundle#end()            " required
