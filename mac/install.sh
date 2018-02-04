@@ -1,11 +1,14 @@
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 
 # looks like brew is just for command line stuff.
-brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	vim ag  git macvim wget ncdu graphviz
+brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	ag  git macvim wget ncdu graphviz
+
+# Make sure install vim with python for denite
+brew install --with-python3 vim
 
 # Install cask
 brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable. 
-brew cask install google-chrome  iterm2	      karabiner	     seil	    skype spectacle sourcetree virtualbox vagrant macdown the-unarchiver anaconda
+brew cask install google-chrome  iterm2	skype spectacle sourcetree virtualbox vagrant macdown the-unarchiver anaconda
 brew cask install visual-studio-code hammerspoon
 
 
@@ -21,7 +24,7 @@ git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 # Mac only git setup
 git config --global credential.helper osxkeychain
-git config --global core.editor /usr/bin/vim
+git config --global core.editor /usr/local/bin/vim
 
 # in seil map caps -> F19 (Keycode: 80) 
 ln -s -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
