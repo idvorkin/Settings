@@ -9,7 +9,9 @@ brew install --with-python3 vim
 brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable. 
 brew cask install google-chrome  iterm2	skype spectacle sourcetree virtualbox vagrant macdown the-unarchiver anaconda
-brew cask install visual-studio-code hammerspoon
+brew cask install visual-studio-code hammerspoon sourcetree 
+brew cask install osxfuse
+brew cask install sshfs
 
 
 # window manager -- pretty cool 
