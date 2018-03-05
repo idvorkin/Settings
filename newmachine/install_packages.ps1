@@ -20,6 +20,7 @@ $packages += @"
 autohotkey 
 windirstat 
 procexp 
+handle
 7zip
 "@.split()
 
