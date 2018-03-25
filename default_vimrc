@@ -329,6 +329,19 @@ let g:vim_markdown_frontmatter = 1
 set conceallevel=2
 let g:vim_markdown_new_list_item_indent = 0
 let g:vim_markdown_folding_level = 4
+let g:vim_markdown_folding_level = 4
+
+" Jekyll posts for use with JPost
+let g:jekyll_post_extension = '.md'
+    let g:jekyll_post_template =  [
+      \ '---',
+      \ 'layout: post',
+      \ 'title: "JEKYLL_TITLE"',
+      \ 'date: "JEKYLL_DATE"',
+      \ 'tags:',
+      \ '  - ',
+      \ '---',
+      \ ]
 
 
 " vim:foldmethod=indent:
