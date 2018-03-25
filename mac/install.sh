@@ -1,6 +1,6 @@
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 
 # looks like brew is just for command line stuff.
-brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	ag  git macvim wget ncdu graphviz
+brew install brew-cask	cask		emacs		zsh		libevent	openssl		tmux	ag  git macvim wget ncdu graphviz htop
 
 # Make sure install vim with python for denite
 brew install --with-python3 vim
