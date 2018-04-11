@@ -58,5 +58,5 @@ if (Test-Path($ChocolateyProfile)) {
 }
 
 # Helpful jekyll commands.
-function Jekyll-Serve {Start-Process bundle "exec jekyll serve --incremental"} 
-function Jekyll-Build {bundle exec jekyll build}
+function Jekyll-Serve {Start-Process bundle "exec jekyll serve --incremental --drafts"} 
+function Jekyll-Build {bundle exec jekyll build --drafts}
