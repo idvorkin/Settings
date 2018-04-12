@@ -331,7 +331,8 @@ let g:vim_markdown_new_list_item_indent = 0
 let g:vim_markdown_folding_level = 4
 let g:vim_markdown_folding_level = 4
 
-" Jekyll posts for use with JPost
+" Jekyll  - posts for use with JPost
+" JVPost -  create jekyll post in new vertical split 
 let g:jekyll_post_extension = '.md'
     let g:jekyll_post_template =  [
       \ '---',
@@ -343,5 +344,6 @@ let g:jekyll_post_extension = '.md'
       \ '---',
       \ ]
 
+let g:jekyll_post_dirs = ['_posts', '../_posts','_drafts','../_drafts']
 
 " vim:foldmethod=indent:
