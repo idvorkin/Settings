@@ -17,11 +17,19 @@ vagrant
 
 #Misc windows utilities
 $packages += @"
-autohotkey 
 windirstat 
 procexp 
 handle
 7zip
+"@.split()
+
+# Windows automation.
+# Wox is like alfred, press A+Space to run a launcher.
+# Also add switcheroo to jump to active window.
+
+$packages += @"
+autohotkey 
+wox
 "@.split()
 
 # Snipping tool
@@ -64,7 +72,7 @@ linqpad
 "@.split()
 
 
-$packages += @"
+$java_install_packages_manually += @"
 maven
 intellijidea-community
 "@.split()

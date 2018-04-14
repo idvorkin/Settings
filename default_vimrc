@@ -210,6 +210,9 @@ autocmd FileType python compiler pylint
     " Replacing CtrlP with Unite
     " Bundle "kien/ctrlp.vim"
 
+    " PymodeLintAuto
+    Plugin 'python-mode/python-mode'
+
     Plugin 'kchmck/vim-coffee-script'
     Plugin 'aklt/plantuml-syntax'
     Plugin 'scrooloose/vim-slumlord'
