@@ -1,8 +1,12 @@
 # looks like brew is just for command line stuff.
-brew install brew-cask cask emacs zsh libevent openssl tmux	ag  git wget ncdu graphviz htop
+brew install brew-cask cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop
+
 
 # Make sure install vim with python for denite
 brew install --with-python3 vim
+
+
+# brew install fasd
 
 
 # shared git stetup
@@ -16,6 +20,7 @@ ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
 ln -s -f ~/settings/default_vimrc ~/.vimrc 
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc 
 ln -s -f ~/settings/mac/.inputrc ~/.inputrc 
+ln -s -f ~/settings/tmuxp ~/.tmuxp
 mkdir ~/.hammerspoon
 ln -s -f ~/settings/mac/hammerspoon/init.lua ~/.hammerspoon/init.lua
 ln -s -f ~/settings/shared/ctags ~/.ctagsrc 
@@ -31,3 +36,14 @@ sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/i
 # Add ctags for vim
 brew install ctags --HEAD
 # /usr/local/bin/ctags -R --langmap=ObjectiveC:.m.h
+
+# setup fasd
+
+
+# setup more tmuxo
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+
+
+# setup tmuxp
+pip3 install --user tmuxp
+# Play - tmuxp alias ~/Library/Python/3.6/bin/tmuxp

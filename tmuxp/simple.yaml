@@ -1,0 +1,9 @@
+session_name: 2-pane-vertical
+windows:
+  - window_name: command
+    panes:
+      - echo hello
+      - echo hello
+  - window_name: vim
+    panes:
+        - echo vim 
