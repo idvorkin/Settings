@@ -1,9 +1,11 @@
+# https://tmuxp.git-pull.com/en/latest/quickstart.html
 session_name: 2-pane-vertical
 windows:
-  - window_name: command
+  - window_name: terminals
+    layout: main-vertical
     panes:
       - echo hello
       - echo hello
   - window_name: vim
     panes:
-        - echo vim 
+        - vim 
