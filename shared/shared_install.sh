@@ -1,21 +1,16 @@
 # looks like brew is just for command line stuff.
-brew install brew-cask cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop
-
+brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3
 
 # Make sure install vim with python for denite
 brew install --with-python3 vim
 
-
 # brew install fasd
-
 
 # shared git stetup
 git config --global user.email "idvorkin@gmail.com"
 git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 
-# in seil map caps -> F19 (Keycode: 80) 
-ln -s -f ~/settings/private.xml ~/Library/Application\ Support/karabiner/private.xml
 ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
 ln -s -f ~/settings/default_vimrc ~/.vimrc 
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc 
@@ -38,9 +33,18 @@ brew install ctags --HEAD
 # /usr/local/bin/ctags -R --langmap=ObjectiveC:.m.h
 
 # setup fasd
+pushd ~/gits
+
+git clone https://github.com/clvv/fasd 
+cd fasd
+sudo make install
+
+# copy this into somewhere useful
+# eval "$(fasd --init auto)"
 
 
-# setup more tmuxo
+
+# setup more tmux plugins (not sure that they are useful.
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 
