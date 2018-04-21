@@ -4,8 +4,8 @@ windows:
   - window_name: terminals
     layout: main-vertical
     panes:
-      - echo hello
-      - echo hello
+      - cd ~/gits/idvorkin.github.io
+      - cd ~/gits
   - window_name: vim
     panes:
         - vim 
