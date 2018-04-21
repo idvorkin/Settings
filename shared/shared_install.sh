@@ -51,3 +51,10 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 # setup tmuxp
 pip3 install --user tmuxp
 # Play - tmuxp alias ~/Library/Python/3.6/bin/tmuxp
+
+
+# Setup italics term info...
+# https://sookocheff.com/post/vim/italics/
+tic -o ~/.terminfo tmux.terminfo
+tic -o ~/.terminfo tmux-256color.terminfo
+tic -o ~/.terminfo xterm-256color.terminfo
