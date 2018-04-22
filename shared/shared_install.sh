@@ -43,14 +43,15 @@ sudo make install
 # eval "$(fasd --init auto)"
 
 
-
 # setup more tmux plugins (not sure that they are useful.
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
-
 # setup tmuxp
 pip3 install --user tmuxp
+
+# Add links to linux brew
 # Play - tmuxp alias ~/Library/Python/3.6/bin/tmuxp
+#echo -n 'export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH' >> ~/.zshrc
 
 
 # Setup italics term info...
@@ -58,3 +59,11 @@ pip3 install --user tmuxp
 tic -o ~/.terminfo tmux.terminfo
 tic -o ~/.terminfo tmux-256color.terminfo
 tic -o ~/.terminfo xterm-256color.terminfo
+
+# powerline fonts - cyan https://github.com/powerline/fonts
+pushd ~/gits
+git clone https://github.com/powerline/fonts.git --depth=1
+cd fonts
+./install.sh
+
+

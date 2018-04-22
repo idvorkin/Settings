@@ -314,6 +314,10 @@ if $TERM_PROGRAM =~ "iTerm"
     set termguicolors
 endif
 
+let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+set termguicolors
+
 " Other schemes I liek
 "
 if has ("gui-running")
@@ -348,5 +352,11 @@ let g:jekyll_post_extension = '.md'
       \ ]
 
 let g:jekyll_post_dirs = ['_posts', '../_posts','_drafts','../_drafts']
+
+function! EscapeKey() 
+    " Do mappings for funny keyboard
+    :inoremap ` <esc>
+    :inoremap C-` `
+endfunction
 
 " vim:foldmethod=indent:
