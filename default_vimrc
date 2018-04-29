@@ -364,6 +364,8 @@ function! EscapeKey()
     " Do mappings for funny keyboard
     :inoremap ` <esc>
     :inoremap C-` `
+    :cnoremap ` <esc>
+    :cnoremap C-` `
 endfunction
 
 function! FixEscapeKey()
