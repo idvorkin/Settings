@@ -16,13 +16,13 @@ git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 
 ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
-ln -s -f ~/settings/default_vimrc ~/.vimrc 
-ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc 
-ln -s -f ~/settings/mac/.inputrc ~/.inputrc 
+ln -s -f ~/settings/default_vimrc ~/.vimrc
+ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc
+ln -s -f ~/settings/mac/.inputrc ~/.inputrc
 ln -s -f ~/settings/tmuxp ~/.tmuxp
 mkdir ~/.hammerspoon
 ln -s -f ~/settings/mac/hammerspoon/init.lua ~/.hammerspoon/init.lua
-ln -s -f ~/settings/shared/ctags ~/.ctagsrc 
+ln -s -f ~/settings/shared/ctags ~/.ctagsrc
 ln -s -f ~/settings/shared/.tmux.conf ~/.tmux.conf
 ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc
 ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
@@ -30,7 +30,7 @@ ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
 #oh my zsh setup - from not fish.
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 
-# Update .zshrc with set -o vi 
+# Update .zshrc with set -o vi
 
 # Add ctags for vim
 brew install ctags --HEAD
@@ -39,7 +39,7 @@ brew install ctags --HEAD
 # setup fasd
 pushd ~/gits
 
-git clone https://github.com/clvv/fasd 
+git clone https://github.com/clvv/fasd
 cd fasd
 sudo make install
 
@@ -55,7 +55,7 @@ pip3 install --user tmuxp
 
 # Add links to linux brew
 # Play - tmuxp alias ~/Library/Python/3.6/bin/tmuxp
-#echo -n 'export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH' >> ~/.zshrc
+echo -n 'export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH' >> ~/.zshrc
 
 
 # Setup italics term info...

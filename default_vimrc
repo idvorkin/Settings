@@ -1,6 +1,6 @@
 " Common  things in all of my vimrc's
 "  File in git:  ~/gits/settings/default_vimrc
-set nocompatible 
+set nocompatible
 set nohls
 set ignorecase
 set noincsearch
@@ -12,27 +12,27 @@ set expandtab
 set cindent
 set laststatus=2
 runtime macros/matchit.vim
-syntax  on 
+syntax  on
 :ca lcdb lcd %:p:h
 " Requires pygments and clippaste.
-:ca pyHTML !c:\python25\scripts\pygmentize -O full -l python -f html \| c:\hg\py\misc\clippaste.py - 
-:ca reHTML !c:\hg\py\misc\clippaste.py - 
+:ca pyHTML !c:\python25\scripts\pygmentize -O full -l python -f html \| c:\hg\py\misc\clippaste.py -
+:ca reHTML !c:\hg\py\misc\clippaste.py -
 
 func! ReToClip()
     " Call VST
     :Vst
     " Wait for new window to pop up
-    :sleep 1 
+    :sleep 1
     " Copy to clipboard
-    :%!c:\hg_resin\py\misc\clippaste.py - 
+    :%!c:\hg_resin\py\misc\clippaste.py -
     " exit
     :q!
 endfunc
 
 " from:http://stackoverflow.com/questions/114431/fast-word-count-function-in-vim
-" Add wordcount to statuline: 
+" Add wordcount to statuline:
 
-function! W0rdCount() 
+function! W0rdCount()
     " Making name a w0rd so not picked up in completion with setWordCountToTitle
     let s:old_status = v:statusmsg
     let position = getpos(".")
@@ -40,7 +40,7 @@ function! W0rdCount()
     if v:statusmsg != '--No lines in buffer--'
         let s:word_count = str2nr(split(v:statusmsg)[11])
         let v:statusmsg = s:old_status
-    end 
+    end
     call setpos('.', position)
     return s:word_count
 endfunction
@@ -78,7 +78,7 @@ function! StripPerfCounterTags()
 endfunction
 
 function! FixMojiBake()
-    " See charector under cursor - 
+    " See charector under cursor -
     "   ga
     " Search for non unicode charecters
     " /[^\x00-\x7F]
@@ -123,14 +123,14 @@ endfunction
 
 ":compiler build
 " Make 2 or more spaces between words an error.
-"match Error /\> \{2,}\</ 
+"match Error /\> \{2,}\</
 "
 autocmd FileType python set omnifunc=pythoncomplete#Complete
 autocmd FileType python compiler pylint
 
 " Replace content with return from wget.
 "
-:cab wg %!c:\bin_drop\wget --quiet --output-document - 
+:cab wg %!c:\bin_drop\wget --quiet --output-document -
 " JS Beautify
 "     https://coderwall.com/p/m2kp5q/invoke-js-beautify-in-vim
 :cab jsb %!js-beautify -j -q -B -f -<CR>
@@ -138,8 +138,8 @@ autocmd FileType python compiler pylint
 "  Vundle setup
     " Instructions @  https://github.com/VundleVim/Vundle.vim/blob/master/README.md
     " git clone https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
-    " MAC - $ git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim 
-    filetype off                  
+    " MAC - $ git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+    filetype off
     set rtp+=~/vimfiles/bundle/Vundle
     set rtp+=~/.vim/bundle/Vundle.vim
     call vundle#begin()
@@ -148,7 +148,7 @@ autocmd FileType python compiler pylint
     Bundle 'mattn/webapi-vim'
     Bundle 'tpope/vim-fugitive'
     Bundle 'Ron89/thesaurus_query.vim'
-    " 
+    "
     :noremap  <Leader>tr :ThesaurusQueryReplaceCurrentWord<CR>
     Bundle 'junegunn/limelight.vim'
     Bundle 'reedes/vim-pencil'
@@ -199,7 +199,7 @@ autocmd FileType python compiler pylint
     Bundle 'scrooloose/nerdcommenter'
     " Bundle 'Shougo/unite.vim'
     Bundle 'Shougo/denite.nvim'
-    "http://vimawesome.com/plugin/unite-outline-shouldve-said-no 
+    "http://vimawesome.com/plugin/unite-outline-shouldve-said-no
     Bundle 'Shougo/neomru.vim'
     Bundle 'Shougo/unite-outline'
     " Removing signifiy to try to get Syntastic working
@@ -220,15 +220,19 @@ autocmd FileType python compiler pylint
     Plugin 'airblade/vim-gitgutter'
     " ]c -> Next hunk
     " ]c -> Prev hunk
-    
+
+
+
+    Plugin 'danro/rename.vim'
+
     " All of your Plugins must be added before the following line
 call vundle#end()            " required
 
 
 " Setup Unite
     :cab ls :Denite buffer
-    :cab UFR :Denite -start-insert file file_mru directory_mru file_rec 
-    :nnoremap <C-P> :Denite file buffer file_mru directory_mru<cr> 
+    :cab UFR :Denite -start-insert file file_mru directory_mru file_rec
+    :nnoremap <C-P> :Denite file buffer file_mru directory_mru<cr>
     call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>', 'noremap')
     call denite#custom#map('insert', '<C-n>', '<denite:move_to_next_line>', 'noremap')
     call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
@@ -239,12 +243,12 @@ call vundle#end()            " required
 filetype plugin indent on    " required
 
 " Open XCode IDE - TBD make this per MAC Only
-map ,x :exe "!xed -l " . line(".") . " %" <cr> 
+map ,x :exe "!xed -l " . line(".") . " %" <cr>
 
 let g:syntastic_javascript_jshint_exec='C:\Chocolatey\lib\nodejs.commandline.0.10.33\tools\jshint.cmd'
 
 " Set font-size default to be a decent size.
-if ( has("win32") || has("win64") || has("win16") ) 
+if ( has("win32") || has("win64") || has("win16") )
     " TBD: Get smart about first run vs reload - but can do that later.
     let defaultFont="Consolas:h14"
     exec "set guifont=".defaultFont
@@ -256,7 +260,7 @@ endif
 func! OneNoteToWafl()
     " Tabs to spaces
     %s;\t;  ;g
-    " Dots to *'s 
+    " Dots to *'s
     %s/\%u2022/*/g
     %s/\%u25cb/*/g
     %s/\%u00b7/*/g
@@ -273,12 +277,12 @@ func! WriteOff()
     :PencilOff
     :Limelight!
 endfunc
-    
+
 
 " TBD  Checkbox processing
 "   add these only to markdown/html; checkboxopen, checkboxdone
 "   Perhaps be clever and alternate between open and done like in OneNote via C-1
-"       
+"
 :iab _mc_ &#x2610;
 :iab _mcd_ &#x2611;
 
@@ -326,6 +330,9 @@ else
     :colo darkblue
 endif
 
+" Remove trailing whitespace:
+autocmd BufWritePre * :%s/\s\+$//e
+
 
 
 " Markdown
@@ -339,7 +346,7 @@ let g:vim_markdown_folding_level = 4
 let g:vim_markdown_folding_level = 4
 
 " Jekyll  - posts for use with JPost
-" JVPost -  create jekyll post in new vertical split 
+" JVPost -  create jekyll post in new vertical split
 let g:jekyll_post_extension = '.md'
     let g:jekyll_post_template =  [
       \ '---',
@@ -353,10 +360,16 @@ let g:jekyll_post_extension = '.md'
 
 let g:jekyll_post_dirs = ['_posts', '../_posts','_drafts','../_drafts']
 
-function! EscapeKey() 
+function! EscapeKey()
     " Do mappings for funny keyboard
     :inoremap ` <esc>
     :inoremap C-` `
+    :cnoremap ` <esc>
+    :cnoremap C-` `
+endfunction
+
+function! FixEscapeKey()
+    :call EscapeKey()
 endfunction
 
 " vim:foldmethod=indent:
