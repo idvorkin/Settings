@@ -1,5 +1,9 @@
 # looks like brew is just for command line stuff.
-brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3
+brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3 ranger cmatrix diff-so-fancy grv
+
+# ranger = File Explorer
+# grv - get repository viewer
+
 
 # Make sure install vim with python for denite
 brew install --with-python3 vim
@@ -66,4 +70,26 @@ git clone https://github.com/powerline/fonts.git --depth=1
 cd fonts
 ./install.sh
 
+# Remote terminal access
+# cat | seashells
+# cat | seashells --delay 5 # see url before gone.
+pip3 install seashells
+
+
+# Config git-so-fancy
+git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
+
+git config --global color.ui true
+
+git config --global color.diff-highlight.oldNormal    "red bold"
+git config --global color.diff-highlight.oldHighlight "red bold 52"
+git config --global color.diff-highlight.newNormal    "green bold"
+git config --global color.diff-highlight.newHighlight "green bold 22"
+
+git config --global color.diff.meta       "yellow"
+git config --global color.diff.frag       "magenta bold"
+git config --global color.diff.commit     "yellow bold"
+git config --global color.diff.old        "red bold"
+git config --global color.diff.new        "green bold"
+git config --global color.diff.whitespace "red reverse"
 
