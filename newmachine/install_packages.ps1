@@ -1,10 +1,10 @@
 $packages = @"
-googlechrome 
-nodejs 
+googlechrome
+nodejs
 "@.split()
 
 # no longer installed:
-# slack 
+# slack
 
 # Drawing  Tools
 $packages += "paint.net"
@@ -17,8 +17,8 @@ vagrant
 
 #Misc windows utilities
 $packages += @"
-windirstat 
-procexp 
+windirstat
+procexp
 handle
 7zip
 "@.split()
@@ -28,7 +28,7 @@ handle
 # Also add switcheroo to jump to active window.
 
 $packages += @"
-autohotkey 
+autohotkey
 wox
 "@.split()
 
@@ -44,12 +44,12 @@ hdtune
 cpu-z
 "@.split()
 
-#Command Line tooling 
+#Command Line tooling
 $packages += @"
 visualstudiocode
-vim 
+vim
 ctags
-ag 
+ag
 ripgrep
 fzf
 plantuml
@@ -57,7 +57,7 @@ plantuml
 
 #Git tools
 $packages += @"
-git 
+git
 sourcetree
 "@.split()
 
@@ -65,10 +65,10 @@ sourcetree
 #dot net development
 # Other good packages (NCrunch)
 $packages += @"
-nuget.commandline 
-nunit 
-nuget 
-linqpad 
+nuget.commandline
+nunit
+nuget
+linqpad
 "@.split()
 
 
@@ -79,7 +79,7 @@ intellijidea-community
 
 # These packages are often installable, but something is goofy right now with them.
 $install_these_packages_manually_for_now += @"
-visualstudio2017community 
+visualstudio2017community
 eclipse-java-neon
 "@.split()
 
@@ -115,24 +115,27 @@ wget
 curl
 "@.split()
 
-# iphone /ios not actually in chocolatey. 
+# iphone /ios not actually in chocolatey.
 # CopyTrans
 
 # Ebooks
 $packages += "calibre"
+#
+# Writing tools
+$packages += "vale"
 
 # Windows Terminal Replacement
 # Make sure conemu is the last thing, as it needs to close the window.
 $packages += "conemu"
 
-foreach ($package in $packages | ? {$_ -ne ""}) 
+foreach ($package in $packages | ? {$_ -ne ""})
 {
-    echo "Installing: $package" 
+    echo "Installing: $package"
     cinst  -y $package
 }
 
-foreach ($package in $packages | ? {$_ -ne ""}) 
+foreach ($package in $packages | ? {$_ -ne ""})
 {
-    echo "Installing: $package" 
+    echo "Installing: $package"
     cup  -y $package
 }

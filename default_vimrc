@@ -182,7 +182,6 @@ autocmd FileType python compiler pylint
 
     Bundle 'elzr/vim-json'
     Bundle 'PProvost/vim-ps1'
-    Bundle 'scrooloose/syntastic'
     Bundle 'othree/javascript-libraries-syntax.vim'
     Bundle "pangloss/vim-javascript"
     Bundle "scrooloose/nerdtree"
@@ -221,6 +220,9 @@ autocmd FileType python compiler pylint
     " ]c -> Next hunk
     " ]c -> Prev hunk
 
+    " Replace syntastic with ale
+    " Bundle 'scrooloose/syntastic'
+    Plugin 'w0rp/ale'
 
 
     Plugin 'danro/rename.vim'
