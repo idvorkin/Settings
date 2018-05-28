@@ -14,53 +14,8 @@ set laststatus=2
 runtime macros/matchit.vim
 syntax  on
 :ca lcdb lcd %:p:h
-" Requires pygments and clippaste.
-:ca pyHTML !c:\python25\scripts\pygmentize -O full -l python -f html \| c:\hg\py\misc\clippaste.py -
-:ca reHTML !c:\hg\py\misc\clippaste.py -
-
-func! ReToClip()
-    " Call VST
-    :Vst
-    " Wait for new window to pop up
-    :sleep 1
-    " Copy to clipboard
-    :%!c:\hg_resin\py\misc\clippaste.py -
-    " exit
-    :q!
-endfunc
-
-" from:http://stackoverflow.com/questions/114431/fast-word-count-function-in-vim
-" Add wordcount to statuline:
-
-function! W0rdCount()
-    " Making name a w0rd so not picked up in completion with setWordCountToTitle
-    let s:old_status = v:statusmsg
-    let position = getpos(".")
-    exe "silent normal g\<c-g>"
-    if v:statusmsg != '--No lines in buffer--'
-        let s:word_count = str2nr(split(v:statusmsg)[11])
-        let v:statusmsg = s:old_status
-    end
-    call setpos('.', position)
-    return s:word_count
-endfunction
-
-function! WordCountToTitle()
-    exec ":set statusline=wc:%{W0rdCount()}"
-endfunction
-
-let g:pyindent_open_paren = '&sw * 2'
-let g:pyindent_nested_paren = '&sw'
-let g:pyindent_continue = '&sw * 2'
-
 
 set tags=tags;/
-
-function! TitlePrefix(prefix)
-    let  g:TitlePrefix=a:prefix
-    :auto! BufEnter * let &titlestring = g:TitlePrefix."||".expand("%:p")
-    let &titlestring = g:TitlePrefix."||".expand("%:p")
-endfunction
 
 " TPS crap.
 " find number in a line of xml.
@@ -120,20 +75,6 @@ function! FirstPersonToThirdPerson()
     :%s;^My ;Your ;g
     :%s;^\.$;
 endfunction
-
-":compiler build
-" Make 2 or more spaces between words an error.
-"match Error /\> \{2,}\</
-"
-autocmd FileType python set omnifunc=pythoncomplete#Complete
-autocmd FileType python compiler pylint
-
-" Replace content with return from wget.
-"
-:cab wg %!c:\bin_drop\wget --quiet --output-document -
-" JS Beautify
-"     https://coderwall.com/p/m2kp5q/invoke-js-beautify-in-vim
-:cab jsb %!js-beautify -j -q -B -f -<CR>
 
 "  Vundle setup
     " Instructions @  https://github.com/VundleVim/Vundle.vim/blob/master/README.md
@@ -201,6 +142,7 @@ autocmd FileType python compiler pylint
 
     " I use this instead of FZF or Ctrl-P
     Bundle 'Shougo/denite.nvim'
+    Bundle 'Shougo/neomru.vim'
 
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
@@ -228,10 +170,11 @@ autocmd FileType python compiler pylint
 call vundle#end()            " required
 
 
-" Setup Unite
+" Setup Denite
     :cab ls :Denite buffer
-    :cab UFR :Denite -start-insert file file_mru directory_mru file_rec
     :nnoremap <C-P> :Denite file buffer file_mru directory_mru<cr>
+    " Open file/directory recursive (can be slow)
+    :cab FR :Denite -start-insert file file_mru directory_mru file_rec
     call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>', 'noremap')
     call denite#custom#map('insert', '<C-n>', '<denite:move_to_next_line>', 'noremap')
     call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
@@ -240,9 +183,6 @@ call vundle#end()            " required
 " End Setup
 
 filetype plugin indent on    " required
-
-" Open XCode IDE - TBD make this per MAC Only
-map ,x :exe "!xed -l " . line(".") . " %" <cr>
 
 " Set font-size default to be a decent size.
 if ( has("win32") || has("win64") || has("win16") )
@@ -304,6 +244,7 @@ func! JsToSingleLineClipBoard()
     normal "*yy
     " Undo
     normal u
+    `
 endfunc
 
 if $TERM_PROGRAM =~ "iTerm"
