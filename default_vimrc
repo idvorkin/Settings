@@ -150,9 +150,11 @@ autocmd FileType python compiler pylint
     Bundle 'Ron89/thesaurus_query.vim'
     "
     :noremap  <Leader>tr :ThesaurusQueryReplaceCurrentWord<CR>
+
     Bundle 'junegunn/limelight.vim'
     Bundle 'reedes/vim-pencil'
     Bundle 'junegunn/goyo.vim'
+
     Bundle 'leafgarland/typescript-vim'
     Bundle 'nathanaelkane/vim-indent-guides'
     Bundle 'mhinz/vim-startify'
@@ -196,18 +198,9 @@ autocmd FileType python compiler pylint
     " Comment \cc
     " Uncomment \cu
     Bundle 'scrooloose/nerdcommenter'
-    " Bundle 'Shougo/unite.vim'
+
+    " I use this instead of FZF or Ctrl-P
     Bundle 'Shougo/denite.nvim'
-    "http://vimawesome.com/plugin/unite-outline-shouldve-said-no
-    Bundle 'Shougo/neomru.vim'
-    Bundle 'Shougo/unite-outline'
-    " Removing signifiy to try to get Syntastic working
-    " Need to figure out when to use which, my preference will be to have
-    " syntastic win
-    " Bundle "mhinz/vim-signify"
-    "
-    " Replacing CtrlP with Unite
-    " Bundle "kien/ctrlp.vim"
 
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
@@ -224,9 +217,13 @@ autocmd FileType python compiler pylint
     " Bundle 'scrooloose/syntastic'
     Plugin 'w0rp/ale'
 
-
+    " Ale for prose requires
+    " write-good
+    " prose-lint
+    " vale
     Plugin 'danro/rename.vim'
 
+    Plugin 'easymotion/vim-easymotion'
     " All of your Plugins must be added before the following line
 call vundle#end()            " required
 
@@ -246,8 +243,6 @@ filetype plugin indent on    " required
 
 " Open XCode IDE - TBD make this per MAC Only
 map ,x :exe "!xed -l " . line(".") . " %" <cr>
-
-let g:syntastic_javascript_jshint_exec='C:\Chocolatey\lib\nodejs.commandline.0.10.33\tools\jshint.cmd'
 
 " Set font-size default to be a decent size.
 if ( has("win32") || has("win64") || has("win16") )
