@@ -1,0 +1,11 @@
+# https://tmuxp.git-pull.com/en/latest/quickstart.html
+session_name: 2-pane-vertical
+windows:
+  - window_name: terminals
+    layout: main-vertical
+    panes:
+      - cd ~/gits/idvorkin.github.io
+      - cd ~/gits
+  - window_name: vim
+    panes:
+        - vim 

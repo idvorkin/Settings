@@ -230,3 +230,20 @@ src/Web/Scripts/*js.map
 #ignore js and map for the E2ETests.
 src/E2ETests/*js
 src/E2ETests/*js.map
+
+##### Vim Files ++ 
+# Swap
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+
+# Temporary
+.netrwhist
+*~
+# Auto-generated tag files
+tags
+##### Vim Files -- 
