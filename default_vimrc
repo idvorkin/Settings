@@ -88,6 +88,9 @@ endfunction
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'mattn/webapi-vim'
     Bundle 'tpope/vim-fugitive'
+
+    "
+    " Writing tools
     Bundle 'Ron89/thesaurus_query.vim'
     "
     :noremap  <Leader>tr :ThesaurusQueryReplaceCurrentWord<CR>
@@ -95,15 +98,19 @@ endfunction
     Bundle 'junegunn/limelight.vim'
     Bundle 'reedes/vim-pencil'
     Bundle 'junegunn/goyo.vim'
+    Bundle 'inkarkat/vim-ingo-library'
+    Bundle 'inkarkat/vim-spellcheck'
 
     Bundle 'leafgarland/typescript-vim'
     Bundle 'nathanaelkane/vim-indent-guides'
+
     Bundle 'mhinz/vim-startify'
     Bundle 'tpope/vim-surround'
     Bundle 'bling/vim-airline'
     Bundle 'chrisbra/csv.vim'
     Bundle 'altercation/vim-colors-solarized'
     Bundle 'vim-scripts/ZoomWin'
+    "
     " change font size \\++
     Bundle 'drmikehenry/vim-fontsize'
 
@@ -207,12 +214,14 @@ func! WriteOn()
     :Goyo
     :PencilSoft
     :Limelight
+    :ALEDisable " Remove spelling and grammer
 endfunc
 
 func! WriteOff()
     :Goyo
     :PencilOff
     :Limelight!
+    :ALEEnable "Remove spelling and grammer
 endfunc
 
 
