@@ -21,11 +21,13 @@ ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc
 ln -s -f ~/settings/mac/.inputrc ~/.inputrc
 ln -s -f ~/settings/tmuxp ~/.tmuxp
 mkdir ~/.hammerspoon
+mkdir ~/.ssh
 ln -s -f ~/settings/mac/hammerspoon/init.lua ~/.hammerspoon/init.lua
 ln -s -f ~/settings/shared/ctags ~/.ctagsrc
 ln -s -f ~/settings/shared/.tmux.conf ~/.tmux.conf
 ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc
 ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
+ln -s -f ~/settings/shared/ssh_config ~/.ssh/ssh_config
 
 #oh my zsh setup - from not fish.
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
