@@ -1,6 +1,7 @@
 $packages = @"
 googlechrome
 nodejs
+yarn
 "@.split()
 
 # no longer installed:
