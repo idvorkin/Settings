@@ -2,7 +2,7 @@ REM First Run As Admin - Install Chocolatey
     @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
 REM Second Run As Admin - Install Git
     cinst git -y
-REM Third Run As Admin 
+REM Third Run As Admin
     mkdir c:\gits\ && cd /d c:\gits && git clone https://github.com/idvorkin/settings
 REM Fourth Run As Admin -- c:\gits\settings\newmachine\setup.bat
 
@@ -22,16 +22,16 @@ REM Setup Pull All
         set TARGETFILE=pullall.bat
         set TARGET=c:\gits\%TARGETFILE%
         del  %TARGET%
-        mklink %TARGET% c:\gits\settings\newmachine\%TARGETFILE% 
+        mklink %TARGET% c:\gits\settings\newmachine\%TARGETFILE%
 
 REM Setup Clink
 
 
 REM clink doesn't yet support links, so set this as a copy for now.
-        copy c:\gits\settings\clink_inputrc  %USERPROFILE%\_inputrc 
+        copy c:\gits\settings\clink_inputrc  %USERPROFILE%\_inputrc
 
 REM Setup Auto Hot Key Path
-        del %USERPROFILE%\Documents\AutoHotkey.ahk 
+        del %USERPROFILE%\Documents\AutoHotkey.ahk
         mklink %USERPROFILE%\Documents\AutoHotkey.ahk c:\hg\autohotkey\AutoHotkey.ahk
 
         del %USERPROFILE%\Documents\vim_onenote.ahk
@@ -66,7 +66,7 @@ git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset
 REM Setting clink completions
 if NOT exist %LOCALAPPDATA%\clink\.git (
     git init
-) 
+)
 git remote add origin https://github.com/vladimir-kotikov/clink-completions.git
 git pull
 
@@ -77,7 +77,7 @@ PROMPT=$E[32m$E]9;8;"USERNAME"$E\@$E]9;8;"COMPUTERNAME"$E\$S$E[92m$P$E[90m {git}
 REM Setup policy execution policy
 powershell Set-ExecutionPolicy RemoteSigned
 
-REM To view git branch from clink 
+REM To view git branch from clink
 REM gitshowbranch /i
 
 REM Install Repos I use.
@@ -91,20 +91,15 @@ git clone https://github.com/idvorkin/jupyter
 git clone https://idvorkin@bitbucket.org/idvorkin/igor2.git
 
 REM Install PowerShell modules, initialized in profile
-@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module z -force"
+@powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module z -force -AllowClobber"
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module Posh-Git -force"
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "Install-Module PSReadline -force"
 
 REM test a current machine with choco list -localonly
 powershell .\install_packages.ps1
 
-REM Setup gvim w/python -- still done manually. 
-REM gvim is statically linked to a python version, which must be in path. Only the dll is  need so we can 
-REM 1) Install py35 via conda
-REM     conda create -n py35 python=3.5 anaconda
-REM 2) Find it 
-REM      C:\Users\idvor\Anaconda3\envs\py35\python35.dll  
-REM 3) Copy it to the vim directoy, so it's in path.
-REM      copy python35.dll "C:\Program Files (x86)\vim\vim80\python35.dll"
+REM Setup gvim w/python -- still done manually.
+REM      copy c:\gits\settings\win\bin\py36_x86\* "C:\Program Files (x86)\vim\vim81\"
+REM Setup gvim w/python -- still done manually.
 
 

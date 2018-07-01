@@ -26,7 +26,12 @@ handle
 
 # Windows automation.
 # Wox is like alfred, press A+Space to run a launcher.
+# then win blah to launch
 # Also add switcheroo to jump to active window.
+# wpm install swicheroo
+# go into settings and update switcheroo alias to be 'w'
+# go into settings and update hotkey to be 'alt-z'
+#
 
 $packages += @"
 autohotkey
