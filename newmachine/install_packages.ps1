@@ -22,6 +22,7 @@ windirstat
 procexp
 handle
 7zip
+rescuetime
 "@.split()
 
 # Windows automation.
