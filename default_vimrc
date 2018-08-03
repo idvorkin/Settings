@@ -45,6 +45,11 @@ function! FixMojiBake()
     " Replace smart quotes
 	:%s/\%x93/"/g
 	:%s/\%x94/"/g
+
+    " Remove TMs and oes
+	:%s/\%x99//g
+	:%s/\%x9c//g
+	:%s/\%x9d//g
     "
 
     " Replace apostrophe

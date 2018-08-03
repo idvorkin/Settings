@@ -11,13 +11,14 @@ yarn
 $packages += "paint.net"
 
 #VM Management
+# vagrant
+# virtualbox
 $packages += @"
-virtualbox
-vagrant
 "@.split()
 
 #Misc windows utilities
 $packages += @"
+meld
 windirstat
 procexp
 handle
