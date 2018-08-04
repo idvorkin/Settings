@@ -6,6 +6,9 @@ set ignorecase
 set noincsearch
 set guioptions-=T
 set guioptions-=m
+" Remove right hand scroll bars
+set guioptions-=R
+set guioptions-=r
 set sw=4
 set ts=4
 set expandtab
