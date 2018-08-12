@@ -172,7 +172,7 @@ endfunction
 
     " Replace syntastic with ale
     " Bundle 'scrooloose/syntastic'
-    Plugin 'w0rp/ale'
+    " Plugin 'w0rp/ale'
 
     " Ale for prose requires
     " write-good
@@ -180,7 +180,7 @@ endfunction
     " vale
     Plugin 'danro/rename.vim'
 
-    Plugin 'easymotion/vim-easymotion'
+    " Plugin 'easymotion/vim-easymotion'
     " All of your Plugins must be added before the following line
 
     Plugin 'PolyCement/vim-tweego'
