@@ -182,6 +182,8 @@ endfunction
 
     Plugin 'easymotion/vim-easymotion'
     " All of your Plugins must be added before the following line
+
+    Plugin 'PolyCement/vim-tweego'
 call vundle#end()            " required
 
 
@@ -325,6 +327,13 @@ endfunction
 
 function! FixEscapeKey()
     :call EscapeKey()
+endfunction
+
+function! DailyPage()
+    " Create a file of day day in current directory
+    " Validate we're in igor2
+    " Copy in a template
+    :py3 import datetime
 endfunction
 
 " vim:foldmethod=indent:
