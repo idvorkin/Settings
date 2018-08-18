@@ -161,6 +161,21 @@ endfunction
 
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
+    let g:pymode_python = 'python3'
+    let g:pymode_options_colorcolumn = 0
+    let g:pymode_options_max_line_length = 88
+    let g:pymode_lint_options_pep8 =
+        \ {'max_line_length': g:pymode_options_max_line_length}
+    let g:pymode_lint_options_pylint =
+        \ {'max-line-length': g:pymode_options_max_line_length}
+
+
+    " Plugin 'plytophogy/vim-virtualenv'
+    " black needs virtual env, which can't find
+    " Plugin 'ambv/black'
+    " Write on Save
+    " autocmd BufWritePost *.py execute ':Black'
+
 
     Plugin 'kchmck/vim-coffee-script'
     Plugin 'aklt/plantuml-syntax'
@@ -203,9 +218,13 @@ filetype plugin indent on    " required
 
 " Set font-size default to be a decent size.
 if ( has("win32") || has("win64") || has("win16") )
-    " TBD: Get smart about first run vs reload - but can do that later.
-    let defaultFont="Consolas:h14"
-    exec "set guifont=".defaultFont
+    if !exists("g:loaded")
+        " TBD: Setting the guifont causes the window to move, so only set the
+        " guifont if it hasn't been set before.
+        let defaultFont="Consolas:h14"
+        let g:loaded=1
+        exec "set guifont=".defaultFont
+    endif
 endif
 "
 "WOFL Helpers
