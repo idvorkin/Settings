@@ -357,8 +357,7 @@ import pathlib
 def MakeDailyPage():
     # Todo make this be path relative so works on unix.
     date_in_format= datetime.now().strftime ("%Y-%m-%d")
-    homeDir = pathlib.Path(path.expanduser("~"))
-    fileName = path.join(homeDir,"/gits/igor2/750words/"+date_in_format+".md")
+    fileName = path.join(path.expanduser("~"),"gits/igor2/750words/"+date_in_format+".md")
     if path.isfile(fileName):
         print (fileName+" exists")
     else:
