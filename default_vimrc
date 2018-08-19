@@ -245,6 +245,8 @@ func! WriteOn()
     :Limelight
     " :ALEDisable " Remove spelling and grammer
 endfunc
+command! IGWriteOn :call WriteOn()
+command! IGWriteOff :call WriteOff()
 
 func! WriteOff()
     :Goyo
@@ -348,31 +350,8 @@ function! FixEscapeKey()
     :call EscapeKey()
 endfunction
 
-:py3 << endpython3
-import sys
-import vim
-from datetime import datetime
-from os import path
-import pathlib
-def MakeDailyPage():
-    # Todo make this be path relative so works on unix.
-    date_in_format= datetime.now().strftime ("%Y-%m-%d")
-    fileName = path.join(path.expanduser("~"),"gits/igor2/750words/"+date_in_format+".md")
-    if path.isfile(fileName):
-        print (fileName+" exists")
-    else:
-        print (fileName)
-        with open(fileName, 'w') as f:
-            f.write("750 words for:"+date_in_format)
-    vim.command("next "+fileName)
-    vim.command("GWrite "+fileName)
-    vim.command("call WriteOn()")
-endpython3
 
-" No clue why neither of these methods can find the python.
-command! NP3 :py3 MakeDialyPage()
-function! DailyPage()
-    :py3 MakeDialyPage()
-endfunction
+:py3file ~/settings/vim_python.py
+command! IGDaily :py3 MakeDailyPage()
 
 " vim:foldmethod=indent:
