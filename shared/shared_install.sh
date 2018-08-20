@@ -3,6 +3,7 @@ brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop pyth
 
 # ranger = File Explorer
 # grv - get repository viewer
+# grv need to unalias grv in zsh
 
 
 # Make sure install vim with python for denite
