@@ -31,8 +31,8 @@ REM clink doesn't yet support links, so set this as a copy for now.
         copy c:\gits\settings\clink_inputrc  %USERPROFILE%\_inputrc
 
 REM Setup Auto Hot Key Path
-        del %USERPROFILE%\Documents\AutoHotkey.ahk
-        mklink %USERPROFILE%\Documents\AutoHotkey.ahk c:\hg\autohotkey\AutoHotkey.ahk
+        del %USERPROFILE%\Documents\alt-space-launch-wox.ahk
+        mklink %USERPROFILE%\Documents\alt-space-launch-wox.ahk c:\gits\settings\alt-space-launch-wox.ahk
 
         del %USERPROFILE%\Documents\vim_onenote.ahk
         mklink %USERPROFILE%\Documents\vim_onenote.ahk c:\hg\autohotkey\vim_onenote.ahk
