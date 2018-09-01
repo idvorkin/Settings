@@ -60,8 +60,11 @@ ctags
 ag
 ripgrep
 fzf
+fd
 plantuml
 "@.split()
+
+# bat - better cat, not yet into choco
 
 #Git tools
 $packages += @"
