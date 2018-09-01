@@ -2,3 +2,6 @@ Host lightsail
     HostName 54.189.209.233
     User ec2-user
 
+Host devbox
+    HostName idvorkin.aka.corp.amazon.com
+    User idvorkin
