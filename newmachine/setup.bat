@@ -15,6 +15,8 @@ REM Setup Mercurial Path
         mklink %USERPROFILE%\_vsvimrc c:\gits\settings\_vsvimrc
         mklink %USERPROFILE%\.ctagsrc c:\gits\settings\shared\ctags
 
+        mklink %USERPROFILE%\settings c:\gits\settings
+
 REM GITS directory alias
         mklink /d %USERPROFILE%\gits c:\gits
 
