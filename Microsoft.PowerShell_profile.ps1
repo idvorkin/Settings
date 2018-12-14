@@ -1,7 +1,7 @@
 Push-Location (Split-Path -Path $MyInvocation.MyCommand.Definition -Parent)
 
 # ps-readline for vi support in powershell.
-Import-Module PSReadLine  
+Import-Module PSReadLine
 Set-PSReadlineOption -EditMode vi
 
 # git support
@@ -26,7 +26,7 @@ function Restart-Explorer {
             public static extern int FindWindow(string lpClassName,string lpWindowName);
             [DllImport("user32.dll")]
             public static extern int SendMessage(int hWnd, uint Msg, int wParam, int lParam);
-                
+
             public const int WM_SYSCOMMAND = 0x0112;
             public const int SC_CLOSE = 0xF060;
 '@
@@ -39,7 +39,7 @@ function Restart-Explorer {
         {
             [void][WPIA.ConsoleUtils]::SendMessage($handle, [WPIA.ConsoleUtils]::WM_SYSCOMMAND, [WPIA.ConsoleUtils]::SC_CLOSE, 0)
             break;
-        }  
+        }
     }
 }
 function Kill-GitGui {Get-Process | where name -eq wish  |kill }
@@ -73,7 +73,7 @@ if (Test-Path($ChocolateyProfile)) {
 }
 
 # Helpful jekyll commands.
-function Jekyll-Serve {Start-Process bundle "exec jekyll serve --incremental --drafts"} 
+function Jekyll-Serve {Start-Process bundle "exec jekyll serve --incremental --drafts --baseurl '' "}
 function Jekyll-Build {bundle exec jekyll build --drafts}
 
 # Helpful recipes
