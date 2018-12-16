@@ -7,6 +7,9 @@ brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop pyth
 # grv need to unalias grv in zsh
 
 
+# to execute it
+# <range>w !bash
+
 # Make sure install vim with python for denite
 brew install --with-python3 vim
 
