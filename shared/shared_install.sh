@@ -87,6 +87,7 @@ pip3 install seashells
 
 # ensure git can be shared between linux and windows
 git config --global core.autocrlf true
+git config --global receive.denyCurrentBranch updateInstead
 
 # Config git-so-fancy
 # https://github.com/so-fancy/diff-so-fancy
