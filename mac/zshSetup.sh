@@ -12,4 +12,6 @@ sudo vim /etc/shells
 
 echo change shell
 sudo chsh -s $(which zsh)
-
+# case $(uname -a) in
+#     *Microsoft*) unsetopt BG_NICE ;;
+# esac
