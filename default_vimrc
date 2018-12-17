@@ -181,7 +181,9 @@ endfunction
     Plugin 'aklt/plantuml-syntax'
     Plugin 'scrooloose/vim-slumlord'
 
-    Plugin 'airblade/vim-gitgutter'
+    " Plugin 'airblade/vim-gitgutter'
+    Plugin 'mhinz/vim-signify'
+
     " ]c -> Next hunk
     " ]c -> Prev hunk
 
