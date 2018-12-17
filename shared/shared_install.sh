@@ -1,3 +1,4 @@
+# goto http://linuxbrew.sh/
 # looks like brew is just for command line stuff.
 brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3 ranger cmatrix diff-so-fancy grv fzf bat fd
 
@@ -5,6 +6,9 @@ brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop pyth
 # grv - get repository viewer
 # grv need to unalias grv in zsh
 
+
+# to execute it
+# <range>w !bash
 
 # Make sure install vim with python for denite
 brew install --with-python3 vim
@@ -78,8 +82,15 @@ cd fonts
 # cat | seashells --delay 5 # see url before gone.
 pip3 install seashells
 
+# however when looking at directories in WSL that are sourced (like vundle, clone with autcrlf)
+# git clone <director> --config core.autocrlf=true
+
+# ensure git can be shared between linux and windows
+git config --global core.autocrlf true
+git config --global receive.denyCurrentBranch updateInstead
 
 # Config git-so-fancy
+# https://github.com/so-fancy/diff-so-fancy
 git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
 
 git config --global color.ui true
@@ -95,4 +106,3 @@ git config --global color.diff.commit     "yellow bold"
 git config --global color.diff.old        "red bold"
 git config --global color.diff.new        "green bold"
 git config --global color.diff.whitespace "red reverse"
-

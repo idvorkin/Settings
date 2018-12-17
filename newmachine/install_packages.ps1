@@ -24,6 +24,8 @@ procexp
 handle
 7zip
 rescuetime
+unzip
+zip
 "@.split()
 
 # Windows automation.
