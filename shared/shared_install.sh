@@ -106,6 +106,20 @@ git config --global color.diff.commit     "yellow bold"
 git config --global color.diff.old        "red bold"
 git config --global color.diff.new        "green bold"
 git config --global color.diff.whitespace "red reverse"
+git config --global user.email "idvorkin@gmail.com"
+git config --global user.name "Igor Dvorkin"
+git config --global push.default simple
+git config --global alias.co checkout
+git config --global alias.com "checkout master"
+git config --global alias.br branch
+git config --global alias.ci commit
+git config --global alias.st status
+git config --global alias.logc log master..
+git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate"
+
+# load up the git repo's for plugins
+git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # Here's stuff for dotnet.
 wget https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
