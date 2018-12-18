@@ -1,6 +1,9 @@
 # goto http://linuxbrew.sh/
 # looks like brew is just for command line stuff.
-brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3 ranger cmatrix diff-so-fancy grv fzf bat fd ruby iftop aws-shell azure-cli
+brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3 ranger cmatrix diff-so-fancy grv fzf bat fd ruby iftop aws-shell jq
+
+# currently broken on some devices.
+brew install azure-cli
 
 # ranger = File Explorer
 # grv - get repository viewer
@@ -130,5 +133,14 @@ sudo apt-get install apt-transport-https
 sudo apt-get update
 sudo apt-get install dotnet-sdk-2.2
 
+#here's stuff for az-cli install
+# This is currently broken -- wait a bit and hope it gets fixed. For now use cloud desktop.
+sudo apt-get install apt-transport-https lsb-release software-properties-common -y
+AZ_REPO=$(lsb_release -cs)
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
+        sudo tee /etc/apt/sources.list.d/azure-cli.list
+
 # Add pipenv
 pip3 install pipenv
+
+
