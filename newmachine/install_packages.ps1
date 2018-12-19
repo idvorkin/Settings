@@ -26,6 +26,7 @@ handle
 rescuetime
 unzip
 zip
+pasteboard
 "@.split()
 
 # Windows automation.
