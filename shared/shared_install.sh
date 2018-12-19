@@ -1,6 +1,6 @@
 # goto http://linuxbrew.sh/
 # looks like brew is just for command line stuff.
-brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3 ranger diff-so-fancy grv fzf bat fd ruby iftop aws-shell jq ag saws mosh npm
+brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3 ranger cmatrix diff-so-fancy grv fzf bat fd ruby iftop aws-shell jq ag npm mosh saws
 
 # currently broken on some devices.
 brew install azure-cli cmatrix
