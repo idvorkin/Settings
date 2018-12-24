@@ -145,6 +145,8 @@ endfunction
     Bundle "scrooloose/nerdtree"
     Bundle "rking/ag.vim"
     Bundle "OrangeT/vim-csharp.git"
+    " OmniSharp doesn't seem to wrok on WSL, let it go.
+    " Bundle "OmniSharp/omnisharp-vim"
     Bundle "lukaszkorecki/workflowish"
     Bundle "keith/swift.vim"
     " http://vimcolors.com/?page=11
@@ -355,5 +357,6 @@ endfunction
 
 :py3file ~/settings/vim_python.py
 command! IGDaily :py3 MakeDailyPage()
+command! IGWeekly :py3 MakeWeeklyReport()
 
 " vim:foldmethod=indent:

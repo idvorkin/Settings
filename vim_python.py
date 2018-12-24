@@ -1,20 +1,19 @@
-import sys
 import vim
-from datetime import datetime
+from datetime import datetime, timedelta
 from os import path
-import pathlib
 import shutil
 
 
-def MakeDailyPage():
-    # Todo make this be path relative so works on unix.
-    date_in_format = datetime.now().strftime("%Y-%m-%d")
-    fileName = path.join(
-        path.expanduser("~"), f"gits/igor2/750words/{date_in_format}.md"
+def pathBasedAtIgor2(filepath):
+    return path.join(
+        path.expanduser("~"), f"gits/igor2/{filepath}"
     )
-    templateFileName  = path.join(
-        path.expanduser("~"), "gits/igor2/750words/daily_template.md"
-    )
+
+
+def MakeTemplatePage(date, directory, template_name):
+    date_in_format = date.strftime("%Y-%m-%d")
+    fileName = pathBasedAtIgor2(f"/{directory}/{date_in_format}.md")
+    templateFileName = pathBasedAtIgor2(f"/{directory}/{template_name}.md")
     isAlreadyCreated = path.isfile(fileName)
 
     if isAlreadyCreated:
@@ -34,3 +33,16 @@ def MakeDailyPage():
         vim.command(f"%s/!template_date!/{date_in_format}/")  # Goto first line
 
     vim.command("9999")  # Goto last line.
+    return
+
+
+def MakeDailyPage():
+    MakeTemplatePage(datetime.now(), "750words", "daily_template")
+
+
+def MakeWeeklyReport():
+    now = datetime.now().date()
+    startOfWeek = now - timedelta(days=now.weekday())
+
+    # Make to sart of week.
+    MakeTemplatePage(startOfWeek, "week_report", "week_template")
