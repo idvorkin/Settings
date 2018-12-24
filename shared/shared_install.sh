@@ -137,6 +137,13 @@ sudo apt-get install apt-transport-https
 sudo apt-get update
 sudo apt-get install dotnet-sdk-2.2
 
+# and the way to do it on AMI since it can't build the dependancies.
+
+wget https://download.microsoft.com/download/5/F/0/5F0362BD-7D0A-4A9D-9BF9-022C6B15B04D/dotnet-runtime-2.0.0-linux-x64.tar.gz
+mkdir -p $HOME/dotnet && tar zxf dotnet-runtime-2.0.0-linux-x64.tar.gz -C $HOME/dotnet
+export PATH=$PATH:$HOME/dotnet
+
+
 #here's stuff for az-cli install
 # This is currently broken -- wait a bit and hope it gets fixed. For now use cloud desktop.
 sudo apt-get install apt-transport-https lsb-release software-properties-common -y
