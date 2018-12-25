@@ -191,7 +191,8 @@ endfunction
 
     " Replace syntastic with ale
     " Bundle 'scrooloose/syntastic'
-    " Plugin 'w0rp/ale'
+    Plugin 'w0rp/ale'
+    Plugin 'prettier/vim-prettier'
 
     " Ale for prose requires
     " write-good
