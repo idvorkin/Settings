@@ -191,7 +191,8 @@ endfunction
 
     " Replace syntastic with ale
     " Bundle 'scrooloose/syntastic'
-    " Plugin 'w0rp/ale'
+    Plugin 'w0rp/ale'
+    Plugin 'prettier/vim-prettier'
 
     " Ale for prose requires
     " write-good
@@ -355,6 +356,13 @@ function! FixEscapeKey()
 endfunction
 
 
+let g:ale_fixers = {
+            \   'javascript': ['prettier'],
+            \   'css': ['prettier'],
+            \   'markdown': ['prettier'],
+            \}
+
+" let g:ale_fix_on_save = 1
 :py3file ~/settings/vim_python.py
 command! IGDaily :py3 MakeDailyPage()
 command! IGWeekly :py3 MakeWeeklyReport()
