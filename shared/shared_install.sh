@@ -154,4 +154,7 @@ echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO 
 # Add pipenv
 pip3 install pipenv
 
+# Cool command to run through all directories and pull them
+alias 'gfrall= for git_directory in * ; echo $git_directory && git -C $git_directory fr'
+
 
