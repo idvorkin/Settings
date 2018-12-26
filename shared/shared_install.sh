@@ -157,4 +157,8 @@ pip3 install pipenv
 # Cool command to run through all directories and pull them
 alias 'gfrall= for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 
+# when locales get screwed up
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
 
