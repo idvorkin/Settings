@@ -61,7 +61,7 @@ sudo make install
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # setup tmuxp
-pip3 install --user tmuxp
+pip3 install --user tmuxp pipenv
 
 # Add links to linux brew
 # Play - tmuxp alias ~/Library/Python/3.6/bin/tmuxp
