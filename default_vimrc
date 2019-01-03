@@ -370,6 +370,7 @@ let g:ale_fixers = {
 " let g:ale_fix_on_save = 1
 :py3file ~/settings/vim_python.py
 command! IGDaily :py3 MakeDailyPage()
+command! IGYesterday :py3 MakeDailyPage(-1)
 command! IGWeekly :py3 MakeWeeklyReport()
 command! Sodot :so ~/.vimrc
 

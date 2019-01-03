@@ -31,9 +31,6 @@ def MakeTemplatePage(date, directory, template_name):
     vim.command("IGWriteOn")
     vim.command("Gwrite")
 
-    if not isAlreadyCreated:
-        vim.command(f"%s/!template_date!/{date_in_format}/")  # Goto first line
-
     vim.command("9999")  # Goto last line.
     return
 
@@ -45,8 +42,8 @@ def NowPST():
     return datetime.now()
 
 
-def MakeDailyPage():
-    MakeTemplatePage(NowPST(), "750words", "daily_template")
+def MakeDailyPage(daysoffset=0):
+    MakeTemplatePage(NowPST()+timedelta(days=daysoffset), "750words", "daily_template")
 
 
 def MakeWeeklyReport():
