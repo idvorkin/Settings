@@ -18,7 +18,7 @@ def MakeTemplatePage(date, directory, template_name):
     else:
         with open(templateFileName, "r") as fileTemplate:
             content = fileTemplate.read()
-            content.replace("!template_date!", date_in_format)
+            content = content.replace("!template_date!", date_in_format)
             with open(fileName, "w") as fileWrite:
                 fileWrite.write(content)
 
