@@ -28,7 +28,6 @@ def MakeTemplatePage(date, directory, template_name):
 
     vim.command("next " + fileName)
     vim.command("lcd %:p:h")  # Goto current Directory
-    vim.command("IGWriteOn")
     vim.command("Gwrite")
 
     vim.command("9999")  # Goto last line.

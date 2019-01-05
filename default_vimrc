@@ -334,6 +334,13 @@ let g:vmt_list_item_char='-'
 let g:vmt_fence_text = 'TOC'
 let g:vmt_fence_closing_text = '/TOC'
 
+" Always enable softpencil
+
+autocmd BufEnter *md :exe ":SoftPencil"
+autocmd BufEnter *md :exe ":Limelight"
+autocmd BufLeave *md :exe ":Limelight!"
+
+
 " Jekyll  - posts for use with JPost
 " JVPost -  create jekyll post in new vertical split
 let g:jekyll_post_extension = '.md'
