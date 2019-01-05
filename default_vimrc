@@ -1,5 +1,5 @@
 " Common  things in all of my vimrc's
-"  File in git:  ~/gits/settings/default_vimrc
+"  File in git: ~/gits/settings/default_vimrc
 set nocompatible
 set nohls
 set ignorecase
