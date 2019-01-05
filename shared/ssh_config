@@ -1,5 +1,5 @@
 Host lightsail
-    HostName 54.189.209.233
+    HostName 54.190.183.242
     User ec2-user
 
 Host devbox
