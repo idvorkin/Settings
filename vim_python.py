@@ -22,14 +22,13 @@ def MakeTemplatePage(date, directory, template_name):
             with open(fileName, "w") as fileWrite:
                 fileWrite.write(content)
 
-        print(f"output: {fileName}")
-        print(f"template: {templateFileName}")
-        print(fileName)
+    #print(f"output: {fileName}")
+    #print(f"template: {templateFileName}")
+    #print(fileName)
 
+    vim.command(f"!pushd {pathBasedAtIgor2(directory)} && git fr && popd")
     vim.command("next " + fileName)
     vim.command("lcd %:p:h")  # Goto current Directory
-    vim.command("Gwrite")
-
     vim.command("9999")  # Goto last line.
     return
 
