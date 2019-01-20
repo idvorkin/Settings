@@ -340,6 +340,9 @@ autocmd BufEnter *md :exe ":SoftPencil"
 autocmd BufEnter *md :exe ":Limelight"
 autocmd BufLeave *md :exe ":Limelight!"
 
+" Break lines on word boudnaries only
+set linebreak
+
 
 " Jekyll  - posts for use with JPost
 " JVPost -  create jekyll post in new vertical split
