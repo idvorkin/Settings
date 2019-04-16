@@ -160,6 +160,9 @@ endfunction
     " I use this instead of FZF or Ctrl-P
     Bundle 'Shougo/denite.nvim'
     Bundle 'Shougo/neomru.vim'
+    Bundle 'roxma/nvim-yarp'
+    Bundle 'roxma/vim-hug-neovim-rpc'
+
 
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
@@ -191,7 +194,8 @@ endfunction
 
     " Replace syntastic with ale
     " Bundle 'scrooloose/syntastic'
-    Plugin 'w0rp/ale'
+    " disable Ale for now as it's mucking my table of contents.
+    " Plugin 'w0rp/ale'
     Plugin 'prettier/vim-prettier'
 
     " Ale for prose requires
