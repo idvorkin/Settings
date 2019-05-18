@@ -91,6 +91,7 @@ endfunction
     filetype off
     set rtp+=~/vimfiles/bundle/Vundle
     set rtp+=~/.vim/bundle/Vundle.vim
+    set rtp+=/home/linuxbrew/.linuxbrew/opt/fzf
     call vundle#begin()
 
     Bundle 'VundleVim/Vundle.vim'
@@ -204,10 +205,13 @@ endfunction
     " vale
     Plugin 'danro/rename.vim'
 
+    Plugin 'junegunn/fzf.vim'
     " Plugin 'easymotion/vim-easymotion'
     " All of your Plugins must be added before the following line
 
     Plugin 'PolyCement/vim-tweego'
+
+
 call vundle#end()            " required
 
 
