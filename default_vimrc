@@ -164,6 +164,9 @@ endfunction
     Bundle 'roxma/nvim-yarp'
     Bundle 'roxma/vim-hug-neovim-rpc'
 
+    " Trying to use fzf cz it looks awesome.
+    Plugin 'junegunn/fzf.vim'
+
 
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
