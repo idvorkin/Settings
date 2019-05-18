@@ -1,6 +1,9 @@
 # goto http://linuxbrew.sh/
 # looks like brew is just for command line stuff.
-brew install cask zsh libevent openssl tmux ag  git wget ncdu graphviz htop python3 ranger cmatrix diff-so-fancy grv fzf bat fd ruby iftop aws-shell jq ag npm mosh saws exa  asciinema svg-term
+brew install cask zsh libevent openssl tmux ag  git wget ncdu graphviz htop python3 ranger cmatrix diff-so-fancy grv fzf bat fd ruby iftop aws-shell jq ag npm mosh exa asciinema rg httpie
+
+# packages I want that don't exist
+# brew install saws svg-term
 
 # currently broken on some devices.
 brew install azure-cli cmatrix
