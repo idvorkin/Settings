@@ -207,8 +207,6 @@ endfunction
     " prose-lint
     " vale
     Plugin 'danro/rename.vim'
-
-    Plugin 'junegunn/fzf.vim'
     " Plugin 'easymotion/vim-easymotion'
     " All of your Plugins must be added before the following line
 
