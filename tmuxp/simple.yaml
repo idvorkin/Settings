@@ -7,9 +7,9 @@ windows:
   - window_name: zsh
     panes:
         - zsh
-  - window_name: htop
+  - window_name: glances
     panes:
-      - htop
+      - glances
   - window_name: ntop
     panes:
       - sudo iftop

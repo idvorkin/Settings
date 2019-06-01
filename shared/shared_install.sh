@@ -1,6 +1,6 @@
 # goto http://linuxbrew.sh/
 # looks like brew is just for command line stuff.
-brew install cask zsh libevent openssl tmux ag  git wget ncdu graphviz htop python3 ranger diff-so-fancy fzf bat fd ruby aws-shell jq ag npm mosh exa asciinema rg httpie pipenv git-extras fasd
+brew install cask zsh libevent openssl tmux ag  git wget ncdu graphviz htop python3 ranger diff-so-fancy fzf bat fd ruby aws-shell jq ag npm mosh exa asciinema rg httpie pipenv git-extras fasd glances neofetch s3cmd fselect
 
 # packages I want that don't exist
 # brew install saws svg-term
