@@ -92,6 +92,14 @@ endfunction
     set rtp+=~/vimfiles/bundle/Vundle
     set rtp+=~/.vim/bundle/Vundle.vim
     set rtp+=/home/linuxbrew/.linuxbrew/opt/fzf
+    set rtp+=/home/brew/.brew/opt/fzf
+
+    " Add osx, you need to source from here -- TBD why.
+    if filereadable("/usr/local/opt/fzf/plugin/fzf.vim")
+        so /usr/local/opt/fzf/plugin/fzf.vim
+    " set rtp+=/usr/local/opt/fzf/plugin/
+    endif
+
     call vundle#begin()
 
     Bundle 'VundleVim/Vundle.vim'
@@ -217,7 +225,7 @@ call vundle#end()            " required
 
 
 " Setup Denite
-    :cab ls :Denite buffer
+    :cab ls :Denite Buffers
     :nnoremap <C-P> :Denite file buffer file_mru directory_mru<cr>
     " Open file/directory recursive (can be slow)
     :cab FR :Denite -start-insert file file_mru directory_mru file_rec
