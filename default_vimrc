@@ -345,13 +345,6 @@ autocmd BufWritePre * :%s/\s\+$//e
 "  ][  - sibling prev
 "  []  - sibling next
 
-" I never use ToHTML and it makes it harder to use Toc
-if  !exists ("g:deleted_stuff")
-    " Can only delete it once
-    let  g:deleted_stuff = "1"
-    :delc TOhtml
-endif
-
 let g:vim_markdown_follow_anchor = 1 " ge will jump to anchor (TBD: Map to C-]
 let g:vim_markdown_toc_autofit = 1 " Great for not wasting extra space
 let g:vim_markdown_frontmatter = 1
@@ -413,5 +406,16 @@ command! IGDaily :py3 MakeDailyPage()
 command! IGYesterday :py3 MakeDailyPage(-1)
 command! IGWeekly :py3 MakeWeeklyReport()
 command! Sodot :so ~/.vimrc
+
+" I never use ToHTML and it makes it harder to use Toc
+" This is loaded in the html plugin, which I'm disabling.
+" search for the below string to find it.
+let g:loaded_2html_plugin = 'vim8.1_v1'
+" leaving the below in for an example of one time load only
+if  !exists ("g:execute_on_first_load_only")
+    " Can only delete it once
+    let  g:execute_on_first_load_only = "1"
+    ":delc TOhtml
+endif
 
 " vim:foldmethod=indent:
