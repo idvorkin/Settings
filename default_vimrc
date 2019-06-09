@@ -345,6 +345,12 @@ autocmd BufWritePre * :%s/\s\+$//e
 "  ][  - sibling prev
 "  []  - sibling next
 
+" I never use ToHTML and it makes it harder to use Toc
+if  !exists ("g:deleted_stuff")
+    " Can only delete it once
+    let  g:deleted_stuff = "1"
+    :delc TOhtml
+endif
 
 let g:vim_markdown_follow_anchor = 1 " ge will jump to anchor (TBD: Map to C-]
 let g:vim_markdown_toc_autofit = 1 " Great for not wasting extra space
@@ -390,6 +396,9 @@ endfunction
 function! FixEscapeKey()
     :call EscapeKey()
 endfunction
+
+
+
 
 
 let g:ale_fixers = {
