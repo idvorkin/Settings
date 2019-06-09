@@ -225,7 +225,6 @@ call vundle#end()            " required
 
 
 " Setup Denite
-    :cab ls :Denite Buffers
     :nnoremap <C-P> :Denite file buffer file_mru directory_mru<cr>
     " Open file/directory recursive (can be slow)
     :cab FR :Denite -start-insert file file_mru directory_mru file_rec
@@ -235,6 +234,12 @@ call vundle#end()            " required
     call denite#custom#map('insert', '<C-p>', '<denite:move_to_previous_line>', 'noremap')
 
 " End Setup
+
+" Setup Fzf
+    :cab ls :Buffers<CR>
+    :nmap g* :exec ":Lines '" expand('<cword>')<CR>
+" End Setup
+
 
 filetype plugin indent on    " required
 
@@ -340,6 +345,7 @@ autocmd BufWritePre * :%s/\s\+$//e
 "  ][  - sibling prev
 "  []  - sibling next
 
+
 let g:vim_markdown_follow_anchor = 1 " ge will jump to anchor (TBD: Map to C-]
 let g:vim_markdown_toc_autofit = 1 " Great for not wasting extra space
 let g:vim_markdown_frontmatter = 1
@@ -348,8 +354,6 @@ let g:vim_markdown_new_list_item_indent = 0
 let g:vim_markdown_folding_level = 4
 let g:vim_markdown_folding_level = 4
 let g:vmt_list_item_char='-'
-let g:vmt_fence_text = 'TOC'
-let g:vmt_fence_closing_text = '/TOC'
 
 " Always enable softpencil
 
