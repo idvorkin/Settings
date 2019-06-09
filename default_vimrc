@@ -239,6 +239,11 @@ call vundle#end()            " required
     :cab ls :Buffers<CR>
     :nmap g* :exec ":Lines '" expand('<cword>')<CR>
 " End Setup
+"
+" Setup English fixes
+     :iab teh the
+
+" End Setup
 
 
 filetype plugin indent on    " required
