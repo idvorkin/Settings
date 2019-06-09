@@ -232,17 +232,21 @@ call vundle#end()            " required
     call denite#custom#map('insert', '<C-n>', '<denite:move_to_next_line>', 'noremap')
     call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
     call denite#custom#map('insert', '<C-p>', '<denite:move_to_previous_line>', 'noremap')
-
 " End Setup
 
 " Setup Fzf
     :cab ls :Buffers<CR>
     :nmap g* :exec ":Lines '" expand('<cword>')<CR>
 " End Setup
-"
-" Setup English fixes
-     :iab teh the
 
+" Setup English fixes
+    " Can fix with Sed
+    " sed '/ teh / the /g' *
+     :iab teh the
+     :iab zach Zach
+     :iab amelia Amelia
+     :iab tori Tori
+     :iab ammon Ammon
 " End Setup
 
 
