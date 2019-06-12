@@ -15,6 +15,10 @@ function getSecretFromSecretBox(secret)
     return secrets[secret]
 end
 
+function screenCapture()
+ hs.execute('screencapture -isc >/dev/null 1>&2')
+end
+
 function vpn()
     hs.application.launchOrFocus("Cisco AnyConnect Secure Mobility Client")
     hs.timer.usleep(1 * 1000 * 1000)
