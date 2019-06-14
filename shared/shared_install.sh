@@ -1,6 +1,6 @@
 # goto http://linuxbrew.sh/
 # looks like brew is just for command line stuff.
-brew install cask zsh libevent openssl tmux ag  git wget ncdu graphviz htop python3 ranger diff-so-fancy fzf bat fd ruby aws-shell jq ag npm mosh exa asciinema rg httpie pipenv git-extras fasd glances neofetch s3cmd fselect bundle
+brew install cask zsh libevent openssl tmux ag  git wget ncdu graphviz htop python3 ranger diff-so-fancy fzf bat fd ruby aws-shell jq ag npm mosh exa asciinema rg httpie pipenv git-extras fasd glances neofetch s3cmd fselect
 
 # packages I want that don't exist
 # brew install saws svg-term
@@ -146,11 +146,21 @@ echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO 
 # Add pipenv
 pip3 install pipenv
 
+# Setup Jekyll
+# Rant why so god damn hard to build jekyll and nokogiri
+# be sure to set path to brew ruby in your zshrc
+# export PATH=/usr/local/opt/ruby/bin:$PATH
+gem install bundle
+brew install rbenv
+gem install --user-install bundler jekyll
+cd
+
 
 # when locales get screwed up
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
+export PATH=/usr/local/opt/ruby/bin:$PATH
 
 
 ## Decent zsh plugins
