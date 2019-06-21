@@ -1,9 +1,12 @@
 # goto http://linuxbrew.sh/
 # looks like brew is just for command line stuff.
-brew install cask zsh libevent openssl tmux	ag  git wget ncdu graphviz htop python3 ranger cmatrix diff-so-fancy grv fzf bat fd ruby iftop aws-shell jq ag npm mosh saws
+brew install cask zsh libevent openssl tmux ag  git wget ncdu graphviz htop python3 ranger diff-so-fancy fzf bat fd ruby aws-shell jq ag npm mosh exa asciinema rg httpie pipenv git-extras fasd glances neofetch s3cmd fselect
+
+# packages I want that don't exist
+# brew install saws svg-term
 
 # currently broken on some devices.
-brew install azure-cli cmatrix
+brew install azure-cli cmatrix iftop
 
 # ranger = File Explorer
 # grv - get repository viewer
@@ -15,8 +18,6 @@ brew install azure-cli cmatrix
 
 # Make sure install vim with python for denite
 brew install --with-python3 vim
-
-# brew install fasd
 
 # shared git stetup
 git config --global user.email "idvorkin@gmail.com"
@@ -35,36 +36,30 @@ ln -s -f ~/settings/shared/ctags ~/.ctagsrc
 ln -s -f ~/settings/shared/.tmux.conf ~/.tmux.conf
 ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc
 ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
-ln -s -f ~/settings/shared/ssh_config ~/.ssh/ssh_config
+ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 
 #oh my zsh setup - from not fish.
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 
-# Update .zshrc with set -o vi
+# load up the git repo's for plugins
+git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # Add ctags for vim
 brew install ctags --HEAD
 # /usr/local/bin/ctags -R --langmap=ObjectiveC:.m.h
 
-# setup fasd
-pushd ~/gits
-
-git clone https://github.com/clvv/fasd
-cd fasd
-sudo make install
-
-# copy this into somewhere useful
+# copy this into somewhere useful - perhaps ohmyzsh plugin handles.
 # eval "$(fasd --init auto)"
-
 
 # setup more tmux plugins (not sure that they are useful.
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # setup tmuxp
 pip3 install --user tmuxp pipenv
+# tmuxp alias ~/Library/Python/3.6/bin/tmuxp
 
 # Add links to linux brew
-# Play - tmuxp alias ~/Library/Python/3.6/bin/tmuxp
 echo -n 'export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH' >> ~/.zshrc
 
 
@@ -125,9 +120,6 @@ git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset
 git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager.exe"
 
 
-# load up the git repo's for plugins
-git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # Here's stuff for dotnet.
 wget https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
@@ -154,11 +146,25 @@ echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO 
 # Add pipenv
 pip3 install pipenv
 
-# Cool command to run through all directories and pull them
-alias 'gfrall= for git_directory in * ; echo $git_directory && git -C $git_directory fr'
+# Setup Jekyll
+# Rant why so god damn hard to build jekyll and nokogiri
+# be sure to set path to brew ruby in your zshrc
+# export PATH=/usr/local/opt/ruby/bin:$PATH
+gem install bundle
+brew install rbenv
+gem install --user-install bundler jekyll
+cd
+
 
 # when locales get screwed up
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
+export PATH=/usr/local/opt/ruby/bin:$PATH
 
+
+## Decent zsh plugins
+plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux)
+
+# Cool command to run through all directories and pull them
+alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'

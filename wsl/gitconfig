@@ -1,0 +1,36 @@
+[core]
+	pager = diff-so-fancy | less --tabs=4 -RFX
+    autocrlf = input
+    safecrlf = false
+[color]
+    ui = true
+[color "diff-highlight"]
+	oldNormal = red bold
+	oldHighlight = red bold 52
+	newNormal = green bold
+	newHighlight = green bold 22
+[color "diff"]
+	meta = yellow
+	frag = magenta bold
+	commit = yellow bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
+[user]
+	email = idvorkin@gmail.com
+	name = Igor Dvorkin
+[push]
+	default = simple
+[receive]
+	denyCurrentBranch = updateInstead
+[alias]
+	co = checkout
+	com = checkout master
+	fr = pull --rebase
+	br = branch
+	ci = commit
+	st = status
+	logc = log
+	logp = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate
+[credential]
+	helper = /mnt/c/Program\\ Files/Git/mingw64/libexec/git-core/git-credential-manager.exe

@@ -1,11 +1,16 @@
 # https://tmuxp.git-pull.com/en/latest/quickstart.html
-session_name: 2-pane-vertical
+session_name: main
 windows:
-  - window_name: terminals
-    layout: main-vertical
-    panes:
-      - cd ~/gits/idvorkin.github.io
-      - cd ~/gits
   - window_name: vim
     panes:
-        - vim 
+        - vim
+  - window_name: zsh
+    panes:
+        - zsh
+  - window_name: glances
+    panes:
+      - glances
+  - window_name: ntop
+    panes:
+      - sudo iftop
+      - sudo nethogs

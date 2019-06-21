@@ -91,6 +91,15 @@ endfunction
     filetype off
     set rtp+=~/vimfiles/bundle/Vundle
     set rtp+=~/.vim/bundle/Vundle.vim
+    set rtp+=/home/linuxbrew/.linuxbrew/opt/fzf
+    set rtp+=/home/brew/.brew/opt/fzf
+
+    " Add osx, you need to source from here -- TBD why.
+    if filereadable("/usr/local/opt/fzf/plugin/fzf.vim")
+        so /usr/local/opt/fzf/plugin/fzf.vim
+    " set rtp+=/usr/local/opt/fzf/plugin/
+    endif
+
     call vundle#begin()
 
     Bundle 'VundleVim/Vundle.vim'
@@ -160,6 +169,12 @@ endfunction
     " I use this instead of FZF or Ctrl-P
     Bundle 'Shougo/denite.nvim'
     Bundle 'Shougo/neomru.vim'
+    Bundle 'roxma/nvim-yarp'
+    Bundle 'roxma/vim-hug-neovim-rpc'
+
+    " Trying to use fzf cz it looks awesome.
+    Plugin 'junegunn/fzf.vim'
+
 
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
@@ -191,7 +206,8 @@ endfunction
 
     " Replace syntastic with ale
     " Bundle 'scrooloose/syntastic'
-    Plugin 'w0rp/ale'
+    " disable Ale for now as it's mucking my table of contents.
+    " Plugin 'w0rp/ale'
     Plugin 'prettier/vim-prettier'
 
     " Ale for prose requires
@@ -199,16 +215,16 @@ endfunction
     " prose-lint
     " vale
     Plugin 'danro/rename.vim'
-
     " Plugin 'easymotion/vim-easymotion'
     " All of your Plugins must be added before the following line
 
     Plugin 'PolyCement/vim-tweego'
+
+
 call vundle#end()            " required
 
 
 " Setup Denite
-    :cab ls :Denite buffer
     :nnoremap <C-P> :Denite file buffer file_mru directory_mru<cr>
     " Open file/directory recursive (can be slow)
     :cab FR :Denite -start-insert file file_mru directory_mru file_rec
@@ -216,8 +232,23 @@ call vundle#end()            " required
     call denite#custom#map('insert', '<C-n>', '<denite:move_to_next_line>', 'noremap')
     call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
     call denite#custom#map('insert', '<C-p>', '<denite:move_to_previous_line>', 'noremap')
-
 " End Setup
+
+" Setup Fzf
+    :cab ls :Buffers<CR>
+    :nmap g* :exec ":Lines '" expand('<cword>')<CR>
+" End Setup
+
+" Setup English fixes
+    " Can fix with Sed
+    " sed '/ teh / the /g' *
+     :iab teh the
+     :iab zach Zach
+     :iab amelia Amelia
+     :iab tori Tori
+     :iab ammon Ammon
+" End Setup
+
 
 filetype plugin indent on    " required
 
@@ -331,8 +362,6 @@ let g:vim_markdown_new_list_item_indent = 0
 let g:vim_markdown_folding_level = 4
 let g:vim_markdown_folding_level = 4
 let g:vmt_list_item_char='-'
-let g:vmt_fence_text = 'TOC'
-let g:vmt_fence_closing_text = '/TOC'
 
 " Always enable softpencil
 
@@ -374,6 +403,9 @@ function! FixEscapeKey()
 endfunction
 
 
+
+
+
 let g:ale_fixers = {
             \   'javascript': ['prettier'],
             \   'css': ['prettier'],
@@ -386,5 +418,16 @@ command! IGDaily :py3 MakeDailyPage()
 command! IGYesterday :py3 MakeDailyPage(-1)
 command! IGWeekly :py3 MakeWeeklyReport()
 command! Sodot :so ~/.vimrc
+
+" I never use ToHTML and it makes it harder to use Toc
+" This is loaded in the html plugin, which I'm disabling.
+" search for the below string to find it.
+let g:loaded_2html_plugin = 'vim8.1_v1'
+" leaving the below in for an example of one time load only
+if  !exists ("g:execute_on_first_load_only")
+    " Can only delete it once
+    let  g:execute_on_first_load_only = "1"
+    ":delc TOhtml
+endif
 
 " vim:foldmethod=indent:
