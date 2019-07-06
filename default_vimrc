@@ -304,6 +304,11 @@ func! MarkDownWordToLink()
     normal yiwi[ea](http://www.pa.com)
 endfunc
 
+func! MarkDownWordToGoogleLucky()
+    " cool yiw takes the word, and jumps you to the beginning of it.
+    normal yiwi[ea](http://www.google.com/search?btnI&q=)hp
+endfunc
+
 func! JsToSingleLineClipBoard()
     " Creating a bookmarklet requires all JS to be on a single line.
     " Make it a single line and put it on global clipboard to paste into JS
