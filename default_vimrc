@@ -167,8 +167,8 @@ endfunction
     Bundle 'scrooloose/nerdcommenter'
 
     " I use this instead of FZF or Ctrl-P
-    Bundle 'Shougo/denite.nvim'
-    Bundle 'Shougo/neomru.vim'
+    "Bundle 'Shougo/denite.nvim'
+    "Bundle 'Shougo/neomru.vim'
     Bundle 'roxma/nvim-yarp'
     Bundle 'roxma/vim-hug-neovim-rpc'
 
@@ -224,15 +224,7 @@ endfunction
 call vundle#end()            " required
 
 
-" Setup Denite
-    :nnoremap <C-P> :Denite file buffer file_mru directory_mru<cr>
-    " Open file/directory recursive (can be slow)
-    :cab FR :Denite -start-insert file file_mru directory_mru file_rec
-    call denite#custom#map('insert', '<C-j>', '<denite:move_to_next_line>', 'noremap')
-    call denite#custom#map('insert', '<C-n>', '<denite:move_to_next_line>', 'noremap')
-    call denite#custom#map('insert', '<C-k>', '<denite:move_to_previous_line>', 'noremap')
-    call denite#custom#map('insert', '<C-p>', '<denite:move_to_previous_line>', 'noremap')
-" End Setup
+:nnoremap <C-P> :History<cr>
 
 " Setup Fzf
     :cab ls :Buffers<CR>
@@ -241,9 +233,14 @@ call vundle#end()            " required
 
 " Setup English fixes
     " Can fix with Sed
-    " sed '/ teh / the /g' *
+    " sed -i -e 's/ teh / the /g' *
      :iab teh the
+     :iab hte the
+     :iab taht that
+     :iab ot to
+     :iab hte the
      :iab zach Zach
+     :iab alot a lot
      :iab amelia Amelia
      :iab tori Tori
      :iab ammon Ammon
@@ -423,6 +420,7 @@ command! IGDaily :py3 MakeDailyPage()
 command! IGYesterday :py3 MakeDailyPage(-1)
 command! IGWeekly :py3 MakeWeeklyReport()
 command! Sodot :so ~/.vimrc
+command! Soed :n ~/settings/default_vimrc
 
 " I never use ToHTML and it makes it harder to use Toc
 " This is loaded in the html plugin, which I'm disabling.
