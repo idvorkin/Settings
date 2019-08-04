@@ -158,3 +158,4 @@ plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux)
 
 # Cool command to run through all directories and pull them
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
+alias weather='http http://wttr.in/'
