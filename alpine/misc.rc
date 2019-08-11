@@ -1,0 +1,17 @@
+# Other things
+
+Manually install
+
+z
+oh-so-diff-fancy
+
+
+# stuff to stick into the .zsh file
+
+set -o vi
+autoload -U colors && colors
+autoload -U promptinit
+promptinit
+PS1="[iPad]%{$fg[blue]%}%~%{$reset_color%}[%!]>"
+. ~/gits/z/z.sh
+PATH+=:~/.local/bin
