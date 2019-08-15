@@ -37,6 +37,7 @@ yasm \
 ffmpeg \
 imagemagick \
 optipng \
+tig \
 yarn "
 
 echo $brew_packages

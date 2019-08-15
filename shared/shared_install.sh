@@ -145,6 +145,9 @@ brew install rbenv
 gem install --user-install bundler jekyll
 cd
 
+# Install top replacement
+pip3 install glances
+
 
 # when locales get screwed up
 export LANGUAGE=en_US.UTF-8
@@ -154,7 +157,7 @@ export PATH=/usr/local/opt/ruby/bin:$PATH
 
 
 ## Decent zsh plugins
-plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux)
+plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux fzf)
 
 # Cool command to run through all directories and pull them
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
