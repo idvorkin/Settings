@@ -38,6 +38,7 @@ ffmpeg \
 imagemagick \
 optipng \
 tig \
+litecli \
 yarn "
 
 echo $brew_packages
