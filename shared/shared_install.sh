@@ -28,6 +28,14 @@ ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc
 ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
 ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 
+
+# link git aliases
+ln -s -f ~/gits/techdiary ~/ghtd
+ln -s -f ~/gits/jupyter ~/ghju
+ln -s -f ~/gits/igor2/750words ~/750
+ln -s -f ~/gits/idvorkin.github.io ~/blog
+
+
 #oh my zsh setup - from not fish.
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 
@@ -46,7 +54,7 @@ brew install ctags --HEAD
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # setup tmuxp
-pip3 install --user tmuxp pipenv
+pip3 install tmuxp pipenv
 # tmuxp alias ~/Library/Python/3.6/bin/tmuxp
 
 # Add links to linux brew
