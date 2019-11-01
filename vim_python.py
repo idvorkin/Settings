@@ -1,6 +1,5 @@
-import vim
 from datetime import datetime, timedelta
-from os import path
+from os import path, system
 
 
 def pathBasedAtIgor2(filepath):
@@ -22,26 +21,32 @@ def MakeTemplatePage(date, directory, template_name):
             with open(fileName, "w") as fileWrite:
                 fileWrite.write(content)
 
-    #print(f"output: {fileName}")
-    #print(f"template: {templateFileName}")
-    #print(fileName)
+    # print(f"output: {fileName}")
+    # print(f"template: {templateFileName}")
+    # print(fileName)
 
-    vim.command(f"!pushd {pathBasedAtIgor2(directory)} && git fr && popd")
-    vim.command("next " + fileName)
-    vim.command("lcd %:p:h")  # Goto current Directory
-    vim.command("9999")  # Goto last line.
-    return
+    system(f"pushd {pathBasedAtIgor2(directory)} && git fr && popd")
+    try:
+        import vim
+        vim.command("next " + fileName)
+        vim.command("lcd %:p:h")  # Goto current Directory
+        vim.command("9999")  # Goto last line.
+    except ImportError:
+        print("VIM not found")
+    return fileName, directory
 
 
 def NowPST():
     # groan no timzone in standard library so fake it - subtract nope, don't want to
-    # subtract as it won't work for non standard times! Cripes - how annoying.
-    # return datetime.now().astimezone(timezone("US/Pacific"))
     return datetime.now()
 
 
 def MakeDailyPage(daysoffset=0):
-    MakeTemplatePage(NowPST()+timedelta(days=daysoffset), "750words", "daily_template")
+    return MakeTemplatePage(NowPST()+timedelta(days=daysoffset), "750words", "daily_template")
+
+
+def WCDailyPage():
+    system(f'wc -w {MakeDailyPage()[0]}')
 
 
 def MakeWeeklyReport():
@@ -49,4 +54,4 @@ def MakeWeeklyReport():
     startOfWeek = now - timedelta(days=now.weekday())
 
     # Make to sart of week.
-    MakeTemplatePage(startOfWeek, "week_report", "week_template")
+    return MakeTemplatePage(startOfWeek, "week_report", "week_template")
