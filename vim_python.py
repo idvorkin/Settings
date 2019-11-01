@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta
-from os import path, system
+from os import path, system, chdir
+import sys
+
+sys.path.append(f"{path.expanduser('~')}/gits/settings")
 
 
 def pathBasedAtIgor2(filepath):
@@ -25,7 +28,8 @@ def MakeTemplatePage(date, directory, template_name):
     # print(f"template: {templateFileName}")
     # print(fileName)
 
-    system(f"pushd {pathBasedAtIgor2(directory)} && git fr && popd")
+    chdir(f"{pathBasedAtIgor2(directory)}")
+    system(f"git fr && popd")
     try:
         import vim
         vim.command("next " + fileName)
