@@ -29,7 +29,7 @@ def MakeTemplatePage(date, directory, template_name):
     # print(fileName)
 
     chdir(f"{pathBasedAtIgor2(directory)}")
-    system(f"git fr && popd")
+    system(f"git fr")
     try:
         import vim
         vim.command("next " + fileName)
@@ -52,6 +52,15 @@ def MakeDailyPage(daysoffset=0):
 def WCDailyPage():
     system(f'wc -w {MakeDailyPage()[0]}')
 
+def GitCommitDailyPage():
+    # f = "/".join(MakeDailyPage()[0].split("/")[-2::])
+    f = MakeDailyPage()[0]
+    git_cmd = (f'git add {f}')
+    print (git_cmd)
+    system(git_cmd)
+    git_cmd = (f'git commit {f} -m 750')
+    print (f"GIT: {git_cmd} EOL")
+    system(git_cmd)
 
 def MakeWeeklyReport():
     now = NowPST()
