@@ -9,24 +9,19 @@ alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCom
 unalias ddg
 function ddg() {
     pushd ~/gits/linqpadsnippets/python
-    python3 dump_grateful.py grateful --days $1
-    popd
-}
-function dda() {
-    pushd ~/gits/linqpadsnippets/python
-    python3 dump_grateful.py awesome --days $1
+    python3 dump_grateful.py grateful $1
     popd
 }
 
 function ddt() {
     pushd ~/gits/linqpadsnippets/python
-    python3 dump_grateful.py todo --days $1
+    python3 dump_grateful.py todo $1
     popd
 }
 
 function dda() {
     pushd ~/gits/linqpadsnippets/python
-    python3 dump_grateful.py --awesome $1
+    python3 dump_grateful.py awesome $1
     popd
 }
 
