@@ -234,6 +234,7 @@ call vundle#end()            " required
 " Setup English fixes
     " Can fix with Sed
     " sed -i -e 's/ teh / the /g' *
+    " grab these from .aspell.en.prepl
      :iab teh the
      :iab hte the
      :iab taht that
@@ -244,6 +245,17 @@ call vundle#end()            " required
      :iab amelia Amelia
      :iab tori Tori
      :iab ammon Ammon
+     :iab adn and
+     :iab cna can
+     :iab dont don't
+     :iab   fi if
+     :iab   fo of
+     :iab iwll will
+     :iab wiht with
+    :iab htgorugh through
+    :iab htis this
+    :iab htourhg through
+
 " End Setup
 
 
@@ -419,6 +431,7 @@ let g:ale_fixers = {
 command! IGDaily :py3 MakeDailyPage()
 command! IGYesterday :py3 MakeDailyPage(-1)
 command! IGWeekly :py3 MakeWeeklyReport()
+command! Ddt :py3 Ddt(2)
 command! Sodot :so ~/.vimrc
 command! Soed :n ~/settings/default_vimrc
 
