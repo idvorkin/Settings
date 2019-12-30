@@ -434,6 +434,7 @@ command! IGWeekly :py3 MakeWeeklyReport()
 command! Ddt :py3 Ddt(2)
 command! Sodot :so ~/.vimrc
 command! Soed :n ~/settings/default_vimrc
+command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 2
 
 " I never use ToHTML and it makes it harder to use Toc
 " This is loaded in the html plugin, which I'm disabling.
