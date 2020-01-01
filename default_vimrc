@@ -143,7 +143,6 @@ endfunction
     " :TOC - Generate a toc sidebar
     " ]] Next Header
     " [[ Prev Header
-    Bundle 'tpope/vim-liquid'
     Bundle 'parkr/vim-jekyll'
     Bundle 'christoomey/vim-quicklink'
 
