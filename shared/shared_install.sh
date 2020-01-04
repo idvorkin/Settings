@@ -54,7 +54,7 @@ brew install ctags --HEAD
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # setup tmuxp
-pip3 install tmuxp pipenv
+pip3 install tmuxp pipenv pytz
 # tmuxp alias ~/Library/Python/3.6/bin/tmuxp
 
 # Add links to linux brew
