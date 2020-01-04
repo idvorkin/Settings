@@ -29,7 +29,6 @@ def MakeTemplatePage(date, directory, template_name):
     # print(fileName)
 
     chdir(f"{pathBasedAtIgor2(directory)}")
-    system(f"git fr")
     try:
         import vim
         vim.command("next " + fileName)
@@ -41,8 +40,9 @@ def MakeTemplatePage(date, directory, template_name):
 
 
 def NowPST():
-    # groan no timzone in standard library so fake it - subtract nope, don't want to
-    return datetime.now()
+    # groan no timzone in standard library - make sure to install pytz.
+    from pytz import timezone
+    return datetime.now().astimezone(timezone('US/Pacific'))
 
 
 def MakeDailyPage(daysoffset=0):
