@@ -18,8 +18,7 @@ function ddg() {
 }
 
 function ddt() {
-    pushd ~/gits/linqpadsnippets/python
-    python3 dump_grateful.py todo $1
+    python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo $1
     popd
 }
 
