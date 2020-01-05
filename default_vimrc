@@ -141,6 +141,7 @@ endfunction
 
     Bundle 'plasticboy/vim-markdown'
     " :TOC - Generate a toc sidebar
+    " :VSize - Resize to 20
     " ]] Next Header
     " [[ Prev Header
     Bundle 'parkr/vim-jekyll'
@@ -373,14 +374,14 @@ let g:vim_markdown_frontmatter = 1
 set conceallevel=2
 let g:vim_markdown_new_list_item_indent = 0
 let g:vim_markdown_folding_level = 4
-let g:vim_markdown_folding_level = 4
 let g:vmt_list_item_char='-'
 
 " Always enable softpencil
 
 autocmd BufEnter *md :exe ":SoftPencil"
 autocmd BufEnter *md :exe ":Limelight"
-autocmd BufLeave *md :exe ":Limelight!"
+ autocmd BufLeave *md :exe ":Limelight!"
+" let g:vim_markdown_folding_disabled = 1
 
 " Break lines on word boudnaries only
 set linebreak
@@ -433,6 +434,7 @@ command! IGWeekly :py3 MakeWeeklyReport()
 command! Ddt :py3 Ddt(2)
 command! Sodot :so ~/.vimrc
 command! Soed :n ~/settings/default_vimrc
+command! VSize :vert resize 20
 command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 2
 
 " I never use ToHTML and it makes it harder to use Toc
