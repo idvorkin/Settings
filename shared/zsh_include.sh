@@ -12,20 +12,15 @@ alias tmuxp="~/.local/bin/tmuxp"
 
 unalias ddg
 function ddg() {
-    pushd ~/gits/linqpadsnippets/python
-    python3 dump_grateful.py grateful $1
-    popd
+    python3 ~/gits/linqpadsnippets/python/dump_grateful.py grateful $1
 }
 
 function ddt() {
     python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo $1
-    popd
 }
 
 function dda() {
-    pushd ~/gits/linqpadsnippets/python
-    python3 dump_grateful.py awesome $1
-    popd
+    python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome $1
 }
 
 
