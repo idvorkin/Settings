@@ -455,4 +455,7 @@ if  !exists ("g:execute_on_first_load_only")
     ":delc TOhtml
 endif
 
+"Auto spell check in aspell.
+:cab aspell :w!<CR>:!aspell check %<CR>:e! %<CR>
+
 " vim:foldmethod=indent:
