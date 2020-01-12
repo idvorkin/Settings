@@ -105,6 +105,11 @@ endfunction
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'mattn/webapi-vim'
     Bundle 'tpope/vim-fugitive'
+    Bundle 'aserebryakov/vim-todo-lists'
+    " Open todo file.
+    let g:VimTodoListsMoveItems = 0
+    let g:VimTodoListsDatesEnabled = 1
+    let g:VimTodoListsDatesFormat = "%a %b %d, %Y"
 
     "
     " Writing tools
