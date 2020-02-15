@@ -4,7 +4,7 @@ windows:
   - window_name: jekyll blog
     start_directory: ~/gits/idvorkin.github.io
     panes:
-        - ./jekyll.sh serve
+        - ./jekyll.sh serve --livereload -I
   - window_name: techdiary grip
     start_directory: ~/gits/techdiary
     panes:
