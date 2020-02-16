@@ -2,6 +2,18 @@ Host lightsail
     HostName 54.190.183.242
     User ec2-user
 
+Host lightsail_forward
+    HostName 54.190.183.242
+    User ec2-user
+    # Juypter
+    LocalForward 8888 localhost:8888
+    # Jekyll
+    LocalForward 4000 localhost:4000
+    # Grip
+    LocalForward 6419 localhost:6419
+    # Jekyll live reload
+    LocalForward 35729 localhost:35729
+
 Host devbox
     HostName idvorkin.aka.corp.amazon.com
     User idvorkin
