@@ -251,6 +251,7 @@ call vundle#end()            " required
      :iab tori Tori
      :iab ammon Ammon
      :iab adn and
+     :iab nad and
      :iab cna can
      :iab dont don't
      :iab   fi if
@@ -443,6 +444,8 @@ command! Sodot :so ~/.vimrc
 command! Soed :n ~/settings/default_vimrc
 command! VSize :vert resize 20
 command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 2
+cab FiBl lcd ~/gits/idvorkin.github.io/<CR>:GFiles<CR>
+:cab aspell :w!<CR>:!aspell check %<CR>:e! %<CR>
 
 " I never use ToHTML and it makes it harder to use Toc
 " This is loaded in the html plugin, which I'm disabling.
