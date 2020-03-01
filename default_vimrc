@@ -433,6 +433,8 @@ let g:ale_fixers = {
             \}
 
 " let g:ale_fix_on_save = 1
+" Scripting reference
+" https://devhints.io/vimscript
 :py3file ~/settings/vim_python.py
 command! IGDaily :py3 MakeDailyPage()
 command! IGYesterday :py3 MakeDailyPage(-1)
@@ -443,8 +445,10 @@ cab Dda !python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome
 command! Sodot :so ~/.vimrc
 command! Soed :n ~/settings/default_vimrc
 command! VSize :vert resize 20
-command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 2
-cab FiBl lcd ~/gits/idvorkin.github.io/<CR>:GFiles<CR>
+command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 1
+command! IgTD :lcd ~/gits/techdiary/<bar>:GFiles
+command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
+command! IgBlog :lcd ~/gits/idvorkin.github.io/<bar>:GFiles
 :cab aspell :w!<CR>:!aspell check %<CR>:e! %<CR>
 
 " I never use ToHTML and it makes it harder to use Toc
