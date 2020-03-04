@@ -449,7 +449,10 @@ command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 
 command! IgTD :lcd ~/gits/techdiary/<bar>:GFiles
 command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
 command! IgBlog :lcd ~/gits/idvorkin.github.io/<bar>:GFiles
-cab DdC :lcd %:p:h<CR>:Gwrite<CR>:!git commit %:p -m "Checkpoint %"
+
+" Common work flow: Switch to current directory, git write, commit and push.
+cab DdC :lcd %:p:h<CR>:Gwrite<CR>:!git commit %:p -m "Checkpoint %"<CR>:!git
+push<CR>
 :cab aspell :w!<CR>:!aspell check %<CR>:e! %<CR>
 
 " I never use ToHTML and it makes it harder to use Toc
