@@ -451,7 +451,7 @@ command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
 command! IgBlog :lcd ~/gits/idvorkin.github.io/<bar>:GFiles
 
 " Common work flow: Switch to current directory, git write, commit and push.
-cab DdC :lcd %:p:h<CR>:Gwrite<CR>:!git commit %:p -m "Checkpoint %"<CR>:!git push<CR>
+cab DdC :lcd %:p:h<CR>:Gwrite<CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
 
 :cab aspell :w!<CR>:!aspell check %<CR>:e! %<CR>
 
