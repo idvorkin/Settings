@@ -311,8 +311,9 @@ endfunc
 "   add these only to markdown/html; checkboxopen, checkboxdone
 "   Perhaps be clever and alternate between open and done like in OneNote via C-1
 "
-:iab _mc_ [ ]
-:iab _mcd_ [X]
+:iab mdtd [ ]
+:iab mdtodo [ ]
+:iab mddone [X]
 
 func! MarkDownWordToLink()
     " cool yiw takes the word, and jumps you to the beginning of it.
@@ -445,7 +446,7 @@ cab Dda !python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome
 command! Sodot :so ~/.vimrc
 command! Soed :n ~/settings/default_vimrc
 command! VSize :vert resize 20
-command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 1
+command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 2
 command! IgTD :lcd ~/gits/techdiary/<bar>:GFiles
 command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
 command! IgBlog :lcd ~/gits/idvorkin.github.io/<bar>:GFiles

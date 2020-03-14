@@ -17,6 +17,7 @@ glances \
 graphviz \
 grip \
 htop \
+hub \
 httpie \
 imagemagick \
 jq \
