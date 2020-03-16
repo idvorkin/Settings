@@ -3,6 +3,8 @@
 #    update cron with crontab -e
 #     Run cron command every 4 minutes
 #    */4 * * * * ~/settings/shared/cron_git_sync.sh >>~/tmp/cronrun 2>&1
+#    More luck with the following explicit line
+#    */4 * * * * /bin/zsh /home/idvorkin/settings/shared/cron_git_sync.sh >>~/tmp/cronrun 2>&1
 #  copied from zsh_include
 echo running
 date
