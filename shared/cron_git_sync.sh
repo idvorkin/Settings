@@ -1,7 +1,9 @@
 #!/home/linuxbrew/.linuxbrew/bin/zsh
+#  setup
+#    update cron with crontab -e
+#     Run cron command every 4 minutes
+#    */4 * * * * ~/settings/shared/cron_git_sync.sh >>~/tmp/cronrun 2>&1
 #  copied from zsh_include
-#  Run cron command every 4 minutes
-# */4 * * * * ~/settings/shared/cron_git_sync.sh >>~/tmp/cronrun 2>&1
 echo running
 date
 cd ~/gits/
