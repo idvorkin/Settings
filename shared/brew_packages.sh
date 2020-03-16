@@ -42,8 +42,9 @@ yasm \
 zsh \
 yarn "
 
-echo $brew_packages
-brew install $brew_packages
+# https://unix.stackexchange.com/questions/7558/execute-a-command-once-per-line-of-piped-input
+# Ahh magic. xargs takes it's input execute command once per line
+echo $brew_packages | xargs -n1 brew install
 
 # packages I want that don't exist
 # brew install saws svg-term
