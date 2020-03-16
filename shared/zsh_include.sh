@@ -1,5 +1,6 @@
 ##
 #
+export EDITOR=vim
 export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH
 [ -f ~/gits/z/z.sh ]  && source ~/gits/z/z.sh
 PATH+=:~/.local/bin
