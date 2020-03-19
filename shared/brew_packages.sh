@@ -38,6 +38,8 @@ s3cmd \
 tig \
 tmux \
 wget \
+w3m \
+docker \
 yasm \
 zsh \
 yarn "
