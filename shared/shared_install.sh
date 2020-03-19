@@ -82,7 +82,8 @@ pip3 install seashells
 # git clone <director> --config core.autocrlf=true
 
 # ensure git can be shared between linux and windows
-git config --global core.autocrlf true
+
+# git config --global core.autocrlf true
 git config --global receive.denyCurrentBranch updateInstead
 
 # Config git-so-fancy
