@@ -1,9 +1,13 @@
 Host lightsail
-    HostName 54.190.183.242
+    HostName 34.217.43.199
     User ec2-user
 
+Host bedrock
+    HostName 34.215.217.225
+    User ubuntu
+
 Host lightsail_forward
-    HostName 54.190.183.242
+    HostName 34.217.43.199
     User ec2-user
     # Juypter
     LocalForward 8888 localhost:8888
