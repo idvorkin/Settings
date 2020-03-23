@@ -6,9 +6,6 @@ Host lightsail
     HostName 34.217.43.199
     User ec2-user
 
-Host bedrock
-    HostName 34.215.217.225
-    User ubuntu
 
 Host lightsail_forward
     HostName 34.217.43.199
@@ -22,6 +19,7 @@ Host lightsail_forward
     # Jekyll live reload
     LocalForward 35729 localhost:35729
 
-Host devbox
-    HostName idvorkin.aka.corp.amazon.com
-    User idvorkin
+Host bedrock
+    HostName 34.215.217.225
+    User ubuntu
+
