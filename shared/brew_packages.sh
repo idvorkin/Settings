@@ -41,6 +41,7 @@ wget \
 w3m \
 docker \
 yasm \
+zip \
 zsh \
 yarn "
 
