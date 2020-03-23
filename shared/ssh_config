@@ -1,5 +1,9 @@
+# Don't forget you need to change perms
+# chmod 600 ~/.ssh/config
+
+
 Host lightsail
-    HostName 34.217.43.199
+    HostName  34.217.43.199
     User ec2-user
 
 Host bedrock
