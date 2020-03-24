@@ -235,6 +235,15 @@ call vundle#end()            " required
 " Setup Fzf
     :cab ls :Buffers<CR>
     :nmap g* :exec ":Lines '" expand('<cword>')<CR>
+
+    " Ahh, FZF, how complex you are:
+
+    " using fd as the source for fzf
+    command! -bang -complete=dir -nargs=* FF
+    \ call fzf#run(fzf#wrap('ff', {'source': 'fd . ~/gits', 'dir': <q-args>}, <bang>0))
+
+    :cab ff FF<CR>
+
 " End Setup
 
 " Setup English fixes
@@ -451,6 +460,7 @@ command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 
 command! IgTD :lcd ~/gits/techdiary/<bar>:GFiles
 command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
 command! IgBlog :lcd ~/gits/idvorkin.github.io/<bar>:GFiles
+
 
 " Common work flow: Switch to current directory, git write, commit and push.
 cab DdC :lcd %:p:h<CR>:Gwrite<CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
