@@ -23,3 +23,8 @@ Host bedrock
     HostName 34.215.217.225
     User ubuntu
 
+Host bedrock-4
+    HostName mc.zacookiegames.com
+    User ubuntu
+
+
