@@ -241,7 +241,7 @@ call vundle#end()            " required
 
     " using fd as the source for fzf
     command! -bang -complete=dir -nargs=* FF
-    \ call fzf#run(fzf#wrap('ff', {'source': 'fd . ~/gits', 'dir': <q-args>}, <bang>0))
+    \ call fzf#run(fzf#wrap('ff', {'source': 'fd . ~/gits', 'dir': <q-args>,'sink':'e +Gcd'}, <bang>0))
 
     :cab ff FF<CR>
 " Some FZF  help
