@@ -103,6 +103,7 @@ endfunction
     call vundle#begin()
 
     Bundle 'VundleVim/Vundle.vim'
+    Bundle 'webdevel/tabulous'
     Bundle 'mattn/webapi-vim'
     Bundle 'tpope/vim-fugitive'
     Bundle 'aserebryakov/vim-todo-lists'
