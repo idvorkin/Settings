@@ -231,6 +231,7 @@ call vundle#end()            " required
 
 
 :nnoremap <C-P> :History<cr>
+:nnoremap <C-O> :FF<cr>
 
 " Setup Fzf
     :cab ls :Buffers<CR>
@@ -243,6 +244,13 @@ call vundle#end()            " required
     \ call fzf#run(fzf#wrap('ff', {'source': 'fd . ~/gits', 'dir': <q-args>}, <bang>0))
 
     :cab ff FF<CR>
+" Some FZF  help
+" typing = fuzzy match
+" 'actual match
+" $end
+" ^start
+" | or :w
+"
 
 " End Setup
 
