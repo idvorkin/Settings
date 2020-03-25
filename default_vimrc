@@ -498,4 +498,7 @@ endif
 "Auto spell check in aspell.
 :cab aspell :w!<CR>:!aspell check %<CR>:e! %<CR>
 
+" I always want the local cd.
+:cab Gcd  :Glcd
+
 " vim:foldmethod=indent:
