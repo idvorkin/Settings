@@ -503,6 +503,6 @@ endif
 
 "  Add alias to regenerate tags for this repo.
 "  Using FD honors the .gitignore
-:cab GTag  :Glcd<CR>!ctags `fd md$`<CR>
+:cab GTag  :Glcd<CR>:!ctags `fd md$`
 
 " vim:foldmethod=indent:
