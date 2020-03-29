@@ -501,4 +501,8 @@ endif
 " I always want the local cd.
 :cab Gcd  :Glcd
 
+"  Add alias to regenerate tags for this repo.
+"  Using FD honors the .gitignore
+:cab GTag  :Glcd<CR>!ctags `fd md$`<CR>
+
 " vim:foldmethod=indent:
