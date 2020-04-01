@@ -20,10 +20,9 @@ syntax  on
 
 set tags=tags;/
 
-" TPS crap.
-" find number in a line of xml.
-:cab only_number %s;.*>\(\d\+.\d\+\)<.*;\1;g
-:cab to_excel  %s;\( \\|,\);\t;g
+
+" OMG - How to support italics in vim in TMUX
+" https://rsapkf.netlify.com/blog/enabling-italics-vim-tmux
 
 function! FixCallStacks()
     :%s;\[NLN\];\r;g
