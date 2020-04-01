@@ -2,12 +2,12 @@
 # chmod 600 ~/.ssh/config
 
 
-Host lightsail
+Host lightsail_no_forward
     HostName 34.217.43.199
     User ec2-user
 
 
-Host lightsail_forward
+Host lightsail
     HostName 34.217.43.199
     User ec2-user
     # Juypter
@@ -18,10 +18,6 @@ Host lightsail_forward
     LocalForward 6419 localhost:6419
     # Jekyll live reload
     LocalForward 35729 localhost:35729
-
-Host bedrock
-    HostName 34.215.217.225
-    User ubuntu
 
 Host bedrock-4
     HostName mc.zacookiegames.com
