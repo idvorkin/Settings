@@ -1,6 +1,9 @@
 
 // To view the default settings, hold "alt" while clicking on the "Settings" button.
 // For documentation on these settings, see: https://aka.ms/terminal-documentation
+// The settings are stored in the file $env:LocalAppData\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\profiles.json.
+
+
 
 {
     "$schema": "https://aka.ms/terminal-profiles-schema",
