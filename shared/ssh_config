@@ -3,12 +3,12 @@
 
 
 Host lightsail_no_forward
-    HostName 34.217.43.199
+    HostName shell.idvork.in
     User ec2-user
 
 
 Host lightsail
-    HostName 34.217.43.199
+    HostName shell.idvork.in
     User ec2-user
     # Juypter
     LocalForward 8888 localhost:8888
