@@ -24,6 +24,25 @@ function dda() {
     python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome $1
 }
 
+function alias_if_exists() {
+    # $1 - alias
+    # $2 - replacement command
+    which $2 &> /dev/null
+    if [[ $? -eq 0 ]] ; then
+        echo alias-set
+        alias $1=$2
+    else
+        echo "program $2 not found"
+
+    fi
+}
+
+# Set alias that are always better
+alias_if_exists cat bat
+alias_if_exists ls exa
+alias_if_exists top htop
+
+
 
 set -o vi
 # shared zsh settings to be sourced
