@@ -41,6 +41,7 @@ function alias_if_exists() {
 alias_if_exists cat bat
 alias_if_exists ls exa
 alias_if_exists top htop
+alias_if_exists tig lazygit
 
 
 
