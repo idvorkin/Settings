@@ -29,7 +29,6 @@ function alias_if_exists() {
     # $2 - replacement command
     which $2 &> /dev/null
     if [[ $? -eq 0 ]] ; then
-        echo alias-set
         alias $1=$2
     else
         echo "program $2 not found"
@@ -42,6 +41,8 @@ alias_if_exists cat bat
 alias_if_exists ls exa
 alias_if_exists top htop
 alias_if_exists tig lazygit
+
+alias weather="curl wttr.in/seattle"
 
 
 
