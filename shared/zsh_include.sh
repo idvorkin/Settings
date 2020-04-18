@@ -3,6 +3,10 @@
 export EDITOR=vim
 export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH
 [ -f ~/gits/z/z.sh ]  && source ~/gits/z/z.sh
+
+# C-T search Files Fuzzy
+# C-R Search History fuzzy
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 PATH+=:~/.local/bin
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 alias gpushall='for git_directory in * ; echo $git_directory && git -C $git_directory push'
