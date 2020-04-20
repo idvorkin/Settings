@@ -124,6 +124,10 @@ endfunction
     Bundle 'inkarkat/vim-spellcheck'
 
     Bundle 'leafgarland/typescript-vim'
+
+    " :IndentGuidesEnable
+    " :IndentGuidesDisable
+    " :IndentGuidesToggle
     Bundle 'nathanaelkane/vim-indent-guides'
 
     Bundle 'mhinz/vim-startify'
