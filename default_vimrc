@@ -504,4 +504,14 @@ endif
 "  Using FD honors the .gitignore
 :cab GTag  :Glcd<CR>:!ctags `fd md$`
 
+
+" Copied from https://gist.github.com/jackkinsella/aa7374a6832cca8a09eadc3434a33c24`
+" Automatically reload file when underlying files change (e.g. git)
+set autoread
+
+
+"By default, swap out all instances in a line during substitutions
+set gdefault
+
+"
 " vim:foldmethod=indent:
