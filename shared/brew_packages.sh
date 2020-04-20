@@ -31,6 +31,7 @@ npm \
 openssl \
 optipng \
 pipenv \
+pup \
 python3 \
 ranger \
 rg \
