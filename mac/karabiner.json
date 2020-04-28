@@ -230,7 +230,7 @@
                     }]
                 },
                 {
-                    "description": "CapLock to Command If Not Terminal",
+                    "description": "Not Terminal: CapLock to Command",
                     "manipulators": [{
                         "conditions": [{
                             "bundle_identifiers": [
@@ -246,7 +246,7 @@
                             "key_code": "caps_lock"
                         },
                         "to": [{
-                            "key_code": "left_control"
+                            "key_code": "left_command"
                         }],
                         "type": "basic"
                     }]
