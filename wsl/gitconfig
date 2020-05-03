@@ -1,6 +1,6 @@
 
 [core]
-    pager = delta --plus-color="#012800" --minus-color="#340001" --theme='Monokai Extended'
+    pager = delta  --theme='zenburn'
 
 [interactive]
     diffFilter = delta --color-only
