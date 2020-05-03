@@ -13,6 +13,7 @@ fselect \
 fzf \
 git \
 git-extras \
+git-delta \
 glances \
 graphviz \
 grip \
