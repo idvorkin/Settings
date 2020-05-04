@@ -91,12 +91,17 @@ endfunction
     set rtp+=~/vimfiles/bundle/Vundle
     set rtp+=~/.vim/bundle/Vundle.vim
     set rtp+=/home/linuxbrew/.linuxbrew/opt/fzf
+    set rtp+=/home/idvorkin/homebrew/opt/fzf
     set rtp+=/home/brew/.brew/opt/fzf
 
     " Add osx, you need to source from here -- TBD why.
     if filereadable("/usr/local/opt/fzf/plugin/fzf.vim")
         so /usr/local/opt/fzf/plugin/fzf.vim
     " set rtp+=/usr/local/opt/fzf/plugin/
+    endif
+    if filereadable("~/homebrew/opt/fzf/plugin/fzf.vim")
+        so ~/homebrew/opt/fzf/plugin/fzf.vim
+        " set rtp+=/usr/local/opt/fzf/plugin/
     endif
 
     call vundle#begin()
