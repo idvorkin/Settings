@@ -126,7 +126,9 @@ git config --global alias.logc log master..
 git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate"
 
 # share credentila manager between WSL and windows desktop
-git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager.exe"
+# git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager.exe"
+# https://git-scm.com/book/en/v2/Git-Tools-Credential-Storage
+# git config --global credential.helper 'store --file ~/.my-credentials'
 
 
 
