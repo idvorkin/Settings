@@ -47,11 +47,13 @@ alias_if_exists top htop
 alias_if_exists tig lazygit
 
 alias weather="curl wttr.in/seattle"
+alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 
 
 
 set -o vi
-# shared zsh settings to be sourced
+echo "end"
+#  shared zsh settings to be sourced
 # TMUX attach
 #
 # if [ -z "$TMUX" ]; then
