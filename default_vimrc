@@ -110,6 +110,9 @@ endfunction
     Bundle 'webdevel/tabulous'
     Bundle 'mattn/webapi-vim'
     Bundle 'tpope/vim-fugitive'
+
+    " Bundle for Mercurial
+    Bundle 'ludovicchabant/vim-lawrencium'
     Bundle 'aserebryakov/vim-todo-lists'
     " Open todo file.
     let g:VimTodoListsMoveItems = 0
