@@ -14,6 +14,16 @@ git config --global user.email "idvorkin@gmail.com"
 git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 
+# Personal respoistories
+git clone  https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
+git clone https://github.com/idvorkin/onom
+git clone https://github.com/idvorkin/Vim-Keybindings-For-Onenote
+git clone https://github.com/idvorkin/LinqpadSnippets
+git clone https://github.com/idvorkin/linqpadDataExplore
+git clone https://github.com/idvorkin/idvorkin.github.io
+git clone https://github.com/idvorkin/jupyter
+git clone https://idvorkin@bitbucket.org/idvorkin/igor2.git
+
 ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
 ln -s -f ~/settings/default_vimrc ~/.vimrc
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc
