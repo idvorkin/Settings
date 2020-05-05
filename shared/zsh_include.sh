@@ -14,9 +14,10 @@ function eval_w_param_if_exists() {
     [ -f $1 ] && eval $($1 $2)
 }
 
+# TODO: consider doing this in a loop as it's really annoying to have 3 configurations
 eval_w_param_if_exists ~/homebrew/bin/brew shellenv
 eval_w_param_if_exists /home/linux/.linuxbrew/bin/brew shellenv
-eval $(brew shellenv)
+eval_w_param_if_exists /usr/local/bin/brew shellenv
 
 export EDITOR=vim
 
@@ -24,7 +25,8 @@ export EDITOR=vim
 # C-R Search History fuzzy
 source_if_exists ~/.fzf.zsh
 source_if_exists ~/gits/z/z.sh
-source_if_exists ~/homebrow/etc/profile.d/z.sh
+source_if_exists ~/homebrew/etc/profile.d/z.sh
+source_if_exists /usr/local/etc/profile.d/z.sh
 
 PATH+=:~/.local/bin
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
