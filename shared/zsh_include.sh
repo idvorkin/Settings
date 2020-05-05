@@ -6,18 +6,25 @@
 
 # Source Brew
 # Brew default
+
+function source_if_exists() {
+    [ -f $1 ] && source $1
+}
+function eval_w_param_if_exists() {
+    # [ -f $1 ] && eval $($1 $2)
+}
+
+eval_w_param_if_exists ~/homebrew/bin/brew shellenv
+eval_w_param_if_exists /home/linux/.linuxbrew/bin/brew shellenv
 eval $(brew shellenv)
-[ -f ~/homebrew/bin/brew ] && eval $(~/homebrew/bin/brew shellenv)
 
 export EDITOR=vim
-export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH
 
 # C-T search Files Fuzzy
 # C-R Search History fuzzy
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# z lets me jump directory
-[ -f ~/gits/z/z.sh ]  && source ~/gits/z/z.sh
+source_if_exists ~/.fzf.zsh
+source_if_exists ~/gits/z/z.sh
+source_if_exists ~/homebrow/etc/profile.d/z.sh
 
 PATH+=:~/.local/bin
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
