@@ -169,13 +169,8 @@ cd
 pip3 install glances
 
 
-# when locales get screwed up
-export LANGUAGE=en_US.UTF-8
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-export PATH=/usr/local/opt/ruby/bin:$PATH
-
-
-## Decent zsh plugins
-plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux fzf)
-
+# when locales get screwed up - haven't needed in a while.
+# export LANGUAGE=en_US.UTF-8
+# xport LANG=en_US.UTF-8
+# export port LC_ALL=en_US.UTF-8
+# export PATH=/usr/local/opt/ruby/bin:$PATH
