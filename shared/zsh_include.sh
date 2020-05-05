@@ -11,7 +11,7 @@ function source_if_exists() {
     [ -f $1 ] && source $1
 }
 function eval_w_param_if_exists() {
-    # [ -f $1 ] && eval $($1 $2)
+    [ -f $1 ] && eval $($1 $2)
 }
 
 eval_w_param_if_exists ~/homebrew/bin/brew shellenv
