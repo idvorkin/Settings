@@ -7,7 +7,7 @@
 # Source Brew
 # Brew default
 eval $(brew shellenv)
-[ -f ~/homebrew ] && eval $(~/homebrew/bin/homebrew shellenv)
+[ -f ~/homebrew/bin/brew ] && eval $(~/homebrew/bin/brew shellenv)
 
 export EDITOR=vim
 export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH

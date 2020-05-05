@@ -1,3 +1,8 @@
+# Setup BREW
+#
+# on linux w/o su access
+mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
+
 # goto http://linuxbrew.sh/
 # looks like brew is just for command line stuff.
 # Run the install script.
