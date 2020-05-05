@@ -15,7 +15,6 @@ git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 
 # Personal respoistories
-git clone  https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
 git clone https://github.com/idvorkin/onom
 git clone https://github.com/idvorkin/Vim-Keybindings-For-Onenote
 git clone https://github.com/idvorkin/LinqpadSnippets
@@ -180,6 +179,3 @@ export PATH=/usr/local/opt/ruby/bin:$PATH
 ## Decent zsh plugins
 plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux fzf)
 
-# Cool command to run through all directories and pull them
-alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
-alias weather='http http://wttr.in/'

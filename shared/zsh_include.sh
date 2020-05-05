@@ -1,15 +1,28 @@
-##
-#
+# SETUP: Put these in your zshrc
+##################
+
+# plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux fzf)
+# . ~/settings/shared/zsh_include.sh
+
+# Source Brew
+# Brew default
+eval $(brew shellenv)
+[ -f ~/homebrew ] && eval $(~/homebrew/bin/homebrew shellenv)
+
 export EDITOR=vim
 export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH
-[ -f ~/gits/z/z.sh ]  && source ~/gits/z/z.sh
 
 # C-T search Files Fuzzy
 # C-R Search History fuzzy
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# z lets me jump directory
+[ -f ~/gits/z/z.sh ]  && source ~/gits/z/z.sh
+
 PATH+=:~/.local/bin
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 alias gpushall='for git_directory in * ; echo $git_directory && git -C $git_directory push'
+alias weather="curl wttr.in/seattle"
 alias dwc='pushd ~/gits/settings && python3 -c "from vim_python import * ;WCDailyPage()" && pushd ~/gits/igor2/750words '
 alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCommitDailyPage()" && pushd ~/gits/igor2/750words '
 
@@ -46,13 +59,11 @@ alias_if_exists ls exa
 alias_if_exists top htop
 alias_if_exists tig lazygit
 
-alias weather="curl wttr.in/seattle"
-alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 
 
 
 set -o vi
-echo "end"
+echo "zsh_include complete"
 #  shared zsh settings to be sourced
 # TMUX attach
 #
@@ -67,3 +78,4 @@ echo "end"
 # export LANG=en_US.UTF-8
 # export LC_ALL=en_US.UTF-8
 # export PATH="$PATH:$HOME/.dotnet/tools"
+
