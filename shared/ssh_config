@@ -23,4 +23,8 @@ Host bedrock-4
     HostName mc.zacookiegames.com
     User ubuntu
 
+Host devbox
+    Hostname devvm030.prn0.facebook.com
+
+
 
