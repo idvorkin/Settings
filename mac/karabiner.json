@@ -15,13 +15,44 @@
                     "mouse_motion_to_scroll.speed": 100
                 },
                 "rules": [
-
+                    {
+                        "description": "XCode C-P opens Quick Open",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com.apple.dt.Xcode$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "p",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_gui"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "o",
+                                        "modifiers": [
+                                                "left_gui", "left_shift"
+                                            ]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
                     {
                         "description": "OmniFocus QuickEntry C-[ W-[",
                             "manipulators": [
                                 {
                                     "from": {
-                                        "key_code": "[",
+                                        "key_code": "open_bracket",
                                             "modifiers": {
                                                 "optional": [
                                                     "left_command"
@@ -30,7 +61,7 @@
                                     },
                                     "to": [
                                         {
-                                            "key_code": "[",
+                                            "key_code": "open_bracket",
                                                 "modifiers": [
                                                     "left_control"
                                                 ]
