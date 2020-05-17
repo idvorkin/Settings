@@ -99,7 +99,7 @@ endfunction
         so /usr/local/opt/fzf/plugin/fzf.vim
     " set rtp+=/usr/local/opt/fzf/plugin/
     endif
-    if filereadable("~/homebrew/opt/fzf/plugin/fzf.vim")
+    if filereadable(expand("~/homebrew/opt/fzf/plugin/fzf.vim"))
         so ~/homebrew/opt/fzf/plugin/fzf.vim
         " set rtp+=/usr/local/opt/fzf/plugin/
     endif
@@ -108,6 +108,7 @@ endfunction
 
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'webdevel/tabulous'
+    Bundle 'r0mai/vim-djinni'
     Bundle 'mattn/webapi-vim'
     Bundle 'tpope/vim-fugitive'
 
@@ -526,6 +527,18 @@ set autoread
 
 "By default, swap out all instances in a line during substitutions
 set gdefault
+
+"""""""""""""
+" FB Specific -- Careful to leak nothing useful.
+"""""""""""""
+
+
+let g:bgdot= "~/fbsource/fbcode/shellconfigs/rc/vim/biggrep.vim"
+if filereadable (expand(g:bgdot))
+    echo "At Facebook"
+    :so  ~/fbsource/fbcode/shellconfigs/rc/vim/biggrep.vim
+endif
+
 
 "
 " vim:foldmethod=indent:
