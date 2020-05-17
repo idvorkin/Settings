@@ -1,0 +1,11 @@
+[alias]
+logp=log --template " {label('custom.rev', node|short)} - {desc|strip|firstline} ({label('custom.date', date|age)}) <{label('custom.author' , author)}>\n"
+logf=log --template " {label('custom.rev', node|short)} - {desc|strip|firstline} ({label('custom.date', date|age)}) <{label('custom.author' , author)}>\n{files % '{file}\n'}\n"
+
+# pretty log styles
+# http://rgoulter.com/blog/posts/programming/2015-06-01-pretty-hg-log-style.html
+[color]
+custom.rev = red
+custom.decorate = yellow
+custom.date = green
+custom.author = yellow
