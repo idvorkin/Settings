@@ -425,8 +425,8 @@ let g:vmt_list_item_char='-'
 " Always enable softpencil
 
 autocmd BufEnter *md :exe ":SoftPencil"
-autocmd BufEnter *md :exe ":Limelight"
- autocmd BufLeave *md :exe ":Limelight!"
+" autocmd BufEnter *md :exe ":Limelight"
+" autocmd BufLeave *md :exe ":Limelight!"
 " let g:vim_markdown_folding_disabled = 1
 
 " Break lines on word boudnaries only
