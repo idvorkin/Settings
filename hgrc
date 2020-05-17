@@ -1,3 +1,6 @@
+# You can include this in the hgrc
+# %include ~/settings/hgrc
+
 [alias]
 logp=log --template " {label('custom.rev', node|short)} - {desc|strip|firstline} ({label('custom.date', date|age)}) <{label('custom.author' , author)}>\n"
 logf=log --template " {label('custom.rev', node|short)} - {desc|strip|firstline} ({label('custom.date', date|age)}) <{label('custom.author' , author)}>\n{files % '{file}\n'}\n"
