@@ -1,0 +1,23 @@
+# command source  ~/settings/shared/lldbinit
+
+command regex b 's/^[-+]([[:alnum:]_:]{2,})/breakpoint set -S %1/' 's/(.*)/_regexp-break %1/'
+
+# Useful scripts
+#########
+
+# re-import this script
+command alias sodot command source  ~/settings/shared/lldbinit
+
+
+# write 'filename.out' command
+command script import ~/git_rare/lldb-write/write.py
+
+# process attach Facebook
+command alias zpaf process attach --name Facebook
+
+command alias zbr process interrupt
+
+script print ("All Loaded")
+
+# Don't forget to write out editrc for vi keybindings
+#   echo bind -v >> ~/.editrc
