@@ -791,6 +791,41 @@
                         ]
                     },
                     {
+                        "description": "Browser:  M-P to C-P (replace printing usually)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^org\\.mozilla\\.firefox$",
+                                            "^com\\.microsoft\\.Edge",
+                                            "^com\\.google\\.Chrome$",
+                                            "^com\\.apple\\.Safari$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "p",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_gui"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                        "key_code": "p",
+                                        "modifiers": [
+                                            "control"
+                                        ]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "Open Console to C-J",
                         "manipulators": [
                             {
