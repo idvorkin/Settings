@@ -1,6 +1,8 @@
 # SETUP: Put these in your zshrc
 ##################
 
+#  Helpful go to your by pressing gf on: ~/.zshrc
+
 # plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux fzf)
 # . ~/settings/shared/zsh_include.sh
 
@@ -68,6 +70,9 @@ alias_if_exists ls exa
 alias_if_exists top htop
 alias_if_exists tig lazygit
 
+# Igor setups use Soed and Sodot as useful aliases
+alias Soed='vim ~/settings/shared/zsh_include.sh'
+alias Sodot='.  ~/settings/shared/zsh_include.sh'
 
 
 
