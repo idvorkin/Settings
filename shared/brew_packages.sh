@@ -68,5 +68,10 @@ brew install azure-cli cmatrix iftop
 # Make sure install vim with python for denite
 brew install --with-python3 vim
 
+# Correct version of tags
+brew install --HEAD universal-ctags/universal-ctags/universal-ctags
+
+
+
 # Add some npm packages
 npm install --global fkill-cli
