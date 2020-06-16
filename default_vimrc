@@ -110,6 +110,7 @@ endfunction
     Bundle 'webdevel/tabulous'
     Bundle 'r0mai/vim-djinni'
     Bundle 'mattn/webapi-vim'
+    Bundle 'majutsushi/tagbar'
     Bundle 'tpope/vim-fugitive'
 
     " Bundle for Mercurial
