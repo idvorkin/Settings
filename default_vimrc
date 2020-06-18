@@ -107,6 +107,7 @@ endfunction
     call vundle#begin()
 
     Bundle 'VundleVim/Vundle.vim'
+    Bundle 'jparise/vim-graphql'
     Bundle 'webdevel/tabulous'
     Bundle 'r0mai/vim-djinni'
     Bundle 'mattn/webapi-vim'
