@@ -112,6 +112,7 @@ endfunction
     Bundle 'r0mai/vim-djinni'
     Bundle 'mattn/webapi-vim'
     Bundle 'majutsushi/tagbar'
+
     Bundle 'tpope/vim-fugitive'
 
     " Bundle for Mercurial
@@ -529,6 +530,42 @@ set autoread
 
 "By default, swap out all instances in a line during substitutions
 set gdefault
+
+" Update markdown tagbar need to install mdctags
+" https://github.com/wsdjeg/mdctags.rs#installation
+let g:tagbar_sort = 0
+let g:tagbar_foldlevel = 99
+let g:tagbar_autoshowtag = 1
+let g:tagbar_compact = 1
+let g:tagbar_type_markdown = {
+            \ 'ctagsbin'  : 'mdctags',
+            \ 'ctagsargs' : '',
+            \ 'kinds'     : [
+            \     'a:h1:0:0',
+            \     'b:h2:0:0',
+            \     'c:h3:0:0',
+            \     'd:h4:0:0',
+            \     'e:h5:0:0',
+            \     'f:h6:0:0',
+            \ ],
+            \ 'sro'        : '::',
+            \ 'kind2scope' : {
+            \     'a' : 'h1',
+            \     'b' : 'h2',
+            \     'c' : 'h3',
+            \     'd' : 'h4',
+            \     'e' : 'h5',
+            \     'f' : 'h6',
+            \ },
+            \ 'scope2kind' : {
+            \     'h1' : 'a',
+            \     'h2' : 'b',
+            \     'h3' : 'c',
+            \     'h4' : 'd',
+            \     'h5' : 'e',
+            \     'h6' : 'f',
+            \}
+            \}
 
 """""""""""""
 " FB Specific -- Careful to leak nothing useful.
