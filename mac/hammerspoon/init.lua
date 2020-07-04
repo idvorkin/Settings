@@ -27,6 +27,9 @@ function vpn()
     hs.eventtap.keyStrokes(getSecretFromSecretBox("VPNKey"))
 end
 
+-- To call from alfred do like:
+-- Not sure why install is broken to /usr/local/bin/hs
+-- /Users/idvorkin/bin/hs -c "chatWith('{query}')"
 function chatWith(name)
     hs.application.launchOrFocus("Workplace Chat")
     hs.timer.usleep(0.3 * 1000 * 1000)
