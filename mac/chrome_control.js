@@ -235,7 +235,7 @@ function chromeControl(argv) {
         list('all')
     } else if (cmd === 'dedup') {
         dedup()
-    } else if (cmd === 'p') {
+    } else if (cmd === 'st') {
         if (argv.length == 1) { usage() }
         const arg = argv[1]
         AllTabsForPerson(arg)
