@@ -24,6 +24,7 @@ function usage() {
     println('\n--------------')
     println('Chrome Control')
     println('--------------\n')
+    println('st                          Stalk  person usage: ./chrome.js st idvorkin')
     println('list                        List all open tabs in all Chrome windows          usage: ./chrome.js list')
     println('dedup                       Close duplicate tabs                              usage: ./chrome.js dedup')
     println('close <winIdx,tabIdx>       Close a specific tab in a specific window         usage: ./chrome.js close 0,13')
@@ -171,33 +172,35 @@ function openForPeople()
 
 }
 
-function AllTabsForPerson(name="Pablo Bravo")
+function AllTabsForPerson(partial="Pablo Bravo")
 {
     println("hello")
 
     // https://stackoverflow.com/questions/27391033/how-can-i-open-a-new-chrome-window-with-javascript-automation-in-yosemite
     // https://medium.com/@SteveBarbera/automating-chrome-with-jxa-javascript-application-scripting-6f9bc433216a
-    const intern = CreateTab(GetInternProfile(name))
-    const wp = CreateTab(GetWorkPlaceProfile(name))
+    const intern = CreateTab(GetInternProfile(partial))
+    const wp = CreateTab(GetWorkPlaceProfile(partial))
     const w = chrome.Window().make()
     const newTab = w.tabs[0]
     w.tabs.push(wp)
     w.tabs.push(intern)
     newTab.close()
     // debugger
-    println (`For ${name}:`)
+    println (`Partial Name: ${partial}`)
     delay(2) // Delay in seconds
-    println (intern.url())
+    const name = intern.title().split(":")[0]
     const internId = GetId(intern.url())
     const wpId = GetId(wp.url())
+
+    println (`Name: ${name}`)
     w.tabs.push(CreateTab(`https://fb.workplace.com/work/org/${wpId}/`))
-    w.tabs.push(CreateTab(`https://fb.workplace.com/chat/t/${wpId}/`))
     w.tabs.push(CreateTab(`https://www.internalfb.com/intern/org/chart/?id=${internId}`))
     const linkedInSearchParam = encodeURIComponent(`${name} facebook`)
     const linkedInUrl = `https://www.linkedin.com/search/results/all/?keywords=${linkedInSearchParam}`
     w.tabs.push(CreateTab(linkedInUrl))
     w.tabs.push(CreateTab(`https://www.internalfb.com/intern/meeting/?invitees[0]=${internId}`))
-    w.tabs[0].focus()
+    w.tabs.push(CreateTab(`https://fb.workplace.com/chat/t/${wpId}/`))
+    // w.tabs[0].focus()
         /*
     println("Tab--")
     for (const t of w.tabs)
