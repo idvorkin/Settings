@@ -83,6 +83,7 @@ function! FirstPersonToThirdPerson()
     :%s;^\.$;
 endfunction
 
+function! SetupPlugins()
 "  Vundle setup
     " Instructions @  https://github.com/VundleVim/Vundle.vim/blob/master/README.md
     " git clone https://github.com/VundleVim/Vundle.vim %USERPROFILE%/vimfiles/bundle/vundle
@@ -240,9 +241,10 @@ endfunction
     " All of your Plugins must be added before the following line
 
     Plugin 'PolyCement/vim-tweego'
+    call vundle#end()            " required
+endfunc
 
-
-call vundle#end()            " required
+call SetupPlugins()
 
 
 
