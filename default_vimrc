@@ -363,11 +363,17 @@ endfunc
 :iab mdc ☑
 :iab mdtodo ☐
 :iab mddone  ☑
+:cab mdcbt g/^#/s;# \*\*\(.*\)\*\*;# \1;
 
 func! MarkDownWordToLink()
     " cool yiw takes the word, and jumps you to the beginning of it.
     normal yiwi[ea](http://www.pa.com)
 endfunc
+
+func! MarkDownClearBoldTitles()
+":cab mdcbt g/^#/s;# \*\*\(.*\)\*\*;# \1;"
+endfunc
+
 
 func! MarkDownWordToGoogleLucky()
     " cool yiw takes the word, and jumps you to the beginning of it.
