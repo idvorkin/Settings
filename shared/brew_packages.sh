@@ -15,6 +15,7 @@ git \
 git-extras \
 git-delta \
 glances \
+gotop \
 graphviz \
 grip \
 htop \
