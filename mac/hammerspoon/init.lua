@@ -34,6 +34,7 @@ function chatWith(name)
     hs.application.launchOrFocus("Workplace Chat")
     hs.timer.usleep(0.3 * 1000 * 1000)
     hs.eventtap.keyStroke({"cmd"}, "k")
+    hs.eventtap.keyStroke({"cmd"}, "a")
     hs.timer.usleep(0.1 * 1000 * 1000)
     hs.eventtap.keyStrokes(name)
 end
