@@ -82,10 +82,13 @@ function toggle(partial)
 
   local left=true
 
+  print ("Original")
   print (inspect(origFrame))
+  print ("Screen")
   print (inspect(max))
 
-  if origFrame.x  == max.x and origFrame.w == IDIV(max.w, partial) then
+  --and origFrame.w == IDIV(max.w, partial) then
+  if origFrame.x  == max.x  then
       left = false
   end
   print("Hi")
