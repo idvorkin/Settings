@@ -80,18 +80,28 @@ function toggle(partial)
   local origFrame = win:frame()
   local max = monitorScreen():frame()
 
-  local left=true
 
   print ("Original")
   print (inspect(origFrame))
   print ("Screen")
   print (inspect(max))
 
-  --and origFrame.w == IDIV(max.w, partial) then
-  if origFrame.x  == max.x  then
-      left = false
+  local changeWidth =  origFrame.w ~= IDIV(max.w, partial)
+  local onLeft = origFrame.x  == max.x
+  print ("changeWidth-",changeWidth)
+  print ("onLeft-",onLeft)
+
+  local left=true
+
+  if onLeft then
+      left = changeWidth
   end
-  print("Hi")
+
+  if  not onLeft  then
+      left = not changeWidth
+  end
+
+  print("Resizing")
 
   local new_frame = win:frame()
   new_frame.y = max.y
