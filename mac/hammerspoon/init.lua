@@ -5,7 +5,15 @@ require("hs.json")
 require("hs.ipc")
 --
 
+function laptopScreen()
+    return hs.screen.allScreens()[1]
+end
 
+function monitorScreen()
+    return hs.screen.allScreens()[2]
+end
+
+pd = hs.inspect.inspect
 
 function getSecretFromSecretBox(secret)
     --  local vpnKey = hs.execute("~/gits/igor2/secretBox.json | jq '.VPNKey'")
@@ -43,5 +51,57 @@ function reloadConfig()
       hs.reload()
       hs.alert.show("Config reloaded")
 end
+
+-- Screen co-ordinates are a global, with main monitor top left = 0,0
+--
+function move_to(left,target_screen, partial)
+
+  local win = hs.window.focusedWindow()
+  local original_screen = win:screen()
+  if original_screen ~= target_screen then
+      win.moveToScreen(target_screen)
+  end
+
+  local max = target_screen:frame()
+  local new_frame = win:frame()
+  new_frame.y = max.y
+  new_frame.w = max.w / partial
+  new_frame.h = max.h
+  if left then
+    new_frame.x = max.x
+  else
+    -- new_frame.x =  max.x - new_frame.w
+    new_frame.x =  max.x + (max.w - new_frame.w)
+  end
+  win:setFrame(new_frame)
+end
+
+function left(target_screen, partial)
+    move_to(true, target_screen, partial)
+end
+
+function right(target_screen, partial)
+    move_to(false, target_screen, partial)
+end
+
+function reload()
+    hs.reload()
+end
+
+-- Fancy Reloading
+function reloadConfig(files)
+    doReload = false
+    for _,file in pairs(files) do
+        if file:sub(-4) == ".lua" then
+            doReload = true
+        end
+    end
+    if doReload then
+        hs.reload()
+    end
+end
+
+myWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig):start()
+hs.alert.show("Config loaded")
 
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "r", reloadConfig)
