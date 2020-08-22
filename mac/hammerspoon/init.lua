@@ -189,3 +189,6 @@ function urlMove(event, params)
 end
 
 hs.urlevent.bind("move", urlMove)
+
+-- To connecto to stream deck, use applescript plugin and do this:
+-- do shell script "/Users/idvorkin/bin/hs -c 'toggle(3/2)' "
