@@ -54,6 +54,56 @@ end
 
 -- Screen co-ordinates are a global, with main monitor top left = 0,0
 --
+
+-- use integer division to make equality work for swapping.
+--
+function IDIV(a,b)
+    return (a - a % b) / b
+end
+
+function toggle(partial)
+
+
+  local win = hs.window.focusedWindow()
+  local original_screen = win:screen()
+  if original_screen == laptopScreen  then
+     move_to(true,laptopScreen, 1)
+     return
+  end
+
+  -- 4 cases:
+  -- On Left exactly -> go right
+  -- On Right exactly -> go left
+  -- On Left hand side -> go left
+  -- On Right hand side -> go right
+
+  local origFrame = win:frame()
+  local max = monitorScreen():frame()
+
+  local left=true
+
+  print (inspect(origFrame))
+  print (inspect(max))
+
+  if origFrame.x  == max.x and origFrame.w == IDIV(max.w, partial) then
+      left = false
+  end
+  print("Hi")
+
+  local new_frame = win:frame()
+  new_frame.y = max.y
+  new_frame.w = IDIV(max.w,partial)
+  new_frame.h = max.h
+  if left then
+    new_frame.x = max.x
+  else
+    -- new_frame.x =  max.x - new_frame.w
+    new_frame.x =  max.x + (max.w - new_frame.w)
+  end
+  win:setFrame(new_frame)
+
+end
+
 function move_to(left,target_screen, partial)
 
   local win = hs.window.focusedWindow()
