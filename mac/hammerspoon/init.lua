@@ -76,16 +76,17 @@ function move_to(left,target_screen, partial)
   win:setFrame(new_frame)
 end
 
-function left(target_screen, partial)
+function toleft(target_screen, partial)
     move_to(true, target_screen, partial)
 end
 
-function right(target_screen, partial)
+function toright(target_screen, partial)
     move_to(false, target_screen, partial)
 end
 
 function reload()
     hs.reload()
+    hs.alert.show("Config loaded")
 end
 
 -- Fancy Reloading
@@ -112,10 +113,10 @@ hs.alert.show("Config loaded")
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "r", reloadConfig)
 
 function urlMove(event, params)
-    inspect (params)
-    print (event)
-    print (params)
-    print (inspect(params))
+    -- inspect (params)
+    -- print (event)
+    -- print (params)
+    -- print (inspect(params))
     left = params["left"] ~= nil
     if params["right"] ~= nil then
         left = false
@@ -130,9 +131,6 @@ function urlMove(event, params)
     if params["laptop"] ~= nil then
         target_screen = laptopScreen()
     end
-
-
-    print(left)
 
     move_to(left, target_screen, partial)
 end
