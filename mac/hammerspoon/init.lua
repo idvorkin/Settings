@@ -57,12 +57,9 @@ end
 
 -- use integer division to make equality work for swapping.
 --
-function IDIV(a,b)
-    return (a - a % b) / b
-end
 
 function toggle(partial)
-
+  print ("Toggling")
 
   local win = hs.window.focusedWindow()
   local original_screen = win:screen()
@@ -86,8 +83,11 @@ function toggle(partial)
   print ("Screen")
   print (inspect(max))
 
-  local changeWidth =  origFrame.w ~= IDIV(max.w, partial)
+  local newWidth =  max.w/ partial
+  local changeWidth =  math.abs(origFrame.w - newWidth) > 10 -- rounding errors
   local onLeft = origFrame.x  == max.x
+
+  print ("New Width:", newWidth)
   print ("changeWidth-",changeWidth)
   print ("onLeft-",onLeft)
 
@@ -95,26 +95,12 @@ function toggle(partial)
 
   if onLeft then
       left = changeWidth
-  end
-
-  if  not onLeft  then
+  else
       left = not changeWidth
   end
 
-  print("Resizing")
-
-  local new_frame = win:frame()
-  new_frame.y = max.y
-  new_frame.w = IDIV(max.w,partial)
-  new_frame.h = max.h
-  if left then
-    new_frame.x = max.x
-  else
-    -- new_frame.x =  max.x - new_frame.w
-    new_frame.x =  max.x + (max.w - new_frame.w)
-  end
-  win:setFrame(new_frame)
-
+  print("Move to left:", left)
+  return move_to(left, monitorScreen(), partial)
 end
 
 function move_to(left,target_screen, partial)
