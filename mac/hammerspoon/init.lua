@@ -13,7 +13,7 @@ function monitorScreen()
     return hs.screen.allScreens()[2]
 end
 
-pd = hs.inspect.inspect
+inspect = hs.inspect.inspect
 
 function getSecretFromSecretBox(secret)
     --  local vpnKey = hs.execute("~/gits/igor2/secretBox.json | jq '.VPNKey'")
@@ -101,7 +101,40 @@ function reloadConfig(files)
     end
 end
 
+-- Sigh this is getting complicated
+-- Inspiration
+-- https://bezhermoso.github.io/2016/01/20/making-perfect-ramen-lua-os-x-automation-with-hammerspoon/
+-- Testing: hs.urlevent.openURL("hammerspoon://left?q=right")
+
 myWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig):start()
 hs.alert.show("Config loaded")
 
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "r", reloadConfig)
+
+function urlMove(event, params)
+    inspect (params)
+    print (event)
+    print (params)
+    print (inspect(params))
+    left = params["left"] ~= nil
+    if params["right"] ~= nil then
+        left = false
+    end
+
+    partial = 0.5
+    if params["partial"] ~= nil then
+        partial = params["partial"]
+    end
+
+    target_screen = monitorScreen()
+    if params["laptop"] ~= nil then
+        target_screen = laptopScreen()
+    end
+
+
+    print(left)
+
+    move_to(left, target_screen, partial)
+end
+
+hs.urlevent.bind("move", urlMove)
