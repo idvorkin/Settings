@@ -27,7 +27,6 @@ export EDITOR=vim
 source_if_exists ~/.fzf.zsh
 source_if_exists ~/gits/z/z.sh
 source_if_exists ~/homebrew/etc/profile.d/z.sh
-source_if_exists /usr/local/etc/profile.d/z.sh
 
 PATH+=:~/.local/bin
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
