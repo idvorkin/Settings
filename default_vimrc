@@ -537,6 +537,7 @@ set gdefault
 function SetupTagbar()
 " Update markdown tagbar need to install mdctags
 " https://github.com/wsdjeg/mdctags.rs#installation
+let g:tagbar_left = 1
 let g:tagbar_sort = 0
 let g:tagbar_foldlevel = 99
 let g:tagbar_autoshowtag = 1
