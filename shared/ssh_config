@@ -18,6 +18,8 @@ Host lightsail
     LocalForward 6419 localhost:6419
     # Jekyll live reload
     LocalForward 35729 localhost:35729
+    RemoteForward 5726 localhost:5726
+
 
 Host bedrock-4
     HostName mc.zacookiegames.com
