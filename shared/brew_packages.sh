@@ -1,6 +1,7 @@
 export brew_packages="\
 ag \
 asciinema \
+asciiquarium \
 aws-shell \
 bat \
 cask \
