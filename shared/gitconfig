@@ -1,0 +1,41 @@
+[user]
+	email = idvorkin@gmail.com
+	name = Igor Dvorkin
+[push]
+	default = simple
+
+[core]
+	editor = /usr/bin/vim
+    pager = delta  --theme='zenburn'
+
+[interactive]
+    diffFilter = delta --color-only
+
+
+[alias]
+	co = checkout
+	com = checkout master
+	br = branch
+	ci = commit
+	st = status
+	logc = log
+	logp = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate
+	logc = log
+	fr = pull --rebase
+	logc = log
+[credential]
+	helper = store
+[color]
+	ui = true
+[color "diff-highlight"]
+	oldNormal = red bold
+	oldHighlight = red bold 52
+	newNormal = green bold
+	newHighlight = green bold 22
+[color "diff"]
+	meta = yellow
+	frag = magenta bold
+	commit = yellow bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
