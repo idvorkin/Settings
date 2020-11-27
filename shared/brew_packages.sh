@@ -6,7 +6,6 @@ aws-shell \
 bat \
 cask \
 diff-so-fancy \
-exa \
 fasd \
 fd \
 ffmpeg \
@@ -47,7 +46,11 @@ docker \
 yasm \
 zip \
 zsh \
+yarn \
+exa \
 yarn "
+
+# Notes, Exa is last because it uses rust, and rust compilation is slow as molasses
 
 # https://unix.stackexchange.com/questions/7558/execute-a-command-once-per-line-of-piped-input
 # Ahh magic. xargs takes it's input execute command once per line

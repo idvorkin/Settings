@@ -1,18 +1,15 @@
-# Setup BREW
-#
-# on linux w/o su access
-mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
+# to execute stuff from vim
+# <range>w !bash
 
-# goto http://linuxbrew.sh/
-# looks like brew is just for command line stuff.
+# Setup BREW
+mkdir ~/homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C ~/homebrew
+
 # Run the install script.
 . ./brew_packages.sh
 
-# to execute it
-# <range>w !bash
-
-# Make sure install vim with python for denite
-brew install --with-python3 vim
+# load up the git repo's for plugin managers
+git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 # shared git stetup
 git config --global user.email "idvorkin@gmail.com"
@@ -28,6 +25,7 @@ git clone https://github.com/idvorkin/idvorkin.github.io
 git clone https://github.com/idvorkin/jupyter
 git clone https://idvorkin@bitbucket.org/idvorkin/igor2.git
 
+# Link to lots of dot files
 ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
 ln -s -f ~/settings/default_vimrc ~/.vimrc
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc
@@ -45,7 +43,6 @@ ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 # Not quite ready to dick iwith it.
 # ln -s -f ~/settings/shared/gitconfig ~/.gitconfig
 
-
 # link git aliases
 ln -s -f ~/gits/techdiary ~/ghtd
 ln -s -f ~/gits/jupyter ~/ghju
@@ -56,26 +53,17 @@ ln -s -f ~/gits/idvorkin.github.io ~/blog
 #oh my zsh setup - from not fish.
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 
-# load up the git repo's for plugins
-git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
-# Add ctags for vim
-brew install ctags --HEAD
+# ctags is not maintained, use universal-ctags instead
+brew install --HEAD universal-ctags/universal-ctags/universal-ctags
+
 # /usr/local/bin/ctags -R --langmap=ObjectiveC:.m.h
 
 # copy this into somewhere useful - perhaps ohmyzsh plugin handles.
 # eval "$(fasd --init auto)"
 
-# setup more tmux plugins (not sure that they are useful.
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-
-# setup tmuxp
-pip3 install tmuxp pipenv pytz
-# tmuxp alias ~/Library/Python/3.6/bin/tmuxp
-
-# Add links to linux brew
-echo -n 'export PATH=/home/linuxbrew/.linuxbrew/bin/:$PATH' >> ~/.zshrc
+# setup useful packages for python
+pip3 install tmuxp pipenv pytz glances
 
 
 # Setup italics term info...
@@ -161,9 +149,6 @@ AZ_REPO=$(lsb_release -cs)
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
         sudo tee /etc/apt/sources.list.d/azure-cli.list
 
-# Add pipenv
-pip3 install pipenv
-
 # Setup Jekyll
 # Rant why so god damn hard to build jekyll and nokogiri
 # be sure to set path to brew ruby in your zshrc
@@ -172,10 +157,6 @@ gem install bundle
 brew install rbenv
 gem install --user-install bundler jekyll
 cd
-
-# Install top replacement
-pip3 install glances
-
 
 # when locales get screwed up - haven't needed in a while.
 # export LANGUAGE=en_US.UTF-8

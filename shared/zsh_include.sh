@@ -18,7 +18,6 @@ function eval_w_param_if_exists() {
 
 # TODO: consider doing this in a loop as it's really annoying to have 3 configurations
 eval_w_param_if_exists ~/homebrew/bin/brew shellenv
-eval_w_param_if_exists /home/linux/.linuxbrew/bin/brew shellenv
 
 export EDITOR=vim
 
