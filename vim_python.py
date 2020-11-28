@@ -31,6 +31,7 @@ def MakeTemplatePage(date, directory, template_name):
     chdir(f"{pathBasedAtIgor2(directory)}")
     try:
         import vim
+
         vim.command("next " + fileName)
         vim.command("lcd %:p:h")  # Goto current Directory
         vim.command("9999")  # Goto last line.
@@ -42,25 +43,30 @@ def MakeTemplatePage(date, directory, template_name):
 def NowPST():
     # groan no timzone in standard library - make sure to install pytz.
     from pytz import timezone
-    return datetime.now().astimezone(timezone('US/Pacific'))
+
+    return datetime.now().astimezone(timezone("US/Pacific"))
 
 
 def MakeDailyPage(daysoffset=0):
-    return MakeTemplatePage(NowPST()+timedelta(days=daysoffset), "750words", "daily_template")
+    return MakeTemplatePage(
+        NowPST() + timedelta(days=daysoffset), "750words", "daily_template"
+    )
 
 
 def WCDailyPage():
-    system(f'wc -w {MakeDailyPage()[0]}')
+    system(f"wc -w {MakeDailyPage()[0]}")
+
 
 def GitCommitDailyPage():
     # f = "/".join(MakeDailyPage()[0].split("/")[-2::])
     f = MakeDailyPage()[0]
-    git_cmd = (f'git add {f}')
-    print (git_cmd)
+    git_cmd = f"git add {f}"
+    print(git_cmd)
     system(git_cmd)
-    git_cmd = (f'git commit {f} -m 750')
-    print (f"GIT: {git_cmd} EOL")
+    git_cmd = f"git commit {f} -m 750"
+    print(f"GIT: {git_cmd} EOL")
     system(git_cmd)
+
 
 def MakeWeeklyReport():
     now = NowPST()
