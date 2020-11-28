@@ -127,6 +127,7 @@ function! SetupPlugins()
     Bundle 'junegunn/goyo.vim'
     Bundle 'inkarkat/vim-ingo-library'
     Bundle 'inkarkat/vim-spellcheck'
+    Bundle 'panozzaj/vim-autocorrect'
 
     Bundle 'leafgarland/typescript-vim'
 
@@ -478,7 +479,7 @@ let g:ale_fixers = {
 command! IGDaily :py3 MakeDailyPage()
 command! IGYesterday :py3 MakeDailyPage(-1)
 command! IGWeekly :py3 MakeWeeklyReport()
-cab Ddt !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo
+cab Ddt !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo --markdown
 cab Ddg !python3 ~/gits/linqpadsnippets/python/dump_grateful.py grateful
 cab Dda !python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome
 command! Sodot :so ~/.vimrc
