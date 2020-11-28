@@ -15,16 +15,6 @@ def MakeTemplatePage(date, directory, template_name):
     templateFileName = pathBasedAtIgor2(f"/{directory}/{template_name}.md")
     isAlreadyCreated = path.isfile(fileName)
 
-    # Hacky - lets copy in yesterday's todos. Totally not generic, but such is life.
-
-    yesterday_in_format = (date-timedelta(days=1)).strftime("%Y-%m-%d")
-    yesterdayFileName = pathBasedAtIgor2(f"/{directory}/{yesterday_in_format}.md")
-    isYesterdayExists = path.isfile(yesterdayFileName)
-    if isYesterdayExsists:
-
-
-
-
     if isAlreadyCreated:
         print(fileName + " exists")
     else:
