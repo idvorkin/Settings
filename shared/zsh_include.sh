@@ -73,8 +73,6 @@ alias_if_exists tig lazygit
 alias Soed='vim ~/settings/shared/zsh_include.sh'
 alias Sodot='.  ~/settings/shared/zsh_include.sh'
 
-
-
 set -o vi
 echo "zsh_include complete"
 #  shared zsh settings to be sourced

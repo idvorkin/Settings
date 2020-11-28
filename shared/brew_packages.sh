@@ -7,7 +7,6 @@ bat \
 cask \
 diff-so-fancy \
 fasd \
-fd \
 ffmpeg \
 fselect \
 fzf \
@@ -47,14 +46,19 @@ yasm \
 zip \
 zsh \
 yarn \
+rust \
 exa \
+fd \
 yarn "
 
-# Notes, Exa is last because it uses rust, and rust compilation is slow as molasses
+# Notes, rust is super slow to compile, so putting that packages last
 
 # https://unix.stackexchange.com/questions/7558/execute-a-command-once-per-line-of-piped-input
 # Ahh magic. xargs takes it's input execute command once per line
 echo $brew_packages | xargs -n1 brew install
+
+# to execute things from VIM
+# <range>w !bash
 
 # packages I want that don't exist
 # brew install saws svg-term
@@ -67,16 +71,8 @@ brew install azure-cli cmatrix iftop
 # grv need to unalias grv in zsh
 
 
-# to execute it
-# <range>w !bash
-
-# Make sure install vim with python for denite
-brew install --with-python3 vim
-
 # Correct version of tags
 brew install --HEAD universal-ctags/universal-ctags/universal-ctags
-
-
 
 # Add some npm packages
 npm install --global fkill-cli
