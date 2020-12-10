@@ -3,6 +3,7 @@
 
 # I just need a command that blocks, but it becomes a zombie, so need to be careful about leaving it around
 # Block for 2 hours
-ssh lightsail /user/bin/sleep 3600
-echo done sleeping
+echo Running ssh sleep
+ssh lightsail /usr/bin/sleep 3600
+echo Done ssh sleeping
 
