@@ -591,7 +591,7 @@ function MdBoldToTitle()
     " Copy into the search string
     " Search string for a full line bold
     " /^*\*\(.*\)\*\*$ "
-end function
+endfunction
 
 
 func SetupFBSpecific()
