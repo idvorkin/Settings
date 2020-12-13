@@ -584,6 +584,14 @@ function SetupTagbar()
 call SetupTagbar()
 
 
+function MdBoldToTitle()
+    " Strip bold and make it an L4
+    " Copy into a macroc
+    " 0xx$hhxxxI#### 
+    " Copy into the search string
+    " Search string for a full line bold
+    " /^*\*\(.*\)\*\*$ "
+end function
 
 
 func SetupFBSpecific()
