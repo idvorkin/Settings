@@ -234,6 +234,17 @@ function! SetupPlugins()
     " All of your Plugins must be added before the following line
 
     Plugin 'PolyCement/vim-tweego'
+
+    " coc and friends, too complex so far
+    " Plugin 'neoclide/coc.nvim', {'branch': 'release'}
+
+    " \r - rename
+    " \n - usages
+    " K - help
+    Plugin 'davidhalter/jedi-vim'
+
+
+
     call vundle#end()            " required
 endfunc
 
@@ -429,6 +440,7 @@ let g:vmt_list_item_char='-'
 " Always enable softpencil
 
 autocmd BufEnter *md :exe ":SoftPencil"
+autocmd BufEnter *md :exe ":call AutoCorrect()"
 " autocmd BufEnter *md :exe ":Limelight"
 " autocmd BufLeave *md :exe ":Limelight!"
 " let g:vim_markdown_folding_disabled = 1
