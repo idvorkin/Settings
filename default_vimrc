@@ -503,8 +503,8 @@ command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
 command! IgBlog :lcd ~/gits/idvorkin.github.io/<bar>:GFiles
 
 
-" Common work flow: Switch to current directory, git write, commit and push.
-cab DdC  :lcd %:p:h<CR>:Gwrite<CR>:!git diff \| bat <CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
+" Common work flow: Switch to current  directory, git write, commit and push.
+cab DdC  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p \| bat <CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
 
 
 " I never use ToHTML and it makes it harder to use Toc
