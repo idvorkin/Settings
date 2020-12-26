@@ -195,7 +195,7 @@ function! SetupPlugins()
     Plugin 'python-mode/python-mode'
     let g:pymode_python = 'python3'
     let g:pymode_options_colorcolumn = 0
-    let g:pymode_options_max_line_length = 88
+    let g:pymode_options_max_line_length = 120
     let g:pymode_lint_options_pep8 =
         \ {'max_line_length': g:pymode_options_max_line_length}
     let g:pymode_lint_options_pylint =
@@ -504,7 +504,7 @@ command! IgBlog :lcd ~/gits/idvorkin.github.io/<bar>:GFiles
 
 
 " Common work flow: Switch to current directory, git write, commit and push.
-cab DdC :lcd %:p:h<CR>:Gwrite<CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
+cab DdC :!git diff \| bat <CR>  :lcd %:p:h<CR>:Gwrite<CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
 
 
 " I never use ToHTML and it makes it harder to use Toc
