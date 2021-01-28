@@ -99,6 +99,7 @@ function! SetupPlugins()
 
     call vundle#begin()
 
+    Plugin 'fcpg/vim-osc52'
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'jparise/vim-graphql'
     Bundle 'webdevel/tabulous'
@@ -605,6 +606,15 @@ if filereadable (expand(g:bgdot))
 endif
 endfunc
 call SetupFBSpecific()
+
+if exists('##TextYankPost')
+    augroup BlinkClipboardIntegration
+        autocmd!
+        " For some reason '*' doesn't show up in the clipboard names, so using
+        " 'cy, instead '*y as used expect
+        autocmd TextYankPost * if v:event.regname == 'c' | call SendViaOSC52(join(v:event["regcontents"],"\n")) | endif
+    augroup END
+endif
 
 "
 " vim:foldmethod=indent:
