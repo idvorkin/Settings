@@ -215,10 +215,18 @@ function! SetupPlugins()
     Plugin 'aklt/plantuml-syntax'
     Plugin 'scrooloose/vim-slumlord'
 
-    Plugin 'airblade/vim-gitgutter'
     Plugin 'mhinz/vim-signify' " Not sure why but gitgutter doesn't display the signs correctly, disable that and use signify for line highlight
-    let g:gitgutter_signs=0
+    " \hp -> Preview hunk
+    " \hu -> Undo Hunk
+    :nmap <leader>hu :SignifyHunkUndo<cr>
+    :nmap <leader>hp :SignifyHunkDiff<cr>
+    " ]c -> Next hunk
+    " ]c -> Prev hunk
+    " \hp -> Preview hunk
+    " \hu -> Undo Hunk
 
+    " Plugin 'airblade/vim-gitgutter'
+    let g:gitgutter_signs=0
 
     " ]c -> Next hunk
     " ]c -> Prev hunk
