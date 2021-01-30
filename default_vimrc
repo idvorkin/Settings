@@ -99,6 +99,7 @@ function! SetupPlugins()
 
     call vundle#begin()
 
+    Plugin 'frazrepo/vim-rainbow' " # :RainbowToggle
     Plugin 'fcpg/vim-osc52'
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'jparise/vim-graphql'
@@ -215,10 +216,21 @@ function! SetupPlugins()
     Plugin 'scrooloose/vim-slumlord'
 
     Plugin 'airblade/vim-gitgutter'
-    " Plugin 'mhinz/vim-signify'
+    Plugin 'mhinz/vim-signify' " Not sure why but gitgutter doesn't display the signs correctly, disable that and use signify for line highlight
+    let g:gitgutter_signs=0
+
 
     " ]c -> Next hunk
     " ]c -> Prev hunk
+    " \hp -> Preview hunk
+    " \hu -> Undo Hunk
+    " :GitGutterFold
+    " :GitGutterEnable
+    " let g:gitgutter_set_sign_backgrounds=1
+    " :highlight! link SignColumn LineNr
+    " :highlight SignColumn guibg='blue' ctermbg='blue'
+	" :highlight SignColumn ctermbg='DarkRed'
+    " let g:gitgutter_preview_win_floating=1
 
     " Replace syntastic with ale
     " Bundle 'scrooloose/syntastic'
