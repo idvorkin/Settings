@@ -159,6 +159,9 @@ brew install rbenv
 gem install --user-install bundler jekyll
 cd
 
+# Set timezone
+# sudo timedatectl set-timezone  America/Los_Angeles
+
 # when locales get screwed up - haven't needed in a while.
 # export LANGUAGE=en_US.UTF-8
 # xport LANG=en_US.UTF-8
