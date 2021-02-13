@@ -250,6 +250,8 @@ function! SetupPlugins()
     " write-good
     " prose-lint
     " vale
+    Plugin 'lgalke/vim-compiler-vale'
+
     Plugin 'danro/rename.vim'
     " Plugin 'easymotion/vim-easymotion'
     " All of your Plugins must be added before the following line
@@ -460,6 +462,7 @@ let g:vmt_list_item_char='-'
 
 " Always enable softpencil
 
+autocmd BufEnter *md :exe ":compiler vale"
 autocmd BufEnter *md :exe ":SoftPencil"
 autocmd BufEnter *md :exe ":call AutoCorrect()"
 " autocmd BufEnter *md :exe ":Limelight"
