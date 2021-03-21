@@ -284,7 +284,7 @@ func FzFConfig()
 
     " using fd as the source for fzf
     command! -bang -complete=dir -nargs=* FF
-    \ call fzf#run(fzf#wrap('ff', {'source': 'fd --follow . ~/blog, 'dir':<q-args>,'sink':'e'}, <bang>0))
+    \ call fzf#run(fzf#wrap('ff', {'source': 'fd --follow . ~/blog', 'dir':<q-args>,'sink':'e'}, <bang>0))
 
     :cab ff FF<CR>
     " Some FZF  help
