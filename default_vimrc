@@ -284,7 +284,7 @@ func FzFConfig()
 
     " using fd as the source for fzf
     command! -bang -complete=dir -nargs=* FF
-    \ call fzf#run(fzf#wrap('ff', {'source': 'fd --follow . ~/gits', 'dir':<q-args>,'sink':'e'}, <bang>0))
+    \ call fzf#run(fzf#wrap('ff', {'source': 'fd --follow . ~/blog, 'dir':<q-args>,'sink':'e'}, <bang>0))
 
     :cab ff FF<CR>
     " Some FZF  help
@@ -524,7 +524,7 @@ command! VSize :vert resize 20
 command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo --markdown 2
 command! IgMdToc :r ~/settings/vim/snip_toc.md
 command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
-command! IgBlog :lcd ~/gits/idvorkin.github.io/<bar>:GFiles
+command! IgBlog :lcd ~/blog/<bar>:GFiles
 
 
 " Common work flow: Switch to current  directory, git write, commit and push.
