@@ -17,6 +17,7 @@ glances \
 gotop \
 graphviz \
 grip \
+gdu \
 htop \
 hub \
 httpie \
