@@ -529,6 +529,8 @@ command! IgTodo :r !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo 
 command! IgMdToc :r ~/settings/vim/snip_toc.md
 command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
 command! IgBlog :lcd ~/blog/<bar>:GFiles
+command! P3 :!python3 % <cr>
+command! Pb :!black % <cr>
 
 
 " Common work flow: Switch to current  directory, git write, commit and push.
