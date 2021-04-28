@@ -108,6 +108,13 @@ function! SetupPlugins()
     Bundle 'mattn/webapi-vim'
     Bundle 'majutsushi/tagbar'
 
+    " q - quit tagbar
+    " p - jump to tag
+    " P - tag to preview
+    " C-P, C-N next high level tag
+
+
+
     Bundle 'tpope/vim-fugitive'
 
     " Bundle for Mercurial
