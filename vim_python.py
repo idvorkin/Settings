@@ -1,6 +1,11 @@
+#!python3
+
 from datetime import datetime, timedelta
 from os import path, system, chdir
 import sys
+import typer
+
+app = typer.Typer()
 
 sys.path.append(f"{path.expanduser('~')}/gits/settings")
 
@@ -16,7 +21,8 @@ def MakeTemplatePage(date, directory, template_name):
     isAlreadyCreated = path.isfile(fileName)
 
     if isAlreadyCreated:
-        print(fileName + " exists")
+        pass
+        # print(fileName + " exists")
     else:
         with open(templateFileName, "r") as fileTemplate:
             content = fileTemplate.read()
@@ -30,11 +36,12 @@ def MakeTemplatePage(date, directory, template_name):
 
     chdir(f"{pathBasedAtIgor2(directory)}")
     try:
-        import vim
+        #import vim
+        #vim.command("next " + fileName)
+        #vim.command("lcd %:p:h")  # Goto current Directory
+        #vim.command("9999")  # Goto last line.
+        pass
 
-        vim.command("next " + fileName)
-        vim.command("lcd %:p:h")  # Goto current Directory
-        vim.command("9999")  # Goto last line.
     except ImportError:
         print("VIM not found")
     return fileName, directory
@@ -47,10 +54,13 @@ def NowPST():
     return datetime.now().astimezone(timezone("US/Pacific"))
 
 
+@app.command()
 def MakeDailyPage(daysoffset=0):
-    return MakeTemplatePage(
+    new_file,directory = MakeTemplatePage(
         NowPST() + timedelta(days=daysoffset), "750words", "daily_template"
     )
+    print(new_file)
+    return
 
 
 def WCDailyPage():
@@ -68,9 +78,14 @@ def GitCommitDailyPage():
     system(git_cmd)
 
 
+@app.command()
 def MakeWeeklyReport():
     now = NowPST()
     startOfWeek = now - timedelta(days=now.weekday())
 
     # Make to sart of week.
-    return MakeTemplatePage(startOfWeek, "week_report", "week_template")
+    new_file,path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
+    print(new_file)
+
+if __name__ == "__main__":
+    app()
