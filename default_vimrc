@@ -497,9 +497,9 @@ let g:jekyll_post_dirs = ['_posts', '../_posts','_drafts','../_drafts']
 function! EscapeKey()
     " Do mappings for funny keyboard
     :inoremap ` <esc>
-    :inoremap C-` `
+    :inoremap C-<esc> `
     :cnoremap ` <esc>
-    :cnoremap C-` `
+    :cnoremap C-<esc> `
 endfunction
 
 function! FixEscapeKey()
@@ -515,10 +515,10 @@ let g:ale_fixers = {
 " let g:ale_fix_on_save = 1
 " Scripting reference
 " https://devhints.io/vimscript
-:py3file ~/settings/vim_python.py
-command! IGDaily :py3 MakeDailyPage()
-command! IGYesterday :py3 MakeDailyPage(-1)
-command! IGWeekly :py3 MakeWeeklyReport()
+" :py3file ~/settings/vim_python.py
+command! IGDaily :n! `~/settings/vim_python.py makedailypage`
+command! IGWeekly :n! `~/settings/vim_python.py makeweeklyreport`
+command! IGYesterday :n! `~/settings/vim_python.py makedailypage --daysoffset -1`
 cab Ddt !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo --markdown
 cab Ddg !python3 ~/gits/linqpadsnippets/python/dump_grateful.py grateful
 cab Dda !python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome
