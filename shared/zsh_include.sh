@@ -37,6 +37,7 @@ alias sl='ssh lightsail'
 alias rpbcopy='nc localhost 5726'
 
 alias tmuxp="~/.local/bin/tmuxp"
+alias mb="pbpaste | sed  's!idvork.in/the-manager-book#!manager-book.azurewebsites.net/topic?t=!' | pbcopy"
 
 unalias ddg
 function ddg() {
