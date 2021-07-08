@@ -37,7 +37,7 @@ alias sl='ssh lightsail'
 alias rpbcopy='nc localhost 5726'
 
 alias tmuxp="~/.local/bin/tmuxp"
-alias mb="pbpaste | sed  's!idvork.in/the-manager-book#!manager-book.azurewebsites.net/topic?t=!' | pbcopy"
+alias mb="pbpaste | sed  's!idvork.in/the-manager-book#!manager-book.azurewebsites.net/!' | pbcopy"
 
 unalias ddg
 function ddg() {
@@ -88,7 +88,6 @@ eval "$(mcfly init zsh)"
 alias_if_exists cat bat
 alias_if_exists ls exa
 alias_if_exists top htop
-alias_if_exists tig lazygit
 alias_if_exists ndcu gdu
 alias_if_exists du gdu
 alias_if_exists cd z
