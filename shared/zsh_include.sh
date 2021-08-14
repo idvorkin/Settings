@@ -80,6 +80,10 @@ function gstatdaterange() {
     git diff --stat `echo $git_output | tail -n 1` `echo $git_output | head -n 1` |  sort -k2 -t'|' -n -r
 }
 
+eval "$(zoxide init zsh)"
+eval "$(mcfly init zsh)"
+
+
 # Set alias that are always better
 alias_if_exists cat bat
 alias_if_exists ls exa
@@ -87,6 +91,7 @@ alias_if_exists top htop
 alias_if_exists tig lazygit
 alias_if_exists ndcu gdu
 alias_if_exists du gdu
+alias_if_exists cd z
 
 # Igor setups use Soed and Sodot as useful aliases
 alias Soed='vim ~/settings/shared/zsh_include.sh'
@@ -94,6 +99,8 @@ alias Sodot='.  ~/settings/shared/zsh_include.sh'
 
 set -o vi
 echo "zsh_include complete"
+eval "$(rbenv init -)"
+
 #  shared zsh settings to be sourced
 # TMUX attach
 #
