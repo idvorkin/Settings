@@ -25,6 +25,7 @@ imagemagick \
 jq \
 libevent \
 litecli \
+mcfly \
 mosh \
 ncdu \
 neofetch \
@@ -43,6 +44,11 @@ tmux \
 wget \
 w3m \
 docker \
+xocide \
+gdu \
+curlie \
+xh \
+procs \
 yasm \
 zip \
 zsh \
