@@ -24,7 +24,6 @@ export EDITOR=vim
 # C-T search Files Fuzzy
 # C-R Search History fuzzy
 source_if_exists ~/.fzf.zsh
-source_if_exists ~/gits/z/z.sh
 source_if_exists ~/homebrew/etc/profile.d/z.sh
 
 PATH+=:~/.local/bin
@@ -90,7 +89,7 @@ alias_if_exists ls exa
 alias_if_exists top htop
 alias_if_exists ndcu gdu
 alias_if_exists du gdu
-alias_if_exists cd zoxide
+alias_if_exists cd z
 
 # Igor setups use Soed and Sodot as useful aliases
 alias Soed='vim ~/settings/shared/zsh_include.sh'
