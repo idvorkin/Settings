@@ -90,7 +90,7 @@ alias_if_exists ls exa
 alias_if_exists top htop
 alias_if_exists ndcu gdu
 alias_if_exists du gdu
-alias_if_exists cd z
+alias_if_exists cd zoxide
 
 # Igor setups use Soed and Sodot as useful aliases
 alias Soed='vim ~/settings/shared/zsh_include.sh'
