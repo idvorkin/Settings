@@ -25,7 +25,6 @@ ffmpeg \
 fselect \
 glances \
 gotop \
-graphviz \
 grip \
 gdu \
 htop \
