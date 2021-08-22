@@ -44,7 +44,7 @@ tmux \
 wget \
 w3m \
 docker \
-xocide \
+zoxide \
 gdu \
 curlie \
 xh \
