@@ -458,7 +458,7 @@ autocmd BufWritePre * :%s/\s\+$//e
 
 let g:vim_markdown_follow_anchor = 1 " ge will jump to anchor (TBD: Map to C-]
 let g:vim_markdown_toc_autofit = 1 " Great for not wasting extra space
-let g:vim_markdown_frontmatter = 1
+" let g:vim_markdown_frontmatter = 1
 set conceallevel=2
 let g:vim_markdown_new_list_item_indent = 0
 let g:vim_markdown_folding_level = 4
