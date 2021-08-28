@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 from os import path, system, chdir
 import sys
 import typer
+from pathlib import Path
+import random
+from icecream import ic
 
 app = typer.Typer()
 
@@ -77,6 +80,12 @@ def GitCommitDailyPage():
     print(f"GIT: {git_cmd} EOL")
     system(git_cmd)
 
+@app.command()
+def RandomBlogPost():
+    blog_path = Path.home() / Path("blog")
+    files = list(blog_path.glob("*/*md"))
+    random_post = random.choice(files)
+    print(random_post)
 
 @app.command()
 def MakeWeeklyReport():
