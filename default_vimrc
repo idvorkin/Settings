@@ -697,5 +697,9 @@ endfun
 
 :nnoremap <silent> <C-Y>  :TagbarOpen fj<cr>
 
+" Disable bells
+set noeb
+set novb
+
 "
 " vim:foldmethod=indent:
