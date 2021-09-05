@@ -700,6 +700,7 @@ endfun
 " Disable bells
 set noeb
 set novb
+set bo="all"
 
 "
 " vim:foldmethod=indent:
