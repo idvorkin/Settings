@@ -97,6 +97,7 @@ alias Soed='vim ~/settings/shared/zsh_include.sh'
 alias Sodot='.  ~/settings/shared/zsh_include.sh'
 
 set -o vi
+set nobell
 echo "zsh_include complete"
 eval "$(rbenv init -)"
 
