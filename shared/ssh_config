@@ -31,3 +31,10 @@ Host devbox
 
 
 
+Host dsvm
+    HostName 20.84.68.112
+    User azureuser
+    # Juypter
+    LocalForward 8888 localhost:8888
+    LocalForward 8889 localhost:8889
+    LocalForward 8000 localhost:8000

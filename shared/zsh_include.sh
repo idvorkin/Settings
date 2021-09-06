@@ -63,6 +63,17 @@ function alias_if_exists() {
     fi
 }
 
+function do_wsl() {
+    echo "in WSL"
+    alias pbcopy='clip.exe'
+    alias pbpaste='powershell.exe -command "Get-Clipboard"'
+
+}
+
+if [[ "$(uname --all)" =~ "microsoft" ]]; then
+    do_wsl
+fi
+
 function gstatdaterange() {
     # $1 - start
     # $2 - end
