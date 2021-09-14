@@ -94,7 +94,10 @@ function! SetupPlugins()
 
     if filereadable(expand("~/homebrew/opt/fzf/plugin/fzf.vim"))
         so ~/homebrew/opt/fzf/plugin/fzf.vim
-        " set rtp+=/usr/local/opt/fzf/plugin/
+    endif
+
+    if filereadable(expand("/opt/homebrew/opt/fzf/plugin/fzf.vim"))
+        so /opt/homebrew/opt/fzf/plugin/fzf.vim
     endif
 
     call vundle#begin()
