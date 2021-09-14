@@ -70,7 +70,7 @@ function do_wsl() {
 
 }
 
-if [[ "$(uname --all)" =~ "microsoft" ]]; then
+if [[ "$(uname -a)" =~ "microsoft" ]]; then
     do_wsl
 fi
 
