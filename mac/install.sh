@@ -8,7 +8,11 @@ brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable.
 brew install --cask google-chrome  iterm2	skype the-unarchiver
 brew install --cask visual-studio-code hammerspoon  vlc
-brew cask install osxfuse
+brew install --cask db-browser-for-sqlite
+brew install --cask bartender
+
+
+# brew cask install osxfuse
 
 
 
