@@ -44,6 +44,8 @@ function chatWith(name)
     hs.eventtap.keyStroke({"cmd"}, "k")
     hs.eventtap.keyStroke({"cmd"}, "a")
     hs.timer.usleep(0.1 * 1000 * 1000)
+    print ("Trying to chat with")
+    print (name)
     hs.eventtap.keyStrokes(name)
 end
 
