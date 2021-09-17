@@ -107,6 +107,11 @@ alias_if_exists ps procs
 alias Soed='vim ~/settings/shared/zsh_include.sh'
 alias Sodot='.  ~/settings/shared/zsh_include.sh'
 
+# Some useful work aliases
+alias chh='wchat messages'
+alias thr='wchat threads'
+
+
 set -o vi
 set nobell
 echo "zsh_include complete"
