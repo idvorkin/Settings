@@ -90,6 +90,14 @@ function gstatdaterange() {
     git diff --stat `echo $git_output | tail -n 1` `echo $git_output | head -n 1` |  sort -k2 -t'|' -n -r
 }
 
+function rhyme()
+{
+     # Call Rhyme using the rhymebrain API
+     # jq - https://stedolan.github.io/jq/manual/#Basicfilters
+     # rhymebrain API - https://rhymebrain.com/api.html
+     http "https://rhymebrain.com/talk?function=getRhymes&word=$1" | jq '.[] | select( .score == 300) |.word'
+}
+
 eval "$(zoxide init zsh)"
 eval "$(mcfly init zsh)"
 
