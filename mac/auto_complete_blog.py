@@ -55,5 +55,6 @@ for redirect in redirects:
     alfred_items += [item]
 
 
-items = {"items": alfred_items}
+random = alfred_item(uid="random", title="random", subtitle="a random post", arg="random", match="random")
+items = {"items": alfred_items+[random]}
 print(json.dumps(items, cls=EnhancedJSONEncoder))
