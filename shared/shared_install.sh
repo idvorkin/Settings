@@ -17,13 +17,13 @@ git config --global user.name "Igor Dvorkin"
 git config --global push.default simple
 
 # Personal respoistories
-git clone https://github.com/idvorkin/onom
-git clone https://github.com/idvorkin/Vim-Keybindings-For-Onenote
+mkdir ~/gits
+cd ~/gits
 git clone https://github.com/idvorkin/LinqpadSnippets
-git clone https://github.com/idvorkin/linqpadDataExplore
 git clone https://github.com/idvorkin/idvorkin.github.io
 git clone https://github.com/idvorkin/jupyter
 git clone https://idvorkin@bitbucket.org/idvorkin/igor2.git
+popd
 
 # Link to lots of dot files
 ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
@@ -129,18 +129,6 @@ git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset
 
 
 # Here's stuff for dotnet.
-wget https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
-sudo dpkg -i packages-microsoft-prod.deb
-sudo add-apt-repository universe
-sudo apt-get install apt-transport-https
-sudo apt-get update
-sudo apt-get install dotnet-sdk-2.2
-
-# and the way to do it on AMI since it can't build the dependancies.
-
-wget https://download.microsoft.com/download/5/F/0/5F0362BD-7D0A-4A9D-9BF9-022C6B15B04D/dotnet-runtime-2.0.0-linux-x64.tar.gz
-mkdir -p $HOME/dotnet && tar zxf dotnet-runtime-2.0.0-linux-x64.tar.gz -C $HOME/dotnet
-export PATH=$PATH:$HOME/dotnet
 
 
 #here's stuff for az-cli install
@@ -157,13 +145,7 @@ echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO 
 gem install bundle
 brew install rbenv
 gem install --user-install bundler jekyll
-cd
 
 # Set timezone
 # sudo timedatectl set-timezone  America/Los_Angeles
 
-# when locales get screwed up - haven't needed in a while.
-# export LANGUAGE=en_US.UTF-8
-# xport LANG=en_US.UTF-8
-# export port LC_ALL=en_US.UTF-8
-# export PATH=/usr/local/opt/ruby/bin:$PATH
