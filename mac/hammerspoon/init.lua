@@ -3,6 +3,7 @@ require("hs.json")
 -- By having IPC loaded can do:
 -- /usr/local/bin hs -c "command"
 require("hs.ipc")
+require("hs.caffeinate")
 --
 
 function laptopScreen()
@@ -152,6 +153,9 @@ function reloadConfig(files)
         hs.reload()
     end
 end
+function lock()
+    hs.caffeinate.lockScreen()
+end
 
 -- Sigh this is getting complicated
 -- Inspiration
@@ -161,7 +165,9 @@ end
 myWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig):start()
 hs.alert.show("Config loaded")
 
-hs.hotkey.bind({"cmd", "alt", "ctrl"}, "r", reloadConfig)
+hs.hotkey.bind({"cmd"}, "l",lock)
+hs.hotkey.bind({"cmd", "ctrl"}, "l",lock)
+-- hs.hotkey.bind({"cmd", "alt", "ctrl"}, "r", reloadConfig)
 
 function urlMove(event, params)
     -- inspect (params)
