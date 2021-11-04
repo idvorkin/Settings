@@ -165,7 +165,6 @@ end
 myWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConfig):start()
 hs.alert.show("Config loaded")
 
-hs.hotkey.bind({"cmd"}, "l",lock)
 hs.hotkey.bind({"ctrl"}, "l",lock)
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "r", reloadConfig)
 
