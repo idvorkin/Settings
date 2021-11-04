@@ -166,8 +166,8 @@ myWatcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reloadConf
 hs.alert.show("Config loaded")
 
 hs.hotkey.bind({"cmd"}, "l",lock)
-hs.hotkey.bind({"cmd", "ctrl"}, "l",lock)
--- hs.hotkey.bind({"cmd", "alt", "ctrl"}, "r", reloadConfig)
+hs.hotkey.bind({"ctrl"}, "l",lock)
+hs.hotkey.bind({"cmd", "alt", "ctrl"}, "r", reloadConfig)
 
 function urlMove(event, params)
     -- inspect (params)
