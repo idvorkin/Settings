@@ -24,16 +24,6 @@ set tags=tags;/
 " OMG - How to support italics in vim in TMUX
 " https://rsapkf.netlify.com/blog/enabling-italics-vim-tmux
 
-function! FixCallStacks()
-    :%s;\[NLN\];\r;g
-    :%s;\[TAB\];\t;g
-endfunction
-
-function! StripPerfCounterTags()
-    %s;\(\\.*\)<.*>;\1;
-    %s;<.*>;;
-endfunction
-
 function! FixMojiBake()
     " See charector under cursor -
     "   ga
@@ -141,7 +131,7 @@ function! SetupPlugins()
     Bundle 'inkarkat/vim-spellcheck'
     Bundle 'panozzaj/vim-autocorrect'
 
-    Bundle 'leafgarland/typescript-vim'
+    Bundle 'HerringtonDarkholme/yats.vim'
 
     " :IndentGuidesEnable
     " :IndentGuidesDisable
