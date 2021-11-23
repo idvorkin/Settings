@@ -3,7 +3,8 @@
 
 #  Helpful go to your by pressing gf on: ~/.zshrc
 
-# plugins=(git osx lol quote vi-mode web-search wd fasd httpie tig tmux fzf)
+# https://github.com/lukechilds/zsh-better-npm-completion
+# plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)
 # . ~/settings/shared/zsh_include.sh
 
 # Source Brew
