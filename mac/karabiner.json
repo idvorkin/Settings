@@ -48,31 +48,7 @@
                         ]
                     },
                     {
-                        "description": "OmniFocus QuickEntry C-[ W-[",
-                            "manipulators": [
-                                {
-                                    "from": {
-                                        "key_code": "open_bracket",
-                                            "modifiers": {
-                                                "mandatory": [
-                                                    "left_command"
-                                                ]
-                                            }
-                                    },
-                                    "to": [
-                                        {
-                                            "key_code": "open_bracket",
-                                                "modifiers": [
-                                                    "left_control"
-                                                ]
-                                        }
-                                            ],
-                                            "type": "basic"
-                                }
-                                    ]
-                    },
-                    {
-                        "description": "X Code C-F to PageDown",
+                        "description": "VS Code C-F to PageDown",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -102,7 +78,7 @@
                         ]
                     },
                     {
-                        "description": "Code C-B to PageUp",
+                        "description": "VSCode C-B to PageUp",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -125,6 +101,72 @@
                                 "to": [
                                     {
                                         "key_code": "page_up"
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "VSCode C-] to Goto Definition",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com.microsoft.VSCode$",
+                                            "^com.facebook.fbvscode$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "close_bracket",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_command"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                            "key_code": "close_bracket",
+                                            "modifiers": [
+                                                "left_control"
+                                            ]
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
+                        "description": "VSCode C-T to Go Back",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com.microsoft.VSCode$",
+                                            "^com.facebook.fbvscode$"
+                                        ],
+                                        "type": "frontmost_application_if"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "t",
+                                    "modifiers": {
+                                        "mandatory": [
+                                            "left_command"
+                                        ]
+                                    }
+                                },
+                                "to": [
+                                    {
+                                            "key_code": "hyphen",
+                                            "modifiers": [
+                                                "left_control"
+                                            ]
                                     }
                                 ],
                                 "type": "basic"
