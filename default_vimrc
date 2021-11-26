@@ -138,6 +138,7 @@ function! SetupPlugins()
     " :IndentGuidesToggle
     Bundle 'nathanaelkane/vim-indent-guides'
 
+    Plugin 'ekalinin/Dockerfile.vim'
     Bundle 'mhinz/vim-startify'
     Bundle 'tpope/vim-surround'
     Bundle 'bling/vim-airline'
