@@ -11,6 +11,7 @@ zsh \
 tmux \
 git \
 tig \
+docui \
 ranger \
 cask \
 fasd \
