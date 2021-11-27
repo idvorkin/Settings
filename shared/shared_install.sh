@@ -45,9 +45,9 @@ ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 # ln -s -f ~/settings/shared/gitconfig ~/.gitconfig
 
 # link git aliases
-ln -s -f ~/gits/techdiary ~/ghtd
 ln -s -f ~/gits/jupyter ~/ghju
 ln -s -f ~/gits/igor2/750words ~/750
+ln -s -f ~/gits/igor2/ ~/igor2
 ln -s -f ~/gits/idvorkin.github.io ~/blog
 
 
@@ -65,7 +65,6 @@ brew install --HEAD universal-ctags/universal-ctags/universal-ctags
 
 # setup useful packages for python
 pip3 install tmuxp pipenv pytz glances
-
 
 # Setup italics term info...
 # https://sookocheff.com/post/vim/italics/
@@ -121,30 +120,7 @@ git config --global alias.st status
 git config --global alias.logc log master..
 git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate"
 
-# share credentila manager between WSL and windows desktop
-# git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-manager.exe"
-# https://git-scm.com/book/en/v2/Git-Tools-Credential-Storage
-# git config --global credential.helper 'store --file ~/.my-credentials'
-
-
-
-# Here's stuff for dotnet.
-
-
-#here's stuff for az-cli install
-# This is currently broken -- wait a bit and hope it gets fixed. For now use cloud desktop.
-sudo apt-get install apt-transport-https lsb-release software-properties-common -y
-AZ_REPO=$(lsb_release -cs)
-echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
-        sudo tee /etc/apt/sources.list.d/azure-cli.list
-
-# Setup Jekyll
-# Rant why so god damn hard to build jekyll and nokogiri
-# be sure to set path to brew ruby in your zshrc
-# export PATH=/usr/local/opt/ruby/bin:$PATH
-gem install bundle
-brew install rbenv
-gem install --user-install bundler jekyll
+# Now I run jekyll in a container -- w00t!
 
 # Set timezone
 # sudo timedatectl set-timezone  America/Los_Angeles
