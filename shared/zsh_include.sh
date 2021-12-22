@@ -106,6 +106,7 @@ eval "$(mcfly init zsh)"
 # Set alias that are always better
 alias_if_exists cat bat
 alias_if_exists ls exa
+alias_if_exists df duf
 alias_if_exists top htop
 alias_if_exists ndcu gdu
 alias_if_exists du gdu

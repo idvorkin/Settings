@@ -5,6 +5,7 @@ exa \
 mcfly \
 fzf \
 bat \
+duf \
 ag \
 fd \
 zsh \
