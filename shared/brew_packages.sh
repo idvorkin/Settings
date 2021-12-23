@@ -13,6 +13,7 @@ tmux \
 git \
 tig \
 docui \
+dua-cli \
 ranger \
 cask \
 fasd \

@@ -109,7 +109,7 @@ alias_if_exists ls exa
 alias_if_exists df duf
 alias_if_exists top htop
 alias_if_exists ndcu gdu
-alias_if_exists du gdu
+alias_if_exists du dua
 alias_if_exists cd z
 alias_if_exists ps procs
 
