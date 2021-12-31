@@ -100,6 +100,7 @@ function! SetupPlugins()
     Bundle 'r0mai/vim-djinni'
     Bundle 'mattn/webapi-vim'
     Bundle 'majutsushi/tagbar'
+    Bundle 'luochen1990/rainbow'
 
     " q - quit tagbar
     " p - jump to tag
@@ -693,6 +694,8 @@ endfun
 
 " Disable bells
 set belloff=all
+let g:rainbow_active = 1 "set to 0 if you want to enable it later via :RainbowToggle
+
 
 "
 " vim:foldmethod=indent:
