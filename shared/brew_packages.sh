@@ -37,6 +37,7 @@ imagemagick \
 jq \
 libevent \
 litecli \
+lazydocker \
 mosh \
 ncdu \
 neofetch \
