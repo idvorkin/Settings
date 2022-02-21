@@ -141,6 +141,20 @@ function! SetupPlugins()
 
     Plugin 'ekalinin/Dockerfile.vim'
     Bundle 'mhinz/vim-startify'
+
+
+    " Cool does wrapping
+    " help surround
+
+    " Wrap current line
+    " ys -> you surround, motion, element
+    " yss* <- Wrap 'Surround' line '*'
+
+    " ds" -> delete surround
+    " cs" -> change surround
+
+
+
     Bundle 'tpope/vim-surround'
     Bundle 'bling/vim-airline'
     Bundle 'chrisbra/csv.vim'
@@ -271,8 +285,6 @@ function! SetupPlugins()
     " \n - usages
     " K - help
     Plugin 'davidhalter/jedi-vim'
-
-
 
     call vundle#end()            " required
 endfunc
@@ -691,6 +703,11 @@ endfun
 " :nnoremap <silent> <C-U>  :call <SID>MkdxFzfQuickfixHeaders()<Cr>
 
 :nnoremap <silent> <C-Y>  :TagbarOpen fj<cr>
+
+" Setup surround for b (old)  and i(talics) for markdown.
+" echo char2nr('b') -> 105
+autocmd FileType markdown let b:surround_105 = "*\r*" " i = 105
+autocmd FileType markdown let b:surround_98 = "**\r**" " b = 98
 
 " Disable bells
 set belloff=all
