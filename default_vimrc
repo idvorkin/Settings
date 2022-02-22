@@ -630,6 +630,17 @@ function MdBoldToTitle()
     " /^*\*\(.*\)\*\*$ "
 endfunction
 
+" Useful for iPlug stuff
+function! SetupIPlug()
+    iplug add 'https://github.com/junegunn/goyo.vim'
+    iplug add 'https://github.com/reedes/vim-pencil'
+    iplug add 'https://github.com/inkarkat/vim-spellcheck'
+    iplug add 'https://github.com/tpope/vim-surround'
+    iplug add 'https://github.com/parkr/vim-jekyll'
+    iplug add "https://github.com/scrooloose/nerdtree"
+    iplug add 'https://github.com/scrooloose/nerdcommenter'
+    iplug update
+endfunc
 
 func SetupFBSpecific()
 """""""""""""
