@@ -406,11 +406,14 @@ endfunc
 :iab mdt ☐
 :iab mdtd ☐
 :iab mdc ☑
-:iab __summarize  {%include summarize-page.html src="/TK" %}
-:iab __youtube  {%include youtube.html src="TK" %}
 :iab mdtodo ☐
 :iab mddone  ☑
 :cab mdcbt g/^#/s;# \*\*\(.*\)\*\*;# \1;
+
+" Note can't use _ in ab, so using 'e' for expand
+:iab esummarize  {%include summarize-page.html src="/TK" %}
+:iab eyoutube  {%include youtube.html src="TK" %}
+:cab egpt  !~/gpt3.py
 
 func! MarkDownWordToLink()
     " cool yiw takes the word, and jumps you to the beginning of it.
