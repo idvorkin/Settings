@@ -406,6 +406,8 @@ endfunc
 :iab mdt ☐
 :iab mdtd ☐
 :iab mdc ☑
+:iab __sumarize  {%include summarize-page.html src="/TK" %}
+:iab __youtube  {%include youtube.html src="TK" %}
 :iab mdtodo ☐
 :iab mddone  ☑
 :cab mdcbt g/^#/s;# \*\*\(.*\)\*\*;# \1;
