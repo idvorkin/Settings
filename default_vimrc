@@ -738,7 +738,7 @@ function! SetupGPT()
     cab e1 call fzf#vim#complete('cat ~/tmp/a.txt')<cr>
     " <expr> say repplace the rhs  with evaluation of rhs
     " inoremap  <expr> <c-x><c-f> fzf#vim#complete("echo ".getline("."))
-    inoremap  <expr> <c-x><c-f> CompleteGpt()
+    inoremap  <expr> <c-x><c-g> CompleteGpt()
     cab ec1 call(fzf#vim#complete("echo ".getline("."))
 endfunction
 
