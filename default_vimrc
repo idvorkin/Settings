@@ -731,7 +731,7 @@ let g:rainbow_active = 1 "set to 0 if you want to enable it later via :RainbowTo
 
 function! CompleteGpt()
   let line = getline(".")
-  return fzf#vim#complete("echo '".line."'| ~/gpt3.py stdin --responses=5")
+  return fzf#vim#complete("echo '".line."'| ~/gpt3.py stdin --responses=5 --to-fzf")
 endfunction
 
 function! SetupGPT()
