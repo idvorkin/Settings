@@ -730,12 +730,20 @@ set belloff=all
 let g:rainbow_active = 1 "set to 0 if you want to enable it later via :RainbowToggle
 
 
+" When doing a visual selection the last line is lost when you do 'A'ppend
+" So you need to capture the last line (TODO See if can pass that to gpt sink
+" options)
+
+let gpt_last_line=0
+
 " The default sink escapes the output, this way we can skip that.
 " We can also unescapet the gpt output too.
 function GptSink(completion)
     " gpt3.py wrap encodes newlines as  ;;
     let gpt_decoded  = substitute(a:completion,';','\n',"g")
     let insert_command = 'normal A'.gpt_decoded
+
+    execute ":".string(g:gpt_last_line)
     execute insert_command
 endfunction
 
@@ -743,6 +751,7 @@ endfunction
 " range after the function enables access to a:firstline, a:lastline
 function! GptComplete() range
   let lines = getline(a:firstline, a:lastline)
+  let g:gpt_last_line = a:lastline
   let tempname = "~/tmp/gpt3.ipc"
   call writefile(lines, expand(tempname))
   let gpt_source =  'python3 ~/gpt3.py stdin --file '.tempname.' --responses=5 --to-fzf'
