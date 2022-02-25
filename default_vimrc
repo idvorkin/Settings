@@ -753,7 +753,7 @@ function! GptComplete(gpt_params='') range
   let g:gpt_last_line = a:lastline
   let tempname = "~/tmp/gpt3.ipc"
   call writefile(lines, expand(tempname))
-  let gpt_source =  'echo '.tempname.'| python3 ~/gpt3.py stdin --responses=5 --to-fzf '.a:gpt_params
+  let gpt_source =  'cat '.tempname.'| python3 ~/gpt3.py stdin --responses=5 --to-fzf '.a:gpt_params
 
   " -to_fzf is ';' separated, we can look at it in the preview window expanded
   let preview =  "echo {} | sed 's/;/\\n/g'"
@@ -764,12 +764,12 @@ endfunction
 
 
 function! SetupGPT()
+    cab ec1 call GptComplete()<CR>
+    :cab egpt  !~/gpt3.py
     " <expr> say repplace the rhs  with evaluation of rhs
     " inoremap  <expr> <c-x><c-f> fzf#vim#complete("echo ".getline("."))
     " inoremap  <expr> <c-x><c-g> CompleteGpt()
     " nnoremap  <expr> <c-x><c-g>  CompleteGpt()
-    cab ec1 call GptComplete()<CR>
-    :cab egpt  !~/gpt3.py
 endfunction
 
 call SetupGPT()
