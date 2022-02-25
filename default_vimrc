@@ -413,7 +413,6 @@ endfunc
 " Note can't use _ in ab, so using 'e' for expand
 :iab esummarize  {%include summarize-page.html src="/TK" %}
 :iab eyoutube  {%include youtube.html src="TK" %}
-:cab egpt  !~/gpt3.py
 
 func! MarkDownWordToLink()
     " cool yiw takes the word, and jumps you to the beginning of it.
@@ -754,7 +753,7 @@ function! GptComplete(gpt_params='') range
   let g:gpt_last_line = a:lastline
   let tempname = "~/tmp/gpt3.ipc"
   call writefile(lines, expand(tempname))
-  let gpt_source =  'python3 ~/gpt3.py stdin --file '.tempname.' --responses=5 --to-fzf '.a:gpt_params
+  let gpt_source =  'echo '.tempname.'| python3 ~/gpt3.py stdin --responses=5 --to-fzf '.a:gpt_params
 
   " -to_fzf is ';' separated, we can look at it in the preview window expanded
   let preview =  "echo {} | sed 's/;/\\n/g'"
@@ -770,6 +769,7 @@ function! SetupGPT()
     " inoremap  <expr> <c-x><c-g> CompleteGpt()
     " nnoremap  <expr> <c-x><c-g>  CompleteGpt()
     cab ec1 call GptComplete()<CR>
+    :cab egpt  !~/gpt3.py
 endfunction
 
 call SetupGPT()
