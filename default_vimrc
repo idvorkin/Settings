@@ -729,17 +729,33 @@ autocmd FileType markdown let b:surround_98 = "**\r**" " b = 98
 set belloff=all
 let g:rainbow_active = 1 "set to 0 if you want to enable it later via :RainbowToggle
 
-function! CompleteGpt()
-  let line = getline(".")
-  return fzf#vim#complete("echo '".line."'| ~/gpt3.py stdin --responses=5 --to-fzf")
+
+" The default sink escapes the output, this way we can skip that.
+" We can also unescapet the gpt output too.
+function GptSink(completion)
+    let the_command = 'normal A'.a:completion
+    execute the_command
 endfunction
 
+
+" range after the function enables access to a:firstline, a:lastline
+function! GptComplete() range
+  let lines = getline(a:firstline, a:lastline)
+  let tempname = "~/tmp/gpt3.ipc"
+  call writefile(lines, expand(tempname))
+  let gpt_source =  'python3 ~/gpt3.py stdin --file '.tempname.' --responses=5 --to-fzf'
+  "let gpt_source = "echo 'hello world'"
+  let wrapped =  fzf#wrap({'source': gpt_source, 'sink':function('GptSink'))
+  call fzf#run(wrapped)
+endfunction
+
+
 function! SetupGPT()
-    cab e1 call fzf#vim#complete('cat ~/tmp/a.txt')<cr>
     " <expr> say repplace the rhs  with evaluation of rhs
     " inoremap  <expr> <c-x><c-f> fzf#vim#complete("echo ".getline("."))
-    inoremap  <expr> <c-x><c-g> CompleteGpt()
-    cab ec1 call(fzf#vim#complete("echo ".getline("."))
+    " inoremap  <expr> <c-x><c-g> CompleteGpt()
+    " nnoremap  <expr> <c-x><c-g>  CompleteGpt()
+    cab ec1 call GptComplete()<CR>
 endfunction
 
 call SetupGPT()
