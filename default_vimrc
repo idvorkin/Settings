@@ -745,7 +745,7 @@ function! GptComplete() range
   call writefile(lines, expand(tempname))
   let gpt_source =  'python3 ~/gpt3.py stdin --file '.tempname.' --responses=5 --to-fzf'
   "let gpt_source = "echo 'hello world'"
-  let wrapped =  fzf#wrap({'source': gpt_source, 'sink':function('GptSink'))
+  let wrapped =  fzf#wrap({'source': gpt_source, 'sink':function('GptSink')})
   call fzf#run(wrapped)
 endfunction
 
