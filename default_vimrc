@@ -749,12 +749,12 @@ endfunction
 
 
 " range after the function enables access to a:firstline, a:lastline
-function! GptComplete() range
+function! GptComplete(gpt_params='') range
   let lines = getline(a:firstline, a:lastline)
   let g:gpt_last_line = a:lastline
   let tempname = "~/tmp/gpt3.ipc"
   call writefile(lines, expand(tempname))
-  let gpt_source =  'python3 ~/gpt3.py stdin --file '.tempname.' --responses=5 --to-fzf'
+  let gpt_source =  'python3 ~/gpt3.py stdin --file '.tempname.' --responses=5 --to-fzf '.a:gpt_params
 
   " -to_fzf is ';' separated, we can look at it in the preview window expanded
   let preview =  "echo {} | sed 's/;/\\n/g'"
