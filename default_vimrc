@@ -748,23 +748,26 @@ endfunction
 
 
 " range after the function enables access to a:firstline, a:lastline
-function! GptComplete(gpt_params='') range
+function! GptComplete(gpt_command='stdin',gpt_params='') range
   let lines = getline(a:firstline, a:lastline)
   let g:gpt_last_line = a:lastline
   let tempname = "~/tmp/gpt3.ipc"
   call writefile(lines, expand(tempname))
-  let gpt_source =  'cat '.tempname.'| python3 ~/gpt3.py stdin --responses=5 --to-fzf '.a:gpt_params
+  let gpt_source =  'cat '.tempname.'| python3 ~/gpt3.py '. a:gpt_command . '  --responses=5 --to-fzf '.a:gpt_params
 
   " -to_fzf is ';' separated, we can look at it in the preview window expanded
   let preview =  "echo {} | sed 's/;/\\n/g'"
   let wrapped =  fzf#wrap({'source': gpt_source, 'sink':function('GptSink'),
-  \  'options':['--preview', preview, '--preview-window', 'down']})
+              \  'options':['--preview', preview, '--preview-window', 'down:wrap']})
   call fzf#run(wrapped)
 endfunction
 
 
 function! SetupGPT()
-    cab ec1 call GptComplete()<CR>
+    : cab ec1 call GptComplete()<CR>
+    : cab ecs call GptComplete("study")<CR>
+    : cab ec5 call GptComplete("eli5")<CR>
+    : cab ecdr call GptComplete("tldr")<CR>
     :cab egpt  !~/gpt3.py
     " <expr> say repplace the rhs  with evaluation of rhs
     " inoremap  <expr> <c-x><c-f> fzf#vim#complete("echo ".getline("."))
