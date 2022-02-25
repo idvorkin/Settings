@@ -733,8 +733,10 @@ let g:rainbow_active = 1 "set to 0 if you want to enable it later via :RainbowTo
 " The default sink escapes the output, this way we can skip that.
 " We can also unescapet the gpt output too.
 function GptSink(completion)
-    let the_command = 'normal A'.a:completion
-    execute the_command
+    " gpt3.py wrap encodes newlines as  ;;
+    let gpt_decoded  = substitute(a:completion,';','\n',"g")
+    let insert_command = 'normal A'.gpt_decoded
+    execute insert_command
 endfunction
 
 
@@ -744,8 +746,11 @@ function! GptComplete() range
   let tempname = "~/tmp/gpt3.ipc"
   call writefile(lines, expand(tempname))
   let gpt_source =  'python3 ~/gpt3.py stdin --file '.tempname.' --responses=5 --to-fzf'
-  "let gpt_source = "echo 'hello world'"
-  let wrapped =  fzf#wrap({'source': gpt_source, 'sink':function('GptSink')})
+
+  " -to_fzf is ';' separated, we can look at it in the preview window expanded
+  let preview =  "echo {} | sed 's/;/\\n/g'"
+  let wrapped =  fzf#wrap({'source': gpt_source, 'sink':function('GptSink'),
+  \  'options':['--preview', preview, '--preview-window', 'down']})
   call fzf#run(wrapped)
 endfunction
 
