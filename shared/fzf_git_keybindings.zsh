@@ -7,7 +7,7 @@ is_in_git_repo() {
 }
 
 fzf-down() {
-  fzf --height 50% --min-height 20 --border --bind ctrl-/:toggle-preview "$@"
+  fzf --min-height 20 --border --bind ctrl-/:toggle-preview "$@"
 }
 
 _gf() {
