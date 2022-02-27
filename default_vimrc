@@ -764,10 +764,11 @@ endfunction
 
 
 function! SetupGPT()
-    : cab ec1 call GptComplete()<CR>
+    : cab ecc call GptComplete()<CR>
     : cab ecs call GptComplete("study")<CR>
     : cab ec5 call GptComplete("eli5")<CR>
     : cab ecdr call GptComplete("tldr")<CR>
+    : cab ecsum call GptComplete("summary")<CR>
     :cab egpt  !~/gpt3.py
     " <expr> say repplace the rhs  with evaluation of rhs
     " inoremap  <expr> <c-x><c-f> fzf#vim#complete("echo ".getline("."))
