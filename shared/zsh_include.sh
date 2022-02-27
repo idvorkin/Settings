@@ -142,7 +142,5 @@ eval "$(rbenv init -)"
 # export LC_ALL=en_US.UTF-8
 # export PATH="$PATH:$HOME/.dotnet/tools"
 
-# Grep out weekly report text, move to python
-function score_week() {
-    cat $1 | grep '\(^## .*(.*\|Report\)'
-}
+source ~/settings/shared/fzf_git_keybindings.zsh
+
