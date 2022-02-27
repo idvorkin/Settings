@@ -35,6 +35,7 @@ hub \
 httpie \
 imagemagick \
 jq \
+jless \
 libevent \
 litecli \
 lazydocker \
