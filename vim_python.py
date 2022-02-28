@@ -6,11 +6,10 @@ import sys
 import typer
 from pathlib import Path
 import random
+from loguru import logger
 from icecream import ic
 
 app = typer.Typer()
-
-sys.path.append(f"{path.expanduser('~')}/gits/settings")
 
 
 def pathBasedAtIgor2(filepath):
@@ -39,10 +38,10 @@ def MakeTemplatePage(date, directory, template_name):
 
     chdir(f"{pathBasedAtIgor2(directory)}")
     try:
-        #import vim
-        #vim.command("next " + fileName)
-        #vim.command("lcd %:p:h")  # Goto current Directory
-        #vim.command("9999")  # Goto last line.
+        # import vim
+        # vim.command("next " + fileName)
+        # vim.command("lcd %:p:h")  # Goto current Directory
+        # vim.command("9999")  # Goto last line.
         pass
 
     except ImportError:
@@ -58,8 +57,8 @@ def NowPST():
 
 
 @app.command()
-def MakeDailyPage(daysoffset=0):
-    new_file,directory = MakeTemplatePage(
+def MakeDailyPage(daysoffset: int = 0):
+    new_file, directory = MakeTemplatePage(
         NowPST() + timedelta(days=daysoffset), "750words", "daily_template"
     )
     print(new_file)
@@ -80,6 +79,7 @@ def GitCommitDailyPage():
     print(f"GIT: {git_cmd} EOL")
     system(git_cmd)
 
+
 @app.command()
 def RandomBlogPost():
     blog_path = Path.home() / Path("blog")
@@ -87,14 +87,21 @@ def RandomBlogPost():
     random_post = random.choice(files)
     print(random_post)
 
+
 @app.command()
 def MakeWeeklyReport():
     now = NowPST()
     startOfWeek = now - timedelta(days=now.weekday())
 
     # Make to sart of week.
-    new_file,path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
+    new_file, path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
     print(new_file)
 
-if __name__ == "__main__":
+
+@logger.catch
+def app_with_loguru():
     app()
+
+
+if __name__ == "__main__":
+    app_with_loguru()
