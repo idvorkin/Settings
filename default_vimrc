@@ -285,6 +285,7 @@ function! SetupPlugins()
     " \n - usages
     " K - help
     Plugin 'davidhalter/jedi-vim'
+    Plugin 'wakatime/vim-wakatime'
 
     call vundle#end()            " required
 endfunc
@@ -512,6 +513,16 @@ function! EscapeKey()
     :cnoremap ` <esc>
     :cnoremap C-<esc> `
 endfunction
+
+function! FJEscape()
+    " Do mappings for funny keyboard
+    :inoremap fj <backspace><esc>
+    :cnoremap fj <backspace><esc>
+endfunction
+call FJEscape()
+
+
+
 
 function! FixEscapeKey()
     :call EscapeKey()
