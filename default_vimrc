@@ -160,10 +160,6 @@ function! SetupPlugins()
     Bundle 'chrisbra/csv.vim'
     Bundle 'altercation/vim-colors-solarized'
     Bundle 'vim-scripts/ZoomWin'
-    "
-    " change font size \\++
-    Bundle 'drmikehenry/vim-fontsize'
-
 
     " Markdown stuff
     " *******************************
