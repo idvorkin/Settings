@@ -89,9 +89,9 @@ def RandomBlogPost():
 
 
 @app.command()
-def MakeWeeklyReport():
+def MakeWeeklyReport(weekoffset:int=0):
     now = NowPST()
-    startOfWeek = now - timedelta(days=now.weekday())
+    startOfWeek = now - timedelta(days=now.weekday())+timedelta(days=weekoffset*7)
 
     # Make to sart of week.
     new_file, path = MakeTemplatePage(startOfWeek, "week_report", "week_template")

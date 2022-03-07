@@ -536,6 +536,7 @@ let g:ale_fixers = {
 " :py3file ~/settings/vim_python.py
 command! IGDaily :n! `~/settings/vim_python.py makedailypage`
 command! IGWeekly :n! `~/settings/vim_python.py makeweeklyreport`
+command! IGYesterweek :n! `~/settings/vim_python.py makeweeklyreport --weekoffset -1`
 command! IGYesterday :n! `~/settings/vim_python.py makedailypage --daysoffset -1`
 cab Ddt !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo --markdown
 cab Ddg !python3 ~/gits/linqpadsnippets/python/dump_grateful.py grateful
@@ -760,7 +761,7 @@ function! GptComplete(gpt_command='stdin',gpt_params='') range
   let g:gpt_last_line = a:lastline
   let tempname = "~/tmp/gpt3.ipc"
   call writefile(lines, expand(tempname))
-  let gpt_source =  'cat '.tempname.'| python3 ~/gpt3.py '. a:gpt_command . '  --responses=5 --to-fzf '.a:gpt_params
+  let gpt_source =  'cat '.tempname.'| python3 ~/gpt.py '. a:gpt_command . '  --responses=5 --to-fzf '.a:gpt_params
 
   " -to_fzf is ';' separated, we can look at it in the preview window expanded
   let preview =  "echo {} | sed 's/;/\\n/g'"
