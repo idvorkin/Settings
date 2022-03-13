@@ -39,6 +39,7 @@ jless \
 libevent \
 litecli \
 lazydocker \
+markdownlint-cli \
 mosh \
 ncdu \
 neofetch \
@@ -48,7 +49,7 @@ optipng \
 pipenv \
 pup \
 rg \
-ruby \
+ruby@2.7 \
 s3cmd \
 wget \
 w3m \
@@ -72,11 +73,12 @@ echo $brew_packages | xargs -n1 brew install
 # to execute things from VIM
 # <range>w !bash
 
-# packages I want that don't exist
-# brew install saws svg-term
+#  Get latest version of mosh
+brew install mosh --head
 
 # currently broken on some devices.
 brew install azure-cli cmatrix iftop
+
 
 # ranger = File Explorer
 # grv - get repository viewer
