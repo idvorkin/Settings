@@ -512,8 +512,8 @@ endfunction
 
 function! FJEscape()
     " Do mappings for funny keyboard
-    :inoremap fj <backspace><esc>
-    :cnoremap fj <backspace><esc>
+    :inoremap fj <esc>
+    :cnoremap fj <esc>
 endfunction
 call FJEscape()
 
