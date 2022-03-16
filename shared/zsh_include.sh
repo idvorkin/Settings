@@ -142,5 +142,6 @@ eval "$(rbenv init -)"
 # export LC_ALL=en_US.UTF-8
 # export PATH="$PATH:$HOME/.dotnet/tools"
 
+bindkey -M viins 'fj' vi-cmd-mode
 source ~/settings/shared/fzf_git_keybindings.zsh
 
