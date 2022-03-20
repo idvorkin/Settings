@@ -745,7 +745,7 @@ let gpt_last_line=0
 
 " The default sink escapes the output, this way we can skip that.
 " We can also unescapet the gpt output too.
-function GptSink(completion)
+function GptSinkAppend(completion)
     " gpt3.py wrap encodes newlines as  ;;
     let gpt_decoded  = substitute(a:completion,';','\n',"g")
     let insert_command = 'normal A'.gpt_decoded
@@ -754,18 +754,31 @@ function GptSink(completion)
     execute insert_command
 endfunction
 
+function GptSinkReplace(completion)
+    " gpt3.py wrap encodes newlines as  ;;
+    let gpt_decoded  = substitute(a:completion,';','\n',"g")
+    " write output to register j
+    call setreg("j",gpt_decoded)
+    " erase current selected text
+    " This puts cursor on last line.
+    execute ":".string(g:gpt_first_line).",".string(g:gpt_last_line)."d"
+    " Write register before current line - which is now the last line.
+    execute ":put! j"
+endfunction
+
 
 " range after the function enables access to a:firstline, a:lastline
-function! GptComplete(gpt_command='stdin',gpt_params='') range
+function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') range
   let lines = getline(a:firstline, a:lastline)
   let g:gpt_last_line = a:lastline
+  let g:gpt_first_line = a:firstline
   let tempname = "~/tmp/gpt3.ipc"
   call writefile(lines, expand(tempname))
   let gpt_source =  'cat '.tempname.'| python3 ~/gpt.py '. a:gpt_command . '  --responses=5 --to-fzf '.a:gpt_params
 
   " -to_fzf is ';' separated, we can look at it in the preview window expanded
   let preview =  "echo {} | sed 's/;/\\n/g'"
-  let wrapped =  fzf#wrap({'source': gpt_source, 'sink':function('GptSink'),
+  let wrapped =  fzf#wrap({'source': gpt_source, 'sink':function(a:sink),
               \  'options':['--preview', preview, '--preview-window', 'down:wrap']})
   call fzf#run(wrapped)
 endfunction
@@ -777,6 +790,7 @@ function! SetupGPT()
     : cab ec5 call GptComplete("eli5")<CR>
     : cab ecdr call GptComplete("tldr")<CR>
     : cab ecsum call GptComplete("summary")<CR>
+    : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
     :cab egpt  !~/gpt3.py
     " <expr> say repplace the rhs  with evaluation of rhs
     " inoremap  <expr> <c-x><c-f> fzf#vim#complete("echo ".getline("."))
