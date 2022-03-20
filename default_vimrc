@@ -515,9 +515,9 @@ function! FJEscape()
     :inoremap fj <esc>
     :cnoremap fj <esc>
 endfunction
+" :iunmap fj
+" :cunmap fj
 call FJEscape()
-
-
 
 
 function! FixEscapeKey()
@@ -780,10 +780,15 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
       let gpt_cmd =  'cat '.tempname_in.' | python3 ~/gpt.py '. a:gpt_command . ' > ' . tempname_out
       echom gpt_cmd
       execute a:firstline. ",". a:lastline ."w !".gpt_cmd
-      let delta_cmd =  ".w !delta ".tempname_in. " ". tempname_out
+      let delta_cmd =  "!delta ".tempname_in. " ". tempname_out
       echom delta_cmd
       execute delta_cmd
-      execute a:firstline. ",". a:lastline ."r ".tempname_out
+
+      " Erase the selected text, putting the cursor on last line.
+      execute ":".string(g:gpt_first_line).",".string(g:gpt_last_line)."d"
+
+      " Read file placing it before the last line
+      execute "-1r ".tempname_out
 
       return
   endif
