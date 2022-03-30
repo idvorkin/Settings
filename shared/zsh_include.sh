@@ -67,7 +67,6 @@ function alias_if_exists() {
 function do_wsl() {
     echo "in WSL"
     alias pbcopy='clip.exe'
-    alias pbpaste='powershell.exe -command "Get-Clipboard"'
 
 }
 
@@ -144,4 +143,3 @@ eval "$(rbenv init -)"
 
 bindkey -M viins 'fj' vi-cmd-mode
 source ~/settings/shared/fzf_git_keybindings.zsh
-
