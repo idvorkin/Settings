@@ -783,6 +783,8 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
       let delta_cmd =  "!delta ".tempname_in. " ". tempname_out
       echom delta_cmd
       execute delta_cmd
+      " Run pause command
+      execute "!read -s -k '?GPT changes'"
 
       " Erase the selected text, putting the cursor on last line.
       execute ":".string(g:gpt_first_line).",".string(g:gpt_last_line)."d"
