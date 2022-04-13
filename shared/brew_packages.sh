@@ -90,3 +90,7 @@ brew install --HEAD universal-ctags/universal-ctags/universal-ctags
 
 # Add some npm packages
 npm install --global fkill-cli
+
+# Add some pip3 packages
+pip3 install install black\[jupyter\] arrow numpy pytz loguru typer
+
