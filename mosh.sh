@@ -1,4 +1,4 @@
 # !zsh
 # Launch mosh from custom location
 
-mosh lightsail --server=/home/ec2-user/homebrew/bin/mosh-server
+mosh lightsail --server=/home/linuxbrew/.linuxbrew/bin/mosh-server
