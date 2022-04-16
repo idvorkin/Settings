@@ -62,6 +62,7 @@ yasm \
 zip \
 yarn \
 rust \
+rbenv \
 yarn "
 
 # Notes, rust is super slow to compile, so putting that packages last
