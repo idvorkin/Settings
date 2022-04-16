@@ -5,7 +5,6 @@
 	default = simple
 
 [core]
-	editor = /usr/bin/vim
     pager = delta  --theme='zenburn'
 
 [interactive]
@@ -41,3 +40,18 @@
 	old = red bold
 	new = green bold
 	whitespace = red reverse
+
+[pull]
+	rebase = true
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true  # use n and N to move between diff sections
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default
