@@ -85,6 +85,9 @@ function! SetupPlugins()
     if filereadable(expand("~/homebrew/opt/fzf/plugin/fzf.vim"))
         so ~/homebrew/opt/fzf/plugin/fzf.vim
     endif
+    if filereadable(expand("~/../linuxbrew/.linuxbrew/opt/fzf/plugin/fzf.vim"))
+        so ~/../linuxbrew/.linuxbrew/opt/fzf/plugin/fzf.vim
+    endif
 
     if filereadable(expand("/opt/homebrew/opt/fzf/plugin/fzf.vim"))
         so /opt/homebrew/opt/fzf/plugin/fzf.vim
