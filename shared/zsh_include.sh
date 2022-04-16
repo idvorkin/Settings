@@ -18,7 +18,8 @@ function eval_w_param_if_exists() {
 }
 
 # TODO: consider doing this in a loop as it's really annoying to have 3 configurations
-eval_w_param_if_exists ~/homebrew/bin/brew shellenv
+# eval_w_param_if_exists ~/homebrew/bin/brew shellenv
+eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
 
 export EDITOR=vim
 
@@ -56,6 +57,19 @@ function alias_if_exists() {
     # $1 - alias
     # $2 - replacement command
     which $2 &> /dev/null
+    if [[ $? -eq 0 ]] ; then
+        alias $1=$2
+    else
+        echo "program $2 not found"
+
+    fi
+}
+
+function alias_if_other_exists() {
+    # $1 - alias
+    # $2 - replacement command
+    # $3 - command to test for
+    which $3 &> /dev/null
     if [[ $? -eq 0 ]] ; then
         alias $1=$2
     else
@@ -109,7 +123,7 @@ alias_if_exists df duf
 alias_if_exists top htop
 alias_if_exists ndcu gdu
 alias_if_exists du dua
-alias_if_exists cd z
+alias_if_other_exists cd z zoxide
 alias_if_exists ps procs
 
 # Igor setups use Soed and Sodot as useful aliases
