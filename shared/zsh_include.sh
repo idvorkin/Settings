@@ -143,29 +143,18 @@ alias thr='wchat threads'
 
 set -o vi
 set nobell
-echo "zsh_include complete"
-eval "$(rbenv init -)"
 
 #  shared zsh settings to be sourced
 # TMUX attach
-#
-# if [ -z "$TMUX" ]; then
-        # tmux attach -t main || tmuxp load simple
-# fi
-#
-# Storing other just in case stuff
-# eval "$(fasd --init auto)"
-# export PATH=$PATH:$HOME/dotnet
-# export LANGUAGE=en_US.UTF-8
-# export LANG=en_US.UTF-8
-# export LC_ALL=en_US.UTF-8
-# export PATH="$PATH:$HOME/.dotnet/tools"
 
 # I'm not sure why, but ruby can't find the linuxbrew path
 export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/home/linuxbrew/.linuxbrew/lib
 bindkey -M viins 'fj' vi-cmd-mode
-source ~/settings/shared/fzf_git_keybindings.zsh
 
+source ~/settings/shared/fzf_git_keybindings.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
 eval "$(starship init zsh)"
 eval "$(thefuck --alias)"
+echo "zsh_include complete"
+eval "$(rbenv init -)"
