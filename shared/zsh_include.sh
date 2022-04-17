@@ -165,3 +165,7 @@ eval "$(rbenv init -)"
 export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/home/linuxbrew/.linuxbrew/lib
 bindkey -M viins 'fj' vi-cmd-mode
 source ~/settings/shared/fzf_git_keybindings.zsh
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+eval "$(starship init zsh)"
+eval "$(thefuck --alias)"
