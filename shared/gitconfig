@@ -49,6 +49,7 @@
 
 [delta]
     navigate = true  # use n and N to move between diff sections
+    max-line-length  = 0 #
 
 [merge]
     conflictstyle = diff3
