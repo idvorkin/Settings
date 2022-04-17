@@ -53,6 +53,12 @@ function dda() {
     python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome $1
 }
 
+function journal_gpt() {
+    # $1 date
+    # $2 command
+     ~/igor_journal.py entries $1  | while read line; do  echo && echo \#\#\#\ $line && ~/igor_journal.py body  $line | ~/gpt.py $2 ; done  | tee ~/tmp/$2_for_$1.md
+}
+
 function alias_if_exists() {
     # $1 - alias
     # $2 - replacement command
