@@ -3,3 +3,9 @@
 [python]
 # Only use the `python3` binary to get the version.
 python_binary = "python3"
+
+
+# Disable the package module, hiding it from the prompt completely
+[package]
+disabled = true
+
