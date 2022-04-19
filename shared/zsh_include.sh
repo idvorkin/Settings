@@ -154,6 +154,7 @@ bindkey -M viins 'fj' vi-cmd-mode
 source ~/settings/shared/fzf_git_keybindings.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+export STARSHIP_CONFIG=~/settings/shared/starship.toml
 eval "$(starship init zsh)"
 eval "$(thefuck --alias)"
 echo "zsh_include complete"
