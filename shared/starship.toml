@@ -9,3 +9,5 @@ python_binary = "python3"
 [package]
 disabled = true
 
+[hostname]
+ssh_only = false
