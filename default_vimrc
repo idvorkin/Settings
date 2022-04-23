@@ -807,6 +807,8 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
   call fzf#run(wrapped)
 endfunction
 
+" Select section
+cab ess :?\#?,/\#/
 
 function! SetupGPT()
     : cab ecc call GptComplete()<CR>
