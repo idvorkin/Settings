@@ -810,7 +810,7 @@ endfunction
 " Select section
 cab ess :?\#?,/\#/
 
-# Select selection and fix
+" Select selection and fix
 cab esf :?\#?,/\#/ call GptComplete("fix", "", "GptSinkReplace")<CR>
 
 
