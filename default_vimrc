@@ -819,6 +819,7 @@ function! SetupGPT()
     : cab ecs call GptComplete("study")<CR>
     : cab ec5 call GptComplete("eli5")<CR>
     : cab ecdr call GptComplete("tldr")<CR>
+    : cab ecj call GptComplete("joke")<CR>
     : cab ecsum call GptComplete("summary")<CR>
     : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
     :cab egpt  !~/gpt3.py
