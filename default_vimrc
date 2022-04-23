@@ -810,6 +810,10 @@ endfunction
 " Select section
 cab ess :?\#?,/\#/
 
+# Select selection and fix
+cab esf :?\#?,/\#/ call GptComplete("fix", "", "GptSinkReplace")<CR>
+
+
 function! SetupGPT()
     : cab ecc call GptComplete()<CR>
     : cab ecs call GptComplete("study")<CR>
