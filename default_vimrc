@@ -808,10 +808,10 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
 endfunction
 
 " Select section
-cab ess :?\#?,/\#/
+cab ess :?\#?+1,/\#/-1
 
 " Select selection and fix
-cab esf :?\#?,/\#/ call GptComplete("fix", "", "GptSinkReplace")<CR>
+cab esf :?\#?+1,/\#/-1 call GptComplete("fix", "", "GptSinkReplace")<CR>
 
 
 function! SetupGPT()
