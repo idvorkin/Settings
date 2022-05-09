@@ -813,6 +813,13 @@ cab ess :?\#?+1,/\#/-1
 " Select selection and fix
 cab esf :?\#?+1,/\#/-1 call GptComplete("fix", "", "GptSinkReplace")<CR>
 
+" Turn a line of ; into gratefulness line.
+
+" Turn a line to grateful to avoid lots of escapes. Format
+" <grateful for>;< god for>;<other>;<other for>;<igor for>
+" Discovered Bands;Easy to use weights everywhere; Amazon ; Selling everything ; Using the bands
+cab grl :s/\"*\s*\(.*\)\s*;\s*\(.*\);\s*\(.*\)\s*;\s*\(.*\)\s*;\s*\(.*\)/1. \1 **God** \2 **\3** \4 **Igor** \5<CR>
+
 
 function! SetupGPT()
     : cab ecc call GptComplete()<CR>
