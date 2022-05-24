@@ -377,6 +377,7 @@ func! OneNoteToWafl()
 endfunc
 
 func! WriteOn()
+    :Goyo!
     :Goyo
     :PencilSoft
     :Limelight
@@ -386,7 +387,7 @@ command! IGWriteOn :call WriteOn()
 command! IGWriteOff :call WriteOff()
 
 func! WriteOff()
-    :Goyo
+    :Goyo!
     :PencilOff
     :Limelight!
     " :ALEEnable "Remove spelling and grammer
