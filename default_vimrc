@@ -808,11 +808,6 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
   call fzf#run(wrapped)
 endfunction
 
-" Select section
-cab ess :?\#?+1,/\#/-1
-
-" Select selection and fix
-cab esf :?\#?+1,/\#/-1 call GptComplete("fix", "", "GptSinkReplace")<CR>
 
 " Turn a line of ; into gratefulness line.
 
@@ -831,6 +826,16 @@ function! SetupGPT()
     : cab ecsum call GptComplete("summary")<CR>
     : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
     :cab egpt  !~/gpt3.py
+
+    " Select section
+    cab ess :?\#?+1,/\#/-1
+
+    " Select selection and fix
+    cab esf :?\#?+1,/\#/-1 call GptComplete("fix", "", "GptSinkReplace")<CR>
+
+    " Select selection and joke
+    cab esj :?\#?+1,/\#/-1 call GptComplete("joke")
+
     " <expr> say repplace the rhs  with evaluation of rhs
     " inoremap  <expr> <c-x><c-f> fzf#vim#complete("echo ".getline("."))
     " inoremap  <expr> <c-x><c-g> CompleteGpt()
