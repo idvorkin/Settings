@@ -116,6 +116,20 @@ function rhyme()
      # jq - https://stedolan.github.io/jq/manual/#Basicfilters
      # rhymebrain API - https://rhymebrain.com/api.html
      http "https://rhymebrain.com/talk?function=getRhymes&word=$1" | jq '.[] | select( .score == 300) |.word'
+
+}
+function go_home()
+{
+    pkill -9 Workplace
+    pkill Outlook
+    # figure out how to kill the tabs ...
+}
+
+function go_work()
+{
+    open '/Applications/Microsoft Outlook.app'
+    open '/Applications/Workplace Chat.app'
+    # figure out how to kill the tabs ...
 }
 
 eval "$(zoxide init zsh)"
