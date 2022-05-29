@@ -129,6 +129,8 @@ function go_work()
 {
     open '/Applications/Microsoft Outlook.app'
     open '/Applications/Workplace Chat.app'
+    wchat threads
+    cal dump
     # figure out how to kill the tabs ...
 }
 
