@@ -42,15 +42,15 @@ alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/
 
 unalias ddg
 function ddg() {
-    python3 ~/gits/linqpadsnippets/python/dump_grateful.py grateful $1
+    dg grateful $1
 }
 
 function ddt() {
-    python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo $1
+    dg todo $1
 }
 
 function dda() {
-    python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome $1
+    dg awesome $1
 }
 
 function journal_gpt() {
