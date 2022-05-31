@@ -127,11 +127,15 @@ function go_home()
 
 function go_work()
 {
-    open '/Applications/Microsoft Outlook.app'
-    open '/Applications/Workplace Chat.app'
+    open -g '/Applications/Microsoft Outlook.app'
+    open -g '/Applications/Workplace Chat.app'
+    # figure out how to kill the tabs ...
+    work_cli
+}
+function work_cli()
+{
     wchat threads
     cal dump
-    # figure out how to kill the tabs ...
 }
 
 eval "$(zoxide init zsh)"
