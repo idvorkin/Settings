@@ -472,7 +472,8 @@ let g:vim_markdown_follow_anchor = 1 " ge will jump to anchor (TBD: Map to C-]
 let g:vim_markdown_toc_autofit = 1 " Great for not wasting extra space
 " let g:vim_markdown_frontmatter = 1
 set conceallevel=2
-let g:vim_markdown_new_list_item_indent = 0
+let g:vim_markdown_new_list_item_indent = 1
+let g:vim_markdown_auto_insert_bullets = 1
 let g:vim_markdown_folding_level = 4
 let g:vmt_list_item_char='-'
 
@@ -542,9 +543,9 @@ command! IGDaily :n! `~/settings/vim_python.py makedailypage`
 command! IGWeekly :n! `~/settings/vim_python.py makeweeklyreport`
 command! IGYesterweek :n! `~/settings/vim_python.py makeweeklyreport --weekoffset -1`
 command! IGYesterday :n! `~/settings/vim_python.py makedailypage --daysoffset -1`
-cab Ddt !python3 ~/gits/linqpadsnippets/python/dump_grateful.py todo --markdown
-cab Ddg !python3 ~/gits/linqpadsnippets/python/dump_grateful.py grateful
-cab Dda !python3 ~/gits/linqpadsnippets/python/dump_grateful.py awesome
+cab Ddt !python3 ~/gits/nlp/dump_grateful.py todo --markdown
+cab Ddg !python3 ~/gits/nlp/dump_grateful.py grateful
+cab Dda !python3 ~/gits/nlp/dump_grateful.py awesome
 command! Sodot :so ~/.vimrc
 command! Soed :n ~/settings/default_vimrc
 command! VSize :vert resize 30
