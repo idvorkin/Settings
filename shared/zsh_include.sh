@@ -168,8 +168,7 @@ set nobell
 # TMUX attach
 
 # I'm not sure why, but ruby can't find the linuxbrew path
-export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/home/linuxbrew/.linuxbrew/lib
-export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):/opt/homebrew/lib
+export LD_LIBRARY_PATH=/home/linuxbrew/.linuxbrew/lib:/opt/homebrew/lib
 bindkey -M viins 'fj' vi-cmd-mode
 
 source ~/settings/shared/fzf_git_keybindings.zsh
