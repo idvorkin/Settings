@@ -17,6 +17,8 @@ dua-cli \
 ranger \
 cask \
 fasd \
+docker \
+docker-compose \
 diff-so-fancy \
 git-extras \
 git-delta \
@@ -96,4 +98,4 @@ npm install --global fkill-cli
 pip3 install install black\[jupyter\] arrow numpy pytz loguru typer openai
 
 
-brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon 
+brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code
