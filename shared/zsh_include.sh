@@ -140,7 +140,6 @@ function work_cli()
 
 eval "$(zoxide init zsh)"
 eval "$(mcfly init zsh)"
-eval $(thefuck --alias --enable-experimental-instant-mode)
 
 
 
@@ -178,6 +177,6 @@ source ~/settings/shared/fzf_git_keybindings.zsh
 
 export STARSHIP_CONFIG=~/settings/shared/starship.toml
 eval "$(starship init zsh)"
-eval "$(thefuck --alias)"
-echo "zsh_include complete"
+eval "$(thefuck --alias --enable-experimental-instant-mode)"
 eval "$(rbenv init -)"
+echo "zsh_include complete"
