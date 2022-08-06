@@ -140,6 +140,8 @@ function work_cli()
 
 eval "$(zoxide init zsh)"
 eval "$(mcfly init zsh)"
+eval $(thefuck --alias --enable-experimental-instant-mode)
+
 
 
 # Set alias that are always better
