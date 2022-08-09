@@ -49,6 +49,7 @@ npm \
 openssl \
 optipng \
 pipenv \
+pgcli \
 pup \
 rg \
 ruby@2.7 \
