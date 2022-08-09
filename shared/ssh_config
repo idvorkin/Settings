@@ -12,6 +12,10 @@ Host lightsail
     User ec2-user
     # Juypter
     LocalForward 8888 localhost:8888
+
+    # movie geeks
+    LocalForward 8010 localhost:8010
+
     LocalForward 8000 localhost:8000
     # Jekyll
     LocalForward 4000 localhost:4000

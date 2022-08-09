@@ -1,2 +1,4 @@
+# vi: ft=dosini
+[main]
 key_bindings = vi
 
