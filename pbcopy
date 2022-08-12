@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+# From: https://github.com/skaji/remote-pbcopy-iterm2/blob/master/README.md
 
 import base64
 import os
