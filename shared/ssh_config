@@ -8,6 +8,8 @@ Host lightsail_no_forward
 
 
 Host lightsail
+    # For use w/Bink
+    # ssh -N -L 4000:localhost:4000 -L 35729:localhost:35729 s2_12_9_ipad13
     HostName shell.idvork.in
     User ec2-user
     # Juypter
