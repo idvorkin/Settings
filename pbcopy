@@ -74,9 +74,11 @@ def run():
     if b:
         b64 = base64.b64encode(b).decode(encoding="UTF-8")
         ic(b64)
-        escaped_string = choose_esc()(b64)
-        ic (escaped_string)
-        print(escaped_string,end="")
+        for escape in [tmux_esc, screen_esc, normal_esc]:
+            print (str(escape))
+            escaped_string = escape(b64)
+            ic (escaped_string)
+            print(escaped_string,end="")
 
 
 
