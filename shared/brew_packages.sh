@@ -96,7 +96,8 @@ brew install --HEAD universal-ctags/universal-ctags/universal-ctags
 npm install --global fkill-cli
 
 # Add some pip3 packages
-pip3 install install black\[jupyter\] arrow numpy pytz loguru typer openai
+pip3 install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich
+pip3 install pip --upgrade
 
 
 brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code docker
