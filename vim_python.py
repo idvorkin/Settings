@@ -83,7 +83,10 @@ def GitCommitDailyPage():
 @app.command()
 def RandomBlogPost():
     blog_path = Path.home() / Path("blog")
-    files = list(blog_path.glob("*/*md"))
+    files = []
+    files.extend(list(blog_path.glob("_posts/*md")))
+    files.extend(list(blog_path.glob("_d/*md")))
+    list(blog_path.glob("_td/*md"))
     random_post = random.choice(files)
     print(random_post)
 
