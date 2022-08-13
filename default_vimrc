@@ -734,6 +734,13 @@ endfun
 
 " Setup surround for b (old)  and i(talics) for markdown.
 " echo char2nr('b') -> 105
+"
+" Cheat Sheat
+" - yssX - soround the current line with italics(i) or bold(b) or something
+" else.
+"
+"  - Once in visual mode, S will do the surround folowed by the b so like
+"  select text in visual mode, then Sb will make it bold.
 autocmd FileType markdown let b:surround_105 = "*\r*" " i = 105
 autocmd FileType markdown let b:surround_98 = "**\r**" " b = 98
 
