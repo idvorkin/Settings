@@ -789,7 +789,7 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
   call writefile(lines, expand(tempname_in))
 
   if a:sink == "GptSinkReplace"
-      let gpt_cmd =  'cat '.tempname_in.' | python3 ~/gpt.py '. a:gpt_command . ' > ' . tempname_out
+      let gpt_cmd =  'cat '.tempname_in.' | python3 ~/gpt3.py '. a:gpt_command . ' > ' . tempname_out
       echom gpt_cmd
       execute a:firstline. ",". a:lastline ."w !".gpt_cmd
       let delta_cmd =  "!delta ".tempname_in. " ". tempname_out
@@ -807,7 +807,7 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
       return
   endif
 
-  let gpt_source =  'cat '.tempname_in.'| python3 ~/gpt.py '. a:gpt_command . '  --responses=5 --to-fzf '.a:gpt_params
+  let gpt_source =  'cat '.tempname_in.'| python3 ~/gpt3.py '. a:gpt_command . '  --responses=5 --to-fzf '.a:gpt_params
 
   " -to_fzf is ';' separated, we can look at it in the preview window expanded
   let preview =  "echo {} | sed 's/;/\\n/g'"
