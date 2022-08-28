@@ -2,6 +2,7 @@
 export brew_packages="\
 zoxide \
 exa \
+jq \
 mcfly \
 fzf \
 bat \
