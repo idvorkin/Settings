@@ -22,6 +22,7 @@ docker \
 docker-compose \
 diff-so-fancy \
 git-extras \
+imagemagick \
 git-delta \
 python3 \
 asciinema \
@@ -97,7 +98,7 @@ brew install --HEAD universal-ctags/universal-ctags/universal-ctags
 npm install --global fkill-cli
 
 # Add some pip3 packages
-pip3 install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle
+pip3 install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader
 pip3 install pip --upgrade
 
 # what is the obs plugin
