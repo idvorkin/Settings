@@ -14,6 +14,7 @@ tmux \
 git \
 tig \
 docui \
+httpie \
 dua-cli \
 ranger \
 cask \
