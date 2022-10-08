@@ -162,6 +162,11 @@ alias chh='wchat messages'
 alias thr='wchat threads'
 
 
+# Turn off auto update brew
+
+export HOMEBREW_NO_AUTO_UPDATE=1
+
+
 set -o vi
 set nobell
 
