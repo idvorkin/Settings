@@ -789,7 +789,7 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
   call writefile(lines, expand(tempname_in))
 
   if a:sink == "GptSinkReplace"
-      let gpt_cmd =  'cat '.tempname_in.' | python3 ~/gpt3.py '. a:gpt_command . ' > ' . tempname_out
+      let gpt_cmd =  'cat '.tempname_in.' | python3.10 ~/gpt3.py '. a:gpt_command . ' > ' . tempname_out
       echom gpt_cmd
       execute a:firstline. ",". a:lastline ."w !".gpt_cmd
       let delta_cmd =  "!delta ".tempname_in. " ". tempname_out
