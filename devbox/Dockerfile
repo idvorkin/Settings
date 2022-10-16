@@ -21,7 +21,7 @@ RUN ["cp","/app/zsh_profile", "/root/.zshrc"]
 
 RUN apt-get -y install python3-pip
 RUN pip3 install bs4 icecream
-RUN apt-get install -y npm fzf vim git make gcc ruby-full bat python3
+RUN apt-get install -y npm fzf vim git make gcc ruby-full bat python3 neofetch cmake cargo
 RUN npm install -g prettier
 
 WORKDIR /root/blog
