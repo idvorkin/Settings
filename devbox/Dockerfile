@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # docker build -t devdocker devdocker
 
-FROM ubuntu
+FROM ubuntu:22.10
 WORKDIR /app
 COPY . .
 RUN ["cp","/app/zsh_profile", "/root/.zshrc"]
@@ -11,7 +11,7 @@ EXPOSE 35729
 RUN apt-get update
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y install tzdata
-RUN apt-get install -y zsh tmux w3m netcat curl wget git
+RUN apt-get install -y zsh tmux w3m curl wget git
 WORKDIR /root
 RUN git clone https://github.com/idvorkin/settings ~/settings
 RUN git clone https://github.com/idvorkin/idvorkin.github.io ~/blog
