@@ -99,7 +99,7 @@ brew install --HEAD universal-ctags/universal-ctags/universal-ctags
 npm install --global fkill-cli
 
 # Add some pip3 packages
-pip3 install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader nltk
+python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader nltk
 
 # what is the obs plugin
 
