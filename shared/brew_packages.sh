@@ -104,3 +104,7 @@ python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer op
 # what is the obs plugin
 
 brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code docker vlc
+
+# Install from cargo incase on linux docker on osx which does not support bottles
+curl https://sh.rustup.rs -sSf | sh
+cargo install zoxide bat duf exa mcfly dua procs htop starship dua
