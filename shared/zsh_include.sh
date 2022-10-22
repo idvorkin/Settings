@@ -182,6 +182,6 @@ source ~/settings/shared/fzf_git_keybindings.zsh
 
 export STARSHIP_CONFIG=~/settings/shared/starship.toml
 eval "$(starship init zsh)"
-eval "$(thefuck --alias )"
+eval $(thefuck --alias)
 eval "$(rbenv init -)"
 echo "zsh_include complete"
