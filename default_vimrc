@@ -414,6 +414,7 @@ endfunc
 " Note can't use _ in ab, so using 'e' for expand
 :iab esummarize  {%include summarize-page.html src="/TK" %}
 :iab eyoutube  {%include youtube.html src="TK" %}
+:cab rfiles :r !exa ~/rare_git/blob/ig66
 
 func! MarkDownWordToLink()
     " cool yiw takes the word, and jumps you to the beginning of it.
