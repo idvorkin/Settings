@@ -6,6 +6,7 @@ jq \
 mcfly \
 fzf \
 bat \
+rich \
 duf \
 ag \
 fd \
