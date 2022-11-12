@@ -439,6 +439,7 @@ function! SetupiPlug()
     iplug add 'https://github.com/parkr/vim-jekyll'
     iplug add "https://github.com/scrooloose/nerdtree"
     iplug add 'https://github.com/scrooloose/nerdcommenter'
+    iplug add 'https://github.com/majutsushi/tagbar'
     iplug update
 endfunc
 
@@ -452,6 +453,7 @@ function! SetupTagbar()
 
     command! TagbarV let g:tagbar_vertical=1|:TagbarOpen
     command! TagbarH let g:tagbar_vertical=0|:TagbarOpen
+:nnoremap <silent> <C-Y>  :TagbarOpen fj<cr>
 
 endfunc
 call SetupTagbar()
