@@ -91,11 +91,9 @@ brew install --HEAD universal-ctags/universal-ctags/universal-ctags
 # currently broken on some devices.
 brew install azure-cli cmatrix iftop
 
-
 # ranger = File Explorer
 # grv - get repository viewer
 # grv need to unalias grv in zsh
-
 
 
 # Add some npm packages
