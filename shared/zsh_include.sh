@@ -53,6 +53,10 @@ function dda() {
     dg awesome $1
 }
 
+function ijm() {
+    ij body --close $1 | gpt mood | bat -l md --style header
+}
+
 function journal_gpt() {
     # $1 date
     # $2 command
