@@ -8,6 +8,7 @@ fzf \
 bat \
 rich \
 duf \
+cpulimit \
 ag \
 fd \
 zsh \
