@@ -1,5 +1,6 @@
 # Settings
-A Place to store my settings/dotFiles/etc
+
+A place to store my settings/dotFiles/etc, my oldest repository
 
 ## Normal linux
 
