@@ -829,9 +829,14 @@ endfunction
 " Discovered Bands;Easy to use weights everywhere; Amazon ; Selling everything ; Using the bands
 cab grl :s/\"*\s*\(.*\)\s*;\s*\(.*\);\s*\(.*\)\s*;\s*\(.*\)\s*;\s*\(.*\)/1. \1 **God** \2 **\3** \4 **Igor** \5<CR>
 
+function! MakeCommitMesage()
+    exec "-1r !git diff --staged \| gpt commit-message"
+    exec "0,1g/^\s\+$/d<CR>"
+endfunction
 
 function! SetupGPT()
-    : cab ecommit :-1r !git diff --staged \| gpt commit-message
+    " Get commit mssage, then erase blank line from the start
+    : cab ecommit call MakeCommitMesage()<CR>
     : cab ecc call GptComplete()<CR>
     : cab ecs call GptComplete("study")<CR>
     : cab ec5 call GptComplete("eli5")<CR>
