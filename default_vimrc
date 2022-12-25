@@ -830,8 +830,9 @@ endfunction
 cab grl :s/\"*\s*\(.*\)\s*;\s*\(.*\);\s*\(.*\)\s*;\s*\(.*\)\s*;\s*\(.*\)/1. \1 **God** \2 **\3** \4 **Igor** \5<CR>
 
 function! MakeCommitMesage()
-    exec "-1r !git diff --staged \| gpt commit-message"
-    exec "0,1g/^\s\+$/d<CR>"
+    exec "0r !git diff --staged \| gpt commit-message"
+    exec "0g/^ $/d"
+    exec "0g/^$/d"
 endfunction
 
 function! SetupGPT()
