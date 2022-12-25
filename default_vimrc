@@ -831,6 +831,7 @@ cab grl :s/\"*\s*\(.*\)\s*;\s*\(.*\);\s*\(.*\)\s*;\s*\(.*\)\s*;\s*\(.*\)/1. \1 *
 
 
 function! SetupGPT()
+    : cab ecommit :-1r !git diff --staged \| gpt commit-message
     : cab ecc call GptComplete()<CR>
     : cab ecs call GptComplete("study")<CR>
     : cab ec5 call GptComplete("eli5")<CR>
