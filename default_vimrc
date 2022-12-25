@@ -829,11 +829,6 @@ endfunction
 " Discovered Bands;Easy to use weights everywhere; Amazon ; Selling everything ; Using the bands
 cab grl :s/\"*\s*\(.*\)\s*;\s*\(.*\);\s*\(.*\)\s*;\s*\(.*\)\s*;\s*\(.*\)/1. \1 **God** \2 **\3** \4 **Igor** \5<CR>
 
-function! MakeCommitMesage()
-    exec "0r !git diff --staged \| gpt commit-message"
-    exec "0g/^ $/d"
-    exec "0g/^$/d"
-endfunction
 
 function! SetupGPT()
     " Get commit mssage, then erase blank line from the start
@@ -869,6 +864,31 @@ autocmd BufEnter *convo :setlocal nocin
 autocmd BufEnter *convo :nnoremap <C-Y>  : % call GptComplete()<cr>
 autocmd BufEnter *convo :imap <C-Y> <esc>:% call GptComplete()<cr>
 autocmd BufEnter *convo :imap ffj  <esc>:% call GptComplete()<cr>
+
+function! GetGitComleteViaInteractiveGPT()
+    let tempfile=tempname()
+    let preview_in_fzf =  "echo {} | sed \"s/;/\\n/g\""
+    let fzf_pager =  "fzf --preview='" .preview_in_fzf. "'  --preview-window='down:wrap'"
+    " execute '!git diff --staged | gpt commit-message --responses=4 --to-fzf '.  fzf_preview . ' >' . shellescape(tempfile)
+    " execute '!cat ~/tmp/out.txt | '.  fzf_preview . ' >' . shellescape(tempfile)
+    let gpt_from_git_diff = '!git diff --staged | gpt commit-message --responses=4 --to-fzf'
+    execute gpt_from_git_diff . ' | '.  fzf_pager . ' > ' . shellescape(tempfile)
+    try
+        silent execute 'read' tempfile
+    finally
+        call delete(tempfile)
+    endtry
+endfunction
+
+function! MakeCommitMesage()
+
+    " --responses=4 --to-fzf | fzf --preview='echo {}' --preview-window='down:wrap'
+    " exec "0r !git diff --staged \| gpt commit-message --to-fzf | fzf -i"
+    call GetGitComleteViaInteractiveGPT()
+    exec "g/^$/d"
+    exec "%s/;/\r/e"
+    exec "%s/^ *//e"
+endfunction
 
 "
 "
