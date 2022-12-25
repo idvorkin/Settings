@@ -864,6 +864,12 @@ endfunction
 
 call SetupGPT()
 
+autocmd BufEnter *convo :match Comment /^\s*>.*/
+autocmd BufEnter *convo :setlocal nocin
+autocmd BufEnter *convo :nnoremap <C-Y>  : % call GptComplete()<cr>
+autocmd BufEnter *convo :imap <C-Y> <esc>:% call GptComplete()<cr>
+autocmd BufEnter *convo :imap ffj  <esc>:% call GptComplete()<cr>
 
+"
 "
 " vim:foldmethod=indent:
