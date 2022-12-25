@@ -885,7 +885,7 @@ function! MakeCommitMesage()
     " --responses=4 --to-fzf | fzf --preview='echo {}' --preview-window='down:wrap'
     " exec "0r !git diff --staged \| gpt commit-message --to-fzf | fzf -i"
     call GetGitComleteViaInteractiveGPT()
-    exec "g/^$/d"
+    exec "0,1g/^$/d"
     exec "%s/;/\r/e"
     exec "%s/^ *//e"
 endfunction
