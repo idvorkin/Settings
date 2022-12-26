@@ -861,7 +861,9 @@ call SetupGPT()
 
 
 func! GptCompleteToBottom()
-    :exec "$put"
+    " hack fj is the escape key - a nice hack sicne <esc> doesn't work with
+    " normal command
+    :normal Go fj
     :% call GptComplete()
 endfunc
 
@@ -869,9 +871,9 @@ func! SetupForConvo()
     :match Comment /^\s*>.*/
     " Turn off hitting enter indents - which BTW, is annoying
     :setlocal nocin
-    " $put . <cr> Adds a new line
-    :imap ffj  <esc>:% call GptComplete()<cr>
-    :map ffj  :call GptCompleteToBottom()<cr>
+    " In insert mode, add cariage return to hint AI that it's its turn ..
+    :imap <buffer> ffj  <cr><cr><esc>:% call GptComplete()<cr>
+    :map <buffer> ffj  :call GptCompleteToBottom()<cr>
 endfunc
 
 autocmd BufEnter *convo call SetupForConvo()
@@ -902,6 +904,4 @@ function! MakeCommitMesage()
     exec "%s/^ *//e"
 endfunction
 
-"
-"
 " vim:foldmethod=indent:
