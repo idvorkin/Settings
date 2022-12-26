@@ -859,16 +859,23 @@ endfunction
 
 call SetupGPT()
 
+
+func! GptCompleteToBottom()
+    :exec "$put"
+    :% call GptComplete()
+endfunc
+
 func! SetupForConvo()
     :match Comment /^\s*>.*/
     " Turn off hitting enter indents - which BTW, is annoying
     :setlocal nocin
     " $put . <cr> Adds a new line
-    :imap ffj  <esc>:% call GptComplete()<cr>:$put . <cr>
-    :nnoremap ffj  :$put . <cr> :% call GptComplete()<cr> :$put . <cr>
+    :imap ffj  <esc>:% call GptComplete()<cr>
+    :map ffj  :call GptCompleteToBottom()<cr>
 endfunc
 
 autocmd BufEnter *convo call SetupForConvo()
+autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage()<cr>
 
 function! GetGitComleteViaInteractiveGPT()
     let tempfile=tempname()
