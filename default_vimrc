@@ -904,4 +904,7 @@ function! MakeCommitMesage()
     exec "%s/^ *//e"
 endfunction
 
+cab rpbc :r !~/settings/rpbcopy.sh
+cab rpbp :r !~/settings/rpbpaste.sh
+
 " vim:foldmethod=indent:
