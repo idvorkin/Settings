@@ -7,6 +7,12 @@ Host lightsail_no_forward
     User ec2-user
 
 
+Host lightsail_clipboard
+    HostName shell.idvork.in
+    User ec2-user
+    RemoteForward 2224 127.0.0.1:2224
+    RemoteForward 2225 127.0.0.1:2225
+
 Host lightsail
     # For use w/Bink
     # ssh -N -L 4000:localhost:4000 -L 35729:localhost:35729 s2_12_9_ipad13
@@ -26,6 +32,8 @@ Host lightsail
     # Jekyll live reload
     LocalForward 35729 localhost:35729
     RemoteForward 5726 localhost:5726
+
+    #
 
 
 Host bedrock-4
