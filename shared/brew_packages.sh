@@ -49,6 +49,7 @@ lazydocker \
 markdownlint-cli \
 mosh \
 ncdu \
+nmap \
 neofetch \
 npm \
 openssl \
