@@ -906,5 +906,7 @@ endfunction
 
 cab rpbc :r !~/settings/rpbcopy.sh
 cab rpbp :r !~/settings/rpbpaste.sh
+" cab ghlink system('gh browse -n ' . expand('%') . ':' . line('.'))
+cab ghlink :!gh browse -n % \| ~/settings/pbcopy
 
 " vim:foldmethod=indent:
