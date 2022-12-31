@@ -1,6 +1,12 @@
 #! /usr/bin/env python3
 # From: https://github.com/skaji/remote-pbcopy-iterm2/blob/master/README.md
 
+# What a PITA - tmux seems to support native OC52 codes in latest ... bleh!
+# See configuration options here; https://github.com/tmux/tmux/wiki/Clipboard#quick-summary
+# NOTE: Note may need to change the vim-oc52 plugin to use raw codes not the old tmux codes
+# Talk about Janky!
+
+
 import base64
 import os
 import subprocess
