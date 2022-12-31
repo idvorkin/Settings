@@ -5,6 +5,7 @@ exa \
 jq \
 mcfly \
 fzf \
+gh \
 bat \
 rich \
 duf \
