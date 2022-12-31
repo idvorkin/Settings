@@ -64,14 +64,16 @@ def run():
     if not new_clipboard_content:
         print("Nothing to copy, clearing clipboard, is that what you meant?")
 
-    ic(new_clipboard_content)
     b64_clipboard_content = base64.b64encode(new_clipboard_content).decode(
         encoding="UTF-8"
     )
-    ic(b64_clipboard_content)
-    for to_clipboard in [tmux_to_clipboard, screen_to_clipboard, normal_to_clipboard]:
+    # ic(new_clipboard_content)
+    # ic(b64_clipboard_content)
+    # clipboard_targets = [tmux_to_clipboard, screen_to_clipboard, normal_to_clipboard]:
+    clipboard_targets = [normal_to_clipboard]
+    for to_clipboard in  clipboard_targets:
         to_clipboard_string = to_clipboard(b64_clipboard_content)
-        ic(to_clipboard_string)
+        # ic(to_clipboard_string)
         print(to_clipboard_string, end="")
 
 
