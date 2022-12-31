@@ -9,19 +9,23 @@ from typing import Callable
 from icecream import ic
 
 
-def normal_esc(b64: str) -> str:
-    return "\x1B]52;;" + b64 + "\x1B\x5C"
+def normal_to_clipboard(b64: str) -> str:
+    return "\x1B]52;c;" + b64 + "\a"
 
 
-def tmux_esc(b64: str) -> str:
-    return "\x1BPtmux;\x1B\x1B]52;;" + b64 + "\x1B\x1B\x5C\x5C\x1B\x5C"
+# Seems like on mosh atleast, normal escape sequence just works ...
+def tmux_to_clipboard(b64: str) -> str:
+    # return "\ePtmux;\e\e]52;c;" . b64 . "\x07\e\\"
+    return ""
 
 
-def screen_esc(b64: str) -> str:
+def screen_to_clipboard(b64: str) -> str:
     out = []
     for i in range(sys.maxsize):
         begin, end = i * 76, min((i + 1) * 76, len(b64))
-        out.append(("\x1BP\x1B]52;;" if begin == 0 else "\x1B\x5C\x1BP") + b64[begin:end])
+        out.append(
+            ("\x1BP\x1B]52;;" if begin == 0 else "\x1B\x5C\x1BP") + b64[begin:end]
+        )
         if end == len(b64):
             break
     out.append("\x07\x1B\x5C")
@@ -41,25 +45,6 @@ def is_tmux_cc(pid: str) -> bool:
         return False
 
 
-def choose_esc() -> Callable[[str], str]:
-    env = os.getenv("TMUX")
-    if env:
-        envs = env.split(",")
-        if len(envs) > 1 and is_tmux_cc(envs[1]):
-            print ("Using Normal escape")
-            return normal_esc
-        else:
-            print ("Using Tmux")
-            return tmux_esc
-
-    env = os.getenv("TERM")
-    if env and env.startswith("screen"):
-        return screen_esc
-
-    print ("Using Term")
-    return normal_esc
-
-
 def run():
     if len(sys.argv) == 1:
         b = sys.stdin.buffer.read()
@@ -69,17 +54,19 @@ def run():
             sys.exit(1)
         b = open(sys.argv[1], "rb").read()
 
-    b = b.rstrip(b"\n\r")
-    ic (b)
-    if b:
-        b64 = base64.b64encode(b).decode(encoding="UTF-8")
-        ic(b64)
-        for escape in [tmux_esc, screen_esc, normal_esc]:
-            print (str(escape))
-            escaped_string = escape(b64)
-            ic (escaped_string)
-            print(escaped_string,end="")
+    new_clipboard_content = b.rstrip(b"\n\r")
+    if not new_clipboard_content:
+        print("Nothing to copy, clearing clipboard, is that what you meant?")
 
+    ic(new_clipboard_content)
+    b64_clipboard_content = base64.b64encode(new_clipboard_content).decode(
+        encoding="UTF-8"
+    )
+    ic(b64_clipboard_content)
+    for to_clipboard in [tmux_to_clipboard, screen_to_clipboard, normal_to_clipboard]:
+        to_clipboard_string = to_clipboard(b64_clipboard_content)
+        ic(to_clipboard_string)
+        print(to_clipboard_string, end="")
 
 
 if __name__ == "__main__":
