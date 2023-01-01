@@ -908,7 +908,12 @@ endfunction
 cab rpbc :r !~/settings/rpbcopy.sh
 cab rpbp :r !~/settings/rpbpaste.sh
 cab pbc :r !pbcopy
-:cab ghlink exe "!gh browse -n " . expand('%') . ':' . line(".") . "\| pbcopy" <cr>
+
+if (has('mac'))
+:cab ghlink :exe "!gh browse " . expand('%') . ':' . line(".") . "" <cr>
+else
+:cab ghlink :exe "!gh browse -n " . expand('%') . ':' . line(".") . "\| pbcopy" <cr>
+endif
 
 
 
