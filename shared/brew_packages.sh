@@ -7,6 +7,7 @@ mcfly \
 fzf \
 gh \
 bat \
+viu \
 rich \
 duf \
 cpulimit \
