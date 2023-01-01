@@ -6,6 +6,7 @@
 # NOTE: Note may need to change the vim-oc52 plugin to use raw codes not the old tmux codes
 # Talk about Janky!
 
+# Usage - link into the bin directory on unix to replace the version on osx
 
 import base64
 import os
@@ -56,13 +57,13 @@ def run():
         b = sys.stdin.buffer.read()
     else:
         if sys.argv[1] == "-h" or sys.argv[1] == "--help":
-            print("Usage:\n  pbcopy FILE\n  some-command | pbcopy\n", end="")
+            print("Usage:\n  pbcopy some string\n  some-command | pbcopy\n", end="")
             sys.exit(1)
-        b = open(sys.argv[1], "rb").read()
+        # Ah, arcane argv
+        all_params = " ".join(sys.argv[1:])
+        b=all_params.encode('utf-8')
 
     new_clipboard_content = b.rstrip(b"\n\r")
-    if not new_clipboard_content:
-        print("Nothing to copy, clearing clipboard, is that what you meant?")
 
     b64_clipboard_content = base64.b64encode(new_clipboard_content).decode(
         encoding="UTF-8"
