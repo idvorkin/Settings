@@ -104,6 +104,7 @@ function! SetupPlugins()
     Bundle 'mattn/webapi-vim'
     Bundle 'majutsushi/tagbar'
     Bundle 'luochen1990/rainbow'
+    Bundle 'tyru/open-browser.vim'
 
     " q - quit tagbar
     " p - jump to tag
@@ -909,6 +910,30 @@ cab rpbp :r !~/settings/rpbpaste.sh
 cab pbc :r !pbcopy
 :cab ghlink exe "!gh browse -n " . expand('%') . ':' . line(".") . "\| pbcopy" <cr>
 
+
+
+function! SetupOpenBrowser()
+	let g:netrw_nogx = 1 " disable netrw's gx mapping.
+	nmap gx <Plug>(openbrowser-smart-search)
+	vmap gx <Plug>(openbrowser-smart-search)
+
+    "if (has('unix'))
+		"let g:netrw_browsex_viewer= "pbcopy"
+        "let g:netrw_suppress_gx_mes=0
+        "let g:openbrowser_browser_commands=[
+            "\ {"name": "zsh",
+            "\  "args": ["zsh", "-c", '"pbcopy {uri}"'],
+            "\ }
+            "\]
+    "endif
+    " https://www.google4.com
+endfunc
+call SetupOpenBrowser()
+
+" Reload when saving vimrc, which is the whole point of changin dotfile
+augroup reload_vimrc | au!
+        au BufWritePost *default_vimrc source ~/.vimrc
+augroup END
 
 
 " vim:foldmethod=indent:
