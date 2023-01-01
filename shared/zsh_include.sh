@@ -174,9 +174,15 @@ alias_if_exists ps procs
 alias Soed='vim ~/settings/shared/zsh_include.sh'
 alias Sodot='.  ~/settings/shared/zsh_include.sh'
 
+function png_shrink()
+{
+    pngquant -f -o $1 $1
+}
+
 # Some useful work aliases
 alias chh='wchat messages'
 alias thr='wchat threads'
+
 
 
 # Turn off auto update brew

@@ -24,6 +24,7 @@ ranger \
 cask \
 fasd \
 docker \
+png-quant \
 docker-compose \
 diff-so-fancy \
 git-extras \
