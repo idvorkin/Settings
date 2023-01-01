@@ -77,6 +77,13 @@ def run():
         # ic(to_clipboard_string)
         print(to_clipboard_string, end="")
 
+    # also copy into tmp file (create new one daily)
+    import datetime
+    import os
+    filename = os.path.expanduser(f"~/tmp/pbcopy_{datetime.date.today()}")
+    with open(filename, 'a+') as fp:
+        fp.write('\n-------------\n')
+        fp.write(new_clipboard_content.decode())
 
 if __name__ == "__main__":
     run()
