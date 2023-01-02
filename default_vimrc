@@ -421,6 +421,30 @@ endfunc
 :cab rfiles :r !exa ~/rare_git/blob/ig66
 :iab epics {%include bi_table.html is="<cr><cr>" %}
 
+func! Ig66Files(week)
+    :match Comment /^#.*/
+    " setup macros
+    :map <buffer> ffj  :s!\(.*\)!{\%include bi_table.html is="\1" \%}!<cr>
+    :map <buffer> ffp  :exe ':!viu '.expand('<cword>')<cr>
+
+    " erase buffer
+    :g/^/d
+
+    :exe  expand(':lcd ~/rare_git/blob/ig66/'.a:week)
+    :exe  expand(':r !exa ~/rare_git/blob/ig66/'.a:week)
+    " Put on trailing ; so joins(gj) work
+    " Add a trailing semicolon
+    :%s!$!;!
+    :%g/montage/d
+    " write help
+    :0
+    :normal O# Useful shortcuts - preview filefj
+    :normal o# ffp - preview filefj
+    :normal o# ffJ - wrap with  bi_tablefj
+    :normal o# gJ - Join lines together before wrapping with ffJ fj
+    :normal ofj
+endfunc
+
 func! MarkDownWordToLink()
     " cool yiw takes the word, and jumps you to the beginning of it.
     normal yiwi[ea](http://www.pa.com)
