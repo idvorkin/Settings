@@ -13,6 +13,7 @@ duf \
 cpulimit \
 ag \
 fd \
+yt-dlp \
 zsh \
 tmux \
 git \
