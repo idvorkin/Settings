@@ -929,9 +929,9 @@ function! MakeCommitMesage()
     exec "%s/^ *//e"
 endfunction
 
-cab rpbc :r !~/settings/rpbcopy.sh
+cab rpbc :w !~/settings/rpbcopy.sh
 cab rpbp :r !~/settings/rpbpaste.sh
-cab pbc :r !pbcopy
+cab pbc :w !pbcopy
 
 if (has('mac'))
 :cab ghlink :exe "!gh browse " . expand('%') . ':' . line(".") . "" <cr>
