@@ -931,6 +931,7 @@ endfunction
 
 cab rpbc :w !~/settings/rpbcopy.sh
 cab rpbp :r !~/settings/rpbpaste.sh
+cab pbp :r !~/pbpaste
 cab pbc :w !pbcopy
 
 if (has('mac'))
