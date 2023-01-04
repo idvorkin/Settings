@@ -964,5 +964,10 @@ augroup reload_vimrc | au!
         au BufWritePost *default_vimrc source ~/.vimrc
 augroup END
 
+" viminfo controls max old files, which is where History is found
+" Setting value is super arcane, first param is count files setting to 1000
+" Annoyingly, only set on vim exit (so cross session files not findable)
+
+set viminfo="1000,<50,s10,h"
 
 " vim:foldmethod=indent:
