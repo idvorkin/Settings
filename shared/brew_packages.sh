@@ -106,7 +106,7 @@ brew install azure-cli cmatrix iftop
 npm install --global fkill-cli
 
 # Add some pip3 packages
-python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader nltk fernet cryptography torch opencv-python imutils sklearn torchvision scikit-learn jupyterlab-vim jupyterlab-vimrc pendulum poetry
+python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader nltk fernet cryptography imutils sklearn scikit-learn jupyterlab-vim jupyterlab-vimrc pendulum poetry torch torchvision opencv-python
 
 
 # On the mac can install tensor flow as follows
