@@ -373,7 +373,6 @@ endif
 
 func! OneNoteToWafl()
     " Tabs to spaces
-    %s;\t;  ;g
     " Dots to *'s
     %s/\%u2022/*/g
     %s/\%u25cb/*/g
@@ -863,6 +862,7 @@ function! SetupGPT()
     : cab ec5 call GptComplete("eli5")<CR>
     : cab ecdr call GptComplete("tldr")<CR>
     : cab ecj call GptComplete("joke")<CR>
+    : cab ecpoem call GptComplete("poem")<CR>
     : cab ecsum call GptComplete("summary")<CR>
     : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
     :cab egpt  !~/gpt3.py
@@ -929,8 +929,6 @@ function! MakeCommitMesage()
     exec "%s/^ *//e"
 endfunction
 
-cab rpbc :w !~/settings/rpbcopy.sh
-cab rpbp :r !~/settings/rpbpaste.sh
 cab pbp :r !pbpaste
 cab pbc :w !pbcopy
 
