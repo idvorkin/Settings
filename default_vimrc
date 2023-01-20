@@ -932,6 +932,9 @@ endfunction
 cab pbp :r !pbpaste
 cab pbc :w !pbcopy
 
+cab pbr :r !pbpaste
+cab pbw :w !pbcopy
+
 if (has('mac'))
 :cab ghlink :exe "!gh browse " . expand('%') . ':' . line(".") . "" <cr>
 else

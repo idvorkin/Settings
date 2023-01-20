@@ -62,7 +62,7 @@ function dda() {
 }
 
 function ijm() {
-    ij body --close $1 | gpt mood | bat -l md --style header
+    ij body --close $1 | gpt mood | tee ~/tmp/ijm/ijm_$1_`date +%y-%m-%d_%H:%M:%S` | bat -l md --style header
 }
 
 
