@@ -47,6 +47,7 @@ alias pbp='pbpaste'
 
 alias tmuxp="~/.local/bin/tmuxp"
 alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"
+alias echomb="sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"
 
 unalias ddg
 function ddg() {
