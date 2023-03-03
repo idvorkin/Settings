@@ -139,6 +139,7 @@ function! SetupPlugins()
 
     Bundle 'elzr/vim-json'
     Bundle 'PProvost/vim-ps1'
+    Bundle 'miyakogi/conoline.vim'
     Bundle 'othree/javascript-libraries-syntax.vim'
     Bundle "pangloss/vim-javascript"
     Bundle "scrooloose/nerdtree"
@@ -155,6 +156,7 @@ function! SetupPlugins()
     " Comment \cc
     " Uncomment \cu
     Bundle 'scrooloose/nerdcommenter'
+    Bundle 'HerringtonDarkholme/yats.vim'
 
     " Plugin 'plytophogy/vim-virtualenv'
     " black needs virtual env, which can't find
@@ -491,4 +493,10 @@ function! FixEscapeKey()
     :call EscapeKey()
 endfunction
 "
+" Reload when saving vimrc, which is the whole point of changin dotfile
+augroup reload_vimrc | au!
+        au BufWritePost *default_vimrc source ~/.vimrc
+        au BufWritePost *_ivim.rc.vim source ~/.vimrc
+augroup END
+set viminfo='1000,<50,s10,h
 " vim:foldmethod=indent:
