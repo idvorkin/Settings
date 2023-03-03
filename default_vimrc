@@ -95,6 +95,9 @@ function! SetupPlugins()
 
     call vundle#begin()
 
+    Plugin 'miyakogi/conoline.vim'
+    " Highlight current line
+    " ConoLineEnable (Highlight current line)
     Plugin 'frazrepo/vim-rainbow' " # :RainbowToggle
     Plugin 'fcpg/vim-osc52'
     Bundle 'VundleVim/Vundle.vim'
@@ -971,5 +974,6 @@ augroup END
 " Annoyingly, only set on vim exit (so cross session files not findable)
 
 set viminfo='1000,<50,s10,h
+" ConoLineEnable
 
 " vim:foldmethod=indent:
