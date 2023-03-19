@@ -48,7 +48,10 @@ alias pbp='pbpaste'
 alias tmuxp="~/.local/bin/tmuxp"
 alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"
 function echomb() {
-    echo $1 | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | tee pbcopy
+    echo $1 > ~/tmp/mb.in
+    cat ~/tmp/mb_tmp | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!'  > ~/tmp/mb.out
+    cat ~/tmp/mb.out | pbc
+    cat ~/tmp/mb.out
 }
 
 unalias ddg
