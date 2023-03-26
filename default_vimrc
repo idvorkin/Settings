@@ -938,7 +938,8 @@ cab pbc :w !pbcopy
 cab pbr :r !pbpaste
 cab pbw :w !pbcopy
 
-cab prompt_eulogy :r ! shuf -n 3 ~/gits/igor2/eulogy_prompts.md
+
+command! PromptEulogy  :r !shuf -n 3 ~/gits/igor2/eulogy_prompts.md
 
 if (has('mac'))
 :cab ghlink :exe "!gh browse " . expand('%') . ':' . line(".") . "" <cr>
