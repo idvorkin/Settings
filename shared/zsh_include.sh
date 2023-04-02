@@ -189,6 +189,9 @@ function png_shrink()
 alias chh='wchat messages'
 alias thr='wchat threads'
 
+# Use rich markdown pager
+alias rmp='rich - -m'
+
 
 
 # Turn off auto update brew
