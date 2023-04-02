@@ -583,6 +583,8 @@ command! Soed :n ~/settings/default_vimrc
 command! VSize :vert resize 30
 command! IgTodo :r !python3 ~/gits/nlp/dump_grateful.py todo --markdown 2
 command! IgMdToc :r ~/settings/vim/snip_toc.md
+command! IgGptBook :r ~/settings/vim/snip_preamble_toc.md
+command! IgFixBook :%s;### \(.*\);**\1**
 command! Ig2 :lcd ~/gits/igor2/<bar>:GFiles
 command! IgBlog :lcd ~/blog/<bar>:GFiles
 command! IgRandomBlog  :n `~/settings/vim_python.py randomblogpost`
