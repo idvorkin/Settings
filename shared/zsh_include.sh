@@ -44,6 +44,8 @@ alias rpbpaste='~/settings/rpbpaste.sh'
 alias rpbp='~/settings/rpbpaste.sh'
 alias pbc='pbcopy'
 alias pbp='pbpaste'
+# Use rich markdown pager
+alias rmp='rich - -m'
 
 alias tmuxp="~/.local/bin/tmuxp"
 alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"
@@ -68,7 +70,7 @@ function dda() {
 }
 
 function ijm() {
-    ij body --close $1 | gpt mood | tee ~/tmp/ijm/ijm_$1_`date +%y-%m-%d_%H:%M:%S` | bat -l md --style header
+    ij body --close $1 | ~/gpt.py mood --debug --u4 --tokens 2000 | tee ~/tmp/ijm/ijm_$1_`date +%y-%m-%d_%H:%M:%S` | rmp
 }
 
 
@@ -189,8 +191,6 @@ function png_shrink()
 alias chh='wchat messages'
 alias thr='wchat threads'
 
-# Use rich markdown pager
-alias rmp='rich - -m'
 
 
 
