@@ -551,6 +551,7 @@ function! FJEscape()
     " Do mappings for funny keyboard
     :inoremap fj <esc>
     :cnoremap fj <esc>
+    :noremap ;; :
 endfunction
 " :iunmap fj
 " :cunmap fj
@@ -906,7 +907,7 @@ func! SetupForConvo()
     :map <buffer> ffj  :call GptCompleteToBottom()<cr>
 endfunc
 
-autocmd BufEnter *convo call SetupForConvo()
+autocmd BufEnter *convo call SetupForCon;o()
 autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage()<cr>
 
 function! GetGitComleteViaInteractiveGPT()
@@ -927,7 +928,7 @@ endfunction
 function! MakeCommitMesage()
 
     " --responses=4 --to-fzf | fzf --preview='echo {}' --preview-window='down:wrap'
-    " exec "0r !git diff --staged \| gpt commit-message --to-fzf | fzf -i"
+    " exec "0r !git diff --staged \| gpt commit-message --u4 --to-fzf | fzf -i"
     call GetGitComleteViaInteractiveGPT()
     exec "0,1g/^$/d"
     exec "%s/;/\r/e"
