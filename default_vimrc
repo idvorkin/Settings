@@ -907,7 +907,7 @@ func! SetupForConvo()
     :map <buffer> ffj  :call GptCompleteToBottom()<cr>
 endfunc
 
-autocmd BufEnter *convo call SetupForCon;o()
+autocmd BufEnter *convo call SetupForConvo()
 autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage()<cr>
 
 function! GetGitComleteViaInteractiveGPT()
