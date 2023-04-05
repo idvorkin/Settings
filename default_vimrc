@@ -595,6 +595,7 @@ cab Pb :!black % <cr>
 
 " Common work flow: Switch to current  directory, git write, commit and push.
 cab DdC  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k  <CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
+cab DdG  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k <CR>:!git commit %:p <CR>:!git push<CR>
 
 " I never use ToHTML and it makes it harder to use Toc
 " This is loaded in the html plugin, which I'm disabling.
@@ -929,30 +930,19 @@ endfunc
 
 autocmd BufEnter *convo call SetupForConvo()
 autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage()<cr>
+" Refactor to share with convo maps
+autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffd :?---?,/---/d<cr>
+autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/,/--- \*\*9/d<cr>
 
-function! GetGitComleteViaInteractiveGPT()
+function! MakeCommitMesage()
     let tempfile=tempname()
-    let preview_in_fzf =  "echo {} | sed \"s/;/\\n/g\""
-    let fzf_pager =  "fzf --preview='" .preview_in_fzf. "'  --preview-window='down:wrap'"
-    " execute '!git diff --staged | gpt commit-message --responses=4 --to-fzf '.  fzf_preview . ' >' . shellescape(tempfile)
-    " execute '!cat ~/tmp/out.txt | '.  fzf_preview . ' >' . shellescape(tempfile)
-    let gpt_from_git_diff = '!git diff --staged | gpt commit-message --responses=4 --to-fzf'
-    execute gpt_from_git_diff . ' | '.  fzf_pager . ' > ' . shellescape(tempfile)
+    let gpt_from_git_diff = '!git diff --staged | ~/gpt3.py commit-message --responses=4'
+    execute gpt_from_git_diff . ' > ' . shellescape(tempfile)
     try
         silent execute 'read' tempfile
     finally
         call delete(tempfile)
     endtry
-endfunction
-
-function! MakeCommitMesage()
-
-    " --responses=4 --to-fzf | fzf --preview='echo {}' --preview-window='down:wrap'
-    " exec "0r !git diff --staged \| gpt commit-message --u4 --to-fzf | fzf -i"
-    call GetGitComleteViaInteractiveGPT()
-    exec "0,1g/^$/d"
-    exec "%s/;/\r/e"
-    exec "%s/^ *//e"
 endfunction
 
 cab pbp :r !pbpaste
