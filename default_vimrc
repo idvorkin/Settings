@@ -914,7 +914,8 @@ func! GptCompleteToBottom()
 endfunc
 
 func! SetupForConvo()
-    :match Comment /^\s*>.*/
+    " :match Comment /^\s*>.*/
+    set syntax=markdown
     " Turn off hitting enter indents - which BTW, is annoying
     :setlocal nocin
     " In insert mode, add cariage return to hint AI that it's its turn ..
