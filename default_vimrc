@@ -921,6 +921,10 @@ func! SetupForConvo()
     " In insert mode, add cariage return to hint AI that it's its turn ..
     :imap <buffer> ffj  <cr><cr><esc>:% call GptCompleteSimple()<cr>
     :map <buffer> ffj  :call GptCompleteToBottom()<cr>
+    " Erase the current GPT answer
+    :map <buffer> ffd :?---?,/---/d<cr>
+    " Keep the current answer
+    :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/,/--- \*\*9/d<cr>
 endfunc
 
 autocmd BufEnter *convo call SetupForConvo()
