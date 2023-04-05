@@ -813,6 +813,21 @@ function GptSinkReplace(completion)
     execute ":put! j"
 endfunction
 
+" range after the function enables access to a:firstline, a:lastline
+function! GptCompleteSimple(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') range
+  let lines = getline(a:firstline, a:lastline)
+  let g:gpt_last_line = a:lastline
+  let g:gpt_first_line = a:firstline
+  let tempname_in = "~/tmp/gpt3.in.ipc"
+  let tempname_out = "~/tmp/gpt3.out.ipc"
+  call writefile(lines, expand(tempname_in))
+
+  let gpt_cmd =  'cat '.tempname_in.' | python3.10 ~/gpt3.py stdin --no-stream --responses=4 > ' . tempname_out
+  echom gpt_cmd
+  execute "!".gpt_cmd
+  execute ":".string(g:gpt_last_line)
+  execute "-1r ".tempname_out
+endfunction
 
 " range after the function enables access to a:firstline, a:lastline
 function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') range
@@ -895,7 +910,7 @@ func! GptCompleteToBottom()
     " hack fj is the escape key - a nice hack sicne <esc> doesn't work with
     " normal command
     :normal Go fj
-    :% call GptComplete()
+    :% call GptCompleteSimple()
 endfunc
 
 func! SetupForConvo()
@@ -903,7 +918,7 @@ func! SetupForConvo()
     " Turn off hitting enter indents - which BTW, is annoying
     :setlocal nocin
     " In insert mode, add cariage return to hint AI that it's its turn ..
-    :imap <buffer> ffj  <cr><cr><esc>:% call GptComplete()<cr>
+    :imap <buffer> ffj  <cr><cr><esc>:% call GptCompleteSimple()<cr>
     :map <buffer> ffj  :call GptCompleteToBottom()<cr>
 endfunc
 
