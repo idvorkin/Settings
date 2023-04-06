@@ -189,6 +189,18 @@ function png_shrink()
     pngquant -f -o $1 $1
 }
 
+function pbfix()
+{
+    pbpaste > ~/tmp/gpt.ipc.in
+    cat ~/tmp/gpt.ipc.in | ~/gpt3.py fix | tee ~/tmp/gpt.ipc.out
+    delta  ~/tmp/gpt.ipc.in ~/tmp/gpt.ipc.out
+    echo "Press any key to continue..."
+    read
+    cat ~/tmp/gpt.ipc.out | pbcopy
+    echo "Clipboard updated, you can back original by running"
+    echo "~/tmp/gpt.ipc.in | pbcopy"
+}
+
 # Some useful work aliases
 alias chh='wchat messages'
 alias thr='wchat threads'
