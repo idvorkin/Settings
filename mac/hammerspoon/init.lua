@@ -4,7 +4,49 @@ require("hs.json")
 -- /usr/local/bin hs -c "command"
 require("hs.ipc")
 require("hs.caffeinate")
---
+require("hs.application")
+
+
+-- A spoon loader. Consider installing this via some setup script
+-- wget https://github.com/Hammerspoon/Spoons/raw/master/Spoons/SpoonInstall.spoon.zip -O ~/tmp/SpoonInstall.spoon.zip && unzip ~/tmp/SpoonInstall.spoon.zip -d ~/.hammerspoon/Spoons
+hs.loadSpoon("SpoonInstall")
+
+
+function appID(app)
+  return hs.application.infoForBundlePath(app)['CFBundleIdentifier']
+end
+
+
+chromeBrowser = appID('/Applications/Google Chrome.app')
+edgeBrowser = appID('/Applications/Microsoft Edge.app')
+
+
+-- TODO: Consider changing these with the home/work scripts
+DefaultBrowser = edgeBrowser
+WorkBrowser = chromeBrowser
+
+
+spoon.SpoonInstall:andUse("URLDispatcher",
+               {
+                 config = {
+                   url_patterns = {
+                     { "https://*internalfb*",      WorkBrowswer },
+                   },
+                   url_redir_decoders = {
+                     -- Send MS Teams URLs directly to the app
+                     { "MS Teams URLs",
+                       "(https://teams.microsoft.com.*)", "msteams:%1", true },
+                     -- Preview incorrectly encodes the anchor
+                     -- character URLs as %23, we fix it
+                     { "Fix broken Preview anchor URLs",
+                       "%%23", "#", false, "Preview" },
+                   },
+                   default_handler = DefaultBrowser
+                 },
+                 start = true,
+                 -- Enable debug logging if you get unexpected behavior
+                 -- loglevel = 'debug'
+               })
 
 function laptopScreen()
     return hs.screen.allScreens()[1]
