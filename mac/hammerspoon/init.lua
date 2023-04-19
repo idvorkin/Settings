@@ -22,7 +22,8 @@ edgeBrowser = appID('/Applications/Microsoft Edge.app')
 
 
 -- TODO: Consider changing these with the home/work scripts
-DefaultBrowser = edgeBrowser
+-- Not clear why these patterns dont work, deal with it later.
+DefaultBrowser = chromeBrowser
 WorkBrowser = chromeBrowser
 
 
@@ -30,22 +31,14 @@ spoon.SpoonInstall:andUse("URLDispatcher",
                {
                  config = {
                    url_patterns = {
-                     { "https://*internalfb*",      WorkBrowswer },
-                   },
-                   url_redir_decoders = {
-                     -- Send MS Teams URLs directly to the app
-                     { "MS Teams URLs",
-                       "(https://teams.microsoft.com.*)", "msteams:%1", true },
-                     -- Preview incorrectly encodes the anchor
-                     -- character URLs as %23, we fix it
-                     { "Fix broken Preview anchor URLs",
-                       "%%23", "#", false, "Preview" },
+                     { "https-://.+internalfb.+",      WorkBrowswer },
+                     {  "https?://fb%.workplace%.com/.*" ,      WorkBrowswer },
                    },
                    default_handler = DefaultBrowser
                  },
                  start = true,
                  -- Enable debug logging if you get unexpected behavior
-                 -- loglevel = 'debug'
+                 loglevel = 'debug'
                })
 
 function laptopScreen()
@@ -234,6 +227,8 @@ function urlMove(event, params)
 end
 
 hs.urlevent.bind("move", urlMove)
+
+print ("Version #1")
 
 -- To connecto to stream deck, use applescript plugin and do this:
 -- do shell script "/Users/idvorkin/bin/hs -c 'toggle(3/2)' "
