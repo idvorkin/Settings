@@ -16,7 +16,12 @@ module.exports = {
     },
     {
       // Open any url that includes the string "workplace" in Firefox
-        match: ["fburl.com/*","internalfb.com/*","fb.facebook.com/*"],
+        match: ["fb.workplace.com/*"],
+      browser: "Google Chrome"
+    },
+    {
+      // Open any url that includes the string "workplace" in Firefox
+        match: ["fburl.com/*","internalfb.com/*","fb.facebook.com/*","fb.workplace.com/*"],
       browser: "Google Chrome"
     },
     {
