@@ -35,6 +35,7 @@ ln -s -f ~/settings/tmuxp ~/.tmuxp
 mkdir ~/.hammerspoon
 mkdir ~/.ssh
 ln -s -f ~/settings/mac/hammerspoon/init.lua ~/.hammerspoon/init.lua
+ln -s -f ~/settings/mac/.finicky.js  ~/.finicky.js
 ln -s -f ~/settings/shared/ctags ~/.ctags
 ln -s -f ~/settings/shared/.tmux.conf ~/.tmux.conf
 ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc

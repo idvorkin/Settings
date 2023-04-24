@@ -10,6 +10,7 @@ brew install --cask google-chrome  iterm2	skype the-unarchiver
 brew install --cask visual-studio-code hammerspoon  vlc
 brew install --cask db-browser-for-sqlite
 brew install --cask bartender
+brew install --cask finicky
 
 
 # brew cask install osxfuse
