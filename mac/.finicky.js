@@ -15,13 +15,17 @@ module.exports = {
       browser: "Safari"
     },
     {
+      match: ["*gmail.com/*", "*mail.google.com*"],
+      browser: "Microsoft Edge"
+    },
+    {
       // Open any url that includes the string "workplace" in Firefox
         match: ["fb.workplace.com/*"],
       browser: "Google Chrome"
     },
     {
       // Open any url that includes the string "workplace" in Firefox
-        match: ["fburl.com/*","internalfb.com/*","fb.facebook.com/*","fb.workplace.com/*"],
+        match: ["fburl.com/*","*internalfb.com/*","*fb.facebook.com/*","*fb.workplace.com/*","*docs.google.com*","*figma*"],
       browser: "Google Chrome"
     },
     {
