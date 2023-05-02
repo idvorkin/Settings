@@ -20,21 +20,13 @@ module.exports = {
     },
     {
       // Open any url that includes the string "workplace" in Firefox
-        match: ["fb.workplace.com/*"],
+        match: ["*fb.workplace.com/*","*figma*"],
       browser: "Google Chrome"
     },
     {
       // Open any url that includes the string "workplace" in Firefox
-        match: ["fburl.com/*","*internalfb.com/*","*fb.facebook.com/*","*fb.workplace.com/*","*docs.google.com*","*figma*"],
+        match: ["fburl.com/*","*internalfb.com/*","*fb.facebook.com/*","*fb.workplace.com/*","*docs.google.com*","*figma*", "*fburl.com/*","*internalfb.com/*","*fb.facebook.com/*","*fb.workplace.com/*", "https://drive.google.com/drive/folders/*", "https://docs.google.com/*", "*fb.quip.com*"],
       browser: "Google Chrome"
     },
-    {
-      // Open google.com and *.google.com urls in Google Chrome
-      match: [
-        "google.com/*", // match google.com urls
-        "*.google.com/*", // match google.com subdomains
-      ],
-      browser: "Google Chrome"
-    }
   ]
 };
