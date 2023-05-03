@@ -188,18 +188,16 @@ function AllTabsForPerson(partial="Pablo Bravo")
     // debugger
     println (`Partial Name: ${partial}`)
     delay(2) // Delay in seconds
-    const name = intern.title().split(":")[0]
+    const name = partial
     const internId = GetId(intern.url())
     const wpId = GetId(wp.url())
 
     println (`Name: ${name}`)
-    w.tabs.push(CreateTab(`https://fb.workplace.com/work/org/${wpId}/`))
-    w.tabs.push(CreateTab(`https://www.internalfb.com/intern/org/chart/?id=${internId}`))
     const linkedInSearchParam = encodeURIComponent(`${name} facebook`)
     const linkedInUrl = `https://www.linkedin.com/search/results/all/?keywords=${linkedInSearchParam}`
     w.tabs.push(CreateTab(linkedInUrl))
-    w.tabs.push(CreateTab(`https://www.internalfb.com/intern/meeting/?invitees[0]=${internId}`))
     w.tabs.push(CreateTab(`https://fb.workplace.com/chat/t/${wpId}/`))
+    w.tabs.push(CreateTab(`https://fb.workplace.com/work/org/${wpId}/`))
     // w.tabs[0].focus()
         /*
     println("Tab--")
