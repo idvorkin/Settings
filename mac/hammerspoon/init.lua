@@ -5,6 +5,7 @@ require("hs.json")
 require("hs.ipc")
 require("hs.caffeinate")
 require("hs.application")
+hs.ipc.cliInstall("/Users/idvorkin/homebrew/")
 
 
 -- A spoon loader. Consider installing this via some setup script
@@ -17,29 +18,6 @@ function appID(app)
 end
 
 
-chromeBrowser = appID('/Applications/Google Chrome.app')
-edgeBrowser = appID('/Applications/Microsoft Edge.app')
-
-
--- TODO: Consider changing these with the home/work scripts
--- Not clear why these patterns dont work, deal with it later.
-DefaultBrowser = chromeBrowser
-WorkBrowser = chromeBrowser
-
-
-spoon.SpoonInstall:andUse("URLDispatcher",
-               {
-                 config = {
-                   url_patterns = {
-                     { "https-://.+internalfb.+",      WorkBrowswer },
-                     {  "https?://fb%.workplace%.com/.*" ,      WorkBrowswer },
-                   },
-                   default_handler = DefaultBrowser
-                 },
-                 start = true,
-                 -- Enable debug logging if you get unexpected behavior
-                 loglevel = 'debug'
-               })
 
 function laptopScreen()
     return hs.screen.allScreens()[1]
