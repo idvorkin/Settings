@@ -1,0 +1,304 @@
+{
+  "title": "Synchronize Modifier Keys Across All Keyboards",
+  "rules": [
+    {
+      "description": "Synchronize All Modifier Keys",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "left_shift",
+            "modifiers": {
+              "optional": ["any"]
+            }
+          },
+          "to": [
+            {
+              "set_variable": {
+                "name": "shift_key_sync",
+                "value": 1
+              }
+            }
+          ],
+          "to_after_key_up": [
+            {
+              "set_variable": {
+                "name": "shift_key_sync",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "right_shift",
+            "modifiers": {
+              "optional": ["any"]
+            }
+          },
+          "to": [
+            {
+              "set_variable": {
+                "name": "shift_key_sync",
+                "value": 1
+              }
+            }
+          ],
+          "to_after_key_up": [
+            {
+              "set_variable": {
+                "name": "shift_key_sync",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "left_control",
+            "modifiers": {
+              "optional": ["any"]
+            }
+          },
+          "to": [
+            {
+              "set_variable": {
+                "name": "control_key_sync",
+                "value": 1
+              }
+            }
+          ],
+          "to_after_key_up": [
+            {
+              "set_variable": {
+                "name": "control_key_sync",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "right_control",
+            "modifiers": {
+              "optional": ["any"]
+            }
+          },
+          "to": [
+            {
+              "set_variable": {
+                "name": "control_key_sync",
+                "value": 1
+              }
+            }
+          ],
+          "to_after_key_up": [
+            {
+              "set_variable": {
+                "name": "control_key_sync",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "left_command",
+            "modifiers": {
+              "optional": ["any"]
+            }
+          },
+          "to": [
+            {
+              "set_variable": {
+                "name": "command_key_sync",
+                "value": 1
+              }
+            }
+          ],
+          "to_after_key_up": [
+            {
+              "set_variable": {
+                "name": "command_key_sync",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "right_command",
+            "modifiers": {
+              "optional": ["any"]
+            }
+          },
+          "to": [
+            {
+              "set_variable": {
+                "name": "command_key_sync",
+                "value": 1
+              }
+            }
+          ],
+          "to_after_key_up": [
+            {
+              "set_variable": {
+                "name": "command_key_sync",
+                "value": 0
+              }
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+
+        "key_code": "left_option",
+        "modifiers": {
+          "optional": ["any"]
+        }
+      },
+      "to": [
+        {
+          "set_variable": {
+            "name": "option_key_sync",
+            "value": 1
+          }
+        }
+      ],
+      "to_after_key_up": [
+        {
+          "set_variable": {
+            "name": "option_key_sync",
+            "value": 0
+          }
+        }
+      ]
+    },
+    {
+      "type": "basic",
+      "from": {
+        "key_code": "right_option",
+        "modifiers": {
+          "optional": ["any"]
+        }
+      },
+      "to": [
+        {
+          "set_variable": {
+            "name": "option_key_sync",
+            "value": 1
+          }
+        }
+      ],
+      "to_after_key_up": [
+        {
+          "set_variable": {
+            "name": "option_key_sync",
+            "value": 0
+          }
+        }
+      ]
+    }
+  ]
+},
+{
+  "description": "Apply Modifier Keys to All Keyboards",
+  "manipulators": [
+    {
+      "type": "basic",
+      "from": {
+        "key_code": "any",
+        "modifiers": {
+          "optional": ["any"]
+        }
+      },
+      "to": [
+        {
+          "key_code": "VK_PSEUDO_MODIFIER_SHIFT",
+          "modifiers": ["left_shift"]
+        }
+      ],
+      "conditions": [
+        {
+          "type": "variable_if",
+          "name": "shift_key_sync",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "type": "basic",
+      "from": {
+        "key_code": "any",
+        "modifiers": {
+          "optional": ["any"]
+        }
+      },
+      "to": [
+        {
+          "key_code": "VK_PSEUDO_MODIFIER_CONTROL",
+          "modifiers": ["left_control"]
+        }
+      ],
+      "conditions": [
+        {
+          "type": "variable_if",
+          "name": "control_key_sync",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "type": "basic",
+      "from": {
+        "key_code": "any",
+        "modifiers": {
+          "optional": ["any"]
+        }
+      },
+      "to": [
+        {
+          "key_code": "VK_PSEUDO_MODIFIER_COMMAND",
+          "modifiers": ["left_command"]
+        }
+      ],
+      "conditions": [
+        {
+          "type": "variable_if",
+          "name": "command_key_sync",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "type": "basic",
+      "from": {
+        "key_code": "any",
+        "modifiers": {
+          "optional": ["any"]
+        }
+      },
+      "to": [
+        {
+          "key_code": "VK_PSEUDO_MODIFIER_OPTION",
+          "modifiers": ["left_option"]
+        }
+      ],
+      "conditions": [
+        {
+          "type": "variable_if",
+          "name": "option_key_sync",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}
+]
+}
