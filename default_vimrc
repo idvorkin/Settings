@@ -424,6 +424,7 @@ endfunc
 :cab rfiles :r !exa ~/rare_git/blob/ig66
 :iab epics {%include bi_table.html is="<cr><cr>" %}
 
+" Family journal, ig66
 func! Ig66Files(week)
     :match Comment /^#.*/
     " setup macros
