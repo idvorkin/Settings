@@ -4,6 +4,7 @@ zoxide \
 exa \
 jq \
 mcfly \
+timg \
 fzf \
 gh \
 bat \
