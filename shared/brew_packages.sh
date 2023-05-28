@@ -88,6 +88,8 @@ yarn "
 
 # https://unix.stackexchange.com/questions/7558/execute-a-command-once-per-line-of-piped-input
 # Ahh magic. xargs takes it's input execute command once per line
+# Start by fetching the packages in parallel as that's non blocking and can run in paralle, while install runs in series
+echo $brew_packages | xargs -I {} zsh -c 'brew fetch {} &'
 echo $brew_packages | xargs -n1 brew install
 
 #  Get latest version of mosh
