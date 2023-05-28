@@ -16,6 +16,12 @@ brew install --cask finicky
 # brew cask install osxfuse
 
 
+# fix up key repeats
+
+defaults write com.visualstudio.code.oss ApplePressAndHoldEnabled -bool false
+defaults write com.microsoft.VSCodeInsiders ApplePressAndHoldEnabled -bool false
+defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
+
 
 brew linkapps macvim
 
