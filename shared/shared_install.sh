@@ -24,8 +24,6 @@ ln -s -f ~/gits/igor2/ ~/igor2
 ln -s -f ~/gits/idvorkin.github.io ~/blog
 
 
-#oh my zsh setup - from not fish.
-sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 
 
 # ctags is not maintained, use universal-ctags instead

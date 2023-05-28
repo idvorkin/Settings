@@ -190,6 +190,15 @@ function png_shrink()
     pngquant -f -o $1 $1
 }
 
+function cs_install_brew()
+{
+    # install brew - much faster to default location
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> /home/codespace/.profile
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+}
+
 function pbfix()
 {
     pbpaste > ~/tmp/gpt.ipc.in
