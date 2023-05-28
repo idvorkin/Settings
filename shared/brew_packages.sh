@@ -110,7 +110,7 @@ brew install azure-cli cmatrix iftop
 npm install --global fkill-cli
 
 # Add some pip3 packages
-python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader nltk fernet cryptography imutils sklearn scikit-learn jupyterlab-vim jupyterlab-vimrc pendulum poetry torch torchvision opencv-python typeguard tiktoken modal-client
+python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader nltk fernet cryptography imutils sklearn scikit-learn jupyterlab-vim jupyterlab-vimrc pendulum poetry torch torchvision opencv-python typeguard tiktoken modal-client uvicorn
 
 
 # On the mac can install tensor flow as follows
@@ -124,3 +124,10 @@ brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspo
 # Install from cargo incase on linux docker on osx which does not support bottles
 curl https://sh.rustup.rs -sSf | sh
 cargo install zoxide bat duf exa mcfly dua procs htop starship dua
+
+# install azure functions
+
+brew tap azure/functions
+brew install azure-functions-core-tools@4
+# if upgrading on a machine that has 2.x or 3.x installed:
+brew link --overwrite azure-functions-core-tools@4
