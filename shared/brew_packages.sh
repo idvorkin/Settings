@@ -7,25 +7,23 @@ exa \
 jq \
 mcfly \
 fd \
-timg \
 procs \
 fzf \
 gh \
 viu \
 rich \
 duf \
-cpulimit \
-pandoc \
+htop \
 ag \
 yt-dlp \
+gdu \
 zsh \
 git \
 tig \
-docui \
+cpulimit \
 httpie \
 dua-cli \
 ranger \
-cask \
 fasd \
 docker \
 png-quant \
@@ -37,13 +35,12 @@ git-delta \
 python3 \
 asciinema \
 asciiquarium \
+docui \
 aws-shell \
 ffmpeg \
 fselect \
 glances \
 gotop \
-grip \
-gdu \
 htop \
 hub \
 httpie \
@@ -70,8 +67,10 @@ s3cmd \
 wget \
 w3m \
 docker \
-gdu \
 curlie \
+pandoc \
+cask \
+timg \
 xh \
 yasm \
 zip \
@@ -89,7 +88,7 @@ yarn "
 # https://unix.stackexchange.com/questions/7558/execute-a-command-once-per-line-of-piped-input
 # Ahh magic. xargs takes it's input execute command once per line
 # Start by fetching the packages in parallel as that's non blocking and can run in paralle, while install runs in series
-echo $brew_packages | xargs -I {} zsh -c 'brew fetch {} &'
+echo $brew_packages | xargs -n1 --max-procs=8 brew fetch
 echo $brew_packages | xargs -n1 brew install
 
 #  Get latest version of mosh
