@@ -58,7 +58,7 @@ ln -s -f ~/settings/shared/ipython_config.py  ~/.ipython/profile_default/ipython
 ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
 ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 
-(echo '# setup by bootstrap.sh') >> ~/.zsh_include
-(echo '. ~/settings/shared/zsh_include.sh') >> ~/.zsh_include
-(echo 'plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)') >> ~/.zsh_include
+(echo '# Added by bootstrap.sh') >> ~/.zshrc
+(echo '. ~/settings/shared/zsh_include.sh') >> ~/.zshrc
+(echo 'plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)') >> ~/.zshrc
 
