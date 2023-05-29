@@ -51,12 +51,14 @@ ln -s -f ~/settings/mac/hammerspoon/init.lua ~/.hammerspoon/init.lua
 ln -s -f ~/settings/mac/.finicky.js  ~/.finicky.js
 ln -s -f ~/settings/shared/ctags ~/.ctags
 ln -s -f ~/settings/shared/.tmux.conf ~/.tmux.conf
+ln -s -f ~/settings/shared/.tmux.conf ~/.tmux/.tmux.conf
 ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc
 ln -s -f ~/settings/shared/ipython_config.py  ~/.ipython/ipython_config.py
 ln -s -f ~/settings/shared/ipython_config.py  ~/.ipython/profile_default/ipython_config.py
 ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
 ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 
-#oh my zsh setup - from not fish.
-sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+(echo '# setup by bootstrap.sh') >> ~/.zsh_include
+(echo '. ~/settings/shared/zsh_include.sh') >> ~/.zsh_include
+(echo 'plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)') >> ~/.zsh_include
 
