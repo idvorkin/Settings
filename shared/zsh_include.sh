@@ -4,7 +4,7 @@
 #  Helpful go to your by pressing gf on: ~/.zshrc
 
 # https://github.com/lukechilds/zsh-better-npm-completion
-# plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)
+# plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf gh)
 # . ~/settings/shared/zsh_include.sh
 
 # Source Brew
