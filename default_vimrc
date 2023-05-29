@@ -292,7 +292,6 @@ function! SetupPlugins()
     " \n - usages
     " K - help
     Plugin 'davidhalter/jedi-vim'
-    Plugin 'wakatime/vim-wakatime'
 
     call vundle#end()            " required
 endfunc
