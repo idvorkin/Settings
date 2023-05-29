@@ -1,23 +1,24 @@
 
 export brew_packages="\
+tmux \
 zoxide \
+bat \
 exa \
 jq \
 mcfly \
+fd \
 timg \
+procs \
 fzf \
 gh \
-bat \
 viu \
 rich \
 duf \
 cpulimit \
 pandoc \
 ag \
-fd \
 yt-dlp \
 zsh \
-tmux \
 git \
 tig \
 docui \
@@ -72,7 +73,6 @@ docker \
 gdu \
 curlie \
 xh \
-procs \
 yasm \
 zip \
 yarn \
