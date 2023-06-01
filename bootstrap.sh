@@ -59,6 +59,6 @@ ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
 ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 
 (echo '# Added by bootstrap.sh') >> ~/.zshrc
-(echo '. ~/settings/shared/zsh_include.sh') >> ~/.zshrc
 (echo 'plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)') >> ~/.zshrc
+(echo '. ~/settings/shared/zsh_include.sh') >> ~/.zshrc
 
