@@ -290,8 +290,11 @@ function! SetupPlugins()
 
     " \r - rename
     " \n - usages
+    " \d definition - maybe remap to C-]
     " K - help
     Plugin 'davidhalter/jedi-vim'
+
+    Plugin 'github/copilot.vim'
 
     call vundle#end()            " required
 endfunc
