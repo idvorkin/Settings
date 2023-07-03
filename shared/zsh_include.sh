@@ -214,6 +214,7 @@ function pbfix()
 function export_secret_openai()
 {
     export OPENAI_API_KEY=$(jq -r '.openai' ~/gits/igor2/secretBox.json)
+    export GOOGLE_API_KEY=$(jq -r '.google-api-key' ~/gits/igor2/secretBox.json)
     echo $OPENAI_API_KEY
 }
 
