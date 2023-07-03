@@ -211,10 +211,10 @@ function pbfix()
     echo "~/tmp/gpt.ipc.in | pbcopy"
 }
 
-function export_secret_openai()
+function export_secrets()
 {
     export OPENAI_API_KEY=$(jq -r '.openai' ~/gits/igor2/secretBox.json)
-    export GOOGLE_API_KEY=$(jq -r '.google-api-key' ~/gits/igor2/secretBox.json)
+    export GOOGLE_API_KEY=$(jq -r '.googleapikey' ~/gits/igor2/secretBox.json)
     echo $OPENAI_API_KEY
 }
 
