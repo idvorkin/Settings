@@ -211,6 +211,12 @@ function pbfix()
     echo "~/tmp/gpt.ipc.in | pbcopy"
 }
 
+function export_secret_openai()
+{
+    export OPENAI_API_KEY=$(jq -r '.openai' ~/gits/igor2/secretBox.json)
+    echo $OPENAI_API_KEY
+}
+
 # Some useful work aliases
 alias chh='wchat messages'
 alias thr='wchat threads'
