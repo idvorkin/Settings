@@ -216,6 +216,8 @@ function export_secrets()
     export OPENAI_API_KEY=$(jq -r '.openai' ~/gits/igor2/secretBox.json)
     export GOOGLE_API_KEY=$(jq -r '.googleapikey' ~/gits/igor2/secretBox.json)
     export BRAVE_SEARCH_API_KEY=$(jq -r '.brave' ~/gits/igor2/secretBox.json)
+    export BING_SUBSCRIPTION_KEY=$(jq -r '.bing' ~/gits/igor2/secretBox.json)
+    export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
     echo $OPENAI_API_KEY
 }
 
