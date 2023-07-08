@@ -9,7 +9,6 @@ mcfly \
 fd \
 procs \
 fzf \
-gh \
 rich \
 duf \
 htop \
@@ -18,9 +17,7 @@ yt-dlp \
 gdu \
 zsh \
 git \
-tig \
 cpulimit \
-httpie \
 dua-cli \
 ranger \
 fasd \
@@ -41,8 +38,6 @@ fselect \
 glances \
 gotop \
 htop \
-hub \
-httpie \
 imagemagick \
 jq \
 jless \
@@ -74,12 +69,24 @@ rust \
 rbenv \
 yarn "
 
+
+# http downloaders
 brew_packages="$brew_packages curlie" # Curl with a UI
-brew_packages="$brew_packages timg" # View images from the terminalfJ;w
+brew_packages="$brew_packages httpie" # Another downloader, cli is http
+
 
 brew_packages="$brew_packages neofetch" # Show system info
-brew_packages="$brew_packages viu" # View images from the terminal
-brew_packages="$brew_packages cloc" # Count lines of code
+
+# Terminal based iamages viewers
+brew_packages="$brew_packages viu"
+brew_packages="$brew_packages timg"
+
+# Source code tools
+brew_packages="$brew_packages gh" # official github cli
+brew_packages="$brew_packages hub" # Legacy github cli
+brew_packages="$brew_packages cloc" # count lines of code
+brew_packages="$brew_packages tig" # git history viewer
+
 brew_packages="$brew_packages pandoc" # Convert between file formats
 
 echo $brew_packages
