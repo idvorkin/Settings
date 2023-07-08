@@ -10,7 +10,6 @@ fd \
 procs \
 fzf \
 gh \
-viu \
 rich \
 duf \
 htop \
@@ -54,7 +53,6 @@ markdownlint-cli \
 mosh \
 ncdu \
 nmap \
-neofetch \
 npm \
 openssl \
 optipng \
@@ -67,10 +65,7 @@ s3cmd \
 wget \
 w3m \
 docker \
-curlie \
-pandoc \
 cask \
-timg \
 xh \
 yasm \
 zip \
@@ -78,6 +73,17 @@ yarn \
 rust \
 rbenv \
 yarn "
+
+brew_packages="$brew_packages curlie" # Curl with a UI
+brew_packages="$brew_packages timg" # View images from the terminalfJ;w
+
+brew_packages="$brew_packages neofetch" # Show system info
+brew_packages="$brew_packages viu" # View images from the terminal
+brew_packages="$brew_packages cloc" # Count lines of code
+brew_packages="$brew_packages pandoc" # Convert between file formats
+
+echo $brew_packages
+
 
 # Notes, rust is super slow to compile, so putting that packages last
 
@@ -109,7 +115,7 @@ brew install azure-cli cmatrix iftop
 npm install --global fkill-cli
 
 # Add some pip3 packages
-python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader nltk fernet cryptography imutils sklearn scikit-learn jupyterlab-vim jupyterlab-vimrc pendulum poetry torch torchvision opencv-python typeguard tiktoken modal-client uvicorn py-cord asyncify asyncer mypy langchain unstructured chromadb
+python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair sklearn plotly pyfiglet jsonpickle pandas-datareader nltk fernet cryptography imutils sklearn scikit-learn jupyterlab-vim jupyterlab-vimrc pendulum poetry torch torchvision opencv-python typeguard tiktoken modal-client uvicorn py-cord asyncify asyncer mypy langchain unstructured chromadb wandb
 
 
 # On the mac can install tensor flow as follows
