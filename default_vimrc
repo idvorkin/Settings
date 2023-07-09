@@ -577,6 +577,7 @@ let g:ale_fixers = {
 " https://devhints.io/vimscript
 " :py3file ~/settings/vim_python.py
 command! IGDaily :n! `~/settings/vim_python.py makedailypage`
+command! IGConvo :n! `~/settings/vim_python.py make-convo`
 command! IGWeekly :n! `~/settings/vim_python.py makeweeklyreport`
 command! IGYesterweek :n! `~/settings/vim_python.py makeweeklyreport --weekoffset -1`
 command! IGYesterday :n! `~/settings/vim_python.py makedailypage --daysoffset -1`

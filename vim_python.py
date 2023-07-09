@@ -100,6 +100,29 @@ def MakeWeeklyReport(weekoffset: int = 0):
     new_file, path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
     print(new_file)
 
+@app.command()
+def make_convo():
+    import os
+    import shutil
+    import tempfile
+
+    # Create a temporary file
+    temp_file, temp_path = tempfile.mkstemp(suffix=".convo")
+
+    try:
+        # Open the temporary file in write mode
+        with open(temp_path, 'w') as temp:
+            # Open the source file in read mode
+            with open(os.path.expanduser('~/gits/nlp/convos/default.convo'), 'r') as source:
+                # Copy the content of the source file into the temporary file
+                shutil.copyfileobj(source, temp)
+
+    finally:
+        # Close the temporary file
+        os.close(temp_file)
+    print (temp_path)
+
+
 
 @logger.catch
 def app_with_loguru():
