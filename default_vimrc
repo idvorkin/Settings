@@ -943,7 +943,7 @@ autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/
 
 function! MakeCommitMesage()
     let tempfile=tempname()
-    let gpt_from_git_diff = '!git diff --staged | ~/gpt3.py commit-message --responses=4'
+    let gpt_from_git_diff = '!git diff --staged -U10 | ~/gpt3.py commit-message --debug  --responses=4'
     execute gpt_from_git_diff . ' > ' . shellescape(tempfile)
     try
         silent execute 'read' tempfile
