@@ -72,7 +72,7 @@ function dda() {
 
 function ijm() {
     export file_name=~/tmp/ijm/ijm_$1_`date +%y-%m-%d_%H:%M:%S.md`
-    ij body --close $1 | ~/gpt.py mood --debug --u4 --tokens 2000 | tee $file_name && cat $file_name | rmp
+    ij body --close $1 | ~/gpt.py mood --debug --u4 | tee $file_name && cat $file_name | rmp
     echo $file_name
 }
 
