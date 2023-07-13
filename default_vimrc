@@ -578,7 +578,32 @@ let g:ale_fixers = {
 " :py3file ~/settings/vim_python.py
 command! IgDaily :n! `~/settings/vim_python.py makedailypage`
 command! Ig3 :resize 10<cr>
-command! IgConvo :n! `~/settings/vim_python.py make-convo`<cr>
+function! OpenConvoFile()
+    let bufexists = 0
+    let bufnum = 0
+
+    " Check if a buffer with the filename ending in '.convo' exists.
+    for buf in range(1, bufnr('$'))
+        if bufexists(buf) && matchstr(bufname(buf), '.*\.convo$') != ''
+            let bufexists = 1
+            let bufnum = buf
+            break
+        endif
+    endfor
+
+    " If the '.convo' buffer exists but not in any window, open it in a new window
+    if bufexists && bufwinnr(bufnum) == -1
+        execute 'sbuffer' bufnum
+    " If the '.convo' buffer exists and in a window, switch to that window.
+    elseif bufexists
+        execute bufwinnr(bufnum) . 'wincmd w'
+    " If the '.convo' buffer doesn't exist, create a new one.
+    else
+        execute 'new  `~/settings/vim_python.py make-convo` '
+    endif
+endfunction
+
+command! IgConvo :call OpenConvoFile()
 command! IgWeekly :n! `~/settings/vim_python.py makeweeklyreport`
 command! IgYesterweek :n! `~/settings/vim_python.py makeweeklyreport --weekoffset -1`
 command! IgYesterday :n! `~/settings/vim_python.py makedailypage --daysoffset -1`
