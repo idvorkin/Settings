@@ -603,6 +603,17 @@ function! OpenConvoFile()
     endif
 endfunction
 
+function! MakeGist()
+  " Write the current buffer to a temporary file
+
+  " Use the gh command to create a gist and copy the url to clipboard
+  silent! execute '!gh gist create % --public | grep https| pbc'
+  " Not sure why but screen gets messed up. Force a redraw
+  redraw!
+
+endfunction
+
+command! IgGist :call MakeGist()
 command! IgConvo :call OpenConvoFile()
 command! IgWeekly :n! `~/settings/vim_python.py makeweeklyreport`
 command! IgYesterweek :n! `~/settings/vim_python.py makeweeklyreport --weekoffset -1`
@@ -958,9 +969,10 @@ func! SetupForConvo()
     :map <buffer> ffd :?---?,/---/d<cr>
     " Keep the current answer
     :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/,/--- \*\*9/d<cr>
+    :set ft=markdown
 endfunc
 
-autocmd BufEnter *convo call SetupForConvo()
+autocmd BufEnter *convo.md call SetupForConvo()
 autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage()<cr>
 " Refactor to share with convo maps
 autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffd :?---?,/---/d<cr>
