@@ -107,7 +107,7 @@ def make_convo():
     import tempfile
 
     # Create a temporary file
-    temp_file, temp_path = tempfile.mkstemp(suffix=".convo")
+    temp_file, temp_path = tempfile.mkstemp(suffix=".convo.md")
 
     try:
         # Open the temporary file in write mode
