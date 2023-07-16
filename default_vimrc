@@ -584,7 +584,7 @@ function! OpenConvoFile()
 
     " Check if a buffer with the filename ending in '.convo' exists.
     for buf in range(1, bufnr('$'))
-        if bufexists(buf) && matchstr(bufname(buf), '.*\.convo$') != ''
+        if bufexists(buf) && matchstr(bufname(buf), '.*\.convo.md$') != ''
             let bufexists = 1
             let bufnum = buf
             break
