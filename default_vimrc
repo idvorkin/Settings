@@ -601,10 +601,13 @@ function! OpenConvoFile()
     else
         execute 'new  `~/settings/vim_python.py make-convo` '
     endif
+    " Jump to the bottom of the file
+    normal G
 endfunction
 
 function! MakeGist()
-  " Write the current buffer to a temporary file
+    " Save the  file
+    silent! write
 
   " Use the gh command to create a gist and copy the url to clipboard
   silent! execute '!gh gist create % --public | grep https| pbc'
