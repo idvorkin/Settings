@@ -149,6 +149,7 @@ function! SetupPlugins()
     Plugin 'ekalinin/Dockerfile.vim'
     Bundle 'mhinz/vim-startify'
     Bundle 'tbastos/vim-lua'
+    Plugin 'terrastruct/d2-vim'
 
 
     " Cool does wrapping
