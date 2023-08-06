@@ -216,6 +216,7 @@ function pbfix()
 function export_secrets()
 {
     export OPENAI_API_KEY=$(jq -r '.openai' ~/gits/igor2/secretBox.json)
+    export LANGCHAIN_API_KEY=$(jq -r '.langchain-api-key' ~/gits/igor2/secretBox.json)
     export GOOGLE_API_KEY=$(jq -r '.googleapikey' ~/gits/igor2/secretBox.json)
     export BRAVE_SEARCH_API_KEY=$(jq -r '.brave' ~/gits/igor2/secretBox.json)
     export BING_SUBSCRIPTION_KEY=$(jq -r '.bing' ~/gits/igor2/secretBox.json)
