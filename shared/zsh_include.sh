@@ -74,7 +74,7 @@ function dda() {
 
 function ijm() {
     export file_name=~/tmp/ijm/ijm_$1_`date +%y-%m-%d_%H:%M:%S.md`
-    ij body --close $1 | ~/gpt.py mood --debug --u4 | tee $file_name && cat $file_name | rmp
+    ij body --close $1 | ~/gits/nlp/life.py journal-report --debug --u4 | tee $file_name && cat $file_name | rmp
     echo $file_name
 }
 
@@ -86,7 +86,7 @@ function ijv() {
 function journal_gpt() {
     # $1 date
     # $2 command
-     ~/igor_journal.py entries $1  | while read line; do  echo && echo \#\#\#\ $line && ~/igor_journal.py body  $line | ~/gpt.py $2 ; done  | tee ~/tmp/$2_for_$1.md
+     ~/igor_journal.py entries $1  | while read line; do  echo && echo \#\#\#\ $line && ~/igor_journal.py body  $line | ~/gits/nlp/mood.py $2 ; done  | tee ~/tmp/$2_for_$1.md
 }
 
 function alias_if_exists() {
