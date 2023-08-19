@@ -95,6 +95,10 @@ function! SetupPlugins()
 
     call vundle#begin()
 
+    Plugin 'tpope/vim-sensible'
+
+    " Some changes to to the netrw?
+    Plugin 'tpope/vim-vinegar'
     Plugin 'miyakogi/conoline.vim'
     " Highlight current line
     " ConoLineEnable (Highlight current line)
