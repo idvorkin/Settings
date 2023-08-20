@@ -1007,9 +1007,9 @@ cab pbw :w !pbcopy
 command! PromptEulogy  :r !shuf -n 3 ~/gits/igor2/eulogy_prompts.md
 
 if (has('mac'))
-:cab ghlink :exe "!gh browse " . expand('%') . ':' . line(".") . "" <cr>
+:cab ghlink :exe "!gh browse -c " . expand('%') . ':' . line(".") . "" <cr>
 else
-:cab ghlink :exe "!gh browse -n " . expand('%') . ':' . line(".") . "\| pbcopy" <cr>
+:cab ghlink :exe "!gh browse -c -n " . expand('%') . ':' . line(".") . "\| pbcopy" <cr>
 endif
 
 
