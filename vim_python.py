@@ -113,7 +113,7 @@ def make_convo():
         # Open the temporary file in write mode
         with open(temp_path, 'w') as temp:
             # Open the source file in read mode
-            with open(os.path.expanduser('~/gits/nlp/convos/default.convo'), 'r') as source:
+            with open(os.path.expanduser('~/gits/nlp/convos/default.convo.md'), 'r') as source:
                 # Copy the content of the source file into the temporary file
                 shutil.copyfileobj(source, temp)
 
