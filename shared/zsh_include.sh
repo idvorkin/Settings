@@ -74,7 +74,7 @@ function dda() {
 
 function ijm() {
     export file_name=~/tmp/ijm/ijm_$1_`date +%y-%m-%d_%H:%M:%S.md`
-    ij body --close $1 | ~/gits/nlp/life.py journal-report --debug --u4 | tee $file_name && cat $file_name | rmp
+    ~/gits/nlp/life.py journal-report --debug --u4 $1
     echo $file_name
 }
 
@@ -227,8 +227,8 @@ function export_secrets()
 # Some useful work aliases
 alias chh='wchat messages'
 alias thr='wchat threads'
-
-
+alias grtd="grep ☐"
+alias tgrtd="cat ~/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep '☐'"
 
 
 # Turn off auto update brew

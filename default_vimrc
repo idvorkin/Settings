@@ -1045,6 +1045,11 @@ let g:copilot_filetypes = {
 " Setting value is super arcane, first param is count files setting to 1000
 " Annoyingly, only set on vim exit (so cross session files not findable)
 
+augroup json
+  autocmd!
+  autocmd BufRead,BufNewFile *.json setlocal foldmethod=indent foldnestmax=10 nofoldenable
+augroup END
+
 set viminfo='1000,<50,s10,h
 " ConoLineEnable
 
