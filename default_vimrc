@@ -120,7 +120,7 @@ function! SetupPlugins()
 
 
 
-    Bundle 'tpope/vim-fugitive'
+    Plugin 'tpope/vim-fugitive'
 
     " Bundle for Mercurial
     Bundle 'ludovicchabant/vim-lawrencium'
@@ -168,8 +168,8 @@ function! SetupPlugins()
 
 
 
-    Bundle 'tpope/vim-surround'
-    Bundle 'bling/vim-airline'
+    Plugin 'tpope/vim-surround'
+    Plugin 'bling/vim-airline'
     Bundle 'chrisbra/csv.vim'
     Bundle 'altercation/vim-colors-solarized'
     Bundle 'vim-scripts/ZoomWin'
