@@ -109,7 +109,7 @@ function! SetupPlugins()
     Bundle 'webdevel/tabulous'
     Bundle 'r0mai/vim-djinni'
     Bundle 'mattn/webapi-vim'
-    Bundle 'majutsushi/tagbar'
+    Plugin 'majutsushi/tagbar'
     Bundle 'luochen1990/rainbow'
     Bundle 'tyru/open-browser.vim'
 
@@ -136,12 +136,12 @@ function! SetupPlugins()
     "
     :noremap  <Leader>tr :ThesaurusQueryReplaceCurrentWord<CR>
 
-    Bundle 'junegunn/limelight.vim'
-    Bundle 'reedes/vim-pencil'
-    Bundle 'junegunn/goyo.vim'
+    Plugin 'junegunn/limelight.vim'
+    Plugin 'reedes/vim-pencil'
+    Plugin 'junegunn/goyo.vim'
     Bundle 'inkarkat/vim-ingo-library'
-    Bundle 'inkarkat/vim-spellcheck'
-    Bundle 'panozzaj/vim-autocorrect'
+    Plugin 'inkarkat/vim-spellcheck'
+    Plugin 'panozzaj/vim-autocorrect'
 
     Bundle 'HerringtonDarkholme/yats.vim'
 
