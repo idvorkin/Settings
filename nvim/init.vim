@@ -21,3 +21,10 @@ function! RunInteractiveShellCommand(command)
 endfunction
 
 command! -nargs=* Shell call RunInteractiveShellCommand(<q-args>)
+
+" Configure lualine
+
+":lua require('lualine').setup()
+:lua require'nvim-web-devicons'.get_icons()
+
+:set shadafile=~/config/nvim/nvim.shadafile

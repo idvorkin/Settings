@@ -40,7 +40,7 @@ ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
 ln -s -f ~/settings/mac/multi_keyboard_sync.json ~/.config/karabiner/assets/complex_modifications/multi_keyboard_sync.json
 ln -s -f ~/settings/default_vimrc ~/.vimrc
 ln -s -f ~/settings/shared/ranger_rc.conf ~/.config/ranger/rc.conf
-ln -s -f ~/settings/shared/nvim ~/.config/nvim
+ln -s -f ~/settings/nvim ~/.config/nvim
 ln -s -f ~/settings/shared/litecli_config ~/.config/litecli/config
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc
 ln -s -f ~/settings/mac/.inputrc ~/.inputrc
