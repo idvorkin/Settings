@@ -6,6 +6,7 @@ Plugin 'nvim-lualine/lualine.nvim'
 Plugin 'nvim-tree/nvim-web-devicons'
 Plugin 'Pocco81/true-zen.nvim'
 
+
 " Remap terminal keys
 
 :tnoremap <C-W><C-W> <C-\><C-n>
@@ -25,7 +26,6 @@ command! -nargs=* Shell call RunInteractiveShellCommand(<q-args>)
 
 " Configure lualine
 
-":lua require('lualine').setup()
-:lua require'nvim-web-devicons'.get_icons()
 
-:set shadafile=~/config/nvim/nvim.shadafile
+:set shadafile=~/.nvim.shadafile
+:luafile ~/.config/nvim/nvim_init.lua
