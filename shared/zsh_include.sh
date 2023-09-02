@@ -31,6 +31,7 @@ source_if_exists ~/homebrew/etc/profile.d/z.sh
 PATH+=:~/.local/bin
 alias ghgmd='gh gist create --filename=out.md --'
 alias imgls='timg --grid 4 --title'
+alias lg='lazygit'
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 alias gpushall='for git_directory in * ; echo $git_directory && git -C $git_directory push'
 alias weather="curl wttr.in/seattle"

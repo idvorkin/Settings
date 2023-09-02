@@ -153,6 +153,7 @@ function! SetupPlugins()
     Plugin 'ekalinin/Dockerfile.vim'
     Bundle 'mhinz/vim-startify'
     Plugin 'terrastruct/d2-vim'
+    Plugin 'voldikss/vim-floaterm'
 
 
     " Cool does wrapping
@@ -1048,6 +1049,10 @@ augroup json
   autocmd!
   autocmd BufRead,BufNewFile *.json setlocal foldmethod=indent foldnestmax=10 nofoldenable
 augroup END
+
+cab lg :FloatermNew lazygit
+let g:floaterm_width=0.99
+let g:floaterm_height=0.99
 
 set viminfo='1000,<50,s10,h
 " ConoLineEnable

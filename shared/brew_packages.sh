@@ -8,6 +8,7 @@ jq \
 mcfly \
 fd \
 procs \
+lazygit \
 fzf \
 rich \
 duf \

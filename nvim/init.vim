@@ -15,12 +15,9 @@ augroup reload_nvimrc | au!
         au BufWritePost *init.vim source ~/settings/nvim/init.vim
 augroup END
 
-:Plugin 'voldikss/vim-floaterm'
-
 function! RunInteractiveShellCommand(command)
   execute 'terminal ' . a:command
   startinsert
 endfunction
 
 command! -nargs=* Shell call RunInteractiveShellCommand(<q-args>)
-cnoremap !tig :FloatermNew tig
