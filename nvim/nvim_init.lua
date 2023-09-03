@@ -9,7 +9,10 @@ require("true-zen").setup {
     }
 }
 
-require('lualine').setup()
+require('lualine').setup{
+    options= {theme= 'iceberg_light'}
+}
+
 print("Config Loaded")
 require('gitsigns').setup{
   on_attach = function(bufnr)

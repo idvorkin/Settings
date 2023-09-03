@@ -80,6 +80,8 @@ function! SetupVimOnlyPlugins()
         :nmap <leader>hu :SignifyHunkUndo<cr>
         :nmap <leader>hp :SignifyHunkDiff<cr>
         Plugin 'ryanoasis/vim-devicons'
+
+        Plugin 'bling/vim-airline'
 endfunction
 
 function! SetupPlugins()
@@ -178,10 +180,7 @@ function! SetupPlugins()
 
 
     Plugin 'tpope/vim-surround'
-    Plugin 'bling/vim-airline'
     Bundle 'chrisbra/csv.vim'
-    Bundle 'altercation/vim-colors-solarized'
-    Bundle 'vim-scripts/ZoomWin'
 
     " Markdown stuff
     " *******************************
