@@ -2,11 +2,20 @@
 let g:in_nvim=1
 source ~/.vimrc
 
+Plugin 'neovim/nvim-lspconfig'
+Plugin 'hrsh7th/cmp-nvim-lsp'
+Plugin 'hrsh7th/cmp-buffer'
+Plugin 'hrsh7th/cmp-path'
+Plugin 'hrsh7th/cmp-cmdline'
+Plugin 'hrsh7th/nvim-cmp'
 Plugin 'nvim-lua/plenary.nvim'
 Plugin 'nvim-lualine/lualine.nvim'
 Plugin 'nvim-tree/nvim-web-devicons'
 Plugin 'Pocco81/true-zen.nvim'
 Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plugin 'sindrets/diffview.nvim'
+Plugin 'folke/trouble.nvim'
+
 
 
 

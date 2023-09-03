@@ -18,6 +18,9 @@ end
 bootstrap_pckr()
 vim.cmd "Plugin 'glepnir/dashboard-nvim'"
 require("dashboard").setup()
+require("trouble").setup{
+    mode="loclist"
+}
 
 
 
@@ -34,7 +37,6 @@ require("true-zen").setup {
 require('lualine').setup{
     options= {theme= 'iceberg_light'}
 }
-
 
 
 -- Lets include some comments here
@@ -153,6 +155,25 @@ require('gitsigns').setup{
         map({'o', 'x'}, 'ih', ':<C-U>Gitsigns select_hunk<CR>')
     end
 }
-
+-- Setup cmp
+--
+local cmp = require'cmp'
+cmp.setup()
+-- `/` cmdline setup.
+cmp.setup.cmdline('/', {
+  mapping = cmp.mapping.preset.cmdline(),
+  sources = {
+    { name = 'buffer' }
+  }
+})
+-- `:` cmdline setup.
+cmp.setup.cmdline(':', {
+  mapping = cmp.mapping.preset.cmdline(),
+  sources = cmp.config.sources({
+    { name = 'path' }
+  }, {
+    { name = 'cmdline' }
+  })
+})
 
 print("Config Loaded")
