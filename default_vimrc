@@ -73,6 +73,15 @@ function! FirstPersonToThirdPerson()
     :%s;^\.$;
 endfunction
 
+function! SetupVimOnlyPlugins()
+        Plugin 'mhinz/vim-signify' " Not sure why but gitgutter doesn't display the signs correctly, disable that and use signify for line highlight
+        " \hp -> Preview hunk
+        " \hu -> Undo Hunk
+        :nmap <leader>hu :SignifyHunkUndo<cr>
+        :nmap <leader>hp :SignifyHunkDiff<cr>
+        Plugin 'ryanoasis/vim-devicons'
+endfunction
+
 function! SetupPlugins()
 "  Vundle setup
     " Instructions @  https://github.com/VundleVim/Vundle.vim/blob/master/README.md
@@ -107,7 +116,7 @@ function! SetupPlugins()
     Bundle 'VundleVim/Vundle.vim'
     Bundle 'jparise/vim-graphql'
     Bundle 'webdevel/tabulous'
-    Bundle 'r0mai/vim-djinni'
+    Bundle'r0mai/vim-djinni'
     Bundle 'mattn/webapi-vim'
     Plugin 'majutsushi/tagbar'
     Bundle 'luochen1990/rainbow'
@@ -247,11 +256,9 @@ function! SetupPlugins()
     Plugin 'aklt/plantuml-syntax'
     Plugin 'scrooloose/vim-slumlord'
 
-    Plugin 'mhinz/vim-signify' " Not sure why but gitgutter doesn't display the signs correctly, disable that and use signify for line highlight
-    " \hp -> Preview hunk
-    " \hu -> Undo Hunk
-    :nmap <leader>hu :SignifyHunkUndo<cr>
-    :nmap <leader>hp :SignifyHunkDiff<cr>
+
+
+
     " ]c -> Next hunk
     " ]c -> Prev hunk
     " \hp -> Preview hunk
@@ -301,8 +308,10 @@ function! SetupPlugins()
 
     Plugin 'github/copilot.vim'
 
-    Plugin 'ryanoasis/vim-devicons'
 
+    if !exists("g:in_nvim")
+        call SetupVimOnlyPlugins()
+    endif
 
     call vundle#end()            " required
 endfunc

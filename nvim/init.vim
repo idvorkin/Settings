@@ -1,3 +1,5 @@
+
+let g:in_nvim=1
 source ~/.vimrc
 
 Plugin 'nvim-lua/plenary.nvim'
@@ -9,7 +11,6 @@ Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
 
 Plugin 'lewis6991/gitsigns.nvim'
-:SignifyDisable
 
 
 " Remap terminal keys
