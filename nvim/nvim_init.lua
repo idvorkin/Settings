@@ -191,4 +191,7 @@ cmp.setup.cmdline(':', {
   })
 })
 
+require'lspconfig'.pyright.setup{}
+
+
 print("Config Loaded")

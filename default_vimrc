@@ -82,6 +82,11 @@ function! SetupVimOnlyPlugins()
         Plugin 'ryanoasis/vim-devicons'
 
         Plugin 'bling/vim-airline'
+        " \r - rename
+        " \n - usages
+        " \d definition - maybe remap to C-]
+        " K - help
+        Plugin 'davidhalter/jedi-vim'
 endfunction
 
 function! SetupPlugins()
@@ -299,11 +304,6 @@ function! SetupPlugins()
     " coc and friends, too complex so far
     " Plugin 'neoclide/coc.nvim', {'branch': 'release'}
 
-    " \r - rename
-    " \n - usages
-    " \d definition - maybe remap to C-]
-    " K - help
-    Plugin 'davidhalter/jedi-vim'
 
     Plugin 'github/copilot.vim'
 
