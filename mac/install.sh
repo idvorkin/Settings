@@ -12,6 +12,15 @@ brew install --cask db-browser-for-sqlite
 brew install --cask bartender
 brew install --cask finicky
 
+# Install fonts
+brew tap homebrew/cask-fonts
+# Add a specific font
+brew install --cask font-hack-nerd-font
+
+# Manulaly install the font
+git clone https://github.com/Karmenzind/monaco-nerd-fonts ~/rare_gits/monaco-nerd-fonts
+
+
 
 # brew cask install osxfuse
 
