@@ -301,6 +301,9 @@ function! SetupPlugins()
 
     Plugin 'github/copilot.vim'
 
+    Plugin 'ryanoasis/vim-devicons'
+
+
     call vundle#end()            " required
 endfunc
 
@@ -1037,6 +1040,7 @@ augroup reload_vimrc | au!
         au BufWritePost *default_vimrc source ~/.vimrc
 augroup END
 
+
 let g:copilot_filetypes = {
   \ 'markdown': v:true,
   \ }
@@ -1053,6 +1057,7 @@ augroup END
 cab lg :FloatermNew lazygit
 let g:floaterm_width=0.99
 let g:floaterm_height=0.99
+set encoding=utf8
 
 set viminfo='1000,<50,s10,h
 " ConoLineEnable
