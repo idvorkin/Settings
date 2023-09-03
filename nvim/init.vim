@@ -7,20 +7,18 @@ Plugin 'nvim-tree/nvim-web-devicons'
 Plugin 'Pocco81/true-zen.nvim'
 Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
-" Reload when saving vimrc, which is the whole point of changin dotfile
-augroup reload_luarc | au!
-        au BufWritePost *nvim/init.vim source ~/.config/nvim/init.vim
-        au BufWritePost *nvim_init.lua source ~/.config/init/nvim.vim
-augroup END
+
+Plugin 'lewis6991/gitsigns.nvim'
+:SignifyDisable
 
 
 " Remap terminal keys
 :tnoremap <C-W><C-W> <C-\><C-n>
 
-"
 " Reload when saving vimrc, which is the whole point of changin dotfile
 augroup reload_nvimrc | au!
         au BufWritePost *init.vim source ~/settings/nvim/init.vim
+        au BufWritePost *nvim_init.lua source ~/settings/nvim/init.vim
 augroup END
 
 function! RunInteractiveShellCommand(command)
@@ -29,6 +27,10 @@ function! RunInteractiveShellCommand(command)
 endfunction
 
 command! -nargs=* Shell call RunInteractiveShellCommand(<q-args>)
+
+" Remap  when in nvim
+command! Sodot :so ~/settings/nvim/init.vim
+command! Soed :n ~/settings/nvim/init.vim
 
 " Configure lualine
 

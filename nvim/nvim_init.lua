@@ -11,6 +11,7 @@ require("true-zen").setup {
 
 require('lualine').setup()
 print("Config Loaded")
+require('gitsigns').setup()
 
 
 require'nvim-treesitter.configs'.setup {
