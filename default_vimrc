@@ -680,7 +680,6 @@ endif
 "  Using FD honors the .gitignore
 :cab GTag  :Glcd<CR>:!ctags `fd md$`
 
-:cab lg  :!lazygit
 
 
 " Copied from https://gist.github.com/jackkinsella/aa7374a6832cca8a09eadc3434a33c24`
@@ -1064,6 +1063,7 @@ augroup json
 augroup END
 
 cab lg :FloatermNew lazygit
+cab gd :FloatermNew --autoclose=0 git diff
 let g:floaterm_width=0.99
 let g:floaterm_height=0.99
 set encoding=utf8
