@@ -15,6 +15,8 @@ Plugin 'Pocco81/true-zen.nvim'
 Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 Plugin 'sindrets/diffview.nvim'
 Plugin 'folke/trouble.nvim'
+Plugin 'nvim-telescope/telescope.nvim', { 'tag': '0.1.2' }
+Plugin 'stevearc/dressing.nvim'
 
 
 
@@ -38,6 +40,9 @@ command! -nargs=* Shell call RunInteractiveShellCommand(<q-args>)
 " Remap  when in nvim
 command! Sodot :so ~/settings/nvim/init.vim
 command! Soed :n ~/settings/nvim/init.vim
+cab ls :Telescope buffers<CR>
+cab gd :terminal git diff
+
 
 " Configure lualine
 
