@@ -1,6 +1,6 @@
 # Settings
 
-A place to store my settings/dotFiles/etc, my oldest repository, and wow have I had fun here
+A place to store my settings/dotFiles/etc, my oldest repository, and wow have I had fun here.
 
 ## Normal linux
 
