@@ -22,6 +22,22 @@ require("trouble").setup{
 }
 
 
+require('aerial').setup({
+    placement= "edge",
+    layout = {
+        default_direction = "left",
+    },
+    -- optionally use on_attach to set keymaps when aerial has attached to a buffer
+    on_attach = function(bufnr)
+        -- Jump forwards/backwards with '{' and '}'
+        vim.keymap.set('n', '{', '<cmd>AerialPrev<CR>', {buffer = bufnr})
+        vim.keymap.set('n', '}', '<cmd>AerialNext<CR>', {buffer = bufnr})
+        vim.keymap.set('n', '<C-y>', '<cmd>AerialToggle<CR>')
+    end
+})
+require('telescope').load_extension('aerial')
+
+
 
 -- Lets keep exra lua stuff here
 require'nvim-web-devicons'.get_icons()
@@ -266,5 +282,10 @@ require("better_escape").setup {
     -- end,
 }
 
+require("lualine").setup({
+  sections = {
+    lualine_x = { "aerial" },
+  },
+})
 
 print("Config Loaded")

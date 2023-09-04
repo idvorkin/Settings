@@ -74,6 +74,11 @@ function! FirstPersonToThirdPerson()
 endfunction
 
 function! SetupVimOnlyPlugins()
+    " :IndentGuidesEnable
+    " :IndentGuidesDisable
+    " :IndentGuidesToggle
+    Bundle 'nathanaelkane/vim-indent-guides'
+
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
     let g:pymode_python = 'python3'
@@ -99,6 +104,9 @@ function! SetupVimOnlyPlugins()
         " \d definition - maybe remap to C-]
         " K - help
         Plugin 'davidhalter/jedi-vim'
+        " finally, map it -- in this case, I mapped it to overwrite the default action for toggling quickfix (<PREFIX>I) :nnoremap <silent> <C-U>  :call <SID>MkdxFzfQuickfixHeaders()<Cr>
+
+        :nnoremap <silent> <C-Y>  :TagbarOpen fj<cr>
 endfunction
 
 function! SetupPlugins()
@@ -173,10 +181,6 @@ function! SetupPlugins()
 
     Bundle 'HerringtonDarkholme/yats.vim'
 
-    " :IndentGuidesEnable
-    " :IndentGuidesDisable
-    " :IndentGuidesToggle
-    Bundle 'nathanaelkane/vim-indent-guides'
 
     Plugin 'ekalinin/Dockerfile.vim'
     Bundle 'mhinz/vim-startify'
@@ -823,10 +827,6 @@ fun! s:MkdxFzfQuickfixHeaders()
                 \ ))
 endfun
 
-" finally, map it -- in this case, I mapped it to overwrite the default action for toggling quickfix (<PREFIX>I)
-" :nnoremap <silent> <C-U>  :call <SID>MkdxFzfQuickfixHeaders()<Cr>
-
-:nnoremap <silent> <C-Y>  :TagbarOpen fj<cr>
 
 " Setup surround for b (old)  and i(talics) for markdown.
 " echo char2nr('b') -> 105
