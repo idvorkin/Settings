@@ -331,7 +331,7 @@ function GitCommitAndPush()
     -- Defining a global function within GitCommitAndPush() to make a closure
     _G["ConfirmCommit"] = function()
         -- Ask for commit
-        local commit_confirm = vim.fn.input('Do you want to commit '.. current_file .. '? (y/n): ')
+        local commit_confirm = vim.fn.input('Do you want to commit '.. current_file .. '? (y/n) [y]: ')
         local commit_message = "Checkpoint ".. current_file
         if commit_confirm == '' or commit_confirm == 'y' then
             vim.cmd('!git commit '..current_file ..  ' -m '..commit_message..' ' )
