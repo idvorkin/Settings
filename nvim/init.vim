@@ -17,6 +17,7 @@ Plugin 'sindrets/diffview.nvim'
 Plugin 'folke/trouble.nvim'
 Plugin 'nvim-telescope/telescope.nvim', { 'tag': '0.1.2' }
 Plugin 'stevearc/dressing.nvim'
+Plugin 'max397574/better-escape.nvim'
 
 
 
