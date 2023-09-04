@@ -56,6 +56,9 @@ cab gd :terminal git diff
 :nnoremap <C-O> :FF<cr>
 :nnoremap <C-I> :Telescope aerial<CR>
 
+
+
 " Common work flow: Switch to current  directory, git write, commit and push.
-cab DdC  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k  <CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
 cab DdG  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k <CR>:!git commit %:p <CR>:!git push<CR>
+cab DdC :lua GitCommitAndPush()<CR>
+
