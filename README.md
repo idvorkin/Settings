@@ -1,6 +1,6 @@
 # Settings
 
-A place to store my settings/dotFiles/etc, my oldest repository
+A place to store my settings/dotFiles/etc, my oldest repository, and wow have I had fun here
 
 ## Normal linux
 
@@ -36,4 +36,3 @@ I use ish as my ssh client, with some minor tweaks:
     git clone https://github.com/idvorkin/settings
 
 
-## Junk1
