@@ -50,7 +50,6 @@ cab gd :terminal git diff
 
 
 :set shadafile=~/.nvim.shadafile
-:luafile ~/.config/nvim/nvim_init.lua
 
 :nnoremap <C-P> :Telescope oldfiles<CR>
 :nnoremap <C-O> :FF<cr>
@@ -62,3 +61,4 @@ cab gd :terminal git diff
 cab DdG  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k <CR>:!git commit %:p <CR>:!git push<CR>
 cab DdC :lua GitCommitAndPush()<CR>
 
+:luafile ~/.config/nvim/nvim_init.lua

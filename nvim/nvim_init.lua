@@ -52,12 +52,6 @@ require("true-zen").setup {
     }
 }
 
-require('lualine').setup{
-    options= {theme= 'iceberg_light'}
-}
-
-
--- Lets include some comments here
 
 require'nvim-treesitter.configs'.setup {
   -- A list of parser names, or "all" (the five listed parsers should always be installed)
@@ -315,11 +309,6 @@ require("better_escape").setup {
     -- end,
 }
 
-require("lualine").setup({
-  sections = {
-    lualine_x = { "aerial" },
-  },
-})
 
 
 function GitCommitAndPush()
@@ -375,5 +364,7 @@ require("copilot").setup{
 }
 
 require("copilot_cmp").setup()
+settings_dir =  os.getenv("HOME").."/settings/nvim/"
+dofile(settings_dir.."nvim_lualine.lua")
 
 print("Config Loaded")
