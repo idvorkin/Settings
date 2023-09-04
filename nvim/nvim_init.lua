@@ -173,6 +173,7 @@ cmp.setup.cmdline(':', {
 local _ = [[
 npm i -g pyright
 brew install lua-language-server
+brew install marksman
 ]]
 
 -- Setup LSP Config
@@ -246,7 +247,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
   end,
   })
 
-
+require'lspconfig'.marksman.setup{
+}
 
 
 
