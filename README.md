@@ -6,8 +6,10 @@ A place to store my settings/dotFiles/etc, my oldest repository, and wow have I 
 
 Mostly done via script, contained here:
 
-    cd ~
-    git clone https://github.com/idvorkin/settings
+```bash
+cd ~
+git clone https://github.com/idvorkin/settings
+```
 
 
 ## Alpine Linux (using iSH)
