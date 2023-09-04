@@ -36,3 +36,4 @@ I use ish as my ssh client, with some minor tweaks:
     git clone https://github.com/idvorkin/settings
 
 
+## Junk
