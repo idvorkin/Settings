@@ -23,8 +23,14 @@ Plugin 'zbirenbaum/copilot.lua'
 Plugin 'zbirenbaum/copilot-cmp'
 
 
-" Remap terminal keys
+" Remap terminal keys, C-W, C-W leaves the terminal window
 :tnoremap <C-W><C-W> <C-\><C-n>
+
+" typing q will erase that buffer
+augroup Terminal
+  autocmd!
+  autocmd TermOpen * nnoremap <buffer> q :bd<CR>
+augroup END
 
 " Reload when saving vimrc, which is the whole point of changin dotfile
 augroup reload_nvimrc | au!
