@@ -170,7 +170,7 @@ cmp.setup.cmdline(':', {
   })
 })
 
-junk = [[
+local _ = [[
 npm i -g pyright
 brew install lua-language-server
 ]]
