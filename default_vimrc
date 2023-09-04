@@ -78,6 +78,7 @@ function! SetupVimOnlyPlugins()
     " :IndentGuidesDisable
     " :IndentGuidesToggle
     Bundle 'nathanaelkane/vim-indent-guides'
+    Plugin 'github/copilot.vim'
 
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
@@ -309,7 +310,6 @@ function! SetupPlugins()
     " Plugin 'neoclide/coc.nvim', {'branch': 'release'}
 
 
-    Plugin 'github/copilot.vim'
 
 
     if !exists("g:in_nvim")

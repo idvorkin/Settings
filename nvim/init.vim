@@ -19,8 +19,8 @@ Plugin 'nvim-telescope/telescope.nvim', { 'tag': '0.1.2' }
 Plugin 'stevearc/dressing.nvim'
 Plugin 'max397574/better-escape.nvim'
 Plugin 'stevearc/aerial.nvim'
-
-
+Plugin 'zbirenbaum/copilot.lua'
+Plugin 'zbirenbaum/copilot-cmp'
 
 
 " Remap terminal keys
