@@ -288,4 +288,38 @@ require("lualine").setup({
   },
 })
 
+
+function GitCommitAndPush()
+    -- Change directory to the directory of the current file
+    vim.cmd('lcd %:p:h')
+    vim.cmd('Gwrite')
+
+    -- Get the current file name
+    local current_file = vim.fn.bufname('%')
+    print(current_file)
+
+    -- Create a new buffer and run git diff in a terminal in that buffer
+    vim.cmd('vnew')
+    vim.bo.buftype='nofile'
+    vim.bo.bufhidden='hide'
+    vim.bo.swapfile=false
+    vim.cmd('terminal git diff --staged ' .. current_file)
+    vim.api.nvim_buf_set_keymap(0, 'n', 'q', ':q<CR>', {noremap = true, silent = true})
+
+    -- Defining a global function within GitCommitAndPush() to make a closure
+    _G["ConfirmCommit"] = function()
+        -- Ask for commit
+        local commit_confirm = vim.fn.input('Do you want to commit '.. current_file .. '? (y/n): ')
+        local commit_message = "Checkpoint ".. current_file
+        if commit_confirm == '' then
+            vim.cmd('!git commit '..current_file ..  ' -m '..commit_message..' ' )
+            vim.cmd('!git push')
+        end
+    end
+
+    -- Ask user to press Enter to continue after they close the buffer
+    vim.api.nvim_exec([[ autocmd BufWinLeave <buffer> lua ConfirmCommit() ]], false)
+end
+
+
 print("Config Loaded")
