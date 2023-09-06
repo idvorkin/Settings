@@ -13,7 +13,7 @@ Plugin 'nvim-lualine/lualine.nvim'
 Plugin 'nvim-tree/nvim-web-devicons'
 Plugin 'Pocco81/true-zen.nvim'
 Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-Plugin 'sindrets/diffview.nvim'
+
 Plugin 'folke/trouble.nvim'
 Plugin 'nvim-telescope/telescope.nvim', { 'tag': '0.1.2' }
 Plugin 'stevearc/dressing.nvim'
@@ -22,6 +22,12 @@ Plugin 'stevearc/aerial.nvim'
 Plugin 'zbirenbaum/copilot.lua'
 Plugin 'zbirenbaum/copilot-cmp'
 
+
+
+" Git like stuff ...
+" DiffViewOpen
+Plugin 'sindrets/diffview.nvim'
+Plugin 'NeogitOrg/neogit'
 
 " Remap terminal keys, C-W, C-W leaves the terminal window
 :tnoremap <C-W><C-W> <C-\><C-n>
@@ -60,6 +66,9 @@ cab gd :terminal git diff
 :nnoremap <C-P> :Telescope oldfiles<CR>
 :nnoremap <C-O> :FF<cr>
 :nnoremap <C-I> :Telescope aerial<CR>
+set fillchars+=diff:╱
+
+
 
 
 

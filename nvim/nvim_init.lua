@@ -167,7 +167,7 @@ cmp.setup{
     {
         {name = 'copilot'},
         {name = 'nvim_lsp'},
-        {name = 'buffer'}
+  --       {name = 'buffer'},  Exclude buffer as it's pretty noisy
     }
     ),
     mapping = cmp.mapping.preset.insert({
@@ -325,7 +325,7 @@ function GitCommitAndPush()
     vim.bo.buftype='nofile'
     vim.bo.bufhidden='hide'
     vim.bo.swapfile=false
-   vim.cmd('terminal git diff --staged ' .. current_file)
+    vim.cmd('terminal git diff --staged ' .. current_file)
     vim.api.nvim_buf_set_keymap(0, 'n', 'q', ':q<CR>', {noremap = true, silent = true})
 
     -- Defining a global function within GitCommitAndPush() to make a closure
@@ -362,6 +362,9 @@ require("copilot").setup{
        markdown=true
     }
 }
+
+local neogit = require('neogit')
+neogit.setup {}
 
 require("copilot_cmp").setup()
 settings_dir =  os.getenv("HOME").."/settings/nvim/"
