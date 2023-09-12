@@ -53,7 +53,7 @@ command! -nargs=* Shell call RunInteractiveShellCommand(<q-args>)
 
 " Remap  when in nvim
 command! Sodot :so ~/settings/nvim/init.vim
-command! Soed :n ~/settings/nvim/init.vim
+command! Soed :n ~/settings/nvim/init.vim<CR>:lcdb<CR>
 cab ls :Telescope buffers<CR>
 cab gd :terminal git diff
 
