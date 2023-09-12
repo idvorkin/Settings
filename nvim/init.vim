@@ -69,6 +69,10 @@ cab gd :terminal git diff
 set fillchars+=diff:╱
 
 
+" Setup lua folding
+syntax region luaFunction start="function" end="end" fold
+syntax region luaBlock start="do" end="end" fold
+autocmd FileType lua setlocal foldmethod=syntax
 
 
 
