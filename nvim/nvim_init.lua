@@ -257,7 +257,8 @@ function GitCommitAndPush()
     print(current_file)
 
     -- Create a new buffer and run git diff in a terminal in that buffer
-    vim.cmd('new')
+    -- Use -1 to make it as big as possible
+    vim.cmd('-1new')
     vim.bo.buftype='nofile'
     vim.bo.bufhidden='hide'
     vim.bo.swapfile=false
