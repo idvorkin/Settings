@@ -229,7 +229,8 @@ function export_secrets()
 alias chh='wchat messages'
 alias thr='wchat threads'
 alias grtd="grep ☐"
-alias tgrtd="cat ~/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep '☐'"
+alias rtd="ssh lightsail_no_forward cat /home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep ☐ | pbcopy | pbpaste"
+
 
 
 # Turn off auto update brew
