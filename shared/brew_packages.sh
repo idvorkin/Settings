@@ -10,7 +10,6 @@ fd \
 procs \
 lazygit \
 fzf \
-rich \
 duf \
 htop \
 ag \
@@ -89,6 +88,10 @@ brew_packages="$brew_packages cloc" # count lines of code
 brew_packages="$brew_packages tig" # git history viewer
 
 brew_packages="$brew_packages pandoc" # Convert between file formats
+
+# Markdown viewer, should include bat
+brew_packages="$brew_packages glow"
+brew_packages="$brew_packages rich"
 
 echo $brew_packages
 
