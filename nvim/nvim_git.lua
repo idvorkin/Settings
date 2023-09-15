@@ -67,7 +67,7 @@ function GitCommitAndPush()
         local commit_confirm = vim.fn.input('Do you want to commit '.. current_file .. '? (y/n) [y]: ')
         local commit_message = "Checkpoint ".. current_file
         if commit_confirm == '' or commit_confirm == 'y' then
-            vim.cmd('!git commit '..current_file ..  ' -m '..commit_message..' ' )
+            vim.cmd('!git commit '..current_file ..  " -m '"..commit_message.."' " )
             vim.cmd('!git push')
         end
     end
@@ -78,3 +78,7 @@ end
 
 local neogit = require('neogit')
 neogit.setup {}
+
+
+require('octo').setup()
+require('neodev').setup()

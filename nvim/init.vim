@@ -14,6 +14,8 @@ Plugin 'nvim-tree/nvim-web-devicons'
 Plugin 'Pocco81/true-zen.nvim'
 Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
+" VIM LSP  for lua - I think I still need to configure it
+Plugin 'folke/neodev.nvim'
 Plugin 'folke/trouble.nvim'
 Plugin 'nvim-telescope/telescope.nvim', { 'tag': '0.1.2' }
 Plugin 'stevearc/dressing.nvim'
@@ -21,6 +23,9 @@ Plugin 'max397574/better-escape.nvim'
 Plugin 'stevearc/aerial.nvim'
 Plugin 'zbirenbaum/copilot.lua'
 Plugin 'zbirenbaum/copilot-cmp'
+Plugin 'nvim-neo-tree/neo-tree.nvim'
+Plugin 'MunifTanjim/nui.nvim'
+
 
 
 
@@ -28,6 +33,7 @@ Plugin 'zbirenbaum/copilot-cmp'
 " DiffViewOpen
 Plugin 'sindrets/diffview.nvim'
 Plugin 'NeogitOrg/neogit'
+Plugin 'pwntester/octo.nvim'
 
 " Remap terminal keys, C-W, C-W leaves the terminal window
 :tnoremap <C-W><C-W> <C-\><C-n>

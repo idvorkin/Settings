@@ -201,6 +201,8 @@ require("better_escape").setup {
     -- end,
 }
 
+require("neo-tree").setup()
+
 
 settings_dir =  os.getenv("HOME").."/settings/nvim/"
 dofile(settings_dir.."nvim_lualine.lua")
