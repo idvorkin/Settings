@@ -36,5 +36,3 @@ I use ish as my ssh client, with some minor tweaks:
 
     cd \
     git clone https://github.com/idvorkin/settings
-
-Adding some junk to play with git tooling f
