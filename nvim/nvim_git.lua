@@ -48,13 +48,13 @@ function GitCommitAndPush()
     vim.cmd('lcd %:p:h')
     vim.cmd('Gwrite')
 
-    -- Get the current file name
-    local current_file = vim.fn.bufname('%')
+    -- Get the current file name, same as taking '%'
+    local current_file = vim.fn.bufname()
     print(current_file)
 
     -- Create a new buffer and run git diff in a terminal in that buffer
-    -- Use -1 to make it as big as possible
-    vim.cmd('-1new')
+    -- Use -1 to make it as big as possible, seems doesn't always work, use 999
+    vim.cmd('999new')
     vim.bo.buftype='nofile'
     vim.bo.bufhidden='hide'
     vim.bo.swapfile=false
@@ -65,9 +65,22 @@ function GitCommitAndPush()
     _G["ConfirmCommit"] = function()
         -- Ask for commit
         local commit_confirm = vim.fn.input('Do you want to commit '.. current_file .. '? (y/n) [y]: ')
+        --  exit if n pressed
+        if commit_confirm == 'n' then
+            return
+        end
+
+        -- default is blank
         local commit_message = "Checkpoint ".. current_file
         if commit_confirm == '' or commit_confirm == 'y' then
             vim.cmd('!git commit '..current_file ..  " -m '"..commit_message.."' " )
+            vim.cmd('!git push')
+        end
+
+        -- if more then 3 chars passed, make that the commit message [filename] - what is passed in
+        if string.len(commit_confirm) > 3 then
+            commit_message = commit_confirm
+            vim.cmd('!git commit '..current_file ..  " -m '["..current_file .. "] "..commit_message.."' " )
             vim.cmd('!git push')
         end
     end
