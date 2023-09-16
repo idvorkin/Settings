@@ -58,7 +58,7 @@ function GitCommitAndPush()
     vim.bo.buftype='nofile'
     vim.bo.bufhidden='hide'
     vim.bo.swapfile=false
-    vim.cmd('terminal git diff --staged ' .. current_file)
+    vim.cmd('terminal export PAGER=don_t_use_me && git diff --staged ' .. current_file)
     vim.api.nvim_buf_set_keymap(0, 'n', 'q', ':q<CR>', {noremap = true, silent = true})
 
     -- Defining a global function within GitCommitAndPush() to make a closure
