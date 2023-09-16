@@ -21,7 +21,7 @@ function eval_w_param_if_exists() {
 eval_w_param_if_exists ~/homebrew/bin/brew shellenv
 eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
 
-export EDITOR=vim
+export EDITOR=nvim
 
 # C-T search Files Fuzzy
 # C-R Search History fuzzy
