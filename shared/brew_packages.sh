@@ -126,7 +126,8 @@ brew install azure-cli cmatrix iftop
 npm install --global fkill-cli
 
 # Add some pip3 packages
-python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab typer rich seaborn matplotlib pandas ipywidgets altair plotly pyfiglet jsonpickle pandas-datareader nltk fernet cryptography imutils scikit-learn jupyterlab-vim jupyterlab-vimrc pendulum poetry  typeguard tiktoken modal-client uvicorn py-cord asyncify asyncer mypy langchain unstructured chromadb wandb pudb tenacity
+python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer openai icecream jupyterlab jupytext typer rich seaborn matplotlib pandas ipywidgets altair plotly pyfiglet jsonpickle pandas-datareader nltk fernet cryptography imutils scikit-learn jupyterlab-vim jupyterlab-vimrc pendulum poetry  typeguard tiktoken modal-client uvicorn py-cord asyncify asyncer mypy langchain unstructured chromadb wandb pudb tenacity
+
 python3 -m pip install torch torchvision opencv-python
 
 
