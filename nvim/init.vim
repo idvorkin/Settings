@@ -76,7 +76,7 @@ command! -nargs=* Shell call RunInteractiveShellCommand(<q-args>)
 command! Sodot :so ~/settings/nvim/init.vim
 command! Soed :n ~/settings/nvim/init.vim<CR>:lcdb<CR>
 cab ls :Telescope buffers<CR>
-cab gd :terminal git diff
+cab gd :terminal export PAGER=don_t_use_me && git diff
 
 
 " Configure lualine
