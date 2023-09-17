@@ -74,9 +74,7 @@ function dda() {
 }
 
 function ijm() {
-    export file_name=~/tmp/ijm/ijm_$1_`date +%y-%m-%d_%H:%M:%S.md`
     ~/gits/nlp/life.py journal-report --debug --u4 $1
-    echo $file_name
 }
 
 
@@ -185,7 +183,7 @@ alias_if_other_exists cd z zoxide
 alias_if_exists ps procs
 
 # Igor setups use Soed and Sodot as useful aliases
-alias Soed='vim ~/settings/shared/zsh_include.sh'
+alias Soed='nvim ~/settings/shared/zsh_include.sh'
 alias Sodot='.  ~/settings/shared/zsh_include.sh'
 
 function png_shrink()
