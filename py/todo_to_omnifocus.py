@@ -53,6 +53,7 @@ def add_task_to_omnifocus(task):
 def debug():
     clipboard_content = pyperclip.paste()
     lines = clipboard_content.split('\n')
+    lines = list(set(lines))
     if  len(lines) > 15:
         print("Probably a bug you have too much clipboard")
         return
