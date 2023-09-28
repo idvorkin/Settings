@@ -17,6 +17,8 @@ endfunction
 
 source ~/.vimrc
 
+Plugin 'folke/twilight.nvim'
+Plugin 'folke/zen-mode.nvim'
 Plugin 'neovim/nvim-lspconfig'
 Plugin 'hrsh7th/cmp-nvim-lsp'
 Plugin 'hrsh7th/cmp-buffer'
