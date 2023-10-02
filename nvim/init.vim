@@ -17,40 +17,7 @@ endfunction
 
 source ~/.vimrc
 
-Plugin 'folke/twilight.nvim'
-Plugin 'folke/zen-mode.nvim'
-Plugin 'neovim/nvim-lspconfig'
-Plugin 'hrsh7th/cmp-nvim-lsp'
-Plugin 'hrsh7th/cmp-buffer'
-Plugin 'hrsh7th/cmp-path'
-Plugin 'hrsh7th/cmp-cmdline'
-Plugin 'hrsh7th/nvim-cmp'
-Plugin 'nvim-lua/plenary.nvim'
-Plugin 'nvim-lualine/lualine.nvim'
-Plugin 'nvim-tree/nvim-web-devicons'
-Plugin 'Pocco81/true-zen.nvim'
-Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
-" VIM LSP  for lua - I think I still need to configure it
-Plugin 'folke/neodev.nvim'
-Plugin 'folke/trouble.nvim'
-Plugin 'nvim-telescope/telescope.nvim', { 'tag': '0.1.2' }
-Plugin 'stevearc/dressing.nvim'
-Plugin 'max397574/better-escape.nvim'
-Plugin 'stevearc/aerial.nvim'
-Plugin 'zbirenbaum/copilot.lua'
-Plugin 'zbirenbaum/copilot-cmp'
-Plugin 'nvim-neo-tree/neo-tree.nvim'
-Plugin 'MunifTanjim/nui.nvim'
-
-
-
-
-" Git like stuff ...
-" DiffViewOpen
-Plugin 'sindrets/diffview.nvim'
-Plugin 'NeogitOrg/neogit'
-Plugin 'pwntester/octo.nvim'
 
 " Remap terminal keys, C-W, C-W leaves the terminal window
 :tnoremap <C-W><C-W> <C-\><C-n>

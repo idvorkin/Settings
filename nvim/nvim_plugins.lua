@@ -1,0 +1,28 @@
+
+vim.cmd "Plugin 'folke/twilight.nvim'"
+vim.cmd "Plugin 'folke/zen-mode.nvim'"
+vim.cmd "Plugin 'neovim/nvim-lspconfig'"
+vim.cmd "Plugin 'hrsh7th/cmp-nvim-lsp'"
+vim.cmd "Plugin 'hrsh7th/cmp-buffer'"
+vim.cmd "Plugin 'hrsh7th/cmp-path'"
+vim.cmd "Plugin 'hrsh7th/cmp-cmdline'"
+vim.cmd "Plugin 'hrsh7th/nvim-cmp'"
+vim.cmd "Plugin 'nvim-lua/plenary.nvim'"
+vim.cmd "Plugin 'nvim-lualine/lualine.nvim'"
+vim.cmd "Plugin 'nvim-tree/nvim-web-devicons'"
+vim.cmd "Plugin 'Pocco81/true-zen.nvim'"
+vim.cmd "Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}"
+
+--  VIM LSP  for lua - I think I still need to configure t
+vim.cmd "Plugin 'dstein64/vim-startuptime'"
+vim.cmd "Plugin 'folke/neodev.nvim'"
+vim.cmd "Plugin 'folke/trouble.nvim'"
+vim.cmd "Plugin 'nvim-telescope/telescope.nvim', { 'tag': '0.1.2' }"
+vim.cmd "Plugin 'stevearc/dressing.nvim'"
+vim.cmd "Plugin 'max397574/better-escape.nvim'"
+vim.cmd "Plugin 'stevearc/aerial.nvim'"
+vim.cmd "Plugin 'zbirenbaum/copilot.lua'"
+vim.cmd "Plugin 'zbirenbaum/copilot-cmp'"
+vim.cmd "Plugin 'nvim-neo-tree/neo-tree.nvim'"
+vim.cmd "Plugin 'MunifTanjim/nui.nvim'"
+

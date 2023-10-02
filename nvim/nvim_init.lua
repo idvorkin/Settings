@@ -1,4 +1,7 @@
 -- Setup Packer
+settings_dir =  os.getenv("HOME").."/settings/nvim/"
+dofile(settings_dir.."nvim_plugins.lua")
+
 local function bootstrap_pckr()
   local pckr_path = vim.fn.stdpath("data") .. "/pckr/pckr.nvim"
 
@@ -204,7 +207,6 @@ require("better_escape").setup {
 require("neo-tree").setup()
 
 
-settings_dir =  os.getenv("HOME").."/settings/nvim/"
 dofile(settings_dir.."nvim_lualine.lua")
 dofile(settings_dir.."nvim_cmp_copilot.lua")
 dofile(settings_dir.."nvim_git.lua")
