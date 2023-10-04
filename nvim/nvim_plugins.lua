@@ -12,6 +12,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
+"reedes/vim-pencil",
 "folke/zen-mode.nvim",
 "neovim/nvim-lspconfig",
 "hrsh7th/cmp-nvim-lsp",

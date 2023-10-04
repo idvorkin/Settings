@@ -79,6 +79,7 @@ function! SetupVimOnlyPlugins()
     " :IndentGuidesToggle
     Bundle 'nathanaelkane/vim-indent-guides'
     Plugin 'github/copilot.vim'
+    Plugin 'reedes/vim-pencil'
 
     " PymodeLintAuto
     Plugin 'python-mode/python-mode'
@@ -174,7 +175,6 @@ function! SetupPlugins()
     :noremap  <Leader>tr :ThesaurusQueryReplaceCurrentWord<CR>
 
     Plugin 'junegunn/limelight.vim'
-    Plugin 'reedes/vim-pencil'
     Plugin 'junegunn/goyo.vim'
     Bundle 'inkarkat/vim-ingo-library'
     Plugin 'inkarkat/vim-spellcheck'
