@@ -12,10 +12,13 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
+"junegunn/limelight.vim",
+"junegunn/goyo.vim",
 "reedes/vim-pencil",
 "folke/zen-mode.nvim",
 "neovim/nvim-lspconfig",
 "hrsh7th/cmp-nvim-lsp",
+"panozzaj/vim-autocorrect",
 "hrsh7th/cmp-buffer",
 "hrsh7th/cmp-path",
 "hrsh7th/cmp-cmdline",
