@@ -12,6 +12,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
+"tpope/vim-fugitive",
 "junegunn/limelight.vim",
 "junegunn/goyo.vim",
 "reedes/vim-pencil",
