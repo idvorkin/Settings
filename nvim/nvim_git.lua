@@ -1,8 +1,4 @@
-vim.cmd "Plugin 'lewis6991/gitsigns.nvim'"
---  DiffViewOpen
-vim.cmd "Plugin 'sindrets/diffview.nvim'"
-vim.cmd "Plugin 'NeogitOrg/neogit'"
-vim.cmd "Plugin 'pwntester/octo.nvim'"
+
 require('gitsigns').setup{
     on_attach = function(bufnr)
         local gs = package.loaded.gitsigns

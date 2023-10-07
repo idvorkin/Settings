@@ -11,8 +11,15 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+local function appendTables(t1, t2)
+    for i=1, #t2 do
+        t1[#t1+1] = t2[i]
+    end
+    return t1
+end
+
 local plugins = {
-"tpope/vim-fugitive",
+"rking/ag.vim",
 "junegunn/limelight.vim",
 "junegunn/goyo.vim",
 "reedes/vim-pencil",
@@ -39,9 +46,23 @@ local plugins = {
 "zbirenbaum/copilot-cmp",
 "nvim-neo-tree/neo-tree.nvim",
 "MunifTanjim/nui.nvim",
+"nvim-treesitter/nvim-treesitter",
+"glepnir/dashboard-nvim",
+"onsails/lspkind.nvim",
 }
 
-vim.cmd "Plugin 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}"
+local git_plugins = {
+"tpope/vim-fugitive",
+"lewis6991/gitsigns.nvim",
+--  DiffViewOpen
+"sindrets/diffview.nvim",
+"NeogitOrg/neogit",
+"pwntester/octo.nvim"
+}
+
+plugins = appendTables(plugins, git_plugins)
+
+
 
 --  VIM LSP  for lua - I think I still need to configure t
 require("lazy").setup(plugins)
