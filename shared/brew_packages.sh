@@ -138,7 +138,7 @@ python3 -m pip install tensorflow-macos
 
 # what is the obs plugin
 
-brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code docker vlc
+brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code docker vlc microsoft-edge
 
 # Install from cargo incase on linux docker on osx which does not support bottles
 curl https://sh.rustup.rs -sSf | sh
