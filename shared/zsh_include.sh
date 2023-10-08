@@ -228,7 +228,7 @@ alias chh='wchat messages'
 alias thr='wchat threads'
 alias grtd="grep ☐"
 alias rtd="ssh lightsail_no_forward cat /home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep ☐ | pbcopy | pbpaste"
-
+alias nvday="nvim scp://ec2-user@lightsail//home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md"
 
 
 # Turn off auto update brew

@@ -19,6 +19,14 @@ local function appendTables(t1, t2)
 end
 
 local plugins = {
+
+"HiPhish/rainbow-delimiters.nvim",
+
+-- Comment \cc
+-- Uncomment \cu
+"scrooloose/nerdcommenter",
+"dhruvasagar/vim-table-mode",
+"MDeiml/tree-sitter-markdown",
 "rking/ag.vim",
 "junegunn/limelight.vim",
 "junegunn/goyo.vim",
@@ -49,6 +57,8 @@ local plugins = {
 "nvim-treesitter/nvim-treesitter",
 "glepnir/dashboard-nvim",
 "onsails/lspkind.nvim",
+"godlygeek/tabular",
+"mzlogin/vim-markdown-toc",
 }
 
 local git_plugins = {
