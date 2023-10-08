@@ -19,12 +19,29 @@ local function appendTables(t1, t2)
 end
 
 local plugins = {
+    -- Highlight current line
+    -- ConoLineEnable (Highlight current line)
+"miyakogi/conoline.vim",
+"ekalinin/Dockerfile.vim",
+"mhinz/vim-startify",
+"terrastruct/d2-vim",
+"voldikss/vim-floaterm",
 "rking/ag.vim",
 "junegunn/limelight.vim",
+"dhruvasagar/vim-table-mode",
 "junegunn/goyo.vim",
 "reedes/vim-pencil",
 "folke/zen-mode.nvim",
 "neovim/nvim-lspconfig",
+-- :Rename a file
+"danro/rename.vim",
+--
+-- Comment \cc
+-- Uncomment \cu
+"scrooloose/nerdcommenter",
+
+-- Auto Update ToC
+-- "mzlogin/vim-markdown-toc",
 "hrsh7th/cmp-nvim-lsp",
 "panozzaj/vim-autocorrect",
 "hrsh7th/cmp-buffer",
@@ -49,6 +66,9 @@ local plugins = {
 "nvim-treesitter/nvim-treesitter",
 "glepnir/dashboard-nvim",
 "onsails/lspkind.nvim",
+
+-- Rainbow Parenthesis
+"https://gitlab.com/HiPhish/rainbow-delimiters.nvim",
 }
 
 local git_plugins = {
