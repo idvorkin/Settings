@@ -184,7 +184,14 @@ require("better_escape").setup {
     -- end,
 }
 
-require("neo-tree").setup()
+require("neo-tree").setup(
+{
+      window = {
+            mappings = {
+              ["u"] = "navigate_up",
+          }
+      }
+})
 
 
 dofile(settings_dir.."nvim_lualine.lua")

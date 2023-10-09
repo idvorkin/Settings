@@ -21,63 +21,67 @@ end
 local plugins = {
     -- Highlight current line
     -- ConoLineEnable (Highlight current line)
-"miyakogi/conoline.vim",
-"ekalinin/Dockerfile.vim",
-"mhinz/vim-startify",
-"terrastruct/d2-vim",
-"voldikss/vim-floaterm",
-"rking/ag.vim",
-"junegunn/limelight.vim",
-"dhruvasagar/vim-table-mode",
-"junegunn/goyo.vim",
-"reedes/vim-pencil",
-"folke/zen-mode.nvim",
-"neovim/nvim-lspconfig",
--- :Rename a file
-"danro/rename.vim",
---
--- Comment \cc
--- Uncomment \cu
-"scrooloose/nerdcommenter",
+    "miyakogi/conoline.vim",
+    "ekalinin/Dockerfile.vim",
+    "terrastruct/d2-vim",
+    "voldikss/vim-floaterm",
 
--- Auto Update ToC
--- "mzlogin/vim-markdown-toc",
-"hrsh7th/cmp-nvim-lsp",
-"panozzaj/vim-autocorrect",
-"hrsh7th/cmp-buffer",
-"hrsh7th/cmp-path",
-"hrsh7th/cmp-cmdline",
-"hrsh7th/nvim-cmp",
-"nvim-lua/plenary.nvim",
-"nvim-lualine/lualine.nvim",
-"nvim-tree/nvim-web-devicons",
-"Pocco81/true-zen.nvim",
-"dstein64/vim-startuptime",
-"folke/neodev.nvim",
-"folke/trouble.nvim",
-"nvim-telescope/telescope.nvim",
-"stevearc/dressing.nvim",
-"max397574/better-escape.nvim",
-"stevearc/aerial.nvim",
-"zbirenbaum/copilot.lua",
-"zbirenbaum/copilot-cmp",
-"nvim-neo-tree/neo-tree.nvim",
-"MunifTanjim/nui.nvim",
-"nvim-treesitter/nvim-treesitter",
-"glepnir/dashboard-nvim",
-"onsails/lspkind.nvim",
+    "HiPhish/rainbow-delimiters.nvim",
 
--- Rainbow Parenthesis
-"https://gitlab.com/HiPhish/rainbow-delimiters.nvim",
+    -- Comment \cc
+    -- Uncomment \cu
+    "scrooloose/nerdcommenter",
+    "dhruvasagar/vim-table-mode",
+    "MDeiml/tree-sitter-markdown",
+    "rking/ag.vim",
+    "junegunn/limelight.vim",
+    "dhruvasagar/vim-table-mode",
+    "junegunn/goyo.vim",
+    "reedes/vim-pencil",
+    "folke/zen-mode.nvim",
+    "neovim/nvim-lspconfig",
+    -- :Rename a file
+    "danro/rename.vim",
+    -- Comment \cc
+    -- Uncomment \cu
+    "scrooloose/nerdcommenter",
+
+    -- Auto Update ToC
+    "mzlogin/vim-markdown-toc",
+    "hrsh7th/cmp-nvim-lsp",
+    "panozzaj/vim-autocorrect",
+    "hrsh7th/cmp-buffer",
+    "hrsh7th/cmp-path",
+    "hrsh7th/cmp-cmdline",
+    "hrsh7th/nvim-cmp",
+    "nvim-lua/plenary.nvim",
+    "nvim-lualine/lualine.nvim",
+    "nvim-tree/nvim-web-devicons",
+    "Pocco81/true-zen.nvim",
+    "dstein64/vim-startuptime",
+    "folke/neodev.nvim",
+    "folke/trouble.nvim",
+    "nvim-telescope/telescope.nvim",
+    "stevearc/dressing.nvim",
+    "max397574/better-escape.nvim",
+    "stevearc/aerial.nvim",
+    "zbirenbaum/copilot.lua",
+    "zbirenbaum/copilot-cmp",
+    "nvim-neo-tree/neo-tree.nvim",
+    "MunifTanjim/nui.nvim",
+    "nvim-treesitter/nvim-treesitter",
+    "glepnir/dashboard-nvim",
+    "onsails/lspkind.nvim",
+    "godlygeek/tabular",
 }
 
 local git_plugins = {
-"tpope/vim-fugitive",
-"lewis6991/gitsigns.nvim",
---  DiffViewOpen
-"sindrets/diffview.nvim",
-"NeogitOrg/neogit",
-"pwntester/octo.nvim"
+    "tpope/vim-fugitive",
+    "lewis6991/gitsigns.nvim",
+    --  DiffViewOpen
+    "sindrets/diffview.nvim",
+    "NeogitOrg/neogit",
+    "pwntester/octo.nvim"
 }
 
 plugins = appendTables(plugins, git_plugins)
