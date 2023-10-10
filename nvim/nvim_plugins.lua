@@ -25,6 +25,7 @@ local plugins = {
     "ekalinin/Dockerfile.vim",
     "terrastruct/d2-vim",
     "voldikss/vim-floaterm",
+    "tree-sitter/tree-sitter-json",
 
     "HiPhish/rainbow-delimiters.nvim",
 
