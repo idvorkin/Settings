@@ -12,6 +12,9 @@ brew install --cask db-browser-for-sqlite
 brew install --cask bartender
 brew install --cask finicky
 
+# Switch between audio input and output
+brew install switchaudio-osx
+
 # Install fonts
 brew tap homebrew/cask-fonts
 # Add a specific font
