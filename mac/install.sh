@@ -14,6 +14,7 @@ brew install --cask finicky
 
 # Switch between audio input and output
 brew install switchaudio-osx
+brew install blackhole-2ch
 
 # Install fonts
 brew tap homebrew/cask-fonts
