@@ -230,6 +230,9 @@ alias grtd="grep ☐"
 alias rtd="ssh lightsail_no_forward cat /home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep ☐ | pbcopy | pbpaste"
 alias nvday="nvim scp://ec2-user@lightsail//home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md"
 
+# Useful stuff w/OSX Sound
+alias restart_audio='sudo launchctl kickstart -kp system/com.apple.audio.coreaudiod'
+alias airpods_audio='SwitchAudioSource -s "Igor’s AirPods Pro" && SwitchAudioSource -t input -s "Igor’s AirPods Pro" '
 
 # Turn off auto update brew
 
