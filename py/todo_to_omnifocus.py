@@ -30,7 +30,8 @@ def add_task_to_omnifocus(task):
     if "work" in task.lower():
         tags="work"
         # remove work from original string, regardless of case
-        import re;
+        import re
+        task = re.sub('work:', '', task, flags=re.IGNORECASE)
         task = re.sub('work', '', task, flags=re.IGNORECASE)
 
     params = {
@@ -46,7 +47,7 @@ def add_task_to_omnifocus(task):
     ic(str_parms)
 
     url = "omnifocus:///add?" + str_parms
-    ic(url)
+    ic("Running", url)
     subprocess.run(['open', url], check=True)
 
 @app.command()
