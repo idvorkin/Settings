@@ -74,6 +74,7 @@ local plugins = {
     "glepnir/dashboard-nvim",
     "onsails/lspkind.nvim",
     "godlygeek/tabular",
+    "AckslD/nvim-neoclip.lua"
 }
 
 local git_plugins = {
@@ -91,4 +92,5 @@ plugins = appendTables(plugins, git_plugins)
 
 --  VIM LSP  for lua - I think I still need to configure t
 require("lazy").setup(plugins)
+require('neoclip').setup()
 
