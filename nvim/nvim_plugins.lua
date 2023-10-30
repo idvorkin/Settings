@@ -39,6 +39,29 @@ local plugins = {
     "dhruvasagar/vim-table-mode",
     "junegunn/goyo.vim",
     "reedes/vim-pencil",
+
+--[[
+     Cool does wrapping
+    help surround
+
+    Wrap current line
+    ys -> you surround, motion, element
+    yss* <- Wrap 'Surround' line '*'
+    ds" -> delete surround
+    cs" -> change surround
+
+    Setup surround for b (old)  and i(talics) for markdown.
+    echo char2nr('b') -> 105
+    "
+    Cheat Sheat
+    " - yssX - soround the current line with italics(i) or bold(b) or something
+    " else.
+    "
+    - Once in visual mode, S will do the surround folowed by the b so like
+    select text in visual mode, then Sb will make it bold.
+]]
+    "tpope/vim-surround",
+
     "folke/zen-mode.nvim",
     "neovim/nvim-lspconfig",
     -- :Rename a file

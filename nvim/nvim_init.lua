@@ -36,9 +36,18 @@ require("true-zen").setup {
 }
 
 
+--[[ Setup Tree Sitter
+Debug w/ :TSInstallInfo
+See: https://github.com/MDeiml/tree-sitter-markdown/issues/121
+
+Install Plugins
+    :TSInstall markdown_inline
+    :TSInstall yaml
+]]
+
 require'nvim-treesitter.configs'.setup {
   -- A list of parser names, or "all" (the five listed parsers should always be installed)
-  ensure_installed = { "c", "lua", "vim", "vimdoc", "query" , "markdown", "python", "javascript"},
+  ensure_installed = { "c", "lua", "vim", "vimdoc", "query" , "markdown_inline", "python", "javascript"},
 
   -- Install parsers synchronously (only applied to `ensure_installed`)
   sync_install = false,
@@ -88,11 +97,14 @@ local junk =  {
 }
 
 
+--
+-- [[
 local _ = [[
 npm i -g pyright
 brew install lua-language-server
 brew install marksman
-]]
+-- ]]
+
 
 -- Setup LSP Config
 require'lspconfig'.pyright.setup{}
