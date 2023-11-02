@@ -70,6 +70,9 @@ local plugins = {
     -- Uncomment \cu
     "scrooloose/nerdcommenter",
 
+    -- NVIM markdown stuff,  lets see if it works with tree sitter
+    "ixru/nvim-markdown",
+
     -- Auto Update ToC
     "mzlogin/vim-markdown-toc",
     "hrsh7th/cmp-nvim-lsp",
