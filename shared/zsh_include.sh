@@ -238,6 +238,9 @@ alias airpods_audio='SwitchAudioSource -s "Igor’s AirPods Pro" && SwitchAudioS
 
 export HOMEBREW_NO_AUTO_UPDATE=1
 
+# Setting this allows lip gloss to use truecolor
+# Man, what a PITA
+export COLORTERM=truecolor
 
 set -o vi
 set nobell
