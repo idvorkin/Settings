@@ -43,7 +43,32 @@ See: https://github.com/MDeiml/tree-sitter-markdown/issues/121
 Install Plugins
     :TSInstall markdown_inline
     :TSInstall yaml
+
+
+
 ]]
+
+-- Bleh lets debug highlighting
+-- For VIM hightlights
+vim.cmd([[
+    function! HighlightGroup()
+        echo synIDattr(synID(line("."), col("."), 1), "name")
+    endfunction
+    function! HighlightLinks(group)
+        redir => links
+        silent highlight
+        redir END
+        return filter(split(links, '\n'), 'v:val =~ "^' . a:group . '\s\+xxx"')
+    endfunction
+
+    " Fix highlighting for markdown
+    " highlight link @text.emphasis htmlItalic
+    " highlight link @text.strong htmlBold
+
+]])
+-- For TS Highlights
+--  :TSHighlightCapturesUnderCursor
+
 
 require'nvim-treesitter.configs'.setup {
   -- A list of parser names, or "all" (the five listed parsers should always be installed)
@@ -63,7 +88,8 @@ require'nvim-treesitter.configs'.setup {
     -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
     -- Using this option may slow down your editor, and you may see some duplicate highlights.
     -- Instead of true it can also be a list of languages
-    additional_vim_regex_highlighting = {'markdown','markdown_inline'},
+    -- additional_vim_regex_highlighting = {'markdown','markdown_inline'},
+    additional_vim_regex_highlighting = False
   },
 }
 

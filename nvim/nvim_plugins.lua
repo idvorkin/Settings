@@ -25,7 +25,6 @@ local plugins = {
     "ekalinin/Dockerfile.vim",
     "terrastruct/d2-vim",
     "voldikss/vim-floaterm",
-    "tree-sitter/tree-sitter-json",
 
     "HiPhish/rainbow-delimiters.nvim",
 
@@ -33,12 +32,12 @@ local plugins = {
     -- Uncomment \cu
     "scrooloose/nerdcommenter",
     "dhruvasagar/vim-table-mode",
-    "MDeiml/tree-sitter-markdown",
     "rking/ag.vim",
     "junegunn/limelight.vim",
     "dhruvasagar/vim-table-mode",
     "junegunn/goyo.vim",
     "reedes/vim-pencil",
+    "catppuccin/nvim",
 
 
     "folke/zen-mode.nvim",
@@ -75,21 +74,24 @@ local plugins = {
     "zbirenbaum/copilot-cmp",
     "nvim-neo-tree/neo-tree.nvim",
     "MunifTanjim/nui.nvim",
-    "nvim-treesitter/nvim-treesitter",
     "glepnir/dashboard-nvim",
     "onsails/lspkind.nvim",
     "godlygeek/tabular",
-    "AckslD/nvim-neoclip.lua"
+    "AckslD/nvim-neoclip.lua",
+    "preservim/vim-colors-pencil"
 }
 
-local git_plugins = {
-    "tpope/vim-fugitive",
-    "lewis6991/gitsigns.nvim",
-    --  DiffViewOpen
-    "sindrets/diffview.nvim",
-    "NeogitOrg/neogit",
-    "pwntester/octo.nvim"
-}
+-- TSPlaygroundToggle
+-- :TSHighlightCapturesUnderCursor
+-- :TSNodeUnderCursor
+--
+plugins = appendTables(plugins, {
+    "tree-sitter/tree-sitter-json",
+    "nvim-treesitter/playground",
+    "nvim-treesitter/nvim-treesitter",
+    "MDeiml/tree-sitter-markdown",
+})
+
 
 plugins = appendTables(plugins, "tpope/vim-surround")
 --[[
@@ -113,6 +115,14 @@ plugins = appendTables(plugins, "tpope/vim-surround")
     select text in visual mode, then Sb will make it bold.
 ]]
 
+local git_plugins = {
+    "tpope/vim-fugitive",
+    "lewis6991/gitsigns.nvim",
+    --  DiffViewOpen
+    "sindrets/diffview.nvim",
+    "NeogitOrg/neogit",
+    "pwntester/octo.nvim"
+}
 plugins = appendTables(plugins, git_plugins)
 
 plugins = appendTables(plugins, {"mhartington/formatter.nvim"})
