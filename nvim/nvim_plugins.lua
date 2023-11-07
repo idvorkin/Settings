@@ -41,7 +41,6 @@ local plugins = {
 
 
     "folke/zen-mode.nvim",
-    "neovim/nvim-lspconfig",
     -- :Rename a file
     "danro/rename.vim",
     -- Comment \cc
@@ -53,12 +52,7 @@ local plugins = {
 
     -- Auto Update ToC
     "mzlogin/vim-markdown-toc",
-    "hrsh7th/cmp-nvim-lsp",
     "panozzaj/vim-autocorrect",
-    "hrsh7th/cmp-buffer",
-    "hrsh7th/cmp-path",
-    "hrsh7th/cmp-cmdline",
-    "hrsh7th/nvim-cmp",
     "nvim-lua/plenary.nvim",
     "nvim-lualine/lualine.nvim",
     "nvim-tree/nvim-web-devicons",
@@ -70,12 +64,9 @@ local plugins = {
     "stevearc/dressing.nvim",
     "max397574/better-escape.nvim",
     "stevearc/aerial.nvim",
-    "zbirenbaum/copilot.lua",
-    "zbirenbaum/copilot-cmp",
     "nvim-neo-tree/neo-tree.nvim",
     "MunifTanjim/nui.nvim",
     "glepnir/dashboard-nvim",
-    "onsails/lspkind.nvim",
     "godlygeek/tabular",
     "AckslD/nvim-neoclip.lua",
     "preservim/vim-colors-pencil"
@@ -127,6 +118,18 @@ plugins = appendTables(plugins, git_plugins)
 
 plugins = appendTables(plugins, {"mhartington/formatter.nvim"})
 
+-- cmp and friends
+plugins = appendTables(plugins, {
+    "hrsh7th/cmp-nvim-lsp",
+    "hrsh7th/cmp-buffer",
+    "hrsh7th/cmp-path",
+    "hrsh7th/nvim-cmp",
+    "hrsh7th/cmp-cmdline",
+    "zbirenbaum/copilot.lua",
+    "zbirenbaum/copilot-cmp",
+    "neovim/nvim-lspconfig",
+    "onsails/lspkind.nvim",
+})
 
 
 --  VIM LSP  for lua - I think I still need to configure t
