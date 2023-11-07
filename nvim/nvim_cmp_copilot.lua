@@ -157,7 +157,7 @@ require("copilot").setup{
         auto_referesh= true
     },
     suggestion = {
-        enabled = true,
+        enabled = false,
         auto_trigger = true,
         keymap  = {
             accept = "<tab>",
