@@ -17,6 +17,7 @@ yt-dlp \
 gdu \
 zsh \
 git \
+yq \
 cpulimit \
 dua-cli \
 ranger \
