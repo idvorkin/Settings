@@ -104,6 +104,7 @@ cmp.setup{
     {
         {name = 'copilot'},
         {name = 'nvim_lsp'},
+        {name = 'conjure'},
   --       {name = 'buffer'},  Exclude buffer as it's pretty noisy
     }
     ),

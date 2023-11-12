@@ -131,6 +131,13 @@ plugins = appendTables(plugins, {
     "neovim/nvim-lspconfig",
     "onsails/lspkind.nvim",
 })
+-- lispy and racket
+plugins = appendTables(plugins, {
+    "wlangstroth/vim-racket",
+    "Olical/conjure",
+    "PaterJason/cmp-conjure",
+})
+
 
 
 --  VIM LSP  for lua - I think I still need to configure t
