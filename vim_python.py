@@ -55,13 +55,19 @@ def NowPST():
     return datetime.now().astimezone(timezone("US/Pacific"))
 
 
+def LocalToRemote(file):
+    return file.replace(path.expanduser("~"), "scp://ec2-user@lightsail//home/ec2-user/")
+
+
 @app.command()
-def MakeDailyPage(daysoffset: int = 0):
+def MakeDailyPage(daysoffset: int = 0,  remote:bool=True):
     new_file, directory = MakeTemplatePage(
         NowPST() + timedelta(days=daysoffset), "750words", "daily_template"
     )
-    print(new_file)
-    return
+    if remote:
+        print (LocalToRemote(new_file))
+    else:
+        print (new_file)
 
 
 
@@ -77,13 +83,16 @@ def RandomBlogPost():
 
 
 @app.command()
-def MakeWeeklyReport(weekoffset: int = 0):
+def MakeWeeklyReport(weekoffset: int = 0, remote:bool = False):
     now = NowPST()
     startOfWeek = now - timedelta(days=now.weekday()) + timedelta(days=weekoffset * 7)
 
     # Make to sart of week.
     new_file, path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
-    print(new_file)
+    if remote:
+        print (LocalToRemote(new_file))
+    else:
+        print (new_file)
 
 @app.command()
 def make_convo():
