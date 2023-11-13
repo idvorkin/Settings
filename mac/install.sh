@@ -6,15 +6,18 @@ brew install macvim
 # Install cask
 brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable.
-brew install --cask google-chrome  iterm2	skype the-unarchiver
-brew install --cask visual-studio-code hammerspoon  vlc
-brew install --cask db-browser-for-sqlite
-brew install --cask bartender
-brew install --cask finicky
+brew install google-chrome  iterm2	skype the-unarchiver
+brew install visual-studio-code hammerspoon
+brew install db-browser-for-sqlite
+brew install bartender
+brew install finicky
 
 # Switch between audio input and output
 brew install switchaudio-osx
 brew install blackhole-2ch
+
+# Video player, better then vlc
+brew install iina
 
 # Install fonts
 brew tap homebrew/cask-fonts
