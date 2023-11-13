@@ -60,7 +60,7 @@ def LocalToRemote(file):
 
 
 @app.command()
-def MakeDailyPage(daysoffset: int = 0,  remote:bool=True):
+def MakeDailyPage(daysoffset: int = 0,  remote:bool=False):
     new_file, directory = MakeTemplatePage(
         NowPST() + timedelta(days=daysoffset), "750words", "daily_template"
     )
