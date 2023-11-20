@@ -3,7 +3,6 @@ settings_dir =  os.getenv("HOME").."/settings/nvim/"
 dofile(settings_dir.."nvim_plugins.lua")
 
 
-require("dashboard").setup()
 require("trouble").setup{
 }
 
@@ -93,34 +92,6 @@ require'nvim-treesitter.configs'.setup {
   },
 }
 
-
-
-
--- Example using a list of specs with the default options
--- vim.g.mapleader = " " -- Make sure to set `mapleader` before lazy so your mappings are correct
-local dashboard_nvim = {
-  'glepnir/dashboard-nvim',
-  event = 'VimEnter',
-  config = function()
-    require('dashboard').setup {
-      -- config
-    }
-  end,
-  dependencies = { {'nvim-tree/nvim-web-devicons'}}
-}
-
-
-
-local junk =  {
-  'glepnir/dashboard-nvim',
-  event = 'VimEnter',
-  config = function()
-    require('dashboard').setup {
-      -- config
-    }
-  end,
-  requires = {'nvim-tree/nvim-web-devicons'}
-}
 
 
 

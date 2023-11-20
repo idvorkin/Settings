@@ -66,11 +66,28 @@ local plugins = {
     "stevearc/aerial.nvim",
     "nvim-neo-tree/neo-tree.nvim",
     "MunifTanjim/nui.nvim",
-    "glepnir/dashboard-nvim",
     "godlygeek/tabular",
     "AckslD/nvim-neoclip.lua",
     "preservim/vim-colors-pencil"
 }
+
+-- Add dashboard
+plugins = appendTables(plugins, {
+     {
+      'nvimdev/dashboard-nvim',
+      event = 'VimEnter',
+      config = function()
+        require('dashboard').setup {
+            theme="doom",
+          -- config
+          -- project = { enable = false}
+
+        }
+      end,
+      dependencies = { {'nvim-tree/nvim-web-devicons'}}
+    },
+}
+)
 
 -- TSPlaygroundToggle
 -- :TSHighlightCapturesUnderCursor
@@ -119,6 +136,10 @@ plugins = appendTables(plugins, git_plugins)
 plugins = appendTables(plugins, {"mhartington/formatter.nvim"})
 plugins = appendTables(plugins, {"sbdchd/neoformat"})
 
+-- Configure formatter
+
+
+
 -- cmp and friends
 plugins = appendTables(plugins, {
     "hrsh7th/cmp-nvim-lsp",
@@ -137,6 +158,9 @@ plugins = appendTables(plugins, {
     "Olical/conjure",
     "PaterJason/cmp-conjure",
 })
+
+--
+-- require('lspconfig').racket_langserver.setup()
 
 
 
