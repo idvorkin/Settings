@@ -879,7 +879,7 @@ function! GptCompleteSimple(gpt_command='stdin',gpt_params='',sink='GptSinkAppen
   call writefile(lines, expand(tempname_in))
 
   " let gpt_cmd =  'cat '.tempname_in.' | python3.10 ~/gpt3.py stdin -no-stream --responses=4 > ' . tempname_out
-  let gpt_cmd =  'cat '.tempname_in.' | python3.10 ~/gpt3.py stdin --u4 | tee ' . tempname_out
+  let gpt_cmd =  'cat '.tempname_in.' | python3.11 ~/gpt3.py stdin --u4 | tee ' . tempname_out
   echom gpt_cmd
   execute "!".gpt_cmd
   execute ":".string(g:gpt_last_line)
@@ -1064,5 +1064,10 @@ set encoding=utf8
 
 set viminfo='1000,<50,s10,h
 " ConoLineEnable
+
+" Todo move this to a configuration file
+let g:neoformat_racket_fmt = { 'exe': 'raco','args': ['fmt']}
+
+let g:neoformat_enabled_racket = ['fmt']
 
 " vim:foldmethod=indent:
