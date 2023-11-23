@@ -11,6 +11,7 @@ brew install marksman
 
 
 -- Setup LSP Config
+require'lspconfig'.racket_langserver.setup{}
 require'lspconfig'.pyright.setup{}
 local lspconfig = require("lspconfig")
 
