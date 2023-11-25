@@ -883,7 +883,7 @@ function! GptCompleteSimple(gpt_command='stdin',gpt_params='',sink='GptSinkAppen
   echom gpt_cmd
   execute "!".gpt_cmd
   execute ":".string(g:gpt_last_line)
-  execute "-1r ".tempname_out
+  execute "$r ".tempname_out
 endfunction
 
 " range after the function enables access to a:firstline, a:lastline
