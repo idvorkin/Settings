@@ -106,7 +106,7 @@ plugins = appendTables(plugins, {
 })
 
 
-plugins = appendTables(plugins, "tpope/vim-surround")
+plugins = appendTables(plugins, {"tpope/vim-surround"})
 --[[
      Cool does wrapping
     help surround
