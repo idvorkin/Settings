@@ -71,6 +71,11 @@ local plugins = {
     "preservim/vim-colors-pencil"
 }
 
+local function readEulogyPrompts()
+    local eulogy_prompts = vim.fn.system("shuf -n 1 ~/gits/igor2/eulogy_prompts.md")
+    -- Return first
+    return vim.split(eulogy_prompts, "\n")[1]
+end
 -- Add dashboard
 plugins = appendTables(plugins, {
      {
@@ -83,6 +88,8 @@ plugins = appendTables(plugins, {
                 week_header = {
                     enable = true,
                 },
+            --footer = {"Igor Is here"}, -- footer
+            footer = {readEulogyPrompts()},
             }
           -- config
           --project = { enable = true}
@@ -93,6 +100,13 @@ plugins = appendTables(plugins, {
     },
 }
 )
+
+-- Read the eulogy prompts, and insert 3 random ones
+-- command! PromptEulogy  :r !shuf -n 3 ~/gits/igor2/eulogy_prompts.md
+--
+
+
+vim.g.dashboard_command_footer = readEulogyPrompts()
 
 -- TSPlaygroundToggle
 -- :TSHighlightCapturesUnderCursor
