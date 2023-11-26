@@ -349,6 +349,7 @@ func SetupAutoFixEnglish()
     " sed -i -e 's/ teh / the /g' *
     " grab these from .aspell.en.prepl
      :iab teh the
+     :iab __today <C-R>=strftime('%Y-%m-%d')<CR>
      :iab hte the
      :iab taht that
      :iab ot to
