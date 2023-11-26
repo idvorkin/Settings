@@ -72,9 +72,14 @@ local plugins = {
 }
 
 local function readEulogyPrompts()
-    local eulogy_prompts = vim.fn.system("shuf -n 1 ~/gits/igor2/eulogy_prompts.md")
-    -- Return first
-    return vim.split(eulogy_prompts, "\n")[1]
+    local eulogy_prompts = vim.fn.systemlist("cat ~/gits/igor2/eulogy_prompts.md")
+    if #eulogy_prompts == 0 then
+        print("No prompts found.")
+        return nil
+    end
+    math.randomseed(os.time()) -- Seed the random number generator
+    local random_index = math.random(1, #eulogy_prompts)
+    return eulogy_prompts[random_index]
 end
 -- Add dashboard
 plugins = appendTables(plugins, {
