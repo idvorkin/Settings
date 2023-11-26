@@ -15,8 +15,4 @@ require("lualine").setup({
           { wordcount,   cond = is_markdown },
       }
   },
-  options = {
-      theme = "catppuccin"
-      -- ... the rest of your lualine config
-  }
 })

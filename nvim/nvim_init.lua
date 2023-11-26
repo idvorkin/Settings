@@ -142,7 +142,7 @@ require("formatter").setup {
 dofile(settings_dir.."nvim_lualine.lua")
 dofile(settings_dir.."nvim_cmp_copilot.lua")
 dofile(settings_dir.."nvim_git.lua")
+dofile(settings_dir.."nvim_color.lua")
 
-vim.cmd(":colorscheme catppuccin")
 
 print("Config Loaded")
