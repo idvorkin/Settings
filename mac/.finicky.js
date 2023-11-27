@@ -20,7 +20,7 @@ module.exports = {
     },
     {
       // Open any url that includes the string "workplace" in Firefox
-        match: ["*fb.workplace.com/*","*figma*"],
+        match: ["*.workplace.com/*","*figma*"],
       browser: "Google Chrome"
     },
     {
