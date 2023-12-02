@@ -74,7 +74,7 @@ function dda() {
 }
 
 function ijm() {
-    ~/gits/nlp/life.py journal-report --debug --u4 $1
+    ~/gits/nlp/life.py journal-report --debug --u4 $1 $2 $3 $4
 }
 
 
