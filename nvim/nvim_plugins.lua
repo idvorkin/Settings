@@ -157,8 +157,8 @@ local git_plugins = {
 }
 plugins = appendTables(plugins, git_plugins)
 
-plugins = appendTables(plugins, {"mhartington/formatter.nvim"})
-plugins = appendTables(plugins, {"sbdchd/neoformat"})
+-- plugins = appendTables(plugins, {"mhartington/formatter.nvim"})
+-- plugins = appendTables(plugins, {"sbdchd/neoformat"})
 
 -- Configure formatter
 
