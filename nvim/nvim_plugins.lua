@@ -22,6 +22,8 @@ local plugins = {
     -- Highlight current line
     -- ConoLineEnable (Highlight current line)
     "miyakogi/conoline.vim",
+    -- Like LimeLight
+    "folke/twilight.nvim",
     "ekalinin/Dockerfile.vim",
     "terrastruct/d2-vim",
     "voldikss/vim-floaterm",
