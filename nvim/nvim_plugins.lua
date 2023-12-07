@@ -23,7 +23,12 @@ local plugins = {
     -- ConoLineEnable (Highlight current line)
     "miyakogi/conoline.vim",
     -- Like LimeLight
-    "folke/twilight.nvim",
+    {
+        "folke/twilight.nvim",
+        opts = {
+            context = 5, -- amount of lines we will try to show around the current line
+        },
+    },
     "ekalinin/Dockerfile.vim",
     "terrastruct/d2-vim",
     "voldikss/vim-floaterm",
@@ -40,7 +45,6 @@ local plugins = {
     "junegunn/goyo.vim",
     "reedes/vim-pencil",
     "catppuccin/nvim",
-
 
     "folke/zen-mode.nvim",
     -- :Rename a file
