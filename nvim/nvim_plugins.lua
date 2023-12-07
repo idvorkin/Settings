@@ -11,6 +11,14 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+local function wordcount()
+    return tostring(vim.fn.wordcount().words) .. ' words'
+end
+
+local function is_markdown()
+    return vim.bo.filetype == "markdown" or vim.bo.filetype == "asciidoc"
+end
+
 local function appendTables(t1, t2)
     for i=1, #t2 do
         t1[#t1+1] = t2[i]
@@ -60,7 +68,18 @@ local plugins = {
     "mzlogin/vim-markdown-toc",
     "panozzaj/vim-autocorrect",
     "nvim-lua/plenary.nvim",
-    "nvim-lualine/lualine.nvim",
+    {
+        "nvim-lualine/lualine.nvim",
+        opts  = {
+            sections = {
+                lualine_z = {
+                    "aerial" ,
+                    -- By default, Z is line:column, I don't mind line, but column is too noisy
+                    { wordcount,   cond = is_markdown },
+                }
+            },
+        }
+    },
     "nvim-tree/nvim-web-devicons",
     "Pocco81/true-zen.nvim",
     "dstein64/vim-startuptime",

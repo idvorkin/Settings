@@ -139,7 +139,6 @@ require("neo-tree").setup(
 --}
 
 
-dofile(settings_dir.."nvim_lualine.lua")
 dofile(settings_dir.."nvim_cmp_copilot.lua")
 dofile(settings_dir.."nvim_git.lua")
 dofile(settings_dir.."nvim_color.lua")
