@@ -31,6 +31,7 @@ git config --global alias.fr "pull --rebase"
 git config --global alias.br branch
 git config --global alias.ci commit
 git config --global alias.st status
+git config --global push.autoSetupRemote 1
 git config --global alias.logc log master..
 git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate"
 ln -s -f ~/settings/shared/gitconfig ~/.gitconfig
