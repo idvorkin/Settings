@@ -11,9 +11,23 @@ brew install marksman
 
 
 -- Setup LSP Config
-require'lspconfig'.racket_langserver.setup{}
-require'lspconfig'.pyright.setup{}
 local lspconfig = require("lspconfig")
+lspconfig.racket_langserver.setup{}
+lspconfig.pyright.setup{}
+local ruff_on_attach = function(client, _)
+  -- Disable hover in favor of Pyright
+  client.server_capabilities.hoverProvider = false
+end
+
+lspconfig.ruff_lsp.setup {
+  on_attach = ruff_on_attach,
+  init_options = {
+    settings = {
+      -- Any extra CLI arguments for `ruff` go here.
+      args = {},
+    }
+  }
+}
 
 lspconfig.lua_ls.setup({
 	settings = {
@@ -43,6 +57,7 @@ lspconfig.lua_ls.setup({
 		},
 	},
 })
+
 
 
 
