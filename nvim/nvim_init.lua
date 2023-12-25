@@ -3,10 +3,6 @@ settings_dir =  os.getenv("HOME").."/settings/nvim/"
 dofile(settings_dir.."nvim_plugins.lua")
 
 
-require("trouble").setup{
-}
-
-
 require('aerial').setup({
     placement= "edge",
     layout = {
@@ -20,20 +16,12 @@ require('aerial').setup({
         vim.keymap.set('n', '<C-y>', '<cmd>AerialToggle<CR>')
     end
 })
-require('telescope').load_extension('aerial')
 
+require('telescope').load_extension('aerial')
 
 
 -- Lets keep exra lua stuff here
 require'nvim-web-devicons'.get_icons()
-require("true-zen").setup {
-    -- your config goes here
-    -- or just leave it empty :)
-    plugins= {
-        tmux = { enabled = false }, -- disables the tmux statusline
-    }
-}
-
 
 --[[ Setup Tree Sitter
 Debug w/ :TSInstallInfo
@@ -42,8 +30,6 @@ See: https://github.com/MDeiml/tree-sitter-markdown/issues/121
 Install Plugins
     :TSInstall markdown_inline
     :TSInstall yaml
-
-
 
 ]]
 
@@ -91,53 +77,6 @@ require'nvim-treesitter.configs'.setup {
     additional_vim_regex_highlighting = False
   },
 }
-
-
-
-
-
-require("better_escape").setup {
-    mapping = {"fj"}, -- a table with mappings to use
-    timeout = vim.o.timeoutlen, -- the time in which the keys must be hit in ms. Use option timeoutlen by default
-    clear_empty_lines = false, -- clear line after escaping if there is only whitespace
-    keys = "<Esc>", -- keys used for escaping, if it is a function will use the result everytime
-    -- example(recommended)
-    -- keys = function()
-    --   return vim.api.nvim_win_get_cursor(0)[2] > 1 and '<esc>l' or '<esc>'
-    -- end,
-}
-
-require("neo-tree").setup(
-{
-      window = {
-            mappings = {
-              ["u"] = "navigate_up",
-          }
-      }
-})
-
--- Provides the Format, FormatWrite, FormatLock, and FormatWriteLock commands
---require("formatter").setup {
-    ---- Enable or disable logging
-    --logging = true,
-    ---- Set the log level
-    --log_level = vim.log.levels.WARN,
-    ---- All formatter configurations are opt-in
-    --filetype = {
-        ---- Formatter configurations for filetype "lua" go here
-        ---- and will be executed in order
-        --lua = {
-            --require("formatter.filetypes.lua").stylua,
-        --},
-        --python = {
-            --require("formatter.filetypes.python").black,
-        --},
-        --markdown = {
-            --require("formatter.filetypes.markdown"),
-        --},
-    --}
---}
-
 
 dofile(settings_dir.."nvim_cmp_copilot.lua")
 dofile(settings_dir.."nvim_git.lua")

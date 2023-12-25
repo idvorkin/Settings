@@ -87,9 +87,26 @@ local plugins = {
     "folke/trouble.nvim",
     "nvim-telescope/telescope.nvim",
     "stevearc/dressing.nvim",
-    "max397574/better-escape.nvim",
+    {
+        "max397574/better-escape.nvim",
+        opts = {
+            mapping = {"fj"}, -- a table with mappings to use
+            timeout = vim.o.timeoutlen, -- the time in which the keys must be hit in ms. Use option timeoutlen by default
+            clear_empty_lines = false, -- clear line after escaping if there is only whitespace
+            keys = "<Esc>", -- keys used for escaping, if it is a function will use the result everytime
+        }
+    },
     "stevearc/aerial.nvim",
-    "nvim-neo-tree/neo-tree.nvim",
+    {
+        "nvim-neo-tree/neo-tree.nvim",
+        opts = {
+            window = {
+                mappings = {
+                    ["u"] = "navigate_up",
+                }
+            }
+        }
+    },
     "MunifTanjim/nui.nvim",
     "godlygeek/tabular",
     "AckslD/nvim-neoclip.lua",
