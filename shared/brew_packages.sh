@@ -122,6 +122,8 @@ brew install azure-cli cmatrix iftop
 # grv - get repository viewer
 # grv need to unalias grv in zsh
 
+gh extension install github/gh-copilot
+
 
 # Add some npm packages
 npm install --global fkill-cli
