@@ -40,6 +40,9 @@ alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCom
 alias sl='ssh lightsail'
 alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
 
+alias ghe="gh copilot explain"
+alias ghs="gh copilot suggest"
+
 # Looks like pbcopy just works over ssh/mosh now!
 # alias rpbcopy='~/settings/rpbcopy.sh'
 alias rpbpaste='~/settings/rpbpaste.sh'
