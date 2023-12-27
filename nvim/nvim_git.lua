@@ -46,8 +46,12 @@ require('gitsigns').setup{
 function GitCommitAndPush()
     -- Change directory to the directory of the current file
     vim.cmd('lcd %:p:h')
+
     vim.cmd('Gwrite')
+    -- pre-commit as it may do an edit
     vim.cmd("!pre-commit run --files %")
+    -- reload the file
+    vim.cmd("e!")
 
     -- Get the current file name, same as taking '%'
     local current_file = vim.fn.bufname()
