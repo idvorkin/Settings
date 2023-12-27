@@ -47,6 +47,7 @@ function GitCommitAndPush()
     -- Change directory to the directory of the current file
     vim.cmd('lcd %:p:h')
     vim.cmd('Gwrite')
+    vim.cmd("!pre-commit run --files %")
 
     -- Get the current file name, same as taking '%'
     local current_file = vim.fn.bufname()
