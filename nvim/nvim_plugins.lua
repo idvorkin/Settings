@@ -110,7 +110,8 @@ local plugins = {
     "MunifTanjim/nui.nvim",
     "godlygeek/tabular",
     "AckslD/nvim-neoclip.lua",
-    "preservim/vim-colors-pencil"
+    "preservim/vim-colors-pencil",
+    'ttibsi/pre-commit.nvim',
 }
 
 local function readEulogyPrompts()
@@ -227,10 +228,6 @@ plugins = appendTables(plugins, {
 
 --
 -- require('lspconfig').racket_langserver.setup()
-
-
-
---  VIM LSP  for lua - I think I still need to configure t
+--  VIM LSP  for lua - I think I still need to configure
 require("lazy").setup(plugins)
-require('neoclip').setup()
 
