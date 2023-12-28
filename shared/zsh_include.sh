@@ -38,6 +38,7 @@ alias weather="curl wttr.in/seattle"
 alias dwc='pushd ~/gits/settings && python3 -c "from vim_python import * ;WCDailyPage()" && pushd ~/gits/igor2/750words '
 alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCommitDailyPage()" && pushd ~/gits/igor2/750words '
 alias sl='ssh lightsail'
+alias tam ='tmux attach-session -t main || tmux new-session -s main'
 alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
 
 alias ghe="gh copilot explain"
