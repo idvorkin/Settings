@@ -133,6 +133,7 @@ python3 -m pip install install black\[jupyter\] arrow numpy pytz loguru typer op
 
 python3 -m pip install torch torchvision opencv-python
 python3 -m pip install jupyterlab-lsp python-lsp-server jupyter-lsp jupyterlab-vim
+python3 -m pip install elevenlabs
 
 
 # On the mac can install tensor flow as follows
