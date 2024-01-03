@@ -13,7 +13,7 @@ brew install finicky
 brew install bettersnaptool
 brew install bartender
 brew install --cask alt-tab
-brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code docker vlc microsoft-edge 1password
+brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code docker vlc microsoft-edge 1password meetingbar
 
 # Switch between audio input and output
 brew install switchaudio-osx
