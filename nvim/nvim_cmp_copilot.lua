@@ -7,6 +7,7 @@ local _ = [[
 npm i -g pyright
 brew install lua-language-server
 brew install marksman
+npm install -g typescript typescript-language-server
 -- ]]
 
 
@@ -29,6 +30,7 @@ lspconfig.ruff_lsp.setup {
   }
 }
 
+lspconfig.tsserver.setup {}
 lspconfig.lua_ls.setup({
 	settings = {
 		Lua = {
