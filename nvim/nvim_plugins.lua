@@ -19,11 +19,40 @@ local function is_markdown()
     return vim.bo.filetype == "markdown" or vim.bo.filetype == "asciidoc"
 end
 
+
 local function appendTables(t1, t2)
     for i=1, #t2 do
         t1[#t1+1] = t2[i]
     end
     return t1
+end
+
+local function get_openai_api_key()
+    -- open secrets.json and read the key
+    -- Read the content of the file
+    local file = io.open("~/gits/igor2/secretBox.json", "r")
+    if not file then
+        return nil, "Unable to open file."
+    end
+    local content = file:read("*a")
+    file:close()
+
+    -- Parse the JSON content
+    local json = require("json")
+    local data, err = json.decode(content)
+    if not data then
+        return nil, "Error parsing JSON: " .. err
+    end
+
+    -- Extract the 'openapi' key
+    local openapiKey = data.openapi
+    if not openapiKey then
+        return nil, "'openapi' key not found."
+    end
+    vim.g.openai_api_key = openapiKey
+    vim.api.nvim_echo({{"openapiKey: " .. openapiKey, "Normal"}}, false, {})
+    return openapiKey
+
 end
 
 local plugins = {
@@ -40,6 +69,20 @@ local plugins = {
     "ekalinin/Dockerfile.vim",
     "terrastruct/d2-vim",
     "voldikss/vim-floaterm",
+    -- gpt plugin
+    {
+        "robitx/gp.nvim",
+        config = function()
+            -- or setup with your own config (see Install > Configuration in Readme)
+            require("gp").setup(
+            {
+                openai_api_key = get_openai_api_key()
+
+            })
+
+            -- shortcuts might be setup here (see Usage > Shortcuts in Readme)
+        end,
+    },
 
     "HiPhish/rainbow-delimiters.nvim",
 
