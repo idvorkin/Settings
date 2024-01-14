@@ -79,8 +79,9 @@ local plugins = {
     {
         "robitx/gp.nvim",
         opts = {
+            chat_topic_gen_model = "gpt-4-1106-preview",
             openai_api_key = get_openai_api_key(),
-            agents = {
+            myagents = {
                 {
                     name = "ChatGPT4",
                     chat = true,
@@ -110,7 +111,6 @@ local plugins = {
     "dhruvasagar/vim-table-mode",
     "rking/ag.vim",
     "junegunn/limelight.vim",
-    "dhruvasagar/vim-table-mode",
     "junegunn/goyo.vim",
     "reedes/vim-pencil",
     "catppuccin/nvim",
@@ -123,7 +123,8 @@ local plugins = {
     "scrooloose/nerdcommenter",
 
     -- NVIM markdown stuff,  lets see if it works with tree sitter
-    "ixru/nvim-markdown",
+    -- "ixru/nvim-markdown",
+    "preservim/vim-markdown",
 
     -- Auto Update ToC
     "mzlogin/vim-markdown-toc",
@@ -146,6 +147,11 @@ local plugins = {
         event = "VeryLazy",
         opts = {
             -- add any options here
+            messages = {
+                -- NOTE: If you enable messages, then the cmdline is enabled automatically.
+                -- This is a current Neovim limitation.
+                enabled = false, -- enables the Noice messages UI
+            }
         },
         dependencies = {
             -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
