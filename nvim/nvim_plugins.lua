@@ -28,32 +28,38 @@ local function appendTables(t1, t2)
 end
 
 local function get_openai_api_key()
-    -- open secrets.json and read the key
-    -- Read the content of the file
-    local file = io.open("~/gits/igor2/secretBox.json", "r")
+    -- Resolve the path to the user's home directory
+    local home = os.getenv("HOME") or os.getenv("USERPROFILE")
+    local filepath = home .. "/gits/igor2/secretBox.json"
+
+    -- Attempt to open the file
+    local file, err = io.open(filepath, "r")
     if not file then
-        return nil, "Unable to open file."
+        vim.api.nvim_echo({{"Error opening file: " .. err, "ErrorMsg"}}, false, {})
+        return nil
     end
+
+    -- Read the entire file content
     local content = file:read("*a")
     file:close()
 
-    -- Parse the JSON content
-    local json = require("json")
-    local data, err = json.decode(content)
+    local data, parse_err = vim.json.decode(content)
     if not data then
-        return nil, "Error parsing JSON: " .. err
+        vim.api.nvim_echo({{"Error parsing JSON: " .. parse_err, "ErrorMsg"}}, false, {})
+        return nil
     end
 
-    -- Extract the 'openapi' key
-    local openapiKey = data.openapi
-    if not openapiKey then
-        return nil, "'openapi' key not found."
+    local openai_api_key = data.openai
+    if not openai_api_key then
+        vim.api.nvim_echo({{"openai_api_key not found in JSON", "ErrorMsg"}}, false, {})
+        return nil
     end
-    vim.g.openai_api_key = openapiKey
-    vim.api.nvim_echo({{"openapiKey: " .. openapiKey, "Normal"}}, false, {})
-    return openapiKey
 
+    -- Set the global variable and echo the key
+    vim.g.openai_api_key = openai_api_key
+    return openai_api_key
 end
+
 
 local plugins = {
     -- Highlight current line
@@ -72,16 +78,28 @@ local plugins = {
     -- gpt plugin
     {
         "robitx/gp.nvim",
-        config = function()
-            -- or setup with your own config (see Install > Configuration in Readme)
-            require("gp").setup(
-            {
-                openai_api_key = get_openai_api_key()
-
-            })
-
-            -- shortcuts might be setup here (see Usage > Shortcuts in Readme)
-        end,
+        opts = {
+            openai_api_key = get_openai_api_key(),
+            agents = {
+                {
+                    name = "ChatGPT4",
+                    chat = true,
+                    command = false,
+                    -- string with model name or table with model name and parameters
+                    model = "gpt-4-1106-preview",
+                    -- system prompt (use this to specify the persona/role of the AI)
+                    system_prompt = "You are a general AI assistant.\n\n"
+                    .. "The user provided the additional info about how they would like you to respond:\n\n"
+                    .. "- If you're unsure don't guess and say you don't know instead.\n"
+                    .. "- Ask question if you need clarification to provide better answer.\n"
+                    .. "- Think deeply and carefully from first principles step by step.\n"
+                    .. "- Zoom out first to see the big picture and then zoom in to details.\n"
+                    .. "- Use Socratic method to improve your thinking and coding skills.\n"
+                    .. "- Don't elide any code from your output if the answer requires coding.\n"
+                    .. "- Take a deep breath; You've got this!\n",
+                },
+            }
+        }
     },
 
     "HiPhish/rainbow-delimiters.nvim",
@@ -187,7 +205,7 @@ plugins = appendTables(plugins, {
      {
       'nvimdev/dashboard-nvim',
       event = 'VimEnter',
-      config = function()
+      opts = function()
         require('dashboard').setup {
             theme="hyper",
             config={
