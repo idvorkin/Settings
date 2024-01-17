@@ -233,7 +233,8 @@ alias thr='wchat threads'
 alias grtd="grep ☐"
 function rtd()
 {
-    ssh lightsail_no_forward cat /home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep ☐ | pbcopy | pbpaste
+    ssh lightsail_no_forward cat /home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep ☐ | pbcopy
+    pbpaste
 }
 
 function nvday()
