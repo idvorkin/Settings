@@ -19,6 +19,9 @@ brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspo
 brew install switchaudio-osx
 brew install blackhole-2ch
 
+# Display resolutoin shifting
+brew install jakehilborn/jakehilborn/displayplacer
+
 # Video player, better then vlc
 brew install iina
 
