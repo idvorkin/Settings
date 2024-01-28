@@ -83,4 +83,4 @@ dofile(settings_dir.."nvim_git.lua")
 dofile(settings_dir.."nvim_color.lua")
 
 
-print("Config Loaded")
+print("nvim_intit.lua loaded")
