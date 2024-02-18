@@ -155,7 +155,6 @@ local plugins = {
         }
     },
     "nvim-tree/nvim-web-devicons",
-    "Pocco81/true-zen.nvim",
     "dstein64/vim-startuptime",
     "folke/neodev.nvim",
     "folke/trouble.nvim",

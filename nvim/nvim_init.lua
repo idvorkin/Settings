@@ -83,4 +83,20 @@ dofile(settings_dir.."nvim_git.lua")
 dofile(settings_dir.."nvim_color.lua")
 
 
+vim.cmd([[
+command! -nargs=* ZMT lua ZenModeToggleFunction(<f-args>)
+]])
+
+function ZenModeToggleFunction(width)
+  if width == nil or width == "" then
+    width = "66"
+  end
+  local width_percentage = tonumber(width) / 100
+  require("zen-mode").toggle({
+    window = {
+      width = width_percentage
+    }
+  })
+end
+
 print("nvim_intit.lua loaded")
