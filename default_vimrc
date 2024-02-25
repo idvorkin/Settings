@@ -436,6 +436,8 @@ endfunc
 :cab mdcbt g/^#/s;# \*\*\(.*\)\*\*;# \1;
 
 " Note can't use _ in ab, so using 'e' for expand
+" expand etoday to be today's date in YYYY-MM-DD format
+:iab etoday <C-R>=strftime('%Y-%m-%d')<CR>
 :iab esummarize  {%include summarize-page.html src="/TK" %}
 :iab eyoutube  {%include youtube.html src="TK" %}
 :cab rfiles :r !exa ~/rare_git/blob/ig66
