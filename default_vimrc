@@ -946,6 +946,7 @@ function! SetupGPT()
     : cab ecpoem call GptComplete("poem")<CR>
     : cab ecsum call GptComplete("summary")<CR>
     : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
+    : cab ffix % call GptComplete("fix", "", "GptSinkReplace")<CR>
     :cab egpt  !~/gpt3.py
 
     " Select section
