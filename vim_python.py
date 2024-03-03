@@ -1,12 +1,12 @@
 #!python3
 
 from datetime import datetime, timedelta
-from os import path,  chdir
+from os import path, chdir
 import typer
 from pathlib import Path
 import random
 from loguru import logger
-from icecream import ic
+import subprocess
 
 app = typer.Typer()
 
@@ -56,19 +56,27 @@ def NowPST():
 
 
 def LocalToRemote(file):
-    return file.replace(path.expanduser("~"), "scp://ec2-user@lightsail//home/ec2-user/")
+    return file.replace(
+        path.expanduser("~"), "scp://ec2-user@lightsail//home/ec2-user/"
+    )
+
+
+def make_remote_call(commands):
+    cmd = "ssh lightsail_no_forward python3 /home/ec2-user/settings/vim_python.py "
+    # execute the commamnd in the shell
+    subprocess.run(cmd + commands, shell=True)
 
 
 @app.command()
-def MakeDailyPage(daysoffset: int = 0,  remote:bool=False):
+def MakeDailyPage(daysoffset: int = 0, remote: bool = False):
     new_file, directory = MakeTemplatePage(
         NowPST() + timedelta(days=daysoffset), "750words", "daily_template"
     )
     if remote:
-        print (LocalToRemote(new_file))
+        make_remote_call(f"makedailpage {daysoffset}")
+        print(LocalToRemote(new_file))
     else:
-        print (new_file)
-
+        print(new_file)
 
 
 @app.command()
@@ -83,16 +91,18 @@ def RandomBlogPost():
 
 
 @app.command()
-def MakeWeeklyReport(weekoffset: int = 0, remote:bool = False):
+def MakeWeeklyReport(weekoffset: int = 0, remote: bool = False):
     now = NowPST()
     startOfWeek = now - timedelta(days=now.weekday()) + timedelta(days=weekoffset * 7)
 
     # Make to sart of week.
     new_file, path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
     if remote:
-        print (LocalToRemote(new_file))
+        make_remote_call(f"makedailpage {weekoffset}")
+        print(LocalToRemote(new_file))
     else:
-        print (new_file)
+        print(new_file)
+
 
 @app.command()
 def make_convo():
@@ -105,17 +115,18 @@ def make_convo():
 
     try:
         # Open the temporary file in write mode
-        with open(temp_path, 'w') as temp:
+        with open(temp_path, "w") as temp:
             # Open the source file in read mode
-            with open(os.path.expanduser('~/gits/nlp/convos/default.convo.md'), 'r') as source:
+            with open(
+                os.path.expanduser("~/gits/nlp/convos/default.convo.md"), "r"
+            ) as source:
                 # Copy the content of the source file into the temporary file
                 shutil.copyfileobj(source, temp)
 
     finally:
         # Close the temporary file
         os.close(temp_file)
-    print (temp_path)
-
+    print(temp_path)
 
 
 @logger.catch
