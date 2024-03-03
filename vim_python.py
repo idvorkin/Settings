@@ -5,7 +5,6 @@ from os import path, chdir
 import typer
 from pathlib import Path
 import random
-from loguru import logger
 import subprocess
 
 app = typer.Typer()
@@ -129,10 +128,5 @@ def make_convo():
     print(temp_path)
 
 
-@logger.catch
-def app_with_loguru():
-    app()
-
-
 if __name__ == "__main__":
-    app_with_loguru()
+    app()
