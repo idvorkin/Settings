@@ -6,6 +6,7 @@ import typer
 from pathlib import Path
 import random
 import subprocess
+import sys
 
 app = typer.Typer()
 
@@ -62,7 +63,9 @@ def LocalToRemote(file):
 
 def make_remote_call(commands):
     cmd = "ssh lightsail_no_forward python3 /home/ec2-user/settings/vim_python.py "
-    # execute the commamnd in the shell
+    # Print the cmd to stderr
+    print(cmd + commands, file=sys.stderr)
+
     subprocess.run(cmd + commands, shell=True)
 
 
@@ -72,7 +75,7 @@ def MakeDailyPage(daysoffset: int = 0, remote: bool = False):
         NowPST() + timedelta(days=daysoffset), "750words", "daily_template"
     )
     if remote:
-        make_remote_call(f"makedailpage {daysoffset}")
+        make_remote_call(f"makedailpage --dayoffset={daysoffset}")
         print(LocalToRemote(new_file))
     else:
         print(new_file)
@@ -97,7 +100,7 @@ def MakeWeeklyReport(weekoffset: int = 0, remote: bool = False):
     # Make to sart of week.
     new_file, path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
     if remote:
-        make_remote_call(f"makeweeklyreport {weekoffset}")
+        make_remote_call(f"makeweeklyreport --weekofset={weekoffset}")
         print(LocalToRemote(new_file))
     else:
         print(new_file)
