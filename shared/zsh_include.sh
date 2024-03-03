@@ -31,6 +31,7 @@ source_if_exists ~/homebrew/etc/profile.d/z.sh
 PATH+=:~/.local/bin
 alias ghgmd='gh gist create --filename=out.md --'
 alias alf="open '/Applications/Alfred 5.app/'"
+alias charge="system_profiler SPPowerDataType  | grep Watt"
 alias imgls='timg --grid 4 --title'
 alias lg='lazygit'
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
@@ -39,6 +40,7 @@ alias weather="curl wttr.in/seattle"
 alias dwc='pushd ~/gits/settings && python3 -c "from vim_python import * ;WCDailyPage()" && pushd ~/gits/igor2/750words '
 alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCommitDailyPage()" && pushd ~/gits/igor2/750words '
 alias sl='ssh lightsail'
+alias slnf='ssh lightsail_no_forward'
 alias tam='tmux attach-session -t main || tmux new-session -s main'
 alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
 
