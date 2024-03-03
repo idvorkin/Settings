@@ -97,7 +97,7 @@ def MakeWeeklyReport(weekoffset: int = 0, remote: bool = False):
     # Make to sart of week.
     new_file, path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
     if remote:
-        make_remote_call(f"makedailpage {weekoffset}")
+        make_remote_call(f"makeweeklyreport {weekoffset}")
         print(LocalToRemote(new_file))
     else:
         print(new_file)
