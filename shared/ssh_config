@@ -3,15 +3,21 @@
 
 
 Host lightsail_no_forward
+    # run settings/clip_forward on remote machine
     HostName shell.idvork.in
     User ec2-user
+    RemoteForward 2224 127.0.0.1:2224 # clipboard copy
+    RemoteForward 2225 127.0.0.1:2225 # clipboard paste
+    RemoteForward 20000 127.0.0.1:20000 # auto ssh
 
 
 Host lightsail_clipboard
+    # run settings/clip_forward on remote machine
     HostName shell.idvork.in
     User ec2-user
     RemoteForward 2224 127.0.0.1:2224
     RemoteForward 2225 127.0.0.1:2225
+    RemoteForward 20000 127.0.0.1:20000 # auto ssh
 
 Host lightsail
     # For use w/Bink
