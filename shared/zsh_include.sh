@@ -238,7 +238,7 @@ function export_secrets()
 alias chh='wchat messages'
 alias thr='wchat threads'
 alias grtd="grep ☐"
-alias copy_secrets_from_shell='scp lightsail:/home/ec2-user/gits/igor2/secretBox.json ~/gits/igor2/secretBox.json"
+alias copy_secrets_from_shell='scp lightsail:/home/ec2-user/gits/igor2/secretBox.json ~/gits/igor2/secretBox.json'
 function rtd()
 {
     ssh lightsail_no_forward cat /home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep ☐ | pbcopy
