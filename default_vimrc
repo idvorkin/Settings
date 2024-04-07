@@ -634,7 +634,7 @@ function! MakeGist()
 endfunction
 
 command! IgGist :call MakeGist()
-command! IgConvo :call OpenConvoFile()
+command! IgOldConvo :call OpenConvoFile()
 command! IgWeekly :n! `~/settings/vim_python.py makeweeklyreport`
 command! IgRWeekly :n! `~/settings/vim_python.py makeweeklyreport --remote`
 command! IgRYesterweek :n! `~/settings/vim_python.py makeweeklyreport --remote --weekoffset -1`

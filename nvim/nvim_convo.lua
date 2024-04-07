@@ -25,14 +25,14 @@ local function SetupPopup()
     })
 
     popup: update_layout({
-        relative = "win",
+        relative = "editor",
         size = {
-            width = 80,
-            height = 40,
+            width = 0.9,
+            height = 0.7,
         },
         position = {
-            row = 30,
-            col = 20,
+            row = 5,
+            col = 5,
         },
     })
     --popup:on("BufLeave", function()
@@ -60,4 +60,4 @@ function OpenConvo()
 end
 
 -- Map to vim command Ig2 to open the Convo popup
-vim.cmd('command! -nargs=0 Ig2 lua OpenConvo()')
+vim.cmd('command! -nargs=0 IgConvo lua OpenConvo()')
