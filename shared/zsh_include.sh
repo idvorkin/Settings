@@ -31,7 +31,11 @@ source_if_exists ~/homebrew/etc/profile.d/z.sh
 PATH+=:~/.local/bin
 alias ghgmd='gh gist create --filename=out.md --'
 alias alf="open '/Applications/Alfred 5.app/'"
-alias charge="system_profiler SPPowerDataType  | grep Watt"
+function charge() {
+    pmset -g batt
+    system_profiler SPPowerDataType  | grep Watt
+}
+
 alias imgls='timg --grid 4 --title'
 alias lg='lazygit'
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
