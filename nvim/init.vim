@@ -71,3 +71,4 @@ cab DdG  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k <CR>:!g
 cab DdC :lua GitCommitAndPush()<CR>
 
 :luafile ~/.config/nvim/nvim_init.lua
+:luafile ~/.config/nvim/nvim_convo.lua
