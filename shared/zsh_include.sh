@@ -230,6 +230,7 @@ function esecret_jq() {
 function export_secrets()
 {
     esecret_jq LANGCHAIN_API_KEY
+    esecret_jq ANTHROPIC_API_KEY
     export OPENAI_API_KEY=$(jq -r '.openai' ~/gits/igor2/secretBox.json)
     export GOOGLE_API_KEY=$(jq -r '.googleapikey' ~/gits/igor2/secretBox.json)
     export BRAVE_SEARCH_API_KEY=$(jq -r '.brave' ~/gits/igor2/secretBox.json)
