@@ -947,6 +947,7 @@ function! SetupGPT()
     : cab ecsum call GptComplete("summary")<CR>
     : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
     : cab ffix % call GptComplete("fix", "", "GptSinkReplace")<CR>
+    : cab flfix % !python3 ~/gits/nlp/fix.py
     :cab egpt  !~/gpt3.py
 
     " Select section
