@@ -141,6 +141,9 @@ python3 -m pip install elevenlabs
 # On the mac can install tensor flow as follows
 python3 -m pip install tensorflow-macos
 
+python3 -m  pip install httpx
+python3 -m  pip install langchain langchain-openai langchain_anthropic  openai langchainhub tiktoken
+
 
 # Install from cargo incase on linux docker on osx which does not support bottles
 curl https://sh.rustup.rs -sSf | sh
