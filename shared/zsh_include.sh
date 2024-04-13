@@ -225,16 +225,16 @@ function pbfix()
 
 function esecret_jq() {
     export "$1"=$(jq -r .$1 ~/gits/igor2/secretBox.json)
-    export | grep $1
+    # list the first 10 chars of the secret, which follows the = sign
+    export SCRATCH=`export | grep $1`
+    echo ${SCRATCH:0:10},${SCRATCH:20:4}
 }
 function export_secrets()
 {
     esecret_jq LANGCHAIN_API_KEY
     esecret_jq ANTHROPIC_API_KEY
-    export OPENAI_API_KEY=$(jq -r '.openai' ~/gits/igor2/secretBox.json)
+    esecret_jq OPENAI_API_KEY
     export GOOGLE_API_KEY=$(jq -r '.googleapikey' ~/gits/igor2/secretBox.json)
-    export BRAVE_SEARCH_API_KEY=$(jq -r '.brave' ~/gits/igor2/secretBox.json)
-    export BING_SUBSCRIPTION_KEY=$(jq -r '.bing' ~/gits/igor2/secretBox.json)
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
     echo $OPENAI_API_KEY
 }
