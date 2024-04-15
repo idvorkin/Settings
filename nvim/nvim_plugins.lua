@@ -269,7 +269,7 @@ local git_plugins = {
     --  DiffViewOpen
     "sindrets/diffview.nvim",
     "NeogitOrg/neogit",
-    "pwntester/octo.nvim"
+    -- "pwntester/octo.nvim"
 }
 plugins = appendTables(plugins, git_plugins)
 
