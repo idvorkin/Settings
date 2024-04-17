@@ -234,6 +234,7 @@ function export_secrets()
     esecret_jq LANGCHAIN_API_KEY
     esecret_jq ANTHROPIC_API_KEY
     esecret_jq OPENAI_API_KEY
+    esecret_jq VAPI_API_KEY
     export GOOGLE_API_KEY=$(jq -r '.googleapikey' ~/gits/igor2/secretBox.json)
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
 }
