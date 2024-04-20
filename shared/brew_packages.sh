@@ -150,6 +150,7 @@ curl https://sh.rustup.rs -sSf | sh
 cargo install zoxide bat duf exa mcfly dua procs htop starship dua
 
 brew install --cask google-cloud-sdk
+brew install dustinblackman/tap/oatmeal
 
 # install azure functions
 

@@ -298,6 +298,20 @@ plugins = appendTables(plugins, {
     "Olical/conjure",
     "PaterJason/cmp-conjure",
 })
+plugins = appendTables(plugins, {
+        {
+        "dustinblackman/oatmeal.nvim",
+        cmd = { "Oatmeal" },
+        keys = {
+            { "<leader>om", mode = "n", desc = "Start Oatmeal session" },
+        },
+        opts = {
+            backend = "ollama",
+            model = "codellama:latest",
+        },
+    }
+}
+)
     -- gpt plugin
     local gpt2 =  {
         {
