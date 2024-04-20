@@ -149,6 +149,8 @@ python3 -m  pip install langchain langchain-openai langchain_anthropic  openai l
 curl https://sh.rustup.rs -sSf | sh
 cargo install zoxide bat duf exa mcfly dua procs htop starship dua
 
+brew install --cask google-cloud-sdk
+
 # install azure functions
 
 brew tap azure/functions
