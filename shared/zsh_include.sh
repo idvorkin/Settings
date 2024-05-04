@@ -17,9 +17,6 @@ function eval_w_param_if_exists() {
     [ -f $1 ] && eval $($1 $2)
 }
 
-# TODO: consider doing this in a loop as it's really annoying to have 3 configurations
-eval_w_param_if_exists ~/homebrew/bin/brew shellenv
-eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
 
 export EDITOR=nvim
 
@@ -50,6 +47,7 @@ alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
 
 alias ghe="gh copilot explain"
 alias ghs="gh copilot suggest"
+
 
 # Looks like pbcopy just works over ssh/mosh now!
 # alias rpbcopy='~/settings/rpbcopy.sh'
@@ -130,6 +128,7 @@ function do_wsl() {
 
 }
 
+
 if [[ "$(uname -a)" =~ "microsoft" ]]; then
     do_wsl
 fi
@@ -178,8 +177,6 @@ function work_cli()
     cal dump
 }
 
-eval "$(zoxide init zsh)"
-eval "$(mcfly init zsh)"
 
 
 
@@ -240,6 +237,8 @@ function export_secrets()
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
 }
 
+echo "Random"
+
 # Some useful work aliases
 alias chh='wchat messages'
 alias thr='wchat threads'
@@ -284,7 +283,13 @@ bindkey -M viins 'fj' vi-cmd-mode
 source ~/settings/shared/fzf_git_keybindings.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+echo "starting evals"
+# TODO: consider doing this in a loop as it's really annoying to have 3 configurations
+eval_w_param_if_exists ~/homebrew/bin/brew shellenv
+eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
 export STARSHIP_CONFIG=~/settings/shared/starship.toml
+eval "$(zoxide init zsh)"
+eval "$(mcfly init zsh)"
 eval "$(starship init zsh)"
 eval $(thefuck --alias)
 eval "$(rbenv init -)"
