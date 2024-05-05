@@ -152,6 +152,12 @@ cargo install zoxide bat duf exa mcfly dua procs htop starship dua
 brew install --cask google-cloud-sdk
 brew install dustinblackman/tap/oatmeal
 
+# Install carapace
+
+brew tap rsteube/homebrew-tap
+brew install rsteube/tap/carapace
+
+
 # install azure functions
 
 brew tap azure/functions
