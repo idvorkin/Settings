@@ -226,6 +226,11 @@ function esecret_jq() {
     export SCRATCH=`export | grep $1`
     echo ${SCRATCH:0:10},${SCRATCH:20:4}
 }
+
+function curl_md() {
+    curl $1 | pandoc -f html -t markdown
+}
+
 function export_secrets()
 {
     esecret_jq LANGCHAIN_API_KEY
