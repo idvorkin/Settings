@@ -142,7 +142,8 @@ python3 -m pip install elevenlabs
 python3 -m pip install tensorflow-macos
 
 python3 -m  pip install httpx
-python3 -m  pip install langchain langchain-openai langchain_anthropic  openai langchainhub tiktoken
+# stuff used by the NLP project
+python3 -m  pip install langchain langchain-openai langchain_anthropic  openai langchainhub tiktoken wordcloud requests html2text
 
 
 # Install from cargo incase on linux docker on osx which does not support bottles
