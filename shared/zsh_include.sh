@@ -296,7 +296,7 @@ export STARSHIP_CONFIG=~/settings/shared/starship.toml
 eval "$(zoxide init zsh)"
 eval "$(mcfly init zsh)"
 eval "$(starship init zsh)"
-eval $(thefuck --alias)
+eval $(thefuck --alias --enable-experimental-instant-mode)
 eval "$(rbenv init -)"
 
 echo ++zfunc
