@@ -238,9 +238,8 @@ function! SetupPlugins()
     Bundle 'flazz/vim-colorschemes'
     Bundle 'dhruvasagar/vim-table-mode'
     Bundle 'atelierbram/vim-colors_atelier-schemes'
-    " Comment \cc
+    " Comment gc
     " Uncomment \cu
-    Bundle 'scrooloose/nerdcommenter'
 
     " I use this instead of FZF or Ctrl-P
     "Bundle 'Shougo/denite.nvim'
