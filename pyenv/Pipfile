@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-
 icecream = "*"
 loguru = "*"
 arrow = "*"
@@ -48,7 +47,6 @@ sparklines = "*"
 ruff = "*"
 pre-commit = "*"
 ruff-lsp = "*"
-
 torch= "*"
 torchvision="*"
 opencv-python="*"
@@ -63,11 +61,9 @@ langsmith = "*"
 langchain-openai = "*"
 langchain-anthropic = "*"
 langchain-groq= "*"
-
-
 # On the mac can install tensor flow as follows
 # python3 -m pip install tensorflow-macos
-
+idvorkin-nlp = {file = "../../gits/nlp"}
 
 [dev-packages]
 

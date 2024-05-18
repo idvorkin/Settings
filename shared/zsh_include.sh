@@ -307,5 +307,7 @@ export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense' # optional
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
 
+cd ~/settings/pyenv
+pipenv shell
 echo "zsh_include complete"
 
