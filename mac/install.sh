@@ -10,8 +10,8 @@ brew install google-chrome  iterm2	skype the-unarchiver
 brew install visual-studio-code hammerspoon
 brew install db-browser-for-sqlite
 brew install finicky
-brew install bettersnaptool
 brew install bartender
+brew install --cask rectangle
 brew install --cask alt-tab
 brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code docker vlc microsoft-edge 1password meetingbar
 
