@@ -66,6 +66,7 @@ langchain-groq= "*"
 # python3 -m pip install tensorflow-macos
 idvorkin-nlp = {file = "../../gits/nlp"}
 langchain-chroma = "*"
+html2text = "*"
 
 [dev-packages]
 

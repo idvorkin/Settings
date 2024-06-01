@@ -249,7 +249,7 @@ alias chh='wchat messages'
 alias thr='wchat threads'
 alias grtd="grep ☐"
 # open the output of pbpaste
-alias pbo="open $(pbpaste)"
+# alias pbo="open $(pbpaste)"
 alias copy_secrets_from_shell='scp lightsail:/home/ec2-user/gits/igor2/secretBox.json ~/gits/igor2/secretBox.json'
 function rtd()
 {
