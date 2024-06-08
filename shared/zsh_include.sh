@@ -308,6 +308,9 @@ zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
 
 cd ~/settings/pyenv
-pipenv shell
+source $(pipenv --venv)/bin/activate
+# OK, Pipenv shell creates a subshell which messes up nvim window name plugin
+# Found this activate comment in Stack Overflow - which works around well:
+# https://github.com/christoomey/vim-tmux-navigator/issues/230#issuecomment-473726444
 echo "zsh_include complete"
 
