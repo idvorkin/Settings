@@ -307,8 +307,13 @@ export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense' # optional
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
 
-cd ~/settings/pyenv
-source $(pipenv --venv)/bin/activate
+pushd ~/settings/pyenv
+# Can't activate it in the directory or won't work
+activate_cmd="$(pipenv --venv)/bin/activate"
+popd
+source $activate_cmd
+echo source $activate_cmd
+
 # OK, Pipenv shell creates a subshell which messes up nvim window name plugin
 # Found this activate comment in Stack Overflow - which works around well:
 # https://github.com/christoomey/vim-tmux-navigator/issues/230#issuecomment-473726444
