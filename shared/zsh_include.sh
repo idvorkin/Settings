@@ -308,11 +308,12 @@ zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
 
 pushd ~/settings/pyenv
-# Can't activate it in the directory or won't work
-activate_cmd="$(pipenv --venv)/bin/activate"
+# Can't activate it in the directory or won't work?
+# Some reason need to activate it outside the script -not worth figuring out
+_activate_cmd="$(pipenv --venv)/bin/activate"
+alias activate_pyenv=". $_activate_cmd"
 popd
-source $activate_cmd
-echo source $activate_cmd
+
 
 # OK, Pipenv shell creates a subshell which messes up nvim window name plugin
 # Found this activate comment in Stack Overflow - which works around well:
