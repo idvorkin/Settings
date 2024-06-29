@@ -61,7 +61,8 @@ ln -s -f ~/settings/shared/ipython_config.py  ~/.ipython/ipython_config.py
 ln -s -f ~/settings/shared/ipython_config.py  ~/.ipython/profile_default/ipython_config.py
 ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
 ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
-ln -s -f ~/settings/config_carapace/ ~/.config/carapace
+ln -s -f ~/settings/config/carapace/ ~/.config/carapace
+ln -s -f ~/settings/config/yazi ~/.config/yazi
 
 (echo '# Added by bootstrap.sh') >> ~/.zshrc
 (echo 'plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)') >> ~/.zshrc
