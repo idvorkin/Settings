@@ -41,6 +41,7 @@ alias weather="curl wttr.in/seattle"
 alias dwc='pushd ~/gits/settings && python3 -c "from vim_python import * ;WCDailyPage()" && pushd ~/gits/igor2/750words '
 alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCommitDailyPage()" && pushd ~/gits/igor2/750words '
 alias sl='ssh lightsail'
+alias asl='autossh -M 20000 lightsail_no_forward'
 alias slnf='ssh lightsail_no_forward'
 alias tam='tmux attach-session -t main || tmux new-session -s main'
 alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
@@ -182,6 +183,7 @@ function work_cli()
 
 # Set alias that are always better
 alias_if_exists cat bat
+alias_if_exists ranger yazi
 alias_if_exists ls exa
 alias_if_exists df duf
 alias_if_exists top htop
