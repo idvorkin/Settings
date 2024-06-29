@@ -20,7 +20,6 @@ git \
 yq \
 cpulimit \
 dua-cli \
-ranger \
 fasd \
 docker \
 png-quant \
@@ -94,6 +93,8 @@ brew_packages="$brew_packages pandoc" # Convert between file formats
 brew_packages="$brew_packages glow"
 brew_packages="$brew_packages rich"
 
+brew_packages="$brew_packages yazi" # CLI file viewer
+
 brew_packages="$brew_packages autossh"  # auto reconnect - like MOSH, but works better w/NVIM
 
 echo $brew_packages
@@ -148,7 +149,7 @@ python3 -m  pip install langchain langchain-openai langchain_anthropic  openai l
 
 # Install from cargo incase on linux docker on osx which does not support bottles
 curl https://sh.rustup.rs -sSf | sh
-cargo install zoxide bat duf exa mcfly dua procs htop starship dua
+cargo install zoxide bat duf exa mcfly dua procs htop starship dua yazi
 
 brew install --cask google-cloud-sdk
 brew install dustinblackman/tap/oatmeal
