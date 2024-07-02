@@ -62,6 +62,7 @@ langsmith = "*"
 langchain-openai = "*"
 langchain-anthropic = "*"
 langchain-groq= "*"
+pudb = "*"
 # On the mac can install tensor flow as follows
 # python3 -m pip install tensorflow-macos
 idvorkin-nlp = {file = "../../gits/nlp"}
