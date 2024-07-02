@@ -1,9 +1,10 @@
-#!python3
+#!python3.11
 
 import typer
 import subprocess
 from pathlib import Path
-from icecream import ic
+# from icecream import ic
+import json
 
 app = typer.Typer(help="A Yabai helper")
 
@@ -55,13 +56,10 @@ def alfred():
     # start by reflecting to find all commands in app.
     # all_commands = app.
     commands = [c.callback.__name__.replace("-", "_") for c in app.registered_commands]
-    ic(commands)
-    a = app
-    # import pudb
-    # pudb.set_trace()
-    ic(a)
-    # print ('{"items": [')
-    # print ('{"title": "Restart", "subtitle": "Restart the yabai service", "arg": "restart"},')
+    # ic(commands)
+    dicts = {"items":[{"title": c, "subtitle": c, "arg": c} for c in commands]}
+    # output json to stdout
+    print (json.dumps(dicts,indent=4))
 
 
 if __name__ == "__main__":
