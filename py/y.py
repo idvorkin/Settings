@@ -3,6 +3,7 @@
 import typer
 import subprocess
 from pathlib import Path
+from icecream import ic
 
 app = typer.Typer(help="A Yabai helper")
 
@@ -43,8 +44,24 @@ def start():
     call_yabi("--start-service")
 
 
+@app.command()
 def stop():
     call_yabi("--stop-service")
+
+
+@app.command()
+def alfred():
+    #  Build a json of commands to be called from an alfred plugin workflow
+    # start by reflecting to find all commands in app.
+    # all_commands = app.
+    commands = [c.callback.__name__.replace("-", "_") for c in app.registered_commands]
+    ic(commands)
+    a = app
+    # import pudb
+    # pudb.set_trace()
+    ic(a)
+    # print ('{"items": [')
+    # print ('{"title": "Restart", "subtitle": "Restart the yabai service", "arg": "restart"},')
 
 
 if __name__ == "__main__":
