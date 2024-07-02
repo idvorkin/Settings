@@ -316,6 +316,8 @@ _activate_cmd="$(pipenv --venv)/bin/activate"
 alias activate_pyenv=". $_activate_cmd"
 popd
 
+alias y="~/settings/py/y.py"
+
 
 # OK, Pipenv shell creates a subshell which messes up nvim window name plugin
 # Found this activate comment in Stack Overflow - which works around well:
