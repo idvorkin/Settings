@@ -33,10 +33,12 @@ def hflip():
     call_yabi("-m space --mirror y-axis")
 
 
+@app.command()
 def restart():
     call_yabi("--restart-service")
 
 
+@app.command()
 def start():
     call_yabi("--start-service")
 
