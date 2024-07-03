@@ -335,6 +335,20 @@ plugins = appendTables(plugins, {
     "Olical/conjure",
     "PaterJason/cmp-conjure",
 })
+
+plugins = appendTables(plugins, {
+    {
+      "iamcco/markdown-preview.nvim",
+      cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+      build = "cd app && yarn install",
+      init = function()
+        vim.g.mkdp_filetypes = { "markdown" }
+      end,
+      ft = { "markdown" },
+    }
+})
+
+
 plugins = appendTables(plugins, {
         {
         "dustinblackman/oatmeal.nvim",
