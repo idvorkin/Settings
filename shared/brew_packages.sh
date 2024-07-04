@@ -35,9 +35,8 @@ docui \
 aws-shell \
 ffmpeg \
 fselect \
-glances \
-gotop \
 htop \
+btop \
 imagemagick \
 jq \
 jless \
