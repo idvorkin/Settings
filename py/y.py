@@ -16,7 +16,7 @@ _ = """
 """
 
 
-def call_yabai(prompt)->CompletedProcess:
+def call_yabai(prompt) -> CompletedProcess:
     yabi_root = Path("~/homebrew/bin/yabai/").expanduser()
 
     # Split the prompt to run the path
@@ -35,28 +35,40 @@ def call_yabai(prompt)->CompletedProcess:
 
 def send_key(key_code):
     # https://superuser.com/questions/368026/can-i-use-a-terminal-command-to-switch-to-a-specific-space-in-os-x-10-6
-    out = subprocess.run(["osascript", "-e",  f'tell application "System Events" to key code {key_code} using control down'])
-    ic (out)
+    out = subprocess.run(
+        [
+            "osascript",
+            "-e",
+            f'tell application "System Events" to key code {key_code} using control down',
+        ]
+    )
+    ic(out)
+
 
 @app.command()
 def hflip():
     call_yabai("-m space --mirror y-axis")
 
+
 @app.command()
 def swest():
     send_key(123)
+
 
 @app.command()
 def seast():
     send_key(124)
 
+
 @app.command()
 def fwest():
     call_yabai("-m window --focus west")
 
+
 @app.command()
 def feast():
     call_yabai("-m window --focus east")
+
 
 @app.command()
 def restart():
@@ -71,6 +83,17 @@ def start():
 @app.command()
 def stop():
     call_yabai("--stop-service")
+
+
+@app.command()
+def rotate():
+    call_yabai("-m space --rotate 90")
+
+
+@app.command()
+def zoom():
+    call_yabai("-m window --toggle zoom-fullscreen")
+
 
 @app.command()
 def cycle():
@@ -90,6 +113,7 @@ def cycle():
         swap_result = call_yabai(f"-m window {win_id} --swap prev")
         if swap_result.returncode != 0:
             break
+
 
 @app.command()
 def legacy_cycle():
@@ -116,7 +140,7 @@ def alfred():
     #  Build a json of commands to be called from an alfred plugin workflow
     # start by reflecting to find all commands in app.
     # all_commands = app.
-    commands = [c.callback.__name__.replace("-", "_") for c in app.registered_commands] #type:ignore
+    commands = [c.callback.__name__.replace("-", "_") for c in app.registered_commands]  # type:ignore
     # ic(commands)
     dicts = {"items": [{"title": c, "subtitle": c, "arg": c} for c in commands]}
     # output json to stdout
