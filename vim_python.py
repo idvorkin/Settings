@@ -1,4 +1,4 @@
-#!python3
+#!python3.11
 
 from datetime import datetime, timedelta
 from os import path, chdir
