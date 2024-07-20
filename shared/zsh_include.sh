@@ -297,7 +297,7 @@ eval_w_param_if_exists ~/homebrew/bin/brew shellenv
 eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
 export STARSHIP_CONFIG=~/settings/shared/starship.toml
 eval "$(zoxide init zsh)"
-export MCFLY_DEBUG=0
+# unset MCFLY_DEBUG=
 eval "$(mcfly init zsh)"
 eval "$(starship init zsh)"
 eval "$(thefuck --alias)"
