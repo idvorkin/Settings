@@ -66,5 +66,14 @@
 
 [diff]
     colorMoved = default
+
+[difftool]
+    prompt = false
+
+[difftool "difftastic"]
+        cmd = difft "$LOCAL" "$REMOTE"
+
+[pager]
+        difftool = true
 #
 # vim: set ft=gitconfig:
