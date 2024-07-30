@@ -164,10 +164,10 @@ auto-commits: false
 #attribute-author: true
 
 ## Attribute aider commits in the git committer name (default: True)
-#attribute-committer: true
+attribute-committer: true
 
 ## Prefix commit messages with 'aider: ' (default: False)
-#attribute-commit-message: false
+attribute-commit-message: true
 
 ## Perform a dry run without modifying files (default: False)
 #dry-run: false
@@ -200,8 +200,7 @@ auto-commits: false
 # Other Settings:
 
 ## Use VI editing mode in the terminal (default: False)
-#vim: false
-
+vim: true
 ## Specify the language for voice using ISO 639-1 code (default: auto)
 #voice-language: en
 
