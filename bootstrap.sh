@@ -60,6 +60,7 @@ ln -s -f ~/settings/shared/.vimperatorrc ~/.vimperatorrc
 ln -s -f ~/settings/shared/ipython_config.py  ~/.ipython/ipython_config.py
 ln -s -f ~/settings/shared/ipython_config.py  ~/.ipython/profile_default/ipython_config.py
 ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
+ln -s -f ~/settings/shared/aider.conf.yml ~/.aider.conf.yml
 ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 
 # Todo consider enumerating the directory and linking all of them
