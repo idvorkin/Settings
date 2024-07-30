@@ -298,7 +298,8 @@ eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
 export STARSHIP_CONFIG=~/settings/shared/starship.toml
 eval "$(zoxide init zsh)"
 # unset MCFLY_DEBUG=
-eval "$(mcfly init zsh)"
+# eval "$(mcfly init zsh)"
+eval "$(atuin init zsh --disable-up-arrow)"
 eval "$(starship init zsh)"
 eval "$(thefuck --alias)"
 eval "$(rbenv init -)"
