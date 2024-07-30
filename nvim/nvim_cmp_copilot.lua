@@ -11,6 +11,15 @@ npm install -g typescript typescript-language-server
 -- ]]
 
 
+-- Hymn, now I can use LSP install, which is cool.
+
+require('mason').setup({})
+require('mason-lspconfig').setup({
+  handlers = {
+    require('lsp-zero').default_setup,
+  },
+})
+
 -- Setup LSP Config
 local lspconfig = require("lspconfig")
 lspconfig.racket_langserver.setup{}
@@ -154,17 +163,6 @@ cmp.setup{
 
 }
 
-require('mason').setup({})
-require('mason-lspconfig').setup({
-  -- Replace the language servers listed here
-  -- with the ones you want to install
-  ensure_installed = {'tsserver', 'rust_analyzer'},
-  handlers = {
-    function(server_name)
-      require('lspconfig')[server_name].setup({})
-    end,
-  },
-})
 
 
 -- `/` cmdline setup.
