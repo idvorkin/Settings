@@ -615,7 +615,7 @@ function! OpenConvoFile()
         execute bufwinnr(bufnum) . 'wincmd w'
     " If the '.convo' buffer doesn't exist, create a new one.
     else
-        execute 'new  `~/settings/vim_python.py make-convo` '
+        execute 'new  `vim_python make-convo` '
     endif
     " Jump to the bottom of the file
     normal G

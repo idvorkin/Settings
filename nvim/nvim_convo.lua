@@ -48,7 +48,7 @@ function OpenConvo()
     win :mount()
     vim.api.nvim_set_current_win(win.winid)
     if G_CONVO_PATH == nil then
-        vim.cmd('e!  `~/settings/vim_python.py make-convo` ')
+        vim.cmd('e!  `vim_python make-convo` ')
         G_CONVO_PATH = vim.fn.expand('%')
         print('creating '.. G_CONVO_PATH)
     else
