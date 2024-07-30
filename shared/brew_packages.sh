@@ -5,7 +5,6 @@ zoxide \
 bat \
 exa \
 jq \
-mcfly \
 fd \
 procs \
 lazygit \
@@ -95,6 +94,8 @@ brew_packages="$brew_packages rich"
 brew_packages="$brew_packages yazi" # CLI file viewer
 
 brew_packages="$brew_packages autossh"  # auto reconnect - like MOSH, but works better w/NVIM
+
+brew_packages="$brew_packages atuin"  # shell history, like mcfly, but slower
 
 echo $brew_packages
 
