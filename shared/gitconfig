@@ -66,6 +66,7 @@
 
 [diff]
     colorMoved = default
+    tool = difftastic
 
 [difftool]
     prompt = false
