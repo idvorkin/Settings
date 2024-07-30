@@ -242,6 +242,7 @@ function export_secrets()
     esecret_jq GOOGLE_API_KEY
     esecret_jq GROQ_API_KEY
     esecret_jq PPLX_API_KEY
+    esecret_jq ZEP_API_KEY
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
 }
 
