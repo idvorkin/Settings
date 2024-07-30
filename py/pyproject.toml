@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "igor_scripts"
+version = "0.1.0"
+description = "A collection of Igor's Python scripts"
+authors = [{name = "Igor Dvorkin"}]
+dependencies = [
+    "typer",
+    "rich",
+]
+
+[tool.setuptools]
+py-modules = ["y", "vim_python"]
+
+[project.scripts]
+y = "y:app"
+vim_python = "vim_python:app"
+

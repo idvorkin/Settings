@@ -6,6 +6,7 @@ import typer
 from pathlib import Path
 import random
 import subprocess
+from zoneinfo import ZoneInfo
 
 app = typer.Typer()
 
@@ -48,10 +49,7 @@ def MakeTemplatePage(date, directory, template_name):
 
 
 def NowPST():
-    # groan no timzone in standard library - make sure to install pytz.
-    from pytz import timezone
-
-    return datetime.now().astimezone(timezone("US/Pacific"))
+    return datetime.now(ZoneInfo("America/Los_Angeles"))
 
 
 def LocalToRemote(file):
