@@ -309,7 +309,7 @@ echo ++zfunc
 for func in ~/.zfunc/*; do source $func; done
 echo --zfunc
 
-export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense' # optional
+export CARAPACE_BRIDGES='zsh'
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
 
@@ -321,6 +321,10 @@ alias activate_pyenv=". $_activate_cmd"
 popd
 
 alias y="~/settings/py/y.py"
+function tyr ()
+{
+    typer $1 run $2 $3 $4 $5 $6 $7
+}
 
 
 # OK, Pipenv shell creates a subshell which messes up nvim window name plugin
