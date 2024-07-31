@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 icecream = "*"
 loguru = "*"
+azure-cosmos = "*"
 arrow = "*"
 numpy = "*"
 pytz = "*"
