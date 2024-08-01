@@ -946,7 +946,7 @@ function! SetupGPT()
     : cab ecsum call GptComplete("summary")<CR>
     : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
     : cab ffix % call GptComplete("fix", "", "GptSinkReplace")<CR>
-    : cab flfix % !python3.11 ~/gits/nlp/fix.py<CR>
+    : cab flfix % !fix --llama <CR>
     :cab egpt  !~/gpt3.py
 
     " Select section
@@ -997,7 +997,7 @@ autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/
 
 function! MakeCommitMesage()
     let tempfile=tempname()
-    let gpt_from_git_diff = '!git diff --staged | ~/gits/nlp/commit.py'
+    let gpt_from_git_diff = '!git diff --staged | commit'
     execute gpt_from_git_diff . ' > ' . shellescape(tempfile)
     try
         silent execute 'read' tempfile
