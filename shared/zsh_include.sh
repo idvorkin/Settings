@@ -193,7 +193,7 @@ alias_if_exists du dua
 alias_if_other_exists cd z zoxide
 alias_if_exists ps procs
 # On mac, gpt is in sbin, use the installed from idvorkin_nlp version instead
-alias_if_exists gpt "~/.local/bin/gpt"
+alias_if_exists gpt ~/.local/bin/gpt
 
 # Igor setups use Soed and Sodot as useful aliases
 alias Soed='nvim ~/settings/shared/zsh_include.sh'
