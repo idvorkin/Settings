@@ -324,13 +324,6 @@ _activate_cmd="$(pipenv --venv)/bin/activate"
 alias activate_pyenv=". $_activate_cmd"
 popd
 
-alias y="~/settings/py/y.py"
-function tyr ()
-{
-    typer $1 run $2 $3 $4 $5 $6 $7
-}
-
-
 # OK, Pipenv shell creates a subshell which messes up nvim window name plugin
 # Found this activate comment in Stack Overflow - which works around well:
 # https://github.com/christoomey/vim-tmux-navigator/issues/230#issuecomment-473726444
