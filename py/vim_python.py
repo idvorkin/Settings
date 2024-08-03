@@ -105,6 +105,30 @@ def MakeWeeklyReport(weekoffset: int = 0, remote: bool = False):
 
 
 @app.command()
+def profile_io(n: int = 3):
+    """Write a temporary file and read it back, and print the timings"""
+    import time
+    import tempfile
+
+    for i in range(n + 1):
+        print("Starting", i)
+        start_time = time.time()
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            tmp_file.write(b"This is a test file")
+            tmp_file_path = tmp_file.name
+        write_time = time.time()
+
+        with open(tmp_file_path, "r") as file:
+            content = file.read()
+
+        read_time = time.time()
+
+        write_duration = write_time - start_time
+        read_duration = read_time - write_time
+        print(f"{i}: Write/Read:  {write_duration:.5f}/{read_duration:.5f} seconds")
+
+
+@app.command()
 def make_convo():
     import os
     import shutil
