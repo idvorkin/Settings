@@ -96,9 +96,13 @@ brew_packages="$brew_packages yazi" # CLI file viewer
 brew_packages="$brew_packages autossh"  # auto reconnect - like MOSH, but works better w/NVIM
 
 brew_packages="$brew_packages atuin"  # shell history, like mcfly, but slower
+brew_packages="$brew_packages pipx uv "  # uv is a replacement for pip, and WAAAAAY faster, especially usefulf or pix replacement
 
 echo $brew_packages
 
+pipx install pipxu # pipx upgrade
+
+pipxu install aider-chat # Code Writing helper
 
 # Notes, rust is super slow to compile, so putting that packages last
 
