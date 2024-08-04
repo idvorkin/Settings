@@ -328,6 +328,7 @@ plugins = appendTables(plugins, git_plugins)
 plugins = appendTables(plugins, {
     "hrsh7th/nvim-cmp",
     "hrsh7th/cmp-nvim-lsp",
+    { "stevanmilic/nvim-lspimport" },
     "hrsh7th/cmp-buffer",
     "hrsh7th/cmp-path",
     "hrsh7th/cmp-cmdline",
