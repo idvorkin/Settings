@@ -306,7 +306,7 @@ local git_plugins = {
     --  DiffViewOpen
     "sindrets/diffview.nvim",
     "NeogitOrg/neogit",
-    -- "pwntester/octo.nvim"
+    "pwntester/octo.nvim",
 }
 plugins = appendTables(plugins, git_plugins)
 
@@ -319,11 +319,12 @@ plugins = appendTables(plugins, git_plugins)
 
 -- cmp and friends
 plugins = appendTables(plugins, {
+    "hrsh7th/nvim-cmp",
     "hrsh7th/cmp-nvim-lsp",
     "hrsh7th/cmp-buffer",
     "hrsh7th/cmp-path",
-    "hrsh7th/nvim-cmp",
     "hrsh7th/cmp-cmdline",
+    "petertriho/cmp-git",
     "zbirenbaum/copilot.lua",
     "zbirenbaum/copilot-cmp",
     "neovim/nvim-lspconfig",

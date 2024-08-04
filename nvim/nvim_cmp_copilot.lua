@@ -176,11 +176,23 @@ cmp.setup.cmdline('/', {
 cmp.setup.cmdline(':', {
   mapping = cmp.mapping.preset.cmdline(),
   sources = cmp.config.sources({
-    { name = 'path' }
+      { name = 'path' }
   }, {
-    { name = 'cmdline' }
+      { name = 'cmdline' }
   })
 })
+
+-- https://github.com/petertriho/cmp-git
+-- Lets us use # and  : in git commits
+cmp.setup.filetype('gitcommit', {
+    sources = cmp.config.sources({
+      { name = 'git' },
+    }, {
+      { name = 'buffer' },
+    })
+ })
+
+ require("cmp_git").setup()
 
 require("copilot").setup{
     auto_trigger = true,

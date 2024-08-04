@@ -98,5 +98,5 @@ local neogit = require('neogit')
 neogit.setup {}
 
 
--- require('octo').setup()
+require('octo').setup()
 require('neodev').setup()
