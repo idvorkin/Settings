@@ -306,7 +306,14 @@ local git_plugins = {
     --  DiffViewOpen
     "sindrets/diffview.nvim",
     "NeogitOrg/neogit",
-    "pwntester/octo.nvim",
+    {"pwntester/octo.nvim",
+        opts = {
+            suppress_missing_scope = {
+                projects_v2 = true,
+            }
+        }
+
+    }
 }
 plugins = appendTables(plugins, git_plugins)
 
