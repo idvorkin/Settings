@@ -247,6 +247,7 @@ function export_secrets()
     esecret_jq PPLX_API_KEY
     esecret_jq ZEP_API_KEY
     esecret_jq TONY_STORAGE_SERVER_API_KEY
+    esecret_jq TONY_API_KEY
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
 }
 
@@ -320,7 +321,7 @@ source <(carapace _carapace)
 pushd ~/settings/pyenv
 # Can't activate it in the directory or won't work?
 # Some reason need to activate it outside the script -not worth figuring out
-_activate_cmd="$(pipenv --venv)/bin/activate"
+_activate_cmd="~/settings/pyenv/bin/activate"
 alias activate_pyenv=". $_activate_cmd"
 popd
 
