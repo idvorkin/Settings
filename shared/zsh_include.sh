@@ -85,7 +85,7 @@ function dda() {
 }
 
 function ijm() {
-    ~/gits/nlp/life.py journal-report $1 $2 $3 $4
+    life journal-report $1 $2 $3 $4
 }
 
 
@@ -96,7 +96,7 @@ function ijv() {
 function journal_gpt() {
     # $1 date
     # $2 command
-     ~/igor_journal.py entries $1  | while read line; do  echo && echo \#\#\#\ $line && ~/igor_journal.py body  $line | ~/gits/nlp/mood.py $2 ; done  | tee ~/tmp/$2_for_$1.md
+     igor_journal entries $1  | while read line; do  echo && echo \#\#\#\ $line && ~/igor_journal.py body  $line | ~/gits/nlp/mood.py $2 ; done  | tee ~/tmp/$2_for_$1.md
 }
 
 function alias_if_exists() {
