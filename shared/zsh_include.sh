@@ -318,12 +318,9 @@ export CARAPACE_BRIDGES='zsh'
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
 
-pushd ~/settings/pyenv
 # Can't activate it in the directory or won't work?
 # Some reason need to activate it outside the script -not worth figuring out
-_activate_cmd="~/settings/pyenv/bin/activate"
-alias activate_pyenv=". $_activate_cmd"
-popd
+alias activate_pyenv=". ~/gits/nlp/.venv/bin/activate"
 
 # OK, Pipenv shell creates a subshell which messes up nvim window name plugin
 # Found this activate comment in Stack Overflow - which works around well:
