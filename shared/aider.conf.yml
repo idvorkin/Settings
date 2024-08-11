@@ -156,7 +156,7 @@ model: gpt-4o-2024-08-06
 #aiderignore: .aiderignore
 
 ## Enable/disable auto commit of LLM changes (default: True)
-auto-commits: false
+auto-commits: true
 ## Enable/disable commits when repo is found dirty (default: True)
 #dirty-commits: true
 
@@ -164,10 +164,11 @@ auto-commits: false
 #attribute-author: true
 
 ## Attribute aider commits in the git committer name (default: True)
-attribute-committer: true
+# attribute-committer: true
 
 ## Prefix commit messages with 'aider: ' (default: False)
-attribute-commit-message: true
+# attribute-commit-message: true
+attribute-commit-message-committer
 
 ## Perform a dry run without modifying files (default: False)
 #dry-run: false
