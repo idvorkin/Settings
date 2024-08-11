@@ -274,6 +274,7 @@ plugins = appendTables(plugins, {
     "tree-sitter/tree-sitter-json",
     "nvim-treesitter/playground",
     "nvim-treesitter/nvim-treesitter",
+   'nvim-treesitter/nvim-treesitter-textobjects',
     "MDeiml/tree-sitter-markdown",
 })
 

@@ -67,6 +67,9 @@ syntax region luaBlock start="do" end="end" fold
 autocmd FileType lua setlocal foldmethod=syntax
 
 cab registers :Telescope registers<CR>
+iab epbyt <esc>:lua InsertYoutubeTemplate()<CR>
+
+
 
 " Common work flow: Switch to current  directory, git write, commit and push.
 cab DdG  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k <CR>:!git commit %:p <CR>:!git push<CR>

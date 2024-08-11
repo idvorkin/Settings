@@ -74,8 +74,18 @@ require'nvim-treesitter.configs'.setup {
     -- Using this option may slow down your editor, and you may see some duplicate highlights.
     -- Instead of true it can also be a list of languages
     -- additional_vim_regex_highlighting = {'markdown','markdown_inline'},
-    additional_vim_regex_highlighting = False
+    additional_vim_regex_highlighting = false
   },
+  textobjects = {
+      select = {
+          enable = true,
+          lookahead = true,
+          keymaps = {
+              ["af"] = "@function.outer",
+              ["if"] = "@function.inner",
+          },
+      },
+  }
 }
 
 dofile(settings_dir.."nvim_cmp_copilot.lua")
@@ -97,6 +107,29 @@ function ZenModeToggleFunction(width)
       width = width_percentage
     }
   })
+end
+
+
+function InsertYouTubeTemplate()
+  -- Get the clipboard content
+  local clipboard = vim.fn.getreg('+')
+
+  -- Pattern to match a YouTube URL and extract the video ID
+  local pattern = 'https://www%.youtube%.com/watch%?v=([%w-_]+)'
+
+  -- Try to match the clipboard content against the pattern
+  local video_id = clipboard:match(pattern)
+
+  if video_id then
+    -- If a match is found, create the template string
+    local template = string.format('{%%include youtube.html src="%s" %%}', video_id)
+
+    -- Insert the template string into the current buffer
+    vim.api.nvim_put({template}, 'c', true, true)
+  else
+    -- If no match is found, print an error message
+    print('Clipboard does not contain a valid YouTube URL.')
+  end
 end
 
 print("nvim_intit.lua loaded")
