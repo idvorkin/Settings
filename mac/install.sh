@@ -1,21 +1,24 @@
 
 # run shared install here.
 
-# Install cask
-brew install caskroom/cask/brew-cask
 # Looks like we need CASK to do things that are findable.
-brew install google-chrome  iterm2	skype the-unarchiver
-brew install visual-studio-code hammerspoon
-brew install db-browser-for-sqlite
-brew install finicky
-brew install bartender
-brew install --cask rectangle
-brew install --cask alt-tab
-brew install --cask karabiner-elements iterm2 alfred bartender alt-tab hammerspoon  visual-studio-code docker vlc microsoft-edge 1password meetingbar
+brew install --cask google-chrome  iterm2	the-unarchiver
+brew install --cask db-browser-for-sqlite
 
-# Switch between audio input and output
-brew install switchaudio-osx
-brew install blackhole-2ch
+brew install --cask finicky # URL handler
+
+# Window managers - I've tried:
+# BetterSnaTool, Rectangle, now i use yabai
+# brew install --cask rectangle
+
+brew install --cask alt-tab # windows like alt-tab handling
+brew install --cask bartender # Collapase menu bar
+
+brew install --cask karabiner-elements iterm2 alfred visual-studio-code docker microsoft-edge 1password meetingbar
+
+# Switch between audio input and output - these mess stuff up, get rid of 'em.
+# brew install switchaudio-osx
+# brew install blackhole-2ch
 
 # Display resolutoin shifting
 brew install jakehilborn/jakehilborn/displayplacer
@@ -31,6 +34,8 @@ brew install --cask font-hack-nerd-font
 # Manulaly install the font
 git clone https://github.com/Karmenzind/monaco-nerd-fonts ~/rare_gits/monaco-nerd-fonts
 
+# Show the keys being pressed
+brew install --cask keycastr
 
 
 # brew cask install osxfuse
@@ -43,19 +48,11 @@ defaults write com.microsoft.VSCodeInsiders ApplePressAndHoldEnabled -bool false
 defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
 defaults write -app /Applications/Visual\ Studio\ Code.app ApplePressAndHoldEnabled -bool false
 
-
-brew linkapps macvim
-
 # Mac only git setup
 git config --global credential.helper osxkeychain
-git config --global core.editor /usr/local/bin/vim
 
 
 # setup xcode
 git clone https://github.com/XVimProject/XVim.git  ~/gits/XVim
 cd ~/gits/XVim
 #make
-
-# window manager -- pretty cool
-
-# Install better snap tool
