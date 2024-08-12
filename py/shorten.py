@@ -7,6 +7,7 @@ import json
 from pydantic import BaseModel, Field, HttpUrl
 import httpx
 from datetime import datetime
+import pyperclip
 from icecream import ic
 
 
