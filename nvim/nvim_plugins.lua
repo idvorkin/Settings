@@ -339,11 +339,11 @@ plugins = appendTables(plugins, {
     "neovim/nvim-lspconfig",
     "onsails/lspkind.nvim",
 })
--- lispy and racket
+-- Take these out unless I'm going back to closure
 plugins = appendTables(plugins, {
-    "wlangstroth/vim-racket",
-    "Olical/conjure",
-    "PaterJason/cmp-conjure",
+    -- "wlangstroth/vim-racket",
+    -- "Olical/conjure",
+    -- "PaterJason/cmp-conjure",
 })
 
 plugins = appendTables(plugins, {
