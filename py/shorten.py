@@ -71,7 +71,7 @@ def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
 
 
 @app.command()
-def shorten(url):
+def shorten(url, paste: bool = typer.Option(False, "--paste", help="Copy the shortened URL to clipboard")):
     short = shorten_url(token, TinyUrlRequest(url=url))
     print(short.data.tiny_url)
 
