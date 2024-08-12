@@ -7,6 +7,7 @@ import json
 from pydantic import BaseModel, Field, HttpUrl
 import httpx
 from datetime import datetime
+from icecream import ic
 
 
 app = typer.Typer(help="A Shortening helper")
@@ -25,12 +26,27 @@ class TinyUrlRequest(BaseModel):
     expires_at: Optional[datetime] = Field(None, description="Optional expiration date and time for the shortened URL")
 
 
+# generated via gpt.py2json (https://tinyurl.com/23dl535z)
 class TinyUrlResponse(BaseModel):
-    tiny_url: HttpUrl = Field(..., description="The shortened URL")
-    alias: Optional[str] = Field(None, description="The alias used for the shortened URL")
-    long_url: HttpUrl = Field(..., description="The original long URL")
-    created_at: datetime = Field(..., description="The date and time when the URL was shortened")
-    expires_at: Optional[datetime] = Field(None, description="The expiration date and time for the shortened URL, if applicable")
+    class Data(BaseModel):
+        class Analytics(BaseModel):
+            enabled: bool
+            public: bool
+
+        alias: str
+        analytics: Analytics
+        archived: bool
+        created_at: str
+        deleted: bool
+        domain: str
+        expires_at: None
+        tags: list[str]
+        tiny_url: str
+        url: str
+
+    code: int
+    data: Data
+    errors: list[str]
 
 def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
     url = "https://api.tinyurl.com/create"  # Endpoint for the TinyURL API
@@ -50,6 +66,7 @@ def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
     response.raise_for_status()
 
     # Parse the JSON response into a Pydantic model
+    ic(response.json())
     return TinyUrlResponse(**response.json())
 
 
