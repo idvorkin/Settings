@@ -6,7 +6,7 @@ import typer
 from pathlib import Path
 from icecream import ic
 import json
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 import httpx
 from datetime import datetime
 
