@@ -7,7 +7,11 @@ import json
 from pydantic import BaseModel, Field, HttpUrl
 import httpx
 from datetime import datetime
-import pyperclip
+try:
+    import pyperclip
+    pyperclip_available = True
+except ImportError:
+    pyperclip_available = False
 from icecream import ic
 
 
@@ -76,7 +80,7 @@ def shorten(url, paste: bool = typer.Option(False, "--paste", help="Copy the sho
     short = shorten_url(token, TinyUrlRequest(url=url))
     tiny_url = short.data.tiny_url
     print(tiny_url)
-    if paste:
+    if paste and pyperclip_available:
         pyperclip.copy(tiny_url)
 
 if __name__ == "__main__":
