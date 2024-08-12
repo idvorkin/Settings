@@ -73,7 +73,10 @@ def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
 @app.command()
 def shorten(url, paste: bool = typer.Option(False, "--paste", help="Copy the shortened URL to clipboard")):
     short = shorten_url(token, TinyUrlRequest(url=url))
-    print(short.data.tiny_url)
+    tiny_url = short.data.tiny_url
+    print(tiny_url)
+    if paste:
+        pyperclip.copy(tiny_url)
 
 if __name__ == "__main__":
     app()
