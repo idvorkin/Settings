@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = ["y", "vim_python", "todo_to_omnifocus"]
+py-modules = ["y", "vim_python", "todo_to_omnifocus", "shorten"]
 
 [project.scripts]
 y = "y:app"
