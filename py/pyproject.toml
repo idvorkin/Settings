@@ -9,6 +9,8 @@ description = "A collection of Igor's Python scripts"
 authors = [{name = "Igor Dvorkin"}]
 dependencies = [
     "typer",
+    "httpx",
+    "typing-extensions",
     "rich",
     "icecream",
     "pydantic",
@@ -24,4 +26,5 @@ py-modules = ["y", "vim_python", "todo_to_omnifocus"]
 y = "y:app"
 vim_python = "vim_python:app"
 todo_to_omnifocus = "todo_to_omnifocus.py:app"
+shorten = "shorten:app"
 
