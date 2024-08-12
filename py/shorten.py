@@ -41,7 +41,11 @@ def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
         "Content-Type": "application/json",
     }
 
-    response = httpx.post(url, headers=headers, json=request_data.dict())
+    # Convert the request data to a dictionary and ensure all URLs are strings
+    request_data_dict = request_data.dict()
+    request_data_dict['url'] = str(request_data_dict['url'])
+
+    response = httpx.post(url, headers=headers, json=request_data_dict)
 
     # Raise an error for bad responses
     response.raise_for_status()
