@@ -3,7 +3,6 @@
 from typing_extensions import Optional
 import typer
 from pathlib import Path
-from icecream import ic
 import json
 from pydantic import BaseModel, Field, HttpUrl
 import httpx
