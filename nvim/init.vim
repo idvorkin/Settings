@@ -44,7 +44,8 @@ command! -nargs=* Shell call RunInteractiveShellCommand(<q-args>)
 " Remap  when in nvim
 command! Sodot :so ~/settings/nvim/init.vim
 cab ls :Telescope buffers<CR>
-command! Gitfiles :Telescope git_files<CR>
+command! Gitfiles Telescope git_files
+command! GitStatus Telescope git_status
 command! Soed execute 'lcd ~/settings' | Telescope git_files
 command! IgBlog execute 'lcd ~/gits/idvorkin.github.io' | Telescope git_files
 cab gd :terminal export PAGER=don_t_use_me && git diff
