@@ -13,6 +13,8 @@ dependencies = [
     "icecream",
     "pydantic",
     "pyperclip; sys_platform == 'darwin'",
+    "httpx",
+    "typing-extensions",
 ]
 
 [tool.setuptools]
