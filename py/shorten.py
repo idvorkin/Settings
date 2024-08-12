@@ -73,7 +73,7 @@ def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
 @app.command()
 def shorten(url):
     short = shorten_url(token, TinyUrlRequest(url=url))
-    ic(short)
+    print(short.data.tiny_url)
 
 if __name__ == "__main__":
     app()
