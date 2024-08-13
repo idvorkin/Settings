@@ -207,7 +207,8 @@ def get_displays() -> Displays:
 
 def set_width(win: Window, width: float):
     assert width >= 0 and width <= 1
-    call_yabai(f"-m window {win.id} --ratio abs:{width}")
+    # call_yabai(f"-m window {win.id} --ratio abs:{width}")
+    call_yabai(f"-m window --ratio abs:{width}")
 
 
 def get_active_display():
@@ -227,6 +228,12 @@ def third():
 def half():
     # Make left window 1/3 of the screen
     set_width(get_left_most_window(), 0.5)
+
+
+@app.command()
+def debug():
+    ic(get_displays())
+    ic([w for w in get_windows().windows])
 
 
 @app.command()
