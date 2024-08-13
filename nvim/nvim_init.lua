@@ -110,26 +110,19 @@ function ZenModeToggleFunction(width)
 end
 
 
-function InsertYouTubeTemplate()
-  -- Get the clipboard content
-  local clipboard = vim.fn.getreg('+')
+local nvim_logic = dofile(settings_dir.."nvim_logic.lua")
 
-  -- Pattern to match a YouTube URL and extract the video ID
-  local pattern = 'https://www%.youtube%.com/watch%?v=([%w-_]+)'
+function InsertYouTubeTemplate(url)
 
-  -- Try to match the clipboard content against the pattern
-  local video_id = clipboard:match(pattern)
-
-  if video_id then
-    -- If a match is found, create the template string
-    local template = string.format('{%%include youtube.html src="%s" %%}', video_id)
-
-    -- Insert the template string into the current buffer
+  if not url then
+    url = vim.fn.getreg('+')
+  end
+  local template, err = nvim_logic.parse_youtube_url(url)
+  if template then
     vim.api.nvim_put({template}, 'c', true, true)
   else
-    -- If no match is found, print an error message
-    print('Clipboard does not contain a valid YouTube URL.')
+    vim.api.nvim_put({err}, 'c', true, true)
   end
 end
 
-print("nvim_intit.lua loaded")
+print("nvim_init.lua loaded")

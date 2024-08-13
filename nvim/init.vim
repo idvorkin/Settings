@@ -68,7 +68,7 @@ syntax region luaBlock start="do" end="end" fold
 autocmd FileType lua setlocal foldmethod=syntax
 
 cab registers :Telescope registers<CR>
-iab epbyt <esc>:lua InsertYoutubeTemplate()<CR>
+iab epbyt <esc>:lua InsertYouTubeTemplate()<CR>
 
 
 
