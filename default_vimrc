@@ -881,7 +881,7 @@ function! GptCompleteSimple(gpt_command='stdin',gpt_params='',sink='GptSinkAppen
   let tempname_out = "~/tmp/gpt3.out.ipc"
   call writefile(lines, expand(tempname_in))
 
-  let gpt_cmd =  'cat '.tempname_in.' | python3.11 ~/gpt3.py stdin --u4 | tee ' . tempname_out
+  let gpt_cmd =  'cat '.tempname_in.' | gpt3 stdin --u4 | tee ' . tempname_out
   echom gpt_cmd
   execute "!".gpt_cmd
   execute ":".string(g:gpt_last_line)
@@ -898,7 +898,7 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
   call writefile(lines, expand(tempname_in))
 
   if a:sink == "GptSinkReplace"
-      let gpt_cmd =  'cat '.tempname_in.' | python3.11 ~/gpt3.py '. a:gpt_command . ' > ' . tempname_out
+      let gpt_cmd =  'cat '.tempname_in.' | gpt3 '. a:gpt_command . ' > ' . tempname_out
       echom gpt_cmd
       execute a:firstline. ",". a:lastline ."w !".gpt_cmd
       let delta_cmd =  "!delta ".tempname_in. " ". tempname_out
@@ -916,7 +916,7 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
       return
   endif
 
-  let gpt_source =  'cat '.tempname_in.'| python3.11 ~/gpt3.py '. a:gpt_command . '  --responses=5 --to-fzf '.a:gpt_params
+  let gpt_source =  'cat '.tempname_in.'| gpt3 '. a:gpt_command . '  --responses=5 --to-fzf '.a:gpt_params
 
   " -to_fzf is ';' separated, we can look at it in the preview window expanded
   let preview =  "echo {} | sed 's/;/\\n/g'"
@@ -947,7 +947,7 @@ function! SetupGPT()
     : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
     : cab ffix % call GptComplete("fix", "", "GptSinkReplace")<CR>
     : cab flfix % !fix --llama <CR>
-    :cab egpt  !~/gpt3.py
+    :cab egpt  !gpt3
 
     " Select section
     cab ess :?\#?+1,/\#/-1
