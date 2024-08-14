@@ -62,8 +62,7 @@ trim_file_after_marker_to_new_file() {
 function ghg-aider()
 {
     trim_file_after_marker_to_new_file '.aider.chat.history.md' '# aider chat started at' '.aider.last.chat.md'
-    # gh gist create -w .aider.last.chat.md
-    bat .aider.last.chat.md
+    gh gist create -w .aider.last.chat.md
     echo v0.1
 }
 
