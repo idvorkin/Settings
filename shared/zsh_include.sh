@@ -26,7 +26,47 @@ source_if_exists ~/.fzf.zsh
 source_if_exists ~/homebrew/etc/profile.d/z.sh
 
 PATH+=:~/.local/bin
-alias ghgmd='gh gist create --filename=out.md --'
+alias ghg-md-sink='gh gist create --filename=out.md -- -o'
+
+
+trim_file_after_marker_to_new_file() {
+  local input_file="$1"
+  local marker="$2"
+  local output_file="$3"
+
+  # Check if the input file exists
+  if [[ ! -f "$input_file" ]]; then
+    echo "Error: Input file '$input_file' does not exist."
+    return 1
+  fi
+
+  # Use awk to find the last occurrence of the marker and print from there
+  awk -v marker="$marker" '
+  {
+    if (index($0, marker) == 1) {
+      last_marker_line = NR  # Save the line number of the last marker
+      last_marker_content = $0  # Save the content of the last marker line
+    }
+    lines[NR] = $0  # Store each line in an array
+  }
+  END {
+    if (last_marker_line > 0) {
+      for (i = last_marker_line; i <= NR; i++) {
+        print lines[i]
+      }
+    }
+  }' "$input_file" > "$output_file"
+}
+
+
+function ghg-aider()
+{
+    trim_file_after_marker_to_new_file '.aider.chat.history.md' '# aider chat started at' '.aider.last.chat.md'
+    # gh gist create -w .aider.last.chat.md
+    bat .aider.last.chat.md
+    echo v0.1
+}
+
 alias alf="open '/Applications/Alfred 5.app/'"
 function charge() {
     pmset -g batt
