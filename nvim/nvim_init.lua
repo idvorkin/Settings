@@ -125,4 +125,25 @@ function InsertYouTubeTemplate(url)
   end
 end
 
+function OpenJekyllInBrowser()
+  local permalink = nil
+  for line in io.lines(vim.fn.expand('%')) do
+    if line:match("^permalink:") then
+      permalink = line:match("^permalink:%s*(%S+)")
+      break
+    end
+  end
+
+  if permalink then
+    local url = "http://localhost:4000" .. permalink
+    os.execute("open " .. url)
+  else
+    print("No permalink found in the current file.")
+  end
+end
+
+vim.cmd([[
+command! OpenJekyll lua OpenJekyllInBrowser()
+]])
+
 print("nvim_init.lua loaded")
