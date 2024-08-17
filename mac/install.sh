@@ -12,7 +12,7 @@ brew install --cask finicky # URL handler
 # brew install --cask rectangle
 
 brew install --cask alt-tab # windows like alt-tab handling
-brew install --cask bartender # Collapase menu bar
+brew install jordanbaird-ice # Collapse menu bar (replaces bartender)
 
 brew install --cask karabiner-elements iterm2 alfred visual-studio-code docker microsoft-edge 1password meetingbar
 
