@@ -148,10 +148,13 @@ function ijv() {
     ij body --close $1 | vim -
 }
 
-function journal_gpt() {
-    # $1 date
-    # $2 command
-     igor_journal entries $1  | while read line; do  echo && echo \#\#\#\ $line && ~/igor_journal.py body  $line | ~/gits/nlp/mood.py $2 ; done  | tee ~/tmp/$2_for_$1.md
+call_ijm_for_n() {
+  local n=$1
+  local i=1
+  while [ $i -le $n ]; do
+    ijm --no-launch-fx "$i"
+    ((i++))
+  done
 }
 
 function alias_if_exists() {
