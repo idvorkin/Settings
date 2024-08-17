@@ -30,7 +30,7 @@ alias ghg-md-sink='gh gist create --filename=out.md -- -o'
 
 # Use diff so fancy without needing to be in git
 diff-so-fancy() {
-  git diff --no-index --color "$@" | diff-so-fancy
+  git diff --no-index --color "$@"
 }
 
 trim_file_after_marker_to_new_file() {
