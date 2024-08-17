@@ -28,6 +28,10 @@ source_if_exists ~/homebrew/etc/profile.d/z.sh
 PATH+=:~/.local/bin
 alias ghg-md-sink='gh gist create --filename=out.md -- -o'
 
+# Use diff so fancy without needing to be in git
+diff-so-fancy() {
+  git diff --no-index --color "$@" | diff-so-fancy
+}
 
 trim_file_after_marker_to_new_file() {
   local input_file="$1"
