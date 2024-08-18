@@ -80,9 +80,11 @@ gchanges() {
     # for directory in settings, idvorkin.github.io, nlp, tony_tesla, run changs command
     pushd ~/gits
     for git_directory in settings idvorkin.github.io nlp tony_tesla; do
+        cd ~/gits
         echo $git_directory
         changes  --directory $git_directory $1 $2 $3 $4
     done
+
 }
 
 alias hibernate="sudo pmset sleepnow"
