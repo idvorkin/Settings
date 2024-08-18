@@ -76,6 +76,15 @@ function charge() {
     system_profiler SPPowerDataType  | grep Watt
 }
 
+gchanges() {
+    # for directory in settings, idvorkin.github.io, nlp, tony_tesla, run changs command
+    pushd ~/gits
+    for git_directory in settings idvorkin.github.io nlp tony_tesla; do
+        echo $git_directory
+        changes  --directory $git_directory $1 $2 $3 $4
+    done
+}
+
 alias hibernate="sudo pmset sleepnow"
 alias imgls='timg --grid 4 --title'
 alias lg='lazygit'
