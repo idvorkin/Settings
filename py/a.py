@@ -1,4 +1,4 @@
-#!python3.11
+#!python3.12
 
 from __future__ import annotations
 import typer
@@ -245,7 +245,7 @@ class AlfredItems(BaseModel):
 
 @app.command()
 def zzfocus(window: int):
-    call_aerospace(f"focus-window --window-id {window}")
+    call_aerospace(f"focus --window-id {window}")
 
 
 @app.command()
@@ -262,7 +262,7 @@ def alfred_windows():
 
     def focus_command(window_id):
         # recall this will be sent to a.py
-        return f"zzfocus --window {window_id}"
+        return f"zzfocus {window_id}"
 
     for line in out.split("\n"):
         if len(line.split(":")) < 3:
