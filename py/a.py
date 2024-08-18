@@ -58,7 +58,7 @@ def send_key(key_code):
 
 @app.command()
 def hflip():
-    # call_yabai("-m space --mirror y-axis")
+    call_aerospace("move left")
     pass
 
 
@@ -155,15 +155,55 @@ def cycle():
             break
 
 
-@app.command()
-def third():
-    pass  #  set_width(get_left_most_window(), 0.3)
+class DisplayResolution(BaseModel):
+    width: int
+    height: int
+    scaling_factor: float
+
+
+def get_display_resolution() -> DisplayResolution:
+    from Quartz import (
+        CGDisplayBounds,
+        CGDisplayPixelsWide,
+        CGDisplayPixelsHigh,
+        CGMainDisplayID,
+    )
+
+    display_id = CGMainDisplayID()
+    width = CGDisplayPixelsWide(display_id)
+    height = CGDisplayPixelsHigh(display_id)
+    bounds = CGDisplayBounds(display_id)
+
+    # Calculate the scaling factor
+    scaling_factor = width / bounds.size.width
+
+    return DisplayResolution(width=width, height=height, scaling_factor=scaling_factor)
 
 
 @app.command()
 def half():
-    # Make left window 1/3 of the screen
-    pass  # set_width(get_left_most_window(), 0.5)
+    resolution = get_display_resolution()
+    new_width = resolution.width // 2
+    call_aerospace(f"resize smart {new_width}")
+
+
+@app.command()
+def third():
+    resolution = get_display_resolution()
+    new_width = resolution.width // 3
+    call_aerospace(f"resize smart {new_width}")
+
+
+@app.command()
+def t1():
+    third()
+
+
+@app.command()
+def t2():
+    resolution = get_display_resolution()
+    new_width = int(resolution.width * 0.66)
+    call_aerospace(f"resize smart {new_width}")
 
 
 @app.command()
@@ -232,6 +272,7 @@ def debug():
     ]
 
     print(call_aerospace(list_windows).stdout)
+    ic(get_displays())
 
 
 class AlfredItems(BaseModel):
