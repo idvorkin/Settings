@@ -244,7 +244,7 @@ class AlfredItems(BaseModel):
 
 
 @app.command()
-def zzfocus(window: int):
+def zzfocus(window):
     call_aerospace(f"focus --window-id {window}")
 
 
