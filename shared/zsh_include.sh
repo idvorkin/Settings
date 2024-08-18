@@ -377,8 +377,6 @@ source <(carapace _carapace)
 # Some reason need to activate it outside the script -not worth figuring out
 alias activate_pyenv=". ~/gits/nlp/.venv/bin/activate"
 
-# OK, Pipenv shell creates a subshell which messes up nvim window name plugin
-# Found this activate comment in Stack Overflow - which works around well:
-# https://github.com/christoomey/vim-tmux-navigator/issues/230#issuecomment-473726444
+unalias a # not sure why  a gets an alias
 echo "zsh_include complete"
 
