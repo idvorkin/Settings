@@ -14,6 +14,12 @@ brew install --cask finicky # URL handler
 brew install --cask alt-tab # windows like alt-tab handling
 brew install jordanbaird-ice # Collapse menu bar (replaces bartender)
 
+
+# Janky borders
+
+brew tap FelixKratz/formulae
+brew install borders
+
 brew install --cask karabiner-elements iterm2 alfred visual-studio-code docker microsoft-edge 1password meetingbar
 
 # Switch between audio input and output - these mess stuff up, get rid of 'em.

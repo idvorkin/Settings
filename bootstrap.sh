@@ -69,6 +69,7 @@ ln -s -f ~/settings/config/carapace/ ~/.config/carapace
 ln -s -f ~/settings/config/yazi ~/.config/yazi
 ln -s -f ~/settings/config/bat ~/.config/bat
 ln -s -f ~/settings/config/yabai ~/.config/yabai
+mkdir ~/.config/borders
 ln -s -f ~/settings/config/borders/bordersrc ~/.config/borders/bordersrc
 
 (echo '# Added by bootstrap.sh') >> ~/.zshrc
