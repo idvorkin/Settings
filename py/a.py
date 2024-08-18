@@ -57,8 +57,14 @@ def send_key(key_code):
 
 
 @app.command()
-def hflip():
+def mleft():
     call_aerospace("move left")
+    pass
+
+
+@app.command()
+def mright():
+    call_aerospace("move right")
     pass
 
 
