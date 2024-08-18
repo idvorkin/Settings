@@ -236,16 +236,24 @@ def debug():
     ic([w for w in get_windows().windows])
 
 
+class AlfredItems(BaseModel):
+    class Item(BaseModel):
+        title: str
+        subtitle: str
+        arg: str
+
+    items: List[Item]
+
+
 @app.command()
 def alfred():
     #  Build a json of commands to be called from an alfred plugin workflow
     # start by reflecting to find all commands in app.
     # all_commands = app.
     commands = [c.callback.__name__.replace("-", "_") for c in app.registered_commands]  # type:ignore
-    # ic(commands)
-    dicts = {"items": [{"title": c, "subtitle": c, "arg": c} for c in commands]}
-    # output json to stdout
-    print(json.dumps(dicts, indent=4))
+    items = [AlfredItems.Item(title=c, subtitle=c, arg=c) for c in commands]
+    alfred_items = AlfredItems(items=items)
+    print(alfred_items.model_dump_json(indent=4))
 
 
 if __name__ == "__main__":
