@@ -75,26 +75,6 @@ local plugins = {
     "ekalinin/Dockerfile.vim",
     "terrastruct/d2-vim",
     "voldikss/vim-floaterm",
-    -- Other gpT plugin
-    {
-        "jackMort/ChatGPT.nvim",
-        event = "VeryLazy",
-         -- model = "gpt-4-1106-preview",
-        config = function()
-            require("chatgpt").setup({
-            -- openai_api_key = get_openai_api_key(),
-            -- api_key_command = get_openai_api_key(),
-            -- string with model name or table with model name and parameters
-           --  model = "gpt-4-1106-preview",
-            })
-        end,
-        dependencies = {
-            "MunifTanjim/nui.nvim",
-            "nvim-lua/plenary.nvim",
-            "nvim-telescope/telescope.nvim"
-        }
-    },
-
     "HiPhish/rainbow-delimiters.nvim",
 
     -- Comment \cc
@@ -195,6 +175,7 @@ local plugins = {
         },
       },
     },
+    { "nvim-telescope/telescope.nvim"},
     { 'nvim-telescope/telescope-fzf-native.nvim', build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release' },
     "stevearc/dressing.nvim",
     {
