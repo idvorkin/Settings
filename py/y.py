@@ -15,7 +15,7 @@ _ = """
 
 """
 
-app = typer.Typer(help="A Yabai helper")
+app = typer.Typer(help="A Yabai helper", no_args_is_help=True)
 
 # AI Coding pro-tip, pump json into AI, and ask it to generate the pydantic types for you
 # Then use typing to avoid the long pain of type errors
