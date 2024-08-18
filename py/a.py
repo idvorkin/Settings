@@ -278,7 +278,7 @@ def debug():
     ]
 
     print(call_aerospace(list_windows).stdout)
-    ic(get_displays())
+    ic(get_display_resolution())
 
 
 class AlfredItems(BaseModel):
