@@ -1,5 +1,6 @@
 #!python3.11
 
+from __future__ import annotations
 import typer
 import subprocess
 from subprocess import CompletedProcess
@@ -7,6 +8,7 @@ from pathlib import Path
 from icecream import ic
 import json
 from typing import List
+from pydantic import BaseModel
 
 _ = """
 
@@ -88,6 +90,11 @@ def ftoggle():
 @app.command()
 def reload():
     call_aerospace("reload-config")
+
+
+@app.command()
+def reset():
+    call_aerospace("balance-sizes")
 
 
 @app.command()
@@ -225,7 +232,55 @@ def debug():
     ]
 
     print(call_aerospace(list_windows).stdout)
-    pass
+
+
+class AlfredItems(BaseModel):
+    class Item(BaseModel):
+        title: str
+        subtitle: str
+        arg: str
+
+    items: List[Item]
+
+
+@app.command()
+def zzfocus(window: int):
+    call_aerospace(f"focus-window --window-id {window}")
+
+
+@app.command()
+def alfred_windows():
+    list_windows = [
+        "list-windows",
+        "--all",
+        "--format",
+        "%{monitor-id} : %{workspace} : %{window-id}:   %{app-name} : %{window-title} ",
+    ]
+
+    out = call_aerospace(list_windows).stdout
+    items: list[AlfredItems.Item] = []
+
+    def focus_command(window_id):
+        # recall this will be sent to a.py
+        return f"zzfocus --window {window_id}"
+
+    for line in out.split("\n"):
+        if len(line.split(":")) < 3:
+            continue
+        monitor = line.split(":")[0]
+        workspace = line.split(":")[1]
+        window_id = line.split(":")[2]
+        app = "".join(line.split(":")[3:])
+        items.append(
+            AlfredItems.Item(
+                title=app,
+                subtitle=f"{monitor}:{workspace}",
+                arg=focus_command(window_id),
+            )
+        )
+        ic(monitor, workspace, window_id, app)
+
+    print(AlfredItems(items=items).model_dump_json(indent=4))
 
 
 @app.command()
@@ -245,10 +300,9 @@ def alfred():
     # start by reflecting to find all commands in app.
     # all_commands = app.
     commands = [c.callback.__name__.replace("-", "_") for c in app.registered_commands]  # type:ignore
-    # ic(commands)
-    dicts = {"items": [{"title": c, "subtitle": c, "arg": c} for c in commands]}
-    # output json to stdout
-    print(json.dumps(dicts, indent=4))
+    items = [AlfredItems.Item(title=c, subtitle=c, arg=c) for c in commands]
+    alfred_items = AlfredItems(items=items)
+    print(alfred_items.model_dump_json(indent=4))
 
 
 if __name__ == "__main__":
