@@ -15,6 +15,7 @@ dependencies = [
     "icecream",
     "pydantic",
     "pyperclip; sys_platform == 'darwin'",
+    "pyobjc; sys_platform == 'darwin'",
     "httpx",
     "typing-extensions",
 ]
