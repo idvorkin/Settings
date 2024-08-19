@@ -35,12 +35,7 @@ git config --global push.autoSetupRemote 1
 git config --global alias.logc log master..
 git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate"
 ln -s -f ~/settings/shared/gitconfig ~/.gitconfig
-ln -s -f ~/settings/shared/aerospace.toml ~/.aerospace.toml
 
-# Link to lots of dot files
-mkdir ~/.config/karabiner/
-ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
-ln -s -f ~/settings/mac/multi_keyboard_sync.json ~/.config/karabiner/assets/complex_modifications/multi_keyboard_sync.json
 ln -s -f ~/settings/default_vimrc ~/.vimrc
 ln -s -f ~/settings/shared/ranger_rc.conf ~/.config/ranger/rc.conf
 mkdir ~/.config
@@ -68,9 +63,17 @@ ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 ln -s -f ~/settings/config/carapace/ ~/.config/carapace
 ln -s -f ~/settings/config/yazi ~/.config/yazi
 ln -s -f ~/settings/config/bat ~/.config/bat
+
+# Mac goodies
 ln -s -f ~/settings/config/yabai ~/.config/yabai
 mkdir ~/.config/borders
 ln -s -f ~/settings/config/borders/bordersrc ~/.config/borders/bordersrc
+ln -s -f ~/settings/shared/aerospace.toml ~/.aerospace.toml
+#
+# Link to lots of dot files
+mkdir ~/.config/karabiner/
+ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
+ln -s -f ~/settings/mac/multi_keyboard_sync.json ~/.config/karabiner/assets/complex_modifications/multi_keyboard_sync.json
 
 (echo '# Added by bootstrap.sh') >> ~/.zshrc
 (echo 'plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)') >> ~/.zshrc
