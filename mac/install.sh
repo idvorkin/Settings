@@ -15,6 +15,11 @@ brew install --cask alt-tab # windows like alt-tab handling
 brew install jordanbaird-ice # Collapse menu bar (replaces bartender)
 
 
+# window managers
+brew install --cask nikitabobko/tap/aerospace
+
+
+
 # Janky borders
 
 brew tap FelixKratz/formulae
