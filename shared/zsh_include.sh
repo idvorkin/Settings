@@ -306,6 +306,7 @@ function export_secrets()
     esecret_jq ZEP_API_KEY
     esecret_jq TONY_STORAGE_SERVER_API_KEY
     esecret_jq TONY_API_KEY
+    esecret_jq ASSEMBLYAI_API_KEY
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
 }
 
