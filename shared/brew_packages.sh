@@ -72,6 +72,8 @@ yarn "
 brew_packages="$brew_packages curlie" # Curl with a UI
 brew_packages="$brew_packages httpie" # Another downloader, cli is http
 
+# Data editors
+brew_packages="$brew_packages dasel" # jq replacement
 
 brew_packages="$brew_packages neofetch" # Show system info
 
