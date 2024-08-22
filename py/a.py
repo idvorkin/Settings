@@ -102,17 +102,25 @@ def reload():
 def reset():
     call_aerospace("balance-sizes")
 
+@app.command()
+def restart():
+    # kill aerospace process
+    stop()
+    start()
 
 @app.command()
 def start():
     # call_yabai("--start-service")
-    pass
+    ret = subprocess.run(["open", "/Applications/AeroSpace.app"])
+    ic(ret)
+
 
 
 @app.command()
 def stop():
     # call_yabai("--stop-service")
-    pass
+    ret = subprocess.run(["pkill", "-9", "AeroSpace"])
+    ic(ret)
 
 
 @app.command()
