@@ -4,9 +4,9 @@
 
 local -a border_options=(
 	style=round
-	width=20.0
+	width=10.0
 	hidpi=on
-	active_color=0xFFFF000000 # NOTE: Color Starts with transp
+	active_color=0xffffff0000 # NOTE: Color Starts with transp
 	inactive_color=0xff414550
 )
 

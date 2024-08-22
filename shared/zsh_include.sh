@@ -26,7 +26,7 @@ source_if_exists ~/.fzf.zsh
 source_if_exists ~/homebrew/etc/profile.d/z.sh
 
 PATH+=:~/.local/bin
-alias ghg-md-sink='gh gist create --filename=out.md -- -o'
+alias ghg-md-sink='gh gist create --filename=out.md -- '
 
 # Use diff so fancy without needing to be in git
 diff-so-fancy() {
