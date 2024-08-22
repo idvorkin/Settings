@@ -248,6 +248,22 @@ def warp4():
 def w1():
     call_aerospace("workspace 1")
 
+@app.command()
+def wm():
+    call_aerospace("workspace m")
+
+@app.command()
+def wt():
+    call_aerospace("workspace t")
+
+@app.command()
+def warpm():
+    call_aerospace("move-node-to-workspace m")
+
+@app.command()
+def warpt():
+    call_aerospace("move-node-to-workspace t")
+
 
 @app.command()
 def w2():
