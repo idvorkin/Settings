@@ -368,6 +368,7 @@ eval "$(atuin init zsh --disable-up-arrow)"
 eval "$(starship init zsh)"
 eval "$(thefuck --alias)"
 eval "$(rbenv init -)"
+eval "$(dasel completion zsh)"
 
 echo ++zfunc
 for func in ~/.zfunc/*; do source $func; done
