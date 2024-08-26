@@ -135,6 +135,25 @@ local plugins = {
             "rcarriga/nvim-notify",
         }
     },
+    {
+        'cameron-wags/rainbow_csv.nvim',
+        config = true,
+        ft = {
+            'csv',
+            'tsv',
+            'csv_semicolon',
+            'csv_whitespace',
+            'csv_pipe',
+            'rfc_csv',
+            'rfc_semicolon'
+        },
+        cmd = {
+            'RainbowDelim',
+            'RainbowDelimSimple',
+            'RainbowDelimQuoted',
+            'RainbowMultiDelim'
+        }
+    },
     "nvim-tree/nvim-web-devicons",
     "dstein64/vim-startuptime",
     "folke/neodev.nvim",
