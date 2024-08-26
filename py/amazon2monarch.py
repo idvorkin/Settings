@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+
 import csv
-import argparse
+import typer
 from datetime import datetime
 import os
 from rich import print
+from icecream import ic
 
 key_website = "Website"
 key_order_date = "Order Date"
@@ -13,23 +16,61 @@ key_payment_type = "Payment Instrument Type"
 whole_foods_value = "panda01"
 amazon_com_value = "Amazon.com"
 
+app = typer.Typer(no_args_is_help=True)
+
+def read_csv_with_bom_handling(filepath) -> csv.DictReader:
+    return csv.DictReader(open(filepath, mode="r", encoding="utf-8-sig"))
+
+
+def input_categories():
+    return "Groceries;Electronics;Pets;Entertainment & Recreation;Clothing;Furniture & Housewares;Shopping".split(";")
+
+@app.command(help="Prompt and display available categories.")
+def prompt_categories():
+    ic(input_categories())
+
+@app.command(help="Extract all product titles into an output file for category mapping.")
+def extract_titles(
+    input_csv: typer.FileText = typer.Option(
+        "Retail.OrderHistory.1.csv",
+        help="Path of the input CSV. This is usually the Retail.OrderHistory.1.csv file from your Amazon Data Request.",
+    ),
+    output_file: typer.FileTextWrite = typer.Option(
+        "titles.txt",
+        help="Path of the output file where product titles will be written.",
+        )):
+    print("\nExtracting product titles...")
+    csv_reader = read_csv_with_bom_handling(input_csv.name)
+    titles = {}
+
+    for row in csv_reader:
+        price = float(row[key_total_cost].replace(',', ''))
+        titles[row[key_name]] = price
+
+    for title in sorted(titles, key=titles.get):
+        output_file.write(f"{title}\n")
+
+    print(f"Extracted {len(titles)} unique product titles to {output_file.name}.")
+
+    input_csv.close()
+    output_file.close()
 
 def convert(
     inputfile,
     outputfile,
     since_date,
     output_category,
-    output_merchant_prefix,
     output_account,
     output_tags,
-    output_notes_prefix,
+    output_notes_prefix
 ):
     print("\n")
     print("Input CSV file is: ", inputfile.name)
     print("Output CSV will be written at: ", outputfile.name)
 
-    if since_date is not None:
-        print("Transactions after this date will be processed: ", since_date.date())
+    if since_date is None:
+        since_date = datetime(2021, 1, 1)
+    print("Transactions after this date will be processed: ", since_date.date())
 
     print("\n")
     input("Press Enter to continue, or Control+C to abort...")
@@ -38,7 +79,8 @@ def convert(
     whole_foods_transactions = 0
     zero_cost_transactions = 0
 
-    csv_reader = csv.DictReader(inputfile, delimiter=",")
+    csv_reader = read_csv_with_bom_handling(inputfile.name)
+    ic(csv_reader.fieldnames)
 
     output_field_names = [
         "Date",
@@ -60,14 +102,12 @@ def convert(
             transaction_date = strptime(row[key_order_date])
             if row[key_total_cost] == "0":
                 zero_cost_transactions += 1
-            elif (
-                since_date is not None and since_date.date() <= transaction_date.date()
-            ):
+            elif since_date.date() <= transaction_date.date():
                 amazon_transactions += 1
                 csv_writer.writerow(
                     {
                         "Date": str(strptime(row[key_order_date]).date()),
-                        "Merchant": output_merchant_prefix + row[key_name][0:31],
+                        "Merchant": row[key_name][0:31] + "-AMZN",
                         "Category": output_category,
                         "Account": output_account,
                         "Original Statement": row[key_name],
@@ -78,12 +118,9 @@ def convert(
                 )
 
     print("\n")
-    if since_date is not None:
-        print(
-            f"Processed {amazon_transactions} Amazon.com transactions since {str(since_date.date())}."
-        )
-    else:
-        print(f"Processed {amazon_transactions} Amazon.com transactions.")
+    print(
+        f"Processed {amazon_transactions} Amazon.com transactions since {str(since_date.date())}."
+    )
     print(f"Ignored {whole_foods_transactions} Whole Foods transactions.")
     print(f"Ignored {zero_cost_transactions} transactions with $0 order amounts.")
 
@@ -100,87 +137,64 @@ def arg_date(str):
         return datetime.strptime(str, "%Y-%m-%d")
     except ValueError:
         msg = "not a valid date: {0!r}".format(str)
-        raise argparse.ArgumentTypeError(msg)
+        raise ValueError(msg)
 
 
-parser = argparse.ArgumentParser(
-    prog="amazon2monarch",
-    description="This script converts Amazon Order History (Retail.OrderHistory.1.csv file) to a CSV that can be imported into Monarch.",
-)
-parser.add_argument(
-    "-i",
-    "--input_csv",
-    required=True,
-    type=argparse.FileType("r", encoding="utf-8-sig"),
-    help="Path of the input CSV. This is usually the Retail.OrderHistory.1.csv file from your Amazon Data Request.",
-)
-parser.add_argument(
-    "-o",
-    "--output_csv",
-    required=True,
-    type=argparse.FileType("w"),
-    help="Path of the output CSV. This is the file you will upload to Monarch.",
-)
-parser.add_argument(
-    "-d",
-    "--since_date",
-    required=False,
-    type=arg_date,
-    help="Process transactions past since this date. If not provided, will process all transactions.",
-)
-parser.add_argument(
-    "-oc",
-    "--output_category",
-    default="Uncategorized",
-    help="Set the category of all transactions in the output file. Defaults to 'Uncategorized'.",
-)
-parser.add_argument(
-    "-om",
-    "--output_merchant_prefix",
-    default="Amazon: ",
-    help="Prefix each transactions with a text for ease of reading. Defaults to 'Amazon: '.",
-)
-parser.add_argument(
-    "-oa",
-    "--output_account",
-    default="Amazon Gift Card Balance",
-    help="Name of the account on Monarch for all the processed transactions. Defaults to 'Amazon Gift Card Balance'.",
-)
-parser.add_argument(
-    "-ot",
-    "--output_tags",
-    default="Amazon Gift Card",
-    help="Comma separated list of Tags on Monarch to be added to all transactions. Defaults to 'Amazon Gift Card'.",
-)
-parser.add_argument(
-    "-on",
-    "--output_notes_prefix",
-    default="Payment Method: ",
-    help="Prefix text to be added to transaction notes in the output files. Payment method is added by default, and the prefix 'Payment Method: ' is added.",
-)
+@app.command(help="Convert Amazon order history CSV to Monarch-compatible CSV.")
+def main(
+    input_csv: typer.FileText = typer.Option(
+        "Retail.OrderHistory.1.csv",
+        help="Path of the input CSV. This is usually the Retail.OrderHistory.1.csv file from your Amazon Data Request.",
+    ),
+    output_csv: typer.FileTextWrite = typer.Option(
+        "monarch.csv",
+        help="Path of the output CSV. This is the file you will upload to Monarch.",
+    ),
+    since_date: datetime = typer.Option(
+        None,
+        help="Process transactions past since this date. If not provided, will process all transactions.",
+    ),
+    output_category: str = typer.Option(
+        "Uncategorized",
+        help="Set the category of all transactions in the output file. Defaults to 'Uncategorized'.",
+    ),
+    output_account: str = typer.Option(
+        "Amazon Gift Card Balance",
+        help="Name of the account on Monarch for all the processed transactions. Defaults to 'Amazon Gift Card Balance'.",
+    ),
+    output_tags: str = typer.Option(
+        "input-converter",
+        help="Comma separated list of Tags on Monarch to be added to all transactions. Defaults to 'input-converter'.",
+    ),
+    output_notes_prefix: str = typer.Option(
+        "Payment Method: ",
+        help="Prefix text to be added to transaction notes in the output files. Payment method is added by default, and the prefix 'Payment Method: ' is added.",
+    ),
+):
+    try:
+        convert(
+            input_csv,
+            output_csv,
+            since_date,
+            output_category,
+            output_account,
+            output_tags,
+            output_notes_prefix,
+        )
+    except Exception as e:
+        print("\nUh Oh. Script failed because of the following reason: ")
+        print(e)
+        ic(e)
+        input_csv.close()
+        output_csv.close()
+        os.remove(output_csv.name)
+    finally:
+        input_csv.close()
+        output_csv.close()
+        epilog = "Thank you for using this script. Hope it helped you. Cheers! 🍻"
+        print("\n")
+        print(epilog)
 
-args = parser.parse_args()
 
-try:
-    convert(
-        args.input_csv,
-        args.output_csv,
-        args.since_date,
-        args.output_category,
-        args.output_merchant_prefix,
-        args.output_account,
-        args.output_tags,
-        args.output_notes_prefix,
-    )
-except Exception as e:
-    print("\nUh Oh. Script failed because of the following reason: ")
-    print(e.with_traceback)
-    args.input_csv.close()
-    args.output_csv.close()
-    os.remove(args.output_csv.name)
-finally:
-    args.input_csv.close()
-    args.output_csv.close()
-    epilog = "Thank you for using this script. Hope it helped you. Cheers! 🍻"
-    print("\n")
-    print(epilog)
+if __name__ == "__main__":
+    app()
