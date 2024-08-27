@@ -226,8 +226,12 @@ def third():
 
 @app.command()
 def half():
-    # Make left window 1/3 of the screen
     set_width(get_left_most_window(), 0.5)
+
+
+@app.command()
+def t2():
+    set_width(get_left_most_window(), 2 / 3)
 
 
 @app.command()
