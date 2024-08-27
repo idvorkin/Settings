@@ -1,12 +1,16 @@
 #!/bin/zsh
 
 # https://github.com/FelixKratz/JankyBorders/wiki/Man-Page
+: <<'run_the_following_with_!w'
+. ~/.config/borders/bordersrc
+
+run_the_following_with_!w
 
 local -a border_options=(
 	style=round
 	width=10.0
 	hidpi=on
-	active_color=0xffffff0000 # NOTE: Color Starts with transp
+    active_color=0xff00ff22 # blue (Note this is ARGB)
 	inactive_color=0xff414550
 )
 
