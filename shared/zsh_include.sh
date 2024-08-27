@@ -331,6 +331,18 @@ function nvday()
 }
 
 
+function dumpPrompts() {
+    # Use an array to explicitly handle glob expansion
+    local files=($1)
+    echo files
+
+    for file in "${files[@]}"; do
+        echo $file
+        cat "$file" | dasel -r json '.Recommendations.all().property(PromptToUseDuringReflection?)'
+    done
+}
+
+
 # Useful stuff w/OSX Sound
 alias restart_audio='sudo launchctl kickstart -kp system/com.apple.audio.coreaudiod'
 alias airpods_audio='SwitchAudioSource -s "Igor’s AirPods Pro" && SwitchAudioSource -t input -s "Igor’s AirPods Pro" '
