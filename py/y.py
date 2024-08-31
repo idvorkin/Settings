@@ -313,7 +313,8 @@ def capture_foreground_window(save_path="screenshot.png"):
 
 
 @app.command()
-def ss_active():
+def ssa():
+    """Take a screenshot of the active window and copy it to the clipboard."""
     dimensions = get_foreground_window_dimensions()
     ic(dimensions)
     if dimensions:
