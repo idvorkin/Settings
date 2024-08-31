@@ -274,7 +274,7 @@ def ghimgpaste(caption: str = ""):
     # do a push
     os.system(f"cd {iclip_dir} && git push")
     # Make a markdown include and write it to the clipboard
-    template = f"![{caption}](https://github.com/idvorkin/ipaste/blob/raw/master/assets/{current_time}.webp)"
+    template = f"![{caption}](https://github.com/idvorkin/ipaste/blob/raw/master/{current_time}.webp)"
     # put this on the clipboard
     pyperclip.copy(template)
     print(template)
