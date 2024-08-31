@@ -374,7 +374,7 @@ plugins = appendTables(plugins, {
         opts = {
 
             heading = {
-                -- Turn on / off heading icon & background rendering
+                -- Turn on / off heading icon & ba󰲧ckground rendering
                 enabled = true,
                 width = 'block',
                 icons = { '# ', '## ', '### ', '#### ', '󰲩 ', '󰲫 ' },
