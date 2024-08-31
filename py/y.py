@@ -1,5 +1,6 @@
 #!python3.11
 
+from datetime import time
 import typer
 import subprocess
 from subprocess import CompletedProcess
@@ -12,12 +13,14 @@ import pyperclip
 import Quartz
 import Quartz.CoreGraphics as CG
 import AppKit
+import math
 
 _ = """
 
 ~/settings/config/yabai/yabairc
 
 """
+
 
 app = typer.Typer(help="A Yabai helper", no_args_is_help=True)
 
@@ -327,6 +330,37 @@ def ss_active():
     pb = AppKit.NSPasteboard.generalPasteboard()
     pb.clearContents()
     pb.writeObjects_([img])
+
+
+def jiggle_mouse():
+    """
+    Move the mouse cursor in a circular pattern and draw a yellow circle around it.
+    """
+    radius = 10  # Radius of the circle
+    center_x, center_y = Quartz.CGEventGetLocation(Quartz.CGEventCreate(None))
+
+    for _ in range(10):  # Repeat 10 times for 10 circles
+        for angle in range(0, 360, 5):  # Move in 5-degree increments
+            # Calculate new position
+            radian = math.radians(angle)
+            dx = radius * math.cos(radian)
+            dy = radius * math.sin(radian)
+
+            # Move mouse and update window position
+            new_x, new_y = center_x + dx, center_y + dy
+            Quartz.CGEventPost(
+                Quartz.kCGHIDEventTap,
+                Quartz.CGEventCreateMouseEvent(
+                    None, Quartz.kCGEventMouseMoved, (new_x, new_y), 0
+                ),
+            )
+            # Wait for a short interval
+            time.sleep(0.001)
+
+
+@app.command()
+def jiggle():
+    jiggle_mouse()
 
 
 @app.command()
