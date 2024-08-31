@@ -14,6 +14,7 @@ import Quartz
 import Quartz.CoreGraphics as CG
 import AppKit
 import math
+import os
 
 _ = """
 
@@ -310,6 +311,12 @@ def capture_foreground_window(save_path="screenshot.png"):
     png_data.writeToFile_atomically_(save_path, True)
 
     print(f"Screenshot of the foreground window saved to {save_path}")
+
+
+@app.command()
+def sss():
+    """Take a screenshot of a selection"""
+    os.system("screencapture -i -c")
 
 
 @app.command()
