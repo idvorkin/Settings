@@ -9,6 +9,9 @@ import json
 from typing import List
 from pydantic import BaseModel, Field
 import pyperclip
+import Quartz
+import Quartz.CoreGraphics as CG
+import AppKit
 
 _ = """
 
@@ -249,9 +252,81 @@ def t2():
 def debug():
     ic(get_displays())
     ic([w for w in get_windows().windows])
+    active_window = [w for w in get_windows().windows if w.has_focus][0]
+    ic(active_window)
 
 
 ## I'm going to add new helpful commands - tbd the right file for them
+def get_foreground_window_dimensions():
+    # Get the list of all windows
+    windows = Quartz.CGWindowListCopyWindowInfo(
+        Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID
+    )
+
+    # Iterate through the windows to find the topmost onscreen window
+    for window in windows:
+        if window.get("kCGWindowLayer") == 0:  # Usually, the topmost window has layer 0
+            bounds = window.get("kCGWindowBounds")
+            x = bounds.get("X", 0)
+            y = bounds.get("Y", 0)
+            width = bounds.get("Width", 0)
+            height = bounds.get("Height", 0)
+            return (x, y, width, height)
+
+    return None
+
+
+def capture_foreground_window(save_path="screenshot.png"):
+    # Get the dimensions of the foreground window
+    ic(save_path)
+    dimensions = get_foreground_window_dimensions()
+    if not dimensions:
+        print("No foreground window found")
+        return
+
+    x, y, width, height = dimensions
+
+    # Create a screenshot of the specified window bounds
+    rect = Quartz.CGRectMake(x, y, width, height)
+    image = CG.CGWindowListCreateImage(
+        rect,
+        CG.kCGWindowListOptionOnScreenOnly,
+        CG.kCGNullWindowID,
+        CG.kCGWindowImageDefault,
+    )
+
+    # Create an NSBitmapImageRep from the CGImage
+    bitmap_rep = AppKit.NSBitmapImageRep.alloc().initWithCGImage_(image)
+
+    # Create an NSData object from the bitmap representation
+    png_data = bitmap_rep.representationUsingType_properties_(
+        AppKit.NSPNGFileType, None
+    )
+
+    # Write the PNG data to a file
+    png_data.writeToFile_atomically_(save_path, True)
+
+    print(f"Screenshot of the foreground window saved to {save_path}")
+
+
+@app.command()
+def ss_active():
+    dimensions = get_foreground_window_dimensions()
+    ic(dimensions)
+    if dimensions:
+        print(
+            f"Active window dimensions: x={dimensions[0]}, y={dimensions[1]}, width={dimensions[2]}, height={dimensions[3]}"
+        )
+    else:
+        print("No active window found")
+        return
+    path = Path.home() / "tmp/screenshot.png"
+    capture_foreground_window(str(path))
+
+    img = AppKit.NSImage.alloc().initWithContentsOfFile_(str(path))
+    pb = AppKit.NSPasteboard.generalPasteboard()
+    pb.clearContents()
+    pb.writeObjects_([img])
 
 
 @app.command()
@@ -274,7 +349,7 @@ def ghimgpaste(caption: str = ""):
     # do a push
     os.system(f"cd {iclip_dir} && git push")
     # Make a markdown include and write it to the clipboard
-    template = f"![{caption}](https://github.com/idvorkin/ipaste/blob/raw/master/{current_time}.webp)"
+    template = f"![{caption}](https://raw.githubusercontent.com/idvorkin/ipaste/main/{current_time}.webp)"
     # put this on the clipboard
     pyperclip.copy(template)
     print(template)
@@ -294,7 +369,7 @@ def alfred():
     #  Build a json of commands to be called from an alfred plugin workflow
     # start by reflecting to find all commands in app.
     # all_commands = app.
-    commands = [c.callback.__name__.replace("-", "_") for c in app.registered_commands]  # type:ignore
+    commands = [c.callback.__name__.replace("_", "-") for c in app.registered_commands]  # type:ignore
     items = [AlfredItems.Item(title=c, subtitle=c, arg=c) for c in commands]
     alfred_items = AlfredItems(items=items)
     print(alfred_items.model_dump_json(indent=4))
