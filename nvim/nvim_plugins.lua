@@ -370,6 +370,19 @@ plugins = appendTables(plugins, {
 
 plugins = appendTables(plugins, {
     {
+        'MeanderingProgrammer/render-markdown.nvim',
+        opts = {
+
+            heading = {
+                -- Turn on / off heading icon & background rendering
+                enabled = true,
+                width = 'block',
+                icons = { '# ', '## ', '### ', '#### ', '󰲩 ', '󰲫 ' },
+            }
+
+        },
+    },
+    {
       "iamcco/markdown-preview.nvim",
       cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
       build = "cd app && yarn install",
