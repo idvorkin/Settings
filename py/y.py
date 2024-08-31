@@ -8,6 +8,7 @@ from icecream import ic
 import json
 from typing import List
 from pydantic import BaseModel, Field
+import pyperclip
 
 _ = """
 
@@ -131,6 +132,16 @@ def fleft():
 
 
 @app.command()
+def fup():
+    call_yabai("-m window --focus north")
+
+
+@app.command()
+def fdown():
+    call_yabai("-m window --focus south")
+
+
+@app.command()
 def fright():
     call_yabai("-m window --focus east")
 
@@ -238,6 +249,35 @@ def t2():
 def debug():
     ic(get_displays())
     ic([w for w in get_windows().windows])
+
+
+## I'm going to add new helpful commands - tbd the right file for them
+
+
+@app.command()
+def ghimgpaste(caption: str = ""):
+    from datetime import datetime
+    import os
+
+    iclip_dir = "~/gits/ipaste"
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+    error = os.system(f"pngpaste {iclip_dir}/{current_time}.png")
+    if error:
+        print("Error pasting image")
+        return
+
+    os.system(f"convert {iclip_dir}/{current_time}.png {iclip_dir}/{current_time}.webp")
+    os.system(f"rm {iclip_dir}/{current_time}.png")
+    os.system(f"cd {iclip_dir} && git fetch && git rebase")
+    os.system(f"cd {iclip_dir} && git add {current_time}.webp")
+    os.system(f"cd {iclip_dir} && git commit -m 'adding image {current_time}.webp'")
+    # do a push
+    os.system(f"cd {iclip_dir} && git push")
+    # Make a markdown include and write it to the clipboard
+    template = f"![{caption}](https://github.com/idvorkin/ipaste/blob/raw/master/assets/{current_time}.webp)"
+    # put this on the clipboard
+    pyperclip.copy(template)
+    print(template)
 
 
 class AlfredItems(BaseModel):
