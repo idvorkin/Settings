@@ -18,18 +18,25 @@ amazon_com_value = "Amazon.com"
 
 app = typer.Typer(no_args_is_help=True)
 
+
 def read_csv_with_bom_handling(filepath) -> csv.DictReader:
     return csv.DictReader(open(filepath, mode="r", encoding="utf-8-sig"))
 
 
 def input_categories():
-    return "Groceries;Electronics;Pets;Entertainment & Recreation;Clothing;Furniture & Housewares;Shopping".split(";")
+    return "Groceries;Electronics;Pets;Entertainment & Recreation;Clothing;Furniture & Housewares;Shopping".split(
+        ";"
+    )
+
 
 @app.command(help="Prompt and display available categories.")
 def prompt_categories():
     ic(input_categories())
 
-@app.command(help="Extract all product titles into an output file for category mapping.")
+
+@app.command(
+    help="Extract all product titles into an output file for category mapping."
+)
 def extract_titles(
     input_csv: typer.FileText = typer.Option(
         "Retail.OrderHistory.1.csv",
@@ -38,13 +45,14 @@ def extract_titles(
     output_file: typer.FileTextWrite = typer.Option(
         "titles.txt",
         help="Path of the output file where product titles will be written.",
-        )):
+    ),
+):
     print("\nExtracting product titles...")
     csv_reader = read_csv_with_bom_handling(input_csv.name)
     titles = {}
 
     for row in csv_reader:
-        price = float(row[key_total_cost].replace(',', ''))
+        price = float(row[key_total_cost].replace(",", ""))
         titles[row[key_name]] = price
 
     for title in sorted(titles, key=titles.get):
@@ -55,6 +63,7 @@ def extract_titles(
     input_csv.close()
     output_file.close()
 
+
 def convert(
     inputfile,
     outputfile,
@@ -62,7 +71,7 @@ def convert(
     output_category,
     output_account,
     output_tags,
-    output_notes_prefix
+    output_notes_prefix,
 ):
     print("\n")
     print("Input CSV file is: ", inputfile.name)
@@ -90,7 +99,6 @@ def convert(
         "Original Statement",
         "Notes",
         "Amount",
-        "Tags",
     ]
     csv_writer = csv.DictWriter(outputfile, output_field_names)
     csv_writer.writeheader()
@@ -113,7 +121,6 @@ def convert(
                         "Original Statement": row[key_name],
                         "Notes": output_notes_prefix + row[key_payment_type],
                         "Amount": "-" + row[key_total_cost],
-                        "Tags": output_tags,
                     }
                 )
 

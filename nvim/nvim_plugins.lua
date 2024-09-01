@@ -378,6 +378,24 @@ plugins = appendTables(plugins, {
                 enabled = true,
                 width = 'block',
                 icons = { '# ', '## ', '### ', '#### ', '󰲩 ', '󰲫 ' },
+                backgrounds = {
+                    'RenderMarkdownH6Bg',
+                    'RenderMarkdownH5Bg',
+                    'RenderMarkdownH4Bg',
+                    'RenderMarkdownH3Bg',
+                    'RenderMarkdownH2Bg',
+                    'RenderMarkdownH1Bg',
+                },
+                -- The 'level' is used to index into the array using a clamp
+                -- Highlight for the heading and sign icons
+                foregrounds = {
+                    'RenderMarkdownH6',
+                    'RenderMarkdownH5',
+                    'RenderMarkdownH4',
+                    'RenderMarkdownH3',
+                    'RenderMarkdownH2',
+                    'RenderMarkdownH1',
+                },
             }
 
         },
