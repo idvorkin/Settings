@@ -19,3 +19,8 @@ repos:
     rev: v2.8.1
     hooks:
       - id: dasel-validate
+
+  - repo: https://github.com/JohnnyMorganz/StyLua
+    rev: v0.20.0
+    hooks:
+      - id: stylua
