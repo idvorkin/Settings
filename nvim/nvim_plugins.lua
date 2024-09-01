@@ -95,12 +95,6 @@ local plugins = {
     -- Uncomment \cu
     "scrooloose/nerdcommenter",
 
-    -- NVIM markdown stuff,  lets see if it works with tree sitter
-    -- "ixru/nvim-markdown",
-    "preservim/vim-markdown",
-
-    -- Auto Update ToC
-    "mzlogin/vim-markdown-toc",
     "panozzaj/vim-autocorrect",
     "nvim-lua/plenary.nvim",
     {
@@ -316,6 +310,21 @@ local git_plugins = {
 
     },
     {
+        'stevearc/conform.nvim',
+        opts={
+
+            formatters_by_ft = {
+                lua = { "stylua" },
+                -- Conform will run multiple formatters sequentially
+                python = { "ruff" },
+                markdown = { "prettier" },
+                html = { "prettier" },
+                -- Conform will run the first available formatter
+                javascript = { "prettierd", "prettier", stop_after_first = true },
+            },
+        }
+    },
+    {
         "yetone/avante.nvim",
         event = "VeryLazy",
         build = "make",
@@ -368,7 +377,14 @@ plugins = appendTables(plugins, {
     -- "PaterJason/cmp-conjure",
 })
 
-plugins = appendTables(plugins, {
+local function setupMarkdown()
+    return {
+    -- NVIM markdown stuff,  lets see if it works with tree sitter
+    -- "ixru/nvim-markdown",
+    "preservim/vim-markdown",
+
+    -- Auto Update ToC
+    "mzlogin/vim-markdown-toc",
     {
         'MeanderingProgrammer/render-markdown.nvim',
         opts = {
@@ -409,8 +425,11 @@ plugins = appendTables(plugins, {
       end,
       ft = { "markdown" },
     }
-})
+}
+end
 
+-- Markdown toys
+plugins = appendTables(plugins, setupMarkdown())
 
 plugins = appendTables(plugins, {
         {
