@@ -27,39 +27,6 @@ local function appendTables(t1, t2)
     return t1
 end
 
-local function get_openai_api_key()
-    -- Resolve the path to the user's home directory
-    local home = os.getenv("HOME") or os.getenv("USERPROFILE")
-    local filepath = home .. "/gits/igor2/secretBox.json"
-
-    -- Attempt to open the file
-    local file, err = io.open(filepath, "r")
-    if not file then
-        vim.api.nvim_echo({{"Error opening file: " .. err, "ErrorMsg"}}, false, {})
-        return nil
-    end
-
-    -- Read the entire file content
-    local content = file:read("*a")
-    file:close()
-
-    local data, parse_err = vim.json.decode(content)
-    if not data then
-        vim.api.nvim_echo({{"Error parsing JSON: " .. parse_err, "ErrorMsg"}}, false, {})
-        return nil
-    end
-
-    local openai_api_key = data.openai
-    if not openai_api_key then
-        vim.api.nvim_echo({{"openai_api_key not found in JSON", "ErrorMsg"}}, false, {})
-        return nil
-    end
-
-    -- Set the global variable and echo the key
-    vim.g.openai_api_key = openai_api_key
-    return openai_api_key
-end
-
 
 local plugins = {
     -- Highlight current line
@@ -95,8 +62,11 @@ local plugins = {
     -- Uncomment \cu
     "scrooloose/nerdcommenter",
 
+    "linux-cultist/venv-selector.nvim",
+
     "panozzaj/vim-autocorrect",
     "nvim-lua/plenary.nvim",
+    { 'echasnovski/mini.nvim', version = '*' },
     {
         "nvim-lualine/lualine.nvim",
         opts  = {
@@ -150,7 +120,7 @@ local plugins = {
     },
     "nvim-tree/nvim-web-devicons",
     "dstein64/vim-startuptime",
-    "folke/neodev.nvim",
+    "folke/lazydev.nvim",
     {
       "folke/trouble.nvim",
       opts = {}, -- for default options, refer to the configuration section for custom setup.
@@ -310,6 +280,7 @@ local git_plugins = {
 
     },
     {
+    -- Configure formatter
         'stevearc/conform.nvim',
         opts={
 
@@ -348,14 +319,6 @@ local git_plugins = {
     }
 }
 plugins = appendTables(plugins, git_plugins)
-
--- plugins = appendTables(plugins, {"mhartington/formatter.nvim"})
--- plugins = appendTables(plugins, {"sbdchd/neoformat"})
-
--- Configure formatter
-
-
-
 -- cmp and friends
 plugins = appendTables(plugins, {
     "hrsh7th/nvim-cmp",

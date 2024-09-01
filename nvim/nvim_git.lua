@@ -99,4 +99,3 @@ neogit.setup {}
 
 
 require('octo').setup()
-require('neodev').setup()
