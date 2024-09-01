@@ -62,11 +62,15 @@ local plugins = {
     -- Uncomment \cu
     "scrooloose/nerdcommenter",
 
-    "linux-cultist/venv-selector.nvim",
+    {
+        "linux-cultist/venv-selector.nvim",
+        branch="regexp",
+        opts={}
+    },
 
-    "panozzaj/vim-autocorrect",
-    "nvim-lua/plenary.nvim",
-    { 'echasnovski/mini.nvim', version = '*' },
+"panozzaj/vim-autocorrect",
+"nvim-lua/plenary.nvim",
+{ 'echasnovski/mini.nvim', version = '*' },
     {
         "nvim-lualine/lualine.nvim",
         opts  = {
