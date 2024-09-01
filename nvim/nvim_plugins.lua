@@ -390,7 +390,6 @@ local function setupMarkdown()
 	}
 end
 
--- Markdown toys
 plugins = appendTables(plugins, setupMarkdown())
 
 plugins = appendTables(plugins, {
