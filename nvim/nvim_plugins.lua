@@ -45,7 +45,6 @@ local plugins = {
 	-- Comment \cc
 	-- Uncomment \cu
 	"scrooloose/nerdcommenter",
-	"tyru/open-browser.vim", -- gx to open URL
 	"dhruvasagar/vim-table-mode",
 	"rking/ag.vim",
 	"junegunn/limelight.vim",
