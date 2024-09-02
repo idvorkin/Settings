@@ -3,7 +3,6 @@ settings_dir = os.getenv("HOME") .. "/settings/nvim/"
 dofile(settings_dir .. "nvim_shared.lua")
 if vim.g.vscode then
 	print("Running in vscode-neovim")
-	dofile(settings_dir .. "nvim_vscode.lua")
 	return
 end
 print("Not running in vscode-neovim")
