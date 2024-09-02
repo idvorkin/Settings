@@ -26,8 +26,8 @@
 ## Specify the Anthropic API key
 #anthropic-api-key:
 
-## Specify the model to use for the main chat
-model: gpt-4o-2024-08-06
+## Specify the model to use for the main chat - default to anthropic now that it has caching
+# model: gpt-4o-2024-08-06
 
 ## Use claude-3-opus-20240229 model for the main chat
 #opus: false
@@ -168,7 +168,6 @@ auto-commits: true
 
 ## Prefix commit messages with 'aider: ' (default: False)
 # attribute-commit-message: true
-attribute-commit-message-committer
 
 ## Perform a dry run without modifying files (default: False)
 #dry-run: false
