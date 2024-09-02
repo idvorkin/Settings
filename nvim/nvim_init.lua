@@ -1,11 +1,9 @@
--- Setup Packer
-settings_dir = os.getenv("HOME") .. "/settings/nvim/"
+-- Setup Packe
+local settings_dir = os.getenv("HOME") .. "/settings/nvim/"
 dofile(settings_dir .. "nvim_shared.lua")
 if vim.g.vscode then
 	print("Running in vscode-neovim")
-	return
 end
-print("Not running in vscode-neovim")
 dofile(settings_dir .. "nvim_plugins.lua")
 
 require("aerial").setup({

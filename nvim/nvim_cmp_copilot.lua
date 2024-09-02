@@ -116,6 +116,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	end,
 })
 
+-- Map :Errors to the following <cmd>Trouble diagnostics toggle filter.buf=0<cr>"
+vim.cmd("command! Errors Trouble diagnostics toggle filter.buf=0")
+
 require("lspconfig").marksman.setup({})
 
 local has_words_before = function()
