@@ -1,0 +1,59 @@
+{
+  "vscode-neovim.neovimExecutablePaths.darwin": "/Users/idvorkin/homebrew/bin/nvim",
+  "vscode-neovim.neovimInitVimPaths.win32": "~/settings/nvim/vscode-init.vim",
+  "vscode-neovim.afterInitConfig": [""],
+  "vscode-neovim.ctrlKeysForInsertMode": [
+    "a",
+    "c",
+    "d",
+    "h",
+    "j",
+    "m",
+    "o",
+    "r",
+    "t",
+    "u",
+    "w",
+    "b"
+  ],
+  "vscode-neovim.compositeKeys": {
+    "fj": {
+      "command": "vscode-neovim.escape"
+    }
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "vscode-neovim.ctrlKeysForNormalMode": [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "o",
+    "r",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+    "/",
+    "]",
+    "right",
+    "left",
+    "up",
+    "down",
+    "backspace",
+    "delete",
+    "g"
+  ]
+}
