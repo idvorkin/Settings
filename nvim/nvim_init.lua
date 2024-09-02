@@ -122,8 +122,4 @@ function InsertYouTubeTemplate(url)
 	end
 end
 
-vim.cmd([[
-command! OpenJekyll lua OpenJekyllInBrowser()
-]])
-
 print("nvim_init.lua loaded")
