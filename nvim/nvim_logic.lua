@@ -55,7 +55,13 @@ function M.OpenJekyllInBrowser()
         if permalink then
             url = "http://localhost:4000/" .. permalink:gsub("^/", ""):gsub("/$", "")
         else
-            url = "http://localhost:4000/" .. relative_path:gsub("^_posts/", ""):gsub("%.md$", ".html")
+            -- Check if the file is in a special directory (_ig66 or _d)
+            local special_dir = relative_path:match("^_([^/]+)/")
+            if special_dir and (special_dir:match("^ig%d+$") or special_dir == "d") then
+                url = "http://localhost:4000/" .. special_dir .. "/" .. relative_path:gsub("^_" .. special_dir .. "/", ""):gsub("%.md$", ".html")
+            else
+                url = "http://localhost:4000/" .. relative_path:gsub("^_posts/", ""):gsub("%.md$", ".html")
+            end
         end
         vim.fn.jobstart({ "open", url })
     else
