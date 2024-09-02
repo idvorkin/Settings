@@ -54,10 +54,7 @@ brew install --cask keycastr
 
 # fix up key repeats
 
-defaults write com.visualstudio.code.oss ApplePressAndHoldEnabled -bool false
-defaults write com.microsoft.VSCodeInsiders ApplePressAndHoldEnabled -bool false
-defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
-defaults write -app /Applications/Visual\ Studio\ Code.app ApplePressAndHoldEnabled -bool false
+defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 
 # Mac only git setup
 git config --global credential.helper osxkeychain
