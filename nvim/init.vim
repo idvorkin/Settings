@@ -1,23 +1,6 @@
-
 let g:in_nvim=1
 
-
-" Monkey patch startify to use nvim's dev icons
-lua << EOF
-function _G.webDevIcons(path)
-  local filename = vim.fn.fnamemodify(path, ':t')
-  local extension = vim.fn.fnamemodify(path, ':e')
-  return require'nvim-web-devicons'.get_icon(filename, extension, { default = true })
-end
-EOF
-
-function! StartifyEntryFormat() abort
-  return 'v:lua.webDevIcons(absolute_path) . " " . entry_path'
-endfunction
-
 source ~/.vimrc
-
-
 
 " Remap terminal keys, C-W, C-W leaves the terminal window
 :tnoremap <C-W><C-W> <C-\><C-n>
