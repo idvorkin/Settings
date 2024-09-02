@@ -2,8 +2,8 @@
 
 # Recipe to run the test for YouTube template
 test:
-    @busted nvim/test_youtube_template.lua
+    @busted nvim/test_*.lua
 
 # Recipe to run the test for YouTube template with verbose output
 test-verbose:
-    @busted --verbose nvim/test_youtube_template.lua
+    @busted --verbose nvim/test_*.lua

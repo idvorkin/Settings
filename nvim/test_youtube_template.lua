@@ -1,5 +1,5 @@
 -- Load the nvim_logic file to access the parse_youtube_url function
-local nvim_logic = require("nvim/nvim_logic")
+local nvim_logic = require("nvim.nvim_logic")
 
 describe("parse_youtube_url", function()
 	it("should return the correct template string for a YouTube URL with a timecode", function()
