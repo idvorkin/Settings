@@ -1,6 +1,6 @@
-#!python3.11
+#!python3
 
-from datetime import time
+from datetime import time, datetime
 import typer
 import subprocess
 from subprocess import CompletedProcess
@@ -322,6 +322,9 @@ def sss():
 @app.command()
 def ssa():
     """Take a screenshot of the active window and copy it to the clipboard."""
+    from PIL import Image
+    import io
+
     dimensions = get_foreground_window_dimensions()
     ic(dimensions)
     if dimensions:
@@ -331,13 +334,56 @@ def ssa():
     else:
         print("No active window found")
         return
-    path = Path.home() / "tmp/screenshot.png"
-    capture_foreground_window(str(path))
 
+    path = Path.home() / "tmp" / "screenshots" / "latest.webp"
+    current_time = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[
+        :-3
+    ]  # Get current time with milliseconds
+    screenshot_path = (
+        Path.home() / "tmp" / "screenshots" / f"screenshot_{current_time}.webp"
+    )
+
+    # Ensure the directory exists
+    screenshot_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Capture the screenshot as PNG in memory
+    png_data = capture_foreground_window_to_memory()
+
+    # Convert PNG to WebP
+    with Image.open(io.BytesIO(png_data)) as img:
+        img.save(str(screenshot_path), "WEBP")
+        img.save(str(path), "WEBP")
+
+    print(f"Screenshot saved to: {screenshot_path}")
+
+    # Load the WebP image and copy to clipboard
     img = AppKit.NSImage.alloc().initWithContentsOfFile_(str(path))
     pb = AppKit.NSPasteboard.generalPasteboard()
     pb.clearContents()
     pb.writeObjects_([img])
+
+
+def capture_foreground_window_to_memory():
+    dimensions = get_foreground_window_dimensions()
+    if not dimensions:
+        return None
+
+    x, y, width, height = dimensions
+
+    rect = Quartz.CGRectMake(x, y, width, height)
+    image = CG.CGWindowListCreateImage(
+        rect,
+        CG.kCGWindowListOptionOnScreenOnly,
+        CG.kCGNullWindowID,
+        CG.kCGWindowImageDefault,
+    )
+
+    bitmap_rep = AppKit.NSBitmapImageRep.alloc().initWithCGImage_(image)
+    png_data = bitmap_rep.representationUsingType_properties_(
+        AppKit.NSPNGFileType, None
+    )
+
+    return png_data.bytes()
 
 
 def jiggle_mouse():
