@@ -325,6 +325,10 @@ def ssa():
     from PIL import Image
     import io
 
+    # So if I'm calle from Alfred, the Alfred window might still be on top,
+    # I can eithe rlook for it, or just sleep, for 0.1s, lets do that
+    time.sleep(0.1)
+
     dimensions = get_foreground_window_dimensions()
     ic(dimensions)
     if dimensions:
