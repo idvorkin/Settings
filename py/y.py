@@ -1,6 +1,7 @@
 #!python3
 
-from datetime import time, datetime
+from datetime import datetime
+import time
 import typer
 import subprocess
 from subprocess import CompletedProcess

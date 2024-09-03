@@ -32,3 +32,8 @@ vim_python = "vim_python:app"
 todo_to_omnifocus = "todo_to_omnifocus.py:app"
 shorten = "shorten:app"
 
+[tool.uv]
+dev-dependencies = [
+    "ruff",
+]
+
