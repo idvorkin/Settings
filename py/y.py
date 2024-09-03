@@ -336,8 +336,8 @@ def ssa():
         return
 
     path = Path.home() / "tmp" / "screenshots" / "latest.webp"
-    current_time = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[
-        :-3
+    current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")[
+        :-5
     ]  # Get current time with milliseconds
     screenshot_path = (
         Path.home() / "tmp" / "screenshots" / f"screenshot_{current_time}.webp"
