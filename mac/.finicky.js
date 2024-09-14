@@ -2,6 +2,7 @@
 
 module.exports = {
   defaultBrowser: "Microsoft Edge",
+  //defaultBrowser: "Google Chrome",
   rewrite: [
     {
       // Redirect all urls to use https
@@ -26,6 +27,11 @@ module.exports = {
     },
     {
       // Open any url that includes the string "workplace" in Firefox
+      match: ["*thefacebook.com/*"],
+      browser: "Google Chrome",
+    },
+    {
+      // Open any url that includes the string "workplace" in Firefox
       match: [
         "fburl.com/*",
         "*internalfb.com/*",
@@ -36,6 +42,7 @@ module.exports = {
         "*fburl.com/*",
         "*internalfb.com/*",
         "*fb.facebook.com/*",
+        "fb.okta.com/*",
         "*fb.workplace.com/*",
         "https://drive.google.com/drive/folders/*",
         "https://docs.google.com/*",
