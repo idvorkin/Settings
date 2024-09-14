@@ -67,6 +67,9 @@ local plugins = {
 
 	"panozzaj/vim-autocorrect",
 	"nvim-lua/plenary.nvim",
+	-- :Lua <lua code>
+	-- :LuaPad
+	"rafcamlet/nvim-luapad",
 	{ "echasnovski/mini.nvim", version = "*" },
 	{
 		"nvim-lualine/lualine.nvim",
@@ -300,6 +303,14 @@ local git_plugins = {
 		build = "make",
 		opts = {
 			-- add any opts here
+			auto_suggestions_provider = "gpt-4o",
+			behaviour = {
+				auto_suggestions = true, -- Experimental stage
+				auto_set_highlight_group = true,
+				auto_set_keymaps = true,
+				auto_apply_diff_after_generation = false,
+				support_paste_from_clipboard = false,
+			},
 		},
 		dependencies = {
 			"nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
