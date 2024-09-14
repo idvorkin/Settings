@@ -41,6 +41,10 @@ local plugins = {
 	"terrastruct/d2-vim",
 	"voldikss/vim-floaterm",
 	"HiPhish/rainbow-delimiters.nvim",
+	{
+		"sontungexpt/url-open",
+		opts = {},
+	},
 
 	-- Comment \cc
 	-- Uncomment \cu
