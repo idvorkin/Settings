@@ -321,6 +321,70 @@ def sss():
 
 
 @app.command()
+def hm_rotate(
+    turns: int = typer.Argument(1, help="Number of turns to rotate"),
+    corner: bool = False,
+):
+    """Rotate hand mirror window to the next corner"""
+
+    hand_mirror_windows = [w for w in get_windows().windows if w.app == "Hand Mirror"]
+    if not hand_mirror_windows or len(hand_mirror_windows) != 1:
+        ic("Hand mirror not as expected")
+        ic(hand_mirror_windows)
+        return
+
+    # find the quadrant of the screen it is in, then rotate it to be in turns
+    # later quadrants
+    hand_mirror_window = hand_mirror_windows[0]
+    display = get_displays().displays[hand_mirror_window.display - 1]
+
+    # Calculate which quadrant the window is currently in
+    x_mid = display.frame.x + display.frame.w / 2
+    y_mid = display.frame.y + display.frame.h / 2
+
+    current_quadrant = 0
+    if hand_mirror_window.frame.x < x_mid:
+        if hand_mirror_window.frame.y < y_mid:
+            current_quadrant = 0  # Top-left
+        else:
+            current_quadrant = 2  # Bottom-left
+    else:
+        if hand_mirror_window.frame.y < y_mid:
+            current_quadrant = 1  # Top-right
+        else:
+            current_quadrant = 3  # Bottom-right
+
+    # Calculate the new quadrant
+    new_quadrant = (current_quadrant + turns) % 4
+
+    # Define new positions for each quadrant
+    # the per quadrant positions , shoudl be 10 pixels away from the corner
+
+    quadrant_positions = [
+        (display.frame.x + 10, display.frame.y + 10),  # Top-left
+        (
+            display.frame.x + display.frame.w - hand_mirror_window.frame.w - 10,
+            display.frame.y + 10,
+        ),  # Top-right
+        (
+            display.frame.x + 10,
+            display.frame.y + display.frame.h - hand_mirror_window.frame.h - 10,
+        ),  # Bottom-left
+        (
+            display.frame.x + display.frame.w - hand_mirror_window.frame.w - 10,
+            display.frame.y + display.frame.h - hand_mirror_window.frame.h - 10,
+        ),  # Bottom-right
+    ]
+
+    new_x, new_y = quadrant_positions[new_quadrant]
+
+    # Move the window to the new position
+    call_yabai(f"-m window {hand_mirror_window.id} --move abs:{new_x}:{new_y}")
+
+    # call_yabai(f"-m window {hand_mirror_window.id} --move abs:0:0")
+
+
+@app.command()
 def ssa():
     """Take a screenshot of the active window and copy it to the clipboard."""
     from PIL import Image
