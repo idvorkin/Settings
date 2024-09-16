@@ -323,7 +323,6 @@ local git_plugins = {
 		build = "make",
 		opts = {
 			-- add any opts here
-			auto_suggestions_provider = "gpt-4o",
 			behaviour = {
 				auto_suggestions = false, -- Experimental stage
 				auto_set_highlight_group = true,
