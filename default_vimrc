@@ -593,6 +593,7 @@ let g:ale_fixers = {
 " :py3file ~/settings/vim_python.py
 command! IgDaily :n! `vim_python makedailypage`
 command! IgRDaily :n! `vim_python makedailypage --remote`
+command! IgRYesterday :n! `vim_python makedailypage --remote --daysoffset=-1`
 command! Ig3 :resize 10<cr>
 function! OpenConvoFile()
     let bufexists = 0

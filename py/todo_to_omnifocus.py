@@ -1,4 +1,4 @@
-#!python3.11
+#!python3
 
 import subprocess
 import urllib.parse
