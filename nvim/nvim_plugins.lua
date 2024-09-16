@@ -43,6 +43,22 @@ local plugins = {
 	"HiPhish/rainbow-delimiters.nvim",
 	{
 		"sontungexpt/url-open",
+		cmd = "URLOpenUnderCursor",
+		keys = {
+			{
+				"gx",
+				"<cmd>URLOpenUnderCursor<cr>",
+				desc = "Open URL",
+			},
+		},
+		config = function()
+			local status_ok, url_open = pcall(require, "url-open")
+			if not status_ok then
+				return
+			end
+			url_open.setup({})
+		end,
+
 		opts = {},
 	},
 
@@ -432,6 +448,9 @@ plugins = appendTables(plugins, {
 		end,
 	},
 })
+
+-- Make command to remap OpenBrowser to  "<cmd>URLOpenUnderCursor<cr>",
+vim.cmd("command! OpenBrowser :URLOpenUnderCursor")
 
 --
 -- require('lspconfig').racket_langserver.setup()

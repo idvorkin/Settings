@@ -96,5 +96,19 @@ function WINDOW_OPEN_CONVO()
 	vim.cmd("normal! G")
 end
 
+function AvanteEnglish()
+	-- Set system prompt to fun
+	local new_prompt = [[This file contains markdown of english. Keep the english simple, upbeat an fun
+    ]]
+	require("avante.config").override({ system_prompt = new_prompt })
+end
+
+function IgAvanteDebug()
+	-- Set system prompt to fun
+	print(require("avante.config").system_prompt)
+end
+
 -- Map to vim command Ig2 to open the Convo popup
 vim.cmd("command! -nargs=0 IgOldConvo lua WINDOW_OPEN_CONVO()")
+vim.cmd("command! -nargs=0 IgAvanteEnglish lua AvanteEnglish()")
+vim.cmd("command! -nargs=0 IgAvantePrompt lua IgAvanteDebug()")
