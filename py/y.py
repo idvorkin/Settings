@@ -26,6 +26,10 @@ _ = """
 
 app = typer.Typer(help="A Yabai helper", no_args_is_help=True)
 
+def ensure_directory_exists(path):
+    """Create a directory if it doesn't exist."""
+    os.makedirs(path, exist_ok=True)
+
 # AI Coding pro-tip, pump json into AI, and ask it to generate the pydantic types for you
 # Then use typing to avoid the long pain of type errors
 
@@ -404,16 +408,12 @@ def ssa():
         print("No active window found")
         return
 
-    path = Path.home() / "tmp" / "screenshots" / "latest.webp"
-    current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")[
-        :-5
-    ]  # Get current time with milliseconds
-    screenshot_path = (
-        Path.home() / "tmp" / "screenshots" / f"screenshot_{current_time}.webp"
-    )
-
-    # Ensure the directory exists
-    screenshot_path.parent.mkdir(parents=True, exist_ok=True)
+    screenshots_dir = Path.home() / "tmp" / "screenshots"
+    ensure_directory_exists(screenshots_dir)
+    
+    path = screenshots_dir / "latest.webp"
+    current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")[:-5]  # Get current time with milliseconds
+    screenshot_path = screenshots_dir / f"screenshot_{current_time}.webp"
 
     # Capture the screenshot as PNG in memory
     png_data = capture_foreground_window_to_memory()
@@ -491,7 +491,8 @@ def ghimgpaste(caption: str = ""):
     from datetime import datetime
     import os
 
-    iclip_dir = "~/gits/ipaste"
+    iclip_dir = Path("~/gits/ipaste").expanduser()
+    ensure_directory_exists(iclip_dir)
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     error = os.system(f"pngpaste {iclip_dir}/{current_time}.png")
     if error:
