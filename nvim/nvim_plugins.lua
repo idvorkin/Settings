@@ -182,7 +182,23 @@ local plugins = {
 			},
 		},
 	},
-	{ "nvim-telescope/telescope.nvim" },
+	{
+		"nvim-telescope/telescope.nvim",
+		config = function()
+			vim.cmd([[
+            cab ls :Telescope buffers<CR>
+            command! Gitfiles Telescope git_files
+            command! GitStatus Telescope git_status
+            command! Registers Telescope registers
+            command! History Telescope command_history
+            command! LiveGrep Telescope live_grep
+            command! Marks Telescope marks
+            command! Colorscheme Telescope colorscheme
+            command! JumpList Telescope jumplist
+            command! LiveSearch Telescope current_buffer_fuzzy_find
+        ]])
+		end,
+	},
 	{
 		"nvim-telescope/telescope-fzf-native.nvim",
 		build = "cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release",
