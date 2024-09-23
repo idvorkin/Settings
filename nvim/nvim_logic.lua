@@ -101,4 +101,44 @@ if vim and vim.api and vim.api.nvim_create_user_command then
 	end, {})
 end
 
+-- Define a function to get the relative path to the Git repo root
+local function get_git_relative_path()
+    -- Get the Git repository root directory using a shell command
+    local full_path = vim.fn.expand('%:p')
+    local git_root = vim.fn.system('git rev-parse --show-toplevel'):gsub('\n', '')
+
+    -- Remove the Git root directory prefix from the full path
+    local relative_path = full_path:gsub('^' .. git_root .. '/', '')
+
+    return relative_path
+end
+
+-- Define a function to open the GitHub link
+local function open_github_link()
+    -- Store the current working directory
+    local working_dir = vim.fn.getcwd()
+
+    -- Change to the directory of the current file
+    local full_path = vim.fn.expand('%:p')
+    vim.fn.chdir(vim.fn.fnamemodify(full_path, ':h'))
+
+
+    -- Get the current line number
+    local line_number = vim.fn.line('.')
+
+    -- Get the relative path to the Git repo
+    local relative_path = get_git_relative_path()
+
+    -- Construct the GitHub CLI command
+    local command = string.format('gh browse -c %s:%d', relative_path, line_number)
+
+    -- Execute the command
+    vim.fn.system(command)
+    -- Go back to the stored working directory
+    vim.fn.chdir(working_dir)
+end
+
+-- Create a Vim command to call the Lua function
+vim.api.nvim_create_user_command('Ghlink', open_github_link, {})
+
 return M
