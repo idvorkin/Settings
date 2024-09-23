@@ -11,7 +11,7 @@ augroup Terminal
   autocmd TermOpen * nnoremap <buffer> q :bd<CR>
 augroup END
 
-" Reload when saving vimrc, which is the whole point of changin dotfile
+" Reload when saving vimrc, which is the whole point of changing dotfile
 augroup reload_nvimrc | au!
         au BufWritePost *init.vim source ~/settings/nvim/init.vim
         au BufWritePost *nvim_init.lua source ~/settings/nvim/init.vim
