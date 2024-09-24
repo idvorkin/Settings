@@ -121,5 +121,6 @@ function InsertYouTubeTemplate(url)
 		vim.api.nvim_put({ err }, "c", true, true)
 	end
 end
+vim.opt.laststatus = 3
 
 print("nvim_init.lua loaded")
