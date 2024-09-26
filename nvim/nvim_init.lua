@@ -1,10 +1,27 @@
 -- Setup Packe
 local settings_dir = os.getenv("HOME") .. "/settings/nvim/"
 dofile(settings_dir .. "nvim_shared.lua")
+dofile(settings_dir .. "nvim_plugins.lua")
+
+local nvim_logic = dofile(settings_dir .. "nvim_logic.lua")
+
+function InsertYouTubeTemplate(url)
+	if not url then
+		url = vim.fn.getreg("+")
+	end
+	local template, err = nvim_logic.parse_youtube_url(url)
+	if template then
+		vim.api.nvim_put({ template }, "c", true, true)
+	else
+		vim.api.nvim_put({ err }, "c", true, true)
+	end
+end
+-- Make command to remap OpenBrowser to  "<cmd>URLOpenUnderCursor<cr>",
+vim.cmd("command! OpenBrowser :URLOpenUnderCursor")
 if vim.g.vscode then
 	print("Running in vscode-neovim")
+	return
 end
-dofile(settings_dir .. "nvim_plugins.lua")
 
 require("aerial").setup({
 	placement = "edge",
@@ -108,19 +125,5 @@ function ZenModeToggleFunction(width)
 	})
 end
 
-local nvim_logic = dofile(settings_dir .. "nvim_logic.lua")
-
-function InsertYouTubeTemplate(url)
-	if not url then
-		url = vim.fn.getreg("+")
-	end
-	local template, err = nvim_logic.parse_youtube_url(url)
-	if template then
-		vim.api.nvim_put({ template }, "c", true, true)
-	else
-		vim.api.nvim_put({ err }, "c", true, true)
-	end
-end
 vim.opt.laststatus = 3
-
 print("nvim_init.lua loaded")

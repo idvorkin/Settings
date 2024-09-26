@@ -26,21 +26,7 @@ local function appendTables(t1, t2)
 	return t1
 end
 
-local plugins = {
-	-- Highlight current line
-	-- ConoLineEnable (Highlight current line)
-	"miyakogi/conoline.vim",
-	-- Like LimeLight
-	{
-		"folke/twilight.nvim",
-		opts = {
-			context = 5, -- amount of lines we will try to show around the current line
-		},
-	},
-	"ekalinin/Dockerfile.vim",
-	"terrastruct/d2-vim",
-	"voldikss/vim-floaterm",
-	"HiPhish/rainbow-delimiters.nvim",
+local vscode_compatible_plugins = {
 	{
 		"sontungexpt/url-open",
 		cmd = "URLOpenUnderCursor",
@@ -61,11 +47,38 @@ local plugins = {
 
 		opts = {},
 	},
-
 	-- Comment \cc
 	-- Uncomment \cu
 	"scrooloose/nerdcommenter",
 	"dhruvasagar/vim-table-mode",
+	-- :Rename a file
+	"danro/rename.vim",
+	-- Comment \cc
+	-- Uncomment \cu
+	"scrooloose/nerdcommenter",
+	"panozzaj/vim-autocorrect",
+	{
+		"linux-cultist/venv-selector.nvim",
+		branch = "regexp",
+		opts = {},
+	},
+}
+local plugins = {
+	-- Highlight current line
+	-- ConoLineEnable (Highlight current line)
+	"miyakogi/conoline.vim",
+	-- Like LimeLight
+	{
+		"folke/twilight.nvim",
+		opts = {
+			context = 5, -- amount of lines we will try to show around the current line
+		},
+	},
+	"ekalinin/Dockerfile.vim",
+	"terrastruct/d2-vim",
+	"voldikss/vim-floaterm",
+	"HiPhish/rainbow-delimiters.nvim",
+
 	"rking/ag.vim",
 	"junegunn/limelight.vim",
 	"junegunn/goyo.vim",
@@ -73,19 +86,7 @@ local plugins = {
 	"catppuccin/nvim",
 
 	"folke/zen-mode.nvim",
-	-- :Rename a file
-	"danro/rename.vim",
-	-- Comment \cc
-	-- Uncomment \cu
-	"scrooloose/nerdcommenter",
 
-	{
-		"linux-cultist/venv-selector.nvim",
-		branch = "regexp",
-		opts = {},
-	},
-
-	"panozzaj/vim-autocorrect",
 	"nvim-lua/plenary.nvim",
 	-- :Lua <lua code>
 	-- :LuaPad
@@ -102,6 +103,23 @@ local plugins = {
 				},
 			},
 		},
+	},
+	{
+		"nvim-telescope/telescope.nvim",
+		config = function()
+			vim.cmd([[
+            cab ls :Telescope buffers<CR>
+            command! Gitfiles Telescope git_files
+            command! GitStatus Telescope git_status
+            command! Registers Telescope registers
+            command! History Telescope command_history
+            command! LiveGrep Telescope live_grep
+            command! Marks Telescope marks
+            command! Colorscheme Telescope colorscheme
+            command! JumpList Telescope jumplist
+            command! LiveSearch Telescope current_buffer_fuzzy_find
+        ]])
+		end,
 	},
 	{
 		"folke/noice.nvim",
@@ -181,23 +199,6 @@ local plugins = {
 				desc = "Quickfix List (Trouble)",
 			},
 		},
-	},
-	{
-		"nvim-telescope/telescope.nvim",
-		config = function()
-			vim.cmd([[
-            cab ls :Telescope buffers<CR>
-            command! Gitfiles Telescope git_files
-            command! GitStatus Telescope git_status
-            command! Registers Telescope registers
-            command! History Telescope command_history
-            command! LiveGrep Telescope live_grep
-            command! Marks Telescope marks
-            command! Colorscheme Telescope colorscheme
-            command! JumpList Telescope jumplist
-            command! LiveSearch Telescope current_buffer_fuzzy_find
-        ]])
-		end,
 	},
 	{
 		"nvim-telescope/telescope-fzf-native.nvim",
@@ -365,7 +366,7 @@ local git_plugins = {
 }
 plugins = appendTables(plugins, git_plugins)
 -- cmp and friends
-plugins = appendTables(plugins, {
+local cmp_and_friends = {
 	"hrsh7th/nvim-cmp",
 	"hrsh7th/cmp-nvim-lsp",
 	{ "stevanmilic/nvim-lspimport" },
@@ -377,7 +378,10 @@ plugins = appendTables(plugins, {
 	"zbirenbaum/copilot-cmp",
 	"neovim/nvim-lspconfig",
 	"onsails/lspkind.nvim",
-})
+}
+
+plugins = appendTables(plugins, cmp_and_friends)
+
 -- Take these out unless I'm going back to closure
 plugins = appendTables(plugins, {
 	-- "wlangstroth/vim-racket",
@@ -438,19 +442,6 @@ end
 plugins = appendTables(plugins, setupMarkdown())
 
 plugins = appendTables(plugins, {
-	{
-		"dustinblackman/oatmeal.nvim",
-		cmd = { "Oatmeal" },
-		keys = {
-			{ "<leader>om", mode = "n", desc = "Start Oatmeal session" },
-		},
-		opts = {
-			backend = "ollama",
-			model = "codellama:latest",
-		},
-	},
-})
-plugins = appendTables(plugins, {
 	{ "williamboman/mason.nvim" },
 	{ "williamboman/mason-lspconfig.nvim" },
 	{ "VonHeikemen/lsp-zero.nvim", branch = "v3.x" },
@@ -464,10 +455,13 @@ plugins = appendTables(plugins, {
 	},
 })
 
--- Make command to remap OpenBrowser to  "<cmd>URLOpenUnderCursor<cr>",
-vim.cmd("command! OpenBrowser :URLOpenUnderCursor")
-
+local plugins_to_load = plugins
+if vim.g.vscode then
+	plugins_to_load = vscode_compatible_plugins
+else
+	plugins_to_load = appendTables(plugins, vscode_compatible_plugins)
+end
 --
 -- require('lspconfig').racket_langserver.setup()
 --  VIM LSP  for lua - I think I still need to configure
-require("lazy").setup(plugins)
+require("lazy").setup(plugins_to_load)
