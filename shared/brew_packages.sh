@@ -3,7 +3,7 @@ export brew_packages="\
 tmux \
 zoxide \
 bat \
-exa \
+eza \
 jq \
 fd \
 procs \
