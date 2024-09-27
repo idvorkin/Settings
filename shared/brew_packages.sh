@@ -19,7 +19,6 @@ git \
 yq \
 cpulimit \
 dua-cli \
-fasd \
 docker \
 png-quant \
 docker-compose \
