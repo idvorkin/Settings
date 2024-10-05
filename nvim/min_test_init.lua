@@ -20,7 +20,7 @@ require("lazy").setup({
 	-- List your plugins here
 	{
 		"nvim-lua/plenary.nvim", -- Plenary for testing and other utilities
-		lazy = true, -- Lazy-load Plenary.nvim only when it's required
+		lazy = false,
 	},
 	-- Add more plugins here
 })
@@ -30,15 +30,6 @@ vim.opt.swapfile = false
 vim.opt.backup = false
 vim.opt.writebackup = false
 vim.opt.undofile = false
-
--- Confirm plenary is available
-local plenary_ok, plenary = pcall(require, "plenary")
-if not plenary_ok then
-	error("Plenary.nvim could not be loaded")
-end
-
--- Add plenary testing functionality
--- require('plenary.test_harness')
 
 -- Hello world test to confirm setup
 print("Last line in test_init.lua")
