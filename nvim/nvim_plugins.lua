@@ -105,6 +105,15 @@ local plugins = {
 		},
 	},
 	{
+		"nvim-neotest/neotest",
+		dependencies = {
+			"nvim-neotest/nvim-nio",
+			"nvim-lua/plenary.nvim",
+			"antoinemadec/FixCursorHold.nvim",
+			"nvim-treesitter/nvim-treesitter",
+		},
+	},
+	{
 		"nvim-telescope/telescope.nvim",
 		config = function()
 			vim.cmd([[
@@ -119,6 +128,12 @@ local plugins = {
             command! JumpList Telescope jumplist
             command! LiveSearch Telescope current_buffer_fuzzy_find
         ]])
+		end,
+	},
+	{
+		"nvim-telescope/telescope-frecency.nvim",
+		config = function()
+			require("telescope").load_extension("frecency")
 		end,
 	},
 	{

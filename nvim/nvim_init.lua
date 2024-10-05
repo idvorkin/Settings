@@ -125,5 +125,5 @@ function ZenModeToggleFunction(width)
 	})
 end
 
-vim.opt.laststatus = 3
+-- vim.opt.laststatus = 3
 print("nvim_init.lua loaded")

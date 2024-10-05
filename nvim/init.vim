@@ -36,7 +36,7 @@ cab gd :terminal export PAGER=don_t_use_me && git diff
 
 :set shadafile=~/.nvim.shadafile
 
-:nnoremap <C-P> :Telescope oldfiles<CR>
+:nnoremap <C-P> :Telescope frecency<cr>
 :nnoremap <C-O> :FF<cr>
 :nnoremap <C-I> :Telescope aerial<CR>
 set fillchars+=diff:╱
