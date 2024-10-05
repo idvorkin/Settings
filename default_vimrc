@@ -336,7 +336,8 @@ func FzFConfig()
     " | or :w
     "
 
-    :nnoremap <C-P> :History<cr>
+    " :nnoremap <C-P> :History<cr>
+    :nnoremap <C-P> :Telescope frecency<cr>
     :nnoremap <C-O> :FF<cr>
     :nnoremap <C-I> :BTags<cr>
 
