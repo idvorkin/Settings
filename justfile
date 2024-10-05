@@ -1,9 +1,12 @@
 # Justfile for running tests
 
 # Recipe to run the test for YouTube template
+# nvim --headless -u nvim/tests/test_init.lua "PlenaryBustedDirectory nvim/tests/"
 test:
-    @busted nvim/test_*.lua
+   nvim --headless -u nvim/tests/test_init.lua -c "PlenaryBustedDirectory nvim/tests/" -c "qa"
+
+
+
 
 # Recipe to run the test for YouTube template with verbose output
 test-verbose:
-    @busted --verbose nvim/test_*.lua
