@@ -125,5 +125,14 @@ function ZenModeToggleFunction(width)
 	})
 end
 
+require("neotest").setup({
+	adapters = {
+		require("neotest-python")({
+			dap = { justMyCode = false },
+		}),
+		require("neotest-plenary"),
+	},
+})
+
 -- vim.opt.laststatus = 3
 print("nvim_init.lua loaded")
