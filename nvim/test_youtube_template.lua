@@ -2,11 +2,16 @@
 local nvim_logic = require("nvim.nvim_logic")
 
 
--- Try to load Plenary, use fallback if not available
-local plenary = require("plenary")
-local describe = plenary.describe
-local assert = plenary.assert
-local it = plenary.it
+-- Define simple test functions
+local function describe(desc, func)
+    print("Describing: " .. desc)
+    func()
+end
+
+local function it(desc, func)
+    print("  It " .. desc)
+    func()
+end
 
 describe("parse_youtube_url", function()
     it("should return the correct template string for a YouTube URL with a timecode", function()
@@ -14,12 +19,10 @@ describe("parse_youtube_url", function()
         local template, err = nvim_logic.parse_youtube_url(url)
         print("Actual template:", template)
         print("Error:", err)
-        assert(
-            template == '{% include youtube.html src="zjkBMFhNj_g&t=2744" %}',
+        assert(template == '{% include youtube.html src="zjkBMFhNj_g&t=2744" %}',
             'Expected template string not returned.\nExpected:\n{% include youtube.html src="zjkBMFhNj_g&t=2744" %}\nGot:\n'
-                .. tostring(template)
-        )
-        assert(err == nil)
+                .. tostring(template))
+        assert(err == nil, "Expected error to be nil, but got: " .. tostring(err))
     end)
 
     it("should return the correct template string for a YouTube URL with a timecode in seconds", function()
@@ -27,12 +30,10 @@ describe("parse_youtube_url", function()
         local template, err = nvim_logic.parse_youtube_url(url)
         print("Actual template:", template)
         print("Error:", err)
-        assert(
-            template == '{% include youtube.html src="zjkBMFhNj_g&t=2743" %}',
+        assert(template == '{% include youtube.html src="zjkBMFhNj_g&t=2743" %}',
             'Expected template string not returned.\nExpected:\n{% include youtube.html src="zjkBMFhNj_g&t=2743" %}\nGot:\n'
-                .. tostring(template)
-        )
-        assert(err == nil)
+                .. tostring(template))
+        assert(err == nil, "Expected error to be nil, but got: " .. tostring(err))
     end)
 
     it("should return an error for an invalid YouTube URL", function()
