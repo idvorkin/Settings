@@ -88,7 +88,6 @@ gchanges() {
 }
 
 alias hibernate="sudo pmset sleepnow"
-alias imgls='timg --grid 4 --title'
 alias lg='lazygit'
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 alias gpushall='for git_directory in * ; echo $git_directory && git -C $git_directory push'
@@ -345,6 +344,14 @@ function dumpPrompts() {
     done
 }
 
+function imgls()
+{
+    if [[ -n "$TMUX" ]]; then
+        timg --grid 4 --title -ps "$@"
+    else
+        timg --grid 4 --title "$@"
+    fi
+}
 
 # Useful stuff w/OSX Sound
 alias restart_audio='sudo launchctl kickstart -kp system/com.apple.audio.coreaudiod'
