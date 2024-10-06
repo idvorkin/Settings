@@ -98,6 +98,7 @@ alias sl='ssh lightsail'
 alias asl='autossh -M 20000 lightsail_no_forward'
 alias slnf='ssh lightsail_no_forward'
 alias tam='tmux attach-session -t main || tmux new-session -s main'
+alias tas='tmux attach-session -t servers || tmux new-session -s servers'
 alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
 alias xuilocal=" pipxu install -f . --editable"
 
