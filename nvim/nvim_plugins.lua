@@ -125,6 +125,7 @@ local plugins = {
             command! Registers Telescope registers
             command! History Telescope command_history
             command! LiveGrep Telescope live_grep
+            command! NeoClip Telescope neoclip
             command! Marks Telescope marks
             command! Colorscheme Telescope colorscheme
             command! JumpList Telescope jumplist
@@ -243,7 +244,13 @@ local plugins = {
 	},
 	"MunifTanjim/nui.nvim",
 	"godlygeek/tabular",
-	"AckslD/nvim-neoclip.lua",
+	{
+		"AckslD/nvim-neoclip.lua",
+		config = function()
+			require("neoclip").setup()
+		end,
+	},
+
 	"preservim/vim-colors-pencil",
 	"ttibsi/pre-commit.nvim",
 }
