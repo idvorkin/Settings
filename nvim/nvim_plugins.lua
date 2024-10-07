@@ -282,21 +282,6 @@ function TelescopePlugins()
 	return {
 		{
 			"nvim-telescope/telescope.nvim",
-			config = function()
-				vim.cmd([[
-                cab ls :Telescope buffers<CR>
-                command! Gitfiles Telescope git_files
-                command! GitStatus Telescope git_status
-                command! Registers Telescope registers
-                command! History Telescope command_history
-                command! LiveGrep Telescope live_grep
-                command! NeoClip Telescope neoclip
-                command! Marks Telescope marks
-                command! Colorscheme Telescope colorscheme
-                command! JumpList Telescope jumplist
-                command! LiveSearch Telescope current_buffer_fuzzy_find
-                ]])
-			end,
 		},
 		{
 			"nvim-telescope/telescope-frecency.nvim",
@@ -304,12 +289,47 @@ function TelescopePlugins()
 				require("telescope").load_extension("frecency")
 			end,
 		},
-	}, {
-		"nvim-telescope/telescope-fzf-native.nvim",
-		build = "cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release",
+		{
+			"nvim-telescope/telescope-fzf-native.nvim",
+			build = "cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release",
+		},
+		{
+			"nvim-telescope/telescope-file-browser.nvim",
+			dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+		},
+		{
+			"jvgrootveld/telescope-zoxide",
+			dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+		},
+		{
+			"nvim-telescope/telescope-file-browser.nvim",
+			dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+		},
 	}
 end
 plugins = appendTables(plugins, TelescopePlugins())
+
+function ConfigureTelescopePlugins()
+	require("telescope").load_extension("zoxide")
+	require("telescope").load_extension("file_browser")
+	vim.cmd([[
+    cab ls :Telescope buffers<CR>
+    command! Gitfiles Telescope git_files
+    command! GitStatus Telescope git_status
+    command! Registers Telescope registers
+    command! History Telescope command_history
+    command! LiveGrep Telescope live_grep
+    command! NeoClip Telescope neoclip
+    command! Cd Telescope zoxide list
+    command! Marks Telescope marks
+    command! Colorscheme Telescope colorscheme
+    command! JumpList Telescope jumplist
+    command! LiveSearch Telescope current_buffer_fuzzy_find
+    command! Z Telescope zoxide list
+    command! Yazi  Telescope file_browser path=%:p:h select_buffer=true
+    command! FileBrowser  Telescope file_browser path=%:p:h select_buffer=true
+    ]])
+end
 
 plugins = appendTables(plugins, { "tpope/vim-surround" })
 --[[
@@ -521,3 +541,5 @@ end
 -- require('lspconfig').racket_langserver.setup()
 --  VIM LSP  for lua - I think I still need to configure
 require("lazy").setup(plugins_to_load)
+
+ConfigureTelescopePlugins()
