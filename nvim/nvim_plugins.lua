@@ -116,30 +116,6 @@ local plugins = {
 		},
 	},
 	{
-		"nvim-telescope/telescope.nvim",
-		config = function()
-			vim.cmd([[
-            cab ls :Telescope buffers<CR>
-            command! Gitfiles Telescope git_files
-            command! GitStatus Telescope git_status
-            command! Registers Telescope registers
-            command! History Telescope command_history
-            command! LiveGrep Telescope live_grep
-            command! NeoClip Telescope neoclip
-            command! Marks Telescope marks
-            command! Colorscheme Telescope colorscheme
-            command! JumpList Telescope jumplist
-            command! LiveSearch Telescope current_buffer_fuzzy_find
-        ]])
-		end,
-	},
-	{
-		"nvim-telescope/telescope-frecency.nvim",
-		config = function()
-			require("telescope").load_extension("frecency")
-		end,
-	},
-	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
 		opts = {
@@ -217,10 +193,6 @@ local plugins = {
 				desc = "Quickfix List (Trouble)",
 			},
 		},
-	},
-	{
-		"nvim-telescope/telescope-fzf-native.nvim",
-		build = "cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release",
 	},
 	"stevearc/dressing.nvim",
 	{
@@ -305,6 +277,39 @@ plugins = appendTables(plugins, {
 	"nvim-treesitter/nvim-treesitter-textobjects",
 	"MDeiml/tree-sitter-markdown",
 })
+
+function TelescopePlugins()
+	return {
+		{
+			"nvim-telescope/telescope.nvim",
+			config = function()
+				vim.cmd([[
+                cab ls :Telescope buffers<CR>
+                command! Gitfiles Telescope git_files
+                command! GitStatus Telescope git_status
+                command! Registers Telescope registers
+                command! History Telescope command_history
+                command! LiveGrep Telescope live_grep
+                command! NeoClip Telescope neoclip
+                command! Marks Telescope marks
+                command! Colorscheme Telescope colorscheme
+                command! JumpList Telescope jumplist
+                command! LiveSearch Telescope current_buffer_fuzzy_find
+                ]])
+			end,
+		},
+		{
+			"nvim-telescope/telescope-frecency.nvim",
+			config = function()
+				require("telescope").load_extension("frecency")
+			end,
+		},
+	}, {
+		"nvim-telescope/telescope-fzf-native.nvim",
+		build = "cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release",
+	}
+end
+plugins = appendTables(plugins, TelescopePlugins())
 
 plugins = appendTables(plugins, { "tpope/vim-surround" })
 --[[
