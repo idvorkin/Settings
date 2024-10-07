@@ -327,7 +327,7 @@ function ConfigureTelescopePlugins()
     command! Z Telescope zoxide list
     command! Yazi  Telescope file_browser path=%:p:h select_buffer=true
     command! FileBrowser  Telescope file_browser path=%:p:h select_buffer=true
-    command! Gist Telescope gh gist limit=20  " Limit gist len to speed up loading
+    command! Gist Telescope gh gist limit=20
     command! Issues Telescope gh issues
     ]])
 end
