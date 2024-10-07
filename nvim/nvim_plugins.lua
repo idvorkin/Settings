@@ -280,38 +280,37 @@ plugins = appendTables(plugins, {
 
 function TelescopePlugins()
 	return {
-		{
-			"nvim-telescope/telescope.nvim",
-		},
-		{
-			"nvim-telescope/telescope-frecency.nvim",
-			config = function()
-				require("telescope").load_extension("frecency")
-			end,
-		},
+		"nvim-telescope/telescope-github.nvim",
+		"nvim-telescope/telescope-file-browser.nvim",
+		"jvgrootveld/telescope-zoxide",
+		"nvim-telescope/telescope-frecency.nvim",
+		"nvim-telescope/telescope-file-browser.nvim",
 		{
 			"nvim-telescope/telescope-fzf-native.nvim",
 			build = "cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release",
 		},
 		{
-			"nvim-telescope/telescope-file-browser.nvim",
-			dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
-		},
-		{
-			"jvgrootveld/telescope-zoxide",
-			dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
-		},
-		{
-			"nvim-telescope/telescope-file-browser.nvim",
-			dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+			"nvim-telescope/telescope.nvim",
+			requires = {
+				{ "nvim-lua/plenary.nvim" },
+			},
 		},
 	}
 end
 plugins = appendTables(plugins, TelescopePlugins())
 
 function ConfigureTelescopePlugins()
-	require("telescope").load_extension("zoxide")
-	require("telescope").load_extension("file_browser")
+	local extensions = {
+		"zoxide",
+		"file_browser",
+		"frecency",
+		"gh",
+	}
+
+	for _, extension in ipairs(extensions) do
+		require("telescope").load_extension(extension)
+	end
+
 	vim.cmd([[
     cab ls :Telescope buffers<CR>
     command! Gitfiles Telescope git_files
@@ -328,8 +327,16 @@ function ConfigureTelescopePlugins()
     command! Z Telescope zoxide list
     command! Yazi  Telescope file_browser path=%:p:h select_buffer=true
     command! FileBrowser  Telescope file_browser path=%:p:h select_buffer=true
+    command! Gist Telescope gh gist limit=20  " Limit gist len to speed up loading
+    command! Issues Telescope gh issues
     ]])
 end
+
+-- gh keybings
+-- C-T open web - All
+-- Gist: C-E : Edit in another tmux tab (weird)
+-- C-L Insert markdown link to issue
+-- <cr> Insert reference to issue number (probably want C-L instead)
 
 plugins = appendTables(plugins, { "tpope/vim-surround" })
 --[[
