@@ -56,7 +56,6 @@ local vscode_compatible_plugins = {
 	-- Comment \cc
 	-- Uncomment \cu
 	"scrooloose/nerdcommenter",
-	-- DB Stuf
 
 	"panozzaj/vim-autocorrect",
 	{
@@ -230,6 +229,11 @@ local plugins = {
 }
 
 -- DB Goop
+--
+local sqlite_path = "/Users/idvorkin/homebrew/opt/sqlite/lib/libsqlite3.dylib"
+if vim.loop.fs_stat(sqlite_path) then
+	vim.g.sqlite_clib_path = sqlite_path
+end
 plugins = appendTables(plugins, {
 	"tpope/vim-dadbod",
 	"kkharji/sqlite.lua",
