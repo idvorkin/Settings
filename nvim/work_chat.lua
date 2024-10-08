@@ -5,7 +5,7 @@ local db = sqlite({
 })
 db:open()
 
-function GetThreads()
+function GetThreadsFromDB()
 	local query_top_message_per_thread = [[
     SELECT (coalesce(T.thread_name, STN.thread_name, CPTN.thread_name)) AS display_name ,
         (coalesce(T.thread_name, STN.thread_name, CPTN.thread_name)) AS name ,
@@ -40,23 +40,52 @@ local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 
+local function threads_finder()
+	return finders.new_table({
+		results = GetThreadsFromDB(),
+		entry_maker = function(thread)
+			local merged_string = (thread.display_name or "") .. " -- " .. (thread.text or "")
+			merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
+			return {
+				value = thread,
+				display = merged_string,
+				ordinal = merged_string,
+			}
+		end,
+	})
+end
+local function thread_preview(opts)
+	opts = opts or {}
+	local previewers = require("telescope.previewers")
+	local thread_viewer = previewers.new_buffer_previewer({
+		title = "Thread Preview -- QQ: Why don't i have the entry",
+		-- make a table of entry.text repeated 5
+
+		define_preview = function(self, entry, _status)
+			local thread = entry.value
+			local preview_lines = {}
+			table.insert(preview_lines, thread.text)
+			for i = 1, 5 do
+				table.insert(preview_lines, "hi:" .. i)
+				-- flatten entry and insert it
+			end
+			for _, e in ipairs(thread) do
+				table.insert(preview_lines, e)
+			end
+			vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, preview_lines)
+		end,
+	})
+
+	return thread_viewer
+end
+
 local function chat_pickers(opts)
 	opts = opts or {}
 	pickers
 		.new(opts, {
 			prompt_title = "Chats",
-			finder = finders.new_table({
-				results = GetThreads(),
-				entry_maker = function(thread)
-					local merged_string = (thread.display_name or "") .. " -- " .. (thread.text or "")
-					merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
-					return {
-						value = merged_string,
-						display = merged_string,
-						ordinal = merged_string,
-					}
-				end,
-			}),
+			previewer = thread_preview(),
+			finder = threads_finder(),
 			sorter = conf.generic_sorter(opts),
 		})
 		:find()
