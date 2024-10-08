@@ -64,7 +64,14 @@ local function thread_preview(opts)
 		define_preview = function(self, entry, _status)
 			local thread = entry.value
 			local preview_lines = {}
-			table.insert(preview_lines, thread.text)
+			--insert every property of thread into preview_lines
+			for k, v in pairs(thread) do
+				-- if v is multiline merge it into a single line.
+				local merged_string = (k or "") .. " -- " .. (v or "")
+				-- skip if it's empty
+				merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
+				table.insert(preview_lines, merged_string)
+			end
 			for i = 1, 5 do
 				table.insert(preview_lines, "hi:" .. i)
 				-- flatten entry and insert it
