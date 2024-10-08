@@ -109,6 +109,17 @@ local function thread_preview(opts)
 				table.insert(preview_lines, e)
 			end
 			vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, preview_lines)
+			-- Add highlights to preview, might want to do this as a syntax file so it's shared
+			-- With the loaded buffer
+			-- TODO: Put highlightsin the picker as well.
+			local ns_id = vim.api.nvim_create_namespace("highlight_igor")
+			local pattern = "Igor" -- Todo load my name from Settings
+			for i, line in ipairs(preview_lines) do
+				local start, finish = line:find(pattern)
+				if start then
+					vim.api.nvim_buf_add_highlight(self.state.bufnr, ns_id, "WarningMsg", i - 1, start - 1, finish)
+				end
+			end
 		end,
 	})
 
