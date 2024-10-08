@@ -56,6 +56,8 @@ local vscode_compatible_plugins = {
 	-- Comment \cc
 	-- Uncomment \cu
 	"scrooloose/nerdcommenter",
+	-- DB Stuf
+
 	"panozzaj/vim-autocorrect",
 	{
 		"linux-cultist/venv-selector.nvim",
@@ -226,6 +228,40 @@ local plugins = {
 	"preservim/vim-colors-pencil",
 	"ttibsi/pre-commit.nvim",
 }
+
+-- DB Goop
+plugins = appendTables(plugins, {
+	"tpope/vim-dadbod",
+	"kkharji/sqlite.lua",
+	-- luarocks install sqlite luv
+	{
+		"kristijanhusak/vim-dadbod-ui",
+		dependencies = {
+			{ "tpope/vim-dadbod", lazy = true },
+			{ "kristijanhusak/vim-dadbod-completion", ft = { "sql", "mysql", "plsql" }, lazy = true }, -- Optional
+		},
+		cmd = {
+			"DBUI",
+			"DBUIToggle",
+			"DBUIAddConnection",
+			"DBUIFindBuffer",
+		},
+		init = function()
+			-- Your DBUI configuration
+			vim.g.db_ui_use_nerd_fonts = 1
+		end,
+	},
+})
+
+-- configure completion
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = { "sql", "mysql", "plsql" },
+	callback = function()
+		require("cmp").setup.buffer({
+			sources = { { name = "vim-dadbod-completion" }, { name = "buffer" } },
+		})
+	end,
+})
 
 local function readEulogyPrompts()
 	local eulogy_prompts = vim.fn.systemlist("cat ~/gits/igor2/eulogy_prompts.md")
