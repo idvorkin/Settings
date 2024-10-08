@@ -24,6 +24,30 @@ function GetThreadsFromDB()
 	return threads
 end
 
+function GetThreadMessages(thread_id)
+	-- local uid = "26138044329119875"
+	local uid = thread_id
+
+	-- Not sure why I can't get string.format to work
+	local query_top_message_per_thread = [[
+    SELECT
+    user.name as user_name,
+    datetime(m.timestamp_ms/1000 + strftime("%s", "1970-01-01") ,"unixepoch","localtime") as time,
+    m.text
+    from messages m
+    JOIN user_contact_info AS user ON m.sender_id = user.contact_id
+    LEFT OUTER JOIN _cached_participant_thread_info AS CPTN ON CPTN.thread_key = m.thread_key
+    LEFT OUTER JOIN _self_thread_name AS STN ON STN.thread_key = m.thread_key
+    LEFT OUTER JOIN threads AS T ON T.thread_key = m.thread_key
+    where CPTN.thread_name='Igor Dvorkin'
+    or T.thread_key=']] .. uid .. [['
+    AND m.text <> ''
+    order by m.timestamp_ms
+    ]]
+
+	return db:eval(query_top_message_per_thread)
+end
+
 --local threads_table = {}
 --for _, thread in ipairs(threads) do
 --local merged_string = (thread.display_name or '') .. ' -- ' .. (thread.text or '')
@@ -72,10 +96,15 @@ local function thread_preview(opts)
 				merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
 				table.insert(preview_lines, merged_string)
 			end
-			for i = 1, 5 do
-				table.insert(preview_lines, "hi:" .. i)
-				-- flatten entry and insert it
+			local messages = GetThreadMessages(thread.uid)
+			for _, message in ipairs(messages) do
+				local first_name = (message.user_name or ""):match("^(%S+)")
+				local merged_string = first_name .. ": " .. (message.text or "")
+				-- skip if it's empty
+				merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
+				table.insert(preview_lines, merged_string)
 			end
+
 			for _, e in ipairs(thread) do
 				table.insert(preview_lines, e)
 			end
