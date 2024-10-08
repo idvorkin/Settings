@@ -17,7 +17,7 @@ function GetThreadsFromDB()
       LEFT OUTER JOIN _cached_participant_thread_info AS CPTN ON CPTN.thread_key = T.thread_key
       LEFT OUTER JOIN _self_thread_name AS STN ON STN.thread_key = T.thread_key
       ORDER BY lasttime DESC
-      LIMIT 50
+      LIMIT 1000
     ]]
 
 	local threads = db:eval(query_top_message_per_thread)
@@ -68,7 +68,7 @@ local function threads_finder()
 	return finders.new_table({
 		results = GetThreadsFromDB(),
 		entry_maker = function(thread)
-			local merged_string = (thread.display_name or "") .. " -- " .. (thread.text or "")
+			local merged_string = (thread.display_name or "") .. ":" .. (thread.text or "")
 			merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
 			return {
 				value = thread,
@@ -89,13 +89,13 @@ local function thread_preview(opts)
 			local thread = entry.value
 			local preview_lines = {}
 			--insert every property of thread into preview_lines
-			for k, v in pairs(thread) do
-				-- if v is multiline merge it into a single line.
-				local merged_string = (k or "") .. " -- " .. (v or "")
-				-- skip if it's empty
-				merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
-				table.insert(preview_lines, merged_string)
-			end
+			--for k, v in pairs(thread) do
+			---- if v is multiline merge it into a single line.
+			--local merged_string = (k or "") .. " -- " .. (v or "")
+			---- skip if it's empty
+			--merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
+			--table.insert(preview_lines, merged_string)
+			--end
 			local messages = GetThreadMessages(thread.uid)
 			for _, message in ipairs(messages) do
 				local first_name = (message.user_name or ""):match("^(%S+)")
@@ -137,5 +137,17 @@ end
 --print(i, thread)
 --end
 
+local l = {
+	layout_strategy = "vertical",
+	layout_config = {
+		vertical = {
+			prompt_position = "top",
+			mirror = true,
+			preview_height = 0.7, -- Adjust this value to set the height of the preview window
+		},
+		preview_cutoff = 1, -- Ensures the preview window is always shown
+	},
+}
+-- chat_pickers(l)
 chat_pickers()
 -- chat_pickers(require("telescope.themes").get_dropdown{})
