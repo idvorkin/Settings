@@ -42,11 +42,14 @@ function GetThreadMessages(thread_id)
     where CPTN.thread_name='Igor Dvorkin'
     or T.thread_key=']] .. uid .. [['
     AND m.text <> ''
-    order by m.timestamp_ms
+    order by m.timestamp_ms DESC
+    LIMIT 20
     ]]
 
 	return db:eval(query_top_message_per_thread)
 end
+
+-- TODO: Remove Boring Messages (bots, notifs, etc)
 
 --local threads_table = {}
 --for _, thread in ipairs(threads) do
@@ -154,11 +157,11 @@ local l = {
 		vertical = {
 			prompt_position = "top",
 			mirror = true,
-			preview_height = 0.7, -- Adjust this value to set the height of the preview window
+			preview_height = 0.5, -- Adjust this value to set the height of the preview window
 		},
 		preview_cutoff = 1, -- Ensures the preview window is always shown
 	},
 }
--- chat_pickers(l)
-chat_pickers()
+chat_pickers(l)
+-- chat_pickers()
 -- chat_pickers(require("telescope.themes").get_dropdown{})
