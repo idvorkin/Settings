@@ -137,6 +137,51 @@ local function chat_pickers(opts)
 			previewer = thread_preview(),
 			finder = threads_finder(),
 			sorter = conf.generic_sorter(opts),
+			attach_mappings = function(prompt_bufnr, map)
+				local actions = require("telescope.actions")
+				local action_state = require("telescope.actions.state")
+
+				actions.select_default:replace(function()
+					actions.close(prompt_bufnr)
+					local selection = action_state.get_selected_entry()
+					local thread = selection.value
+
+					-- Create a new buffer
+					local buf = vim.api.nvim_create_buf(true, true)
+					vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
+					vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+					vim.api.nvim_buf_set_name(buf, "Thread: " .. thread.display_name)
+
+					-- Get messages for the selected thread
+					local messages = GetThreadMessages(thread.uid)
+					local buf_lines = {}
+					for _, message in ipairs(messages) do
+						local first_name = (message.user_name or ""):match("^(%S+)")
+						local merged_string = first_name .. ": " .. (message.text or "")
+						merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
+						table.insert(buf_lines, merged_string)
+					end
+
+					-- Set the buffer contents
+					vim.api.nvim_buf_set_lines(buf, 0, -1, false, buf_lines)
+
+					-- Open the buffer in a new window
+					vim.api.nvim_command('vsplit')
+					vim.api.nvim_win_set_buf(0, buf)
+
+					-- Add highlights
+					local ns_id = vim.api.nvim_create_namespace("highlight_igor")
+					local pattern = "Igor" -- TODO: Load my name from Settings
+					for i, line in ipairs(buf_lines) do
+						local start, finish = line:find(pattern)
+						if start then
+							vim.api.nvim_buf_add_highlight(buf, ns_id, "WarningMsg", i - 1, start - 1, finish)
+						end
+					end
+				end)
+
+				return true
+			end,
 		})
 		:find()
 end
