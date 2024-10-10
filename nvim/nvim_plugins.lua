@@ -354,6 +354,7 @@ function ConfigureTelescopePlugins()
 	vim.cmd([[
     cab ls :Telescope buffers<CR>
     command! Gitfiles Telescope git_files
+    command! WorkChat :so ~/settings/nvim/work_chat.lua
     command! GitStatus Telescope git_status
     command! Registers Telescope registers
     command! History Telescope command_history
