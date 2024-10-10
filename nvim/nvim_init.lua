@@ -1,7 +1,6 @@
 -- Setup Packe
 local settings_dir = os.getenv("HOME") .. "/settings/nvim/"
 dofile(settings_dir .. "nvim_shared.lua")
-dofile(settings_dir .. "nvim_plugins.lua")
 
 local nvim_logic = dofile(settings_dir .. "nvim_logic.lua")
 
@@ -19,9 +18,11 @@ end
 -- Make command to remap OpenBrowser to  "<cmd>URLOpenUnderCursor<cr>",
 vim.cmd("command! OpenBrowser :URLOpenUnderCursor")
 if vim.g.vscode then
+	-- Would be nice to have OpenBrowser in vscode
 	print("Running in vscode-neovim")
 	return
 end
+dofile(settings_dir .. "nvim_plugins.lua")
 
 require("aerial").setup({
 	placement = "edge",
