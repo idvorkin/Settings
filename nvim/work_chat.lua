@@ -5,6 +5,8 @@ local db = sqlite({
 })
 db:open()
 
+
+
 function GetThreadsFromDB()
 	local query_top_message_per_thread = [[
     SELECT (coalesce(T.thread_name, STN.thread_name, CPTN.thread_name)) AS display_name ,
@@ -81,29 +83,64 @@ local function threads_finder()
 		end,
 	})
 end
+
+-- Define highlight groups (you might want to put this in your init.lua or a separate file)
+local function setup_highlight_groups()
+	local groups = {
+		ChatName1 = { fg = "#90EE90" },  -- Light Green
+		ChatName2 = { fg = "#ADD8E6" },  -- Light Blue
+		ChatName3 = { fg = "#FFA07A" },  -- Light Salmon
+		ChatName4 = { fg = "#DDA0DD" },  -- Plum
+		ChatName5 = { fg = "#FFB6C1" },  -- Light Pink
+		ChatNameSelf = { fg = "#FFFF00", bold = true },  -- Yellow (bold)
+		-- Add more as needed
+	}
+	
+	for group_name, attributes in pairs(groups) do
+		vim.api.nvim_set_hl(0, group_name, attributes)
+	end
+end
+
+-- Call this function when your plugin loads
+setup_highlight_groups()
+
+local self = "Igor"
+
+local function apply_highlights(bufnr, lines)
+	local ns_id = vim.api.nvim_create_namespace("chat_highlights")
+	local name_groups = {}
+	local group_index = 1
+	local max_groups = 5  -- Matches the number of ChatName groups we defined
+
+	for i, line in ipairs(lines) do
+		local name = line:match("^(%S+):")
+		if name then
+			if name == self then
+				name_groups[name] = "ChatNameSelf"
+			elseif not name_groups[name] then
+				name_groups[name] = "ChatName" .. group_index
+				group_index = (group_index % max_groups) + 1
+			end
+			local start, finish = line:find(name)
+			if start then
+				vim.api.nvim_buf_add_highlight(bufnr, ns_id, name_groups[name], i - 1, start - 1, finish)
+			end
+		end
+	end
+end
+
 local function thread_preview(opts)
 	opts = opts or {}
 	local previewers = require("telescope.previewers")
 	local thread_viewer = previewers.new_buffer_previewer({
 		title = "Thread Preview -- QQ: Why don't i have the entry",
-		-- make a table of entry.text repeated 5
-
 		define_preview = function(self, entry, _status)
 			local thread = entry.value
 			local preview_lines = {}
-			--insert every property of thread into preview_lines
-			--for k, v in pairs(thread) do
-			---- if v is multiline merge it into a single line.
-			--local merged_string = (k or "") .. " -- " .. (v or "")
-			---- skip if it's empty
-			--merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
-			--table.insert(preview_lines, merged_string)
-			--end
 			local messages = GetThreadMessages(thread.uid)
 			for _, message in ipairs(messages) do
 				local first_name = (message.user_name or ""):match("^(%S+)")
 				local merged_string = first_name .. ": " .. (message.text or "")
-				-- skip if it's empty
 				merged_string = merged_string:gsub("[\n\r]", " "):gsub("%s+", " ")
 				table.insert(preview_lines, merged_string)
 			end
@@ -112,17 +149,8 @@ local function thread_preview(opts)
 				table.insert(preview_lines, e)
 			end
 			vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, preview_lines)
-			-- Add highlights to preview, might want to do this as a syntax file so it's shared
-			-- With the loaded buffer
-			-- TODO: Put highlightsin the picker as well.
-			local ns_id = vim.api.nvim_create_namespace("highlight_igor")
-			local pattern = "Igor" -- Todo load my name from Settings
-			for i, line in ipairs(preview_lines) do
-				local start, finish = line:find(pattern)
-				if start then
-					vim.api.nvim_buf_add_highlight(self.state.bufnr, ns_id, "WarningMsg", i - 1, start - 1, finish)
-				end
-			end
+			
+			apply_highlights(self.state.bufnr, preview_lines)
 		end,
 	})
 
@@ -169,15 +197,7 @@ local function chat_pickers(opts)
 					vim.api.nvim_command('vsplit')
 					vim.api.nvim_win_set_buf(0, buf)
 
-					-- Add highlights
-					local ns_id = vim.api.nvim_create_namespace("highlight_igor")
-					local pattern = "Igor" -- TODO: Load my name from Settings
-					for i, line in ipairs(buf_lines) do
-						local start, finish = line:find(pattern)
-						if start then
-							vim.api.nvim_buf_add_highlight(buf, ns_id, "WarningMsg", i - 1, start - 1, finish)
-						end
-					end
+					apply_highlights(buf, buf_lines)
 				end)
 
 				return true
