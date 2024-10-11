@@ -5,8 +5,6 @@ local db = sqlite({
 })
 db:open()
 
-
-
 function GetThreadsFromDB()
 	local query_top_message_per_thread = [[
     SELECT (coalesce(T.thread_name, STN.thread_name, CPTN.thread_name)) AS display_name ,
@@ -45,7 +43,7 @@ function GetThreadMessages(thread_id)
     or T.thread_key=']] .. uid .. [['
     AND m.text <> ''
     order by m.timestamp_ms DESC
-    LIMIT 20
+    LIMIT 1000
     ]]
 
 	return db:eval(query_top_message_per_thread)
@@ -87,12 +85,12 @@ end
 -- Define highlight groups (you might want to put this in your init.lua or a separate file)
 local function setup_highlight_groups()
 	local groups = {
-		ChatName1 = { fg = "#90EE90" },  -- Light Green
-		ChatName2 = { fg = "#ADD8E6" },  -- Light Blue
-		ChatName3 = { fg = "#FFA07A" },  -- Light Salmon
-		ChatName4 = { fg = "#DDA0DD" },  -- Plum
-		ChatName5 = { fg = "#FFB6C1" },  -- Light Pink
-		ChatNameSelf = { fg = "#FFFF00", bold = true },  -- Yellow (bold)
+		ChatName1 = { fg = "#90EE90" }, -- Light Green
+		ChatName2 = { fg = "#ADD8E6" }, -- Light Blue
+		ChatName3 = { fg = "#FFA07A" }, -- Light Salmon
+		ChatName4 = { fg = "#DDA0DD" }, -- Plum
+		ChatName5 = { fg = "#FFB6C1" }, -- Light Pink
+		ChatNameSelf = { fg = "#FFFF00", bold = true }, -- Yellow (bold)
 		-- Add more as needed
 	}
 	for group_name, attributes in pairs(groups) do
@@ -109,7 +107,7 @@ local function apply_highlights(bufnr, lines)
 	local ns_id = vim.api.nvim_create_namespace("chat_highlights")
 	local name_groups = {}
 	local group_index = 1
-	local max_groups = 5  -- Matches the number of ChatName groups we defined
+	local max_groups = 5 -- Matches the number of ChatName groups we defined
 
 	for i, line in ipairs(lines) do
 		local name = line:match("^(%S+):")
@@ -137,6 +135,11 @@ local function thread_preview(opts)
 			local thread = entry.value
 			local preview_lines = {}
 			local messages = GetThreadMessages(thread.uid)
+			-- if messages isn't a table, make it a blank table
+			if type(messages) ~= "table" then
+				messages = {}
+			end
+
 			for _, message in ipairs(messages) do
 				local first_name = (message.user_name or ""):match("^(%S+)")
 				local merged_string = first_name .. ": " .. (message.text or "")
@@ -174,8 +177,8 @@ local function chat_pickers(opts)
 
 					-- Create a new buffer
 					local buf = vim.api.nvim_create_buf(true, true)
-					vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-					vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+					vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
+					vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe")
 					vim.api.nvim_buf_set_name(buf, "Thread: " .. thread.display_name)
 
 					-- Get messages for the selected thread
@@ -188,24 +191,23 @@ local function chat_pickers(opts)
 						table.insert(buf_lines, merged_string)
 					end
 
-                    -- Reverse the order of lines before setting them in the buffer.
-                    local reversed_buf_lines = {}
-                    for i = #buf_lines, 1, -1 do
-                        table.insert(reversed_buf_lines, buf_lines[i])
-                    end
+					-- Reverse the order of lines before setting them in the buffer.
+					local reversed_buf_lines = {}
+					for i = #buf_lines, 1, -1 do
+						table.insert(reversed_buf_lines, buf_lines[i])
+					end
 
-                    -- Set the buffer contents
-                    vim.api.nvim_buf_set_lines(buf, 0, -1, false, reversed_buf_lines)
+					-- Set the buffer contents
+					vim.api.nvim_buf_set_lines(buf, 0, -1, false, reversed_buf_lines)
 
-                    -- Open the buffer in a new window
-                    vim.api.nvim_command('new')
-                    vim.api.nvim_win_set_buf(0, buf)
+					-- Open the buffer in a new window
+					vim.api.nvim_command("new")
+					vim.api.nvim_win_set_buf(0, buf)
 
-                    apply_highlights(buf, reversed_buf_lines)
+					apply_highlights(buf, reversed_buf_lines)
 
-                    -- Jump to the bottom line
-                    vim.api.nvim_command('normal! G')
-
+					-- Jump to the bottom line
+					vim.api.nvim_command("normal! G")
 				end)
 
 				return true
