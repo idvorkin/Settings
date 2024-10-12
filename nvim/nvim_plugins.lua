@@ -79,6 +79,13 @@ local plugins = {
 	"terrastruct/d2-vim",
 	"voldikss/vim-floaterm",
 	"HiPhish/rainbow-delimiters.nvim",
+	-- Add a messages plugin
+	-- :BMessages
+	{
+		"ariel-frischer/bmessages.nvim",
+		event = "CmdlineEnter",
+		opts = {},
+	},
 
 	"rking/ag.vim",
 	"junegunn/limelight.vim",
