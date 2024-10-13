@@ -79,14 +79,6 @@ local plugins = {
 	"terrastruct/d2-vim",
 	"voldikss/vim-floaterm",
 	"HiPhish/rainbow-delimiters.nvim",
-	-- Add a messages plugin
-	-- :BMessages
-	{
-		"ariel-frischer/bmessages.nvim",
-		event = "CmdlineEnter",
-		opts = {},
-	},
-
 	"rking/ag.vim",
 	"junegunn/limelight.vim",
 	"junegunn/goyo.vim",
@@ -164,7 +156,6 @@ local plugins = {
 	},
 	"nvim-tree/nvim-web-devicons",
 	"dstein64/vim-startuptime",
-	"folke/lazydev.nvim",
 	{
 		"folke/trouble.nvim",
 		opts = {}, -- for default options, refer to the configuration section for custom setup.
@@ -576,6 +567,20 @@ plugins = appendTables(plugins, {
 	{
 		"idvorkin/nvim-messages",
 		path = "~/gits/nvim-messages",
+		dev = true,
+	},
+})
+
+-- Neovim development plugins
+plugins = appendTables(plugins, {
+	"folke/lazydev.nvim",
+	"ii14/neorepl.nvim",
+	-- Add a messages plugin
+	-- :BMessages
+	{
+		"ariel-frischer/bmessages.nvim",
+		event = "CmdlineEnter",
+		opts = {},
 	},
 })
 
