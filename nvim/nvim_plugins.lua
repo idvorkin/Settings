@@ -573,6 +573,13 @@ end
 plugins = appendTables(plugins, setupMarkdown())
 
 plugins = appendTables(plugins, {
+	{
+		"idvorkin/nvim-messages",
+		path = "~/gits/nvim-messages",
+	},
+})
+
+plugins = appendTables(plugins, {
 	{ "williamboman/mason.nvim" },
 	{ "williamboman/mason-lspconfig.nvim" },
 	{ "VonHeikemen/lsp-zero.nvim", branch = "v3.x" },
