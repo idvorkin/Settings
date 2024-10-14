@@ -352,7 +352,9 @@ function ConfigureTelescopePlugins()
 	vim.cmd([[
     cab ls :Telescope buffers<CR>
     command! Gitfiles Telescope git_files
-    command! WorkChat :so ~/settings/nvim/work_chat.lua
+    command! WorkChat :lua require('nvim-messages').workchat()
+    command! MockChat :lua require('nvim-messages').mockchat()
+    command! IMessageChat :lua require('nvim-messages').imessage()
     command! GitStatus Telescope git_status
     command! Registers Telescope registers
     command! History Telescope command_history
@@ -563,13 +565,13 @@ end
 
 plugins = appendTables(plugins, setupMarkdown())
 
-plugins = appendTables(plugins, {
-	{
-		"idvorkin/nvim-messages",
-		path = "~/gits/nvim-messages",
-		dev = true,
-	},
-})
+--plugins = appendTables(plugins, {
+--{
+--"idvorkin/nvim-messages",
+--path = "~/gits/nvim-messages",
+--dev = true,
+--},
+--})
 
 -- Neovim development plugins
 plugins = appendTables(plugins, {
@@ -610,3 +612,5 @@ end
 require("lazy").setup(plugins_to_load)
 
 ConfigureTelescopePlugins()
+
+vim.opt.rtp:prepend("~/gits/nvim-messages")
