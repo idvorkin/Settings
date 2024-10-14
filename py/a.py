@@ -6,7 +6,6 @@ import subprocess
 from subprocess import CompletedProcess
 from pathlib import Path
 from icecream import ic
-import json
 from typing import List
 from pydantic import BaseModel
 
@@ -89,6 +88,16 @@ def fright():
 
 
 @app.command()
+def joinright():
+    call_aerospace("join-with right")
+
+
+@app.command()
+def joinleft():
+    call_aerospace("join-with left")
+
+
+@app.command()
 def ftoggle():
     call_aerospace("focus-back-and-forth")
 
@@ -100,7 +109,8 @@ def reload():
 
 @app.command()
 def reset():
-    call_aerospace("balance-sizes")
+    call_aerospace("flatten-workspace-tree")
+
 
 @app.command()
 def restart():
@@ -108,17 +118,15 @@ def restart():
     stop()
     start()
 
+
 @app.command()
 def start():
-    # call_yabai("--start-service")
     ret = subprocess.run(["open", "/Applications/AeroSpace.app"])
     ic(ret)
 
 
-
 @app.command()
 def stop():
-    # call_yabai("--stop-service")
     ret = subprocess.run(["pkill", "-9", "AeroSpace"])
     ic(ret)
 
@@ -151,22 +159,23 @@ def close():
 
 @app.command()
 def cycle():
-    win_result = call_yabai("-m query --windows --window last")
-    if win_result.returncode != 0:
-        typer.echo("Failed to query yabai windows")
-        raise typer.Exit(code=1)
+    pass
+    # win_result = call_yabai("-m query --windows --window last")
+    # if win_result.returncode != 0:
+    # typer.echo("Failed to query yabai windows")
+    # raise typer.Exit(code=1)
 
-    try:
-        win_data = json.loads(win_result.stdout)
-        win_id = win_data["id"]
-    except (json.JSONDecodeError, KeyError) as e:
-        typer.echo(f"Failed to parse window data: {e}")
-        raise typer.Exit(code=1)
+    # try:
+    # win_data = json.loads(win_result.stdout)
+    # win_id = win_data["id"]
+    # except (json.JSONDecodeError, KeyError) as e:
+    # typer.echo(f"Failed to parse window data: {e}")
+    # raise typer.Exit(code=1)
 
-    while True:
-        swap_result = call_yabai(f"-m window {win_id} --swap prev")
-        if swap_result.returncode != 0:
-            break
+    # while True:
+    # swap_result = call_yabai(f"-m window {win_id} --swap prev")
+    # if swap_result.returncode != 0:
+    # break
 
 
 class DisplayResolution(BaseModel):
@@ -248,17 +257,21 @@ def warp4():
 def w1():
     call_aerospace("workspace 1")
 
+
 @app.command()
 def wm():
     call_aerospace("workspace m")
+
 
 @app.command()
 def wt():
     call_aerospace("workspace t")
 
+
 @app.command()
 def warpm():
     call_aerospace("move-node-to-workspace m")
+
 
 @app.command()
 def warpt():
