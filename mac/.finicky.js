@@ -1,5 +1,7 @@
 // ~/.finicky.js
 
+const { map } = require("lodash");
+
 module.exports = {
   defaultBrowser: "Microsoft Edge",
   //defaultBrowser: "Google Chrome",
@@ -28,6 +30,11 @@ module.exports = {
     {
       // Open any url that includes the string "workplace" in Firefox
       match: ["*thefacebook.com/*"],
+      browser: "Google Chrome",
+    },
+    {
+      // Open any url that includes the string "workplace" in Firefox
+      match: ["*facebook.csod.com/*", "*facebook.zoom.us/*", "meta.zoom.us/*"],
       browser: "Google Chrome",
     },
     {
