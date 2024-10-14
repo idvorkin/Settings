@@ -82,6 +82,27 @@ def fleft():
     call_aerospace("focus left")
 
 
+# Note DFS focus in 0 indexed, not easier to type on the keyboard with 1 index
+@app.command()
+def f1():
+    call_aerospace("focus --dfs-index 0")
+
+
+@app.command()
+def f2():
+    call_aerospace("focus --dfs-index 1")
+
+
+@app.command()
+def f3():
+    call_aerospace("focus --dfs-index 2")
+
+
+@app.command()
+def f4():
+    call_aerospace("focus --dfs-index 3")
+
+
 @app.command()
 def fright():
     call_aerospace("focus right")
