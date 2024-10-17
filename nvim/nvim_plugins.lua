@@ -464,7 +464,15 @@ local git_plugins = {
 plugins = appendTables(plugins, git_plugins)
 -- cmp and friends
 local cmp_and_friends = {
+	{
+		"L3MON4D3/LuaSnip",
+		-- follow latest release.
+		version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
+		-- install jsregexp (optional!).
+		build = "make install_jsregexp",
+	},
 	"hrsh7th/nvim-cmp",
+	"saadparwaiz1/cmp_luasnip",
 	"hrsh7th/cmp-nvim-lsp",
 	{ "stevanmilic/nvim-lspimport" },
 	"hrsh7th/cmp-buffer",
@@ -612,5 +620,13 @@ end
 require("lazy").setup(plugins_to_load)
 
 ConfigureTelescopePlugins()
+
+function ReloadSnippets()
+	local settings_dir = os.getenv("HOME") .. "/settings/nvim/"
+	dofile(settings_dir .. "snippets.lua")
+end
+
+ReloadSnippets()
+vim.api.nvim_set_keymap("n", "<leader><leader>s", ":lua ReloadSnippets()<cr>", {})
 
 vim.opt.rtp:prepend("~/gits/nvim-messages")
