@@ -22,6 +22,7 @@ dua-cli \
 docker \
 png-quant \
 docker-compose \
+lua-language-server \
 diff-so-fancy \
 git-extras \
 imagemagick \
