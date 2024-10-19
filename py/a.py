@@ -389,6 +389,38 @@ def alfred_windows():
 
 
 @app.command()
+def arrange():
+    # Get the list of windows
+    out = call_aerospace(
+        [
+            "list-windows",
+            "--all",
+            "--format",
+            "%{window-id} +!+ %{app-name} +!+ %{window-title}",
+        ]
+    ).stdout
+
+    # Define apps to move and their target workspace
+    apps_to_move = {"Messages": "m", "OmniFocus": "m", "Workplace Chat": "m"}
+
+    # Parse the output and move the specified windows
+    for line in out.split("\n"):
+        parts = line.split("+!+")
+        if len(parts) < 3:
+            continue
+        window_id, app_name, _ = [part.strip() for part in parts]
+
+        if app_name in apps_to_move:
+            workspace = apps_to_move[app_name]
+            call_aerospace(
+                f"move-node-to-workspace --window-id {window_id} {workspace}"
+            )
+            print(f"Moved {app_name} (Window ID: {window_id}) to workspace {workspace}")
+
+    print("Arrangement complete.")
+
+
+@app.command()
 def keybindings():
     print("https://nikitabobko.github.io/AeroSpace/guide#default-config")
     print("Zoom Toggle: Alt-, (a zoom is better) ")
