@@ -1,7 +1,5 @@
 // ~/.finicky.js
 
-const { map } = require("lodash");
-
 module.exports = {
   defaultBrowser: "Microsoft Edge",
   //defaultBrowser: "Google Chrome",
