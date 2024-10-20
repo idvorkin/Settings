@@ -130,14 +130,25 @@ def reload():
 
 @app.command()
 def reset():
-    call_aerospace("flatten-workspace-tree")
+    import time
+
+    print("Stopping AeroSpace...")
+    stop()
+    time.sleep(0.5)
+    print("Starting AeroSpace...")
+    start()
+    time.sleep(0.5)
+    print("Arranging windows...")
+    arrange()
+    time.sleep(0.5)
+    print("Tiling")
+    tile()
+    print("Reset complete.")
 
 
 @app.command()
 def restart():
-    # kill aerospace process
-    stop()
-    start()
+    reset()
 
 
 @app.command()
