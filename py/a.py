@@ -130,6 +130,11 @@ def reload():
 
 @app.command()
 def reset():
+    restart()
+
+
+@app.command()
+def restart():
     import time
 
     print("Stopping AeroSpace...")
@@ -147,8 +152,8 @@ def reset():
 
 
 @app.command()
-def restart():
-    reset()
+def flatten():
+    call_aerospace("flatten-workspace-tree")
 
 
 @app.command()
