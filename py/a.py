@@ -186,7 +186,7 @@ def zoom():
 
 @app.command()
 def tile():
-    call_aerospace("layout tiles")
+    call_aerospace("layout h_tiles")
 
 
 @app.command()
