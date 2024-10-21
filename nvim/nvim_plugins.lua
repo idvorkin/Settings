@@ -96,6 +96,7 @@ local plugins = {
 		"nvim-lualine/lualine.nvim",
 		opts = {
 			sections = {
+				lualine_x = { "copilot", "encoding", "fileformat", "filetype" }, -- I added copilot here
 				lualine_z = {
 					"aerial",
 					-- By default, Z is line:column, I don't mind line, but column is too noisy
@@ -481,6 +482,7 @@ local cmp_and_friends = {
 	"petertriho/cmp-git",
 	"zbirenbaum/copilot.lua",
 	"zbirenbaum/copilot-cmp",
+	"AndreM222/copilot-lualine",
 	"neovim/nvim-lspconfig",
 	"onsails/lspkind.nvim",
 }
