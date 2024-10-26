@@ -42,3 +42,5 @@ function SetupVSCode()
 	keymap("v", "<Leader>ca", v_notify("editor.action.refactor"), { silent = true })
 	keymap("v", "<Leader>fc", v_notify("workbench.action.showCommands"), { silent = true })
 end
+
+SetupVSCode()
