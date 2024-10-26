@@ -20,9 +20,12 @@ vim.cmd("command! OpenBrowser :URLOpenUnderCursor")
 if vim.g.vscode then
 	-- Would be nice to have OpenBrowser in vscode
 	print("Running in vscode-neovim")
+	dofile(settings_dir .. "nvim_vscode.lua")
 	return
 end
+
 dofile(settings_dir .. "nvim_plugins.lua")
+print("nvim_plugins done")
 
 require("aerial").setup({
 	placement = "edge",

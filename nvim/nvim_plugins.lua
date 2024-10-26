@@ -47,9 +47,6 @@ local vscode_compatible_plugins = {
 
 		opts = {},
 	},
-	-- Comment \cc
-	-- Uncomment \cu
-	"scrooloose/nerdcommenter",
 	"dhruvasagar/vim-table-mode",
 	-- :Rename a file
 	"danro/rename.vim",
@@ -64,6 +61,7 @@ local vscode_compatible_plugins = {
 		opts = {},
 	},
 }
+
 local plugins = {
 	-- Highlight current line
 	-- ConoLineEnable (Highlight current line)
@@ -610,16 +608,15 @@ plugins = appendTables(plugins, {
 	},
 })
 
-local plugins_to_load = plugins
 if vim.g.vscode then
-	plugins_to_load = vscode_compatible_plugins
-else
-	plugins_to_load = appendTables(plugins, vscode_compatible_plugins)
+	require("lazy").setup(vscode_compatible_plugins)
+	return
 end
---
--- require('lspconfig').racket_langserver.setup()
---  VIM LSP  for lua - I think I still need to configure
-require("lazy").setup(plugins_to_load)
+
+plugins = appendTables(plugins, vscode_compatible_plugins)
+require("lazy").setup(plugins)
+
+vim.opt.rtp:prepend("~/gits/nvim-messages")
 
 ConfigureTelescopePlugins()
 
@@ -630,5 +627,3 @@ end
 
 ReloadSnippets()
 vim.api.nvim_set_keymap("n", "<leader><leader>s", ":lua ReloadSnippets()<cr>", {})
-
-vim.opt.rtp:prepend("~/gits/nvim-messages")

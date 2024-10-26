@@ -12,6 +12,7 @@ if not vim.loop.fs_stat(lazypath) then
 	})
 end
 vim.opt.rtp:prepend(lazypath)
+local keymap = vim.api.nvim_set_keymap
 
 function SetupVSCode()
 	-- from: https://github.com/milanglacier/nvim/blob/f54b7356dc97cbf9b07a77d5db1ad199c2ff3f2e/lua/conf/vscode.lua#L29
@@ -26,6 +27,7 @@ function SetupVSCode()
 	keymap("n", "<Leader>xr", notify("references-view.findReferences"), { silent = true }) -- language references
 	keymap("n", "<Leader>xx", notify("workbench.actions.view.problems"), { silent = true }) -- language diagnostics
 	keymap("n", "gr", notify("editor.action.goToReferences"), { silent = true })
+	keymap("n", "gd", notify("editor.action.goToDefinition"), { silent = true })
 	keymap("n", "<space>rn", notify("editor.action.rename"), { silent = true })
 	keymap("n", "<Leader>fm", notify("editor.action.formatDocument"), { silent = true })
 	keymap("n", "<Leader>ca", notify("editor.action.refactor"), { silent = true }) -- language code actions
