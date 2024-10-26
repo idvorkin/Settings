@@ -110,6 +110,7 @@
                     "bundle_identifiers": [
                       "^com.microsoft.VSCode$",
                       "^com.microsoft.VSCodeInsiders$",
+                      "^com.todesktop.230313mzl4w4u92",
                       "^com.facebook.fbvscode$"
                     ],
                     "type": "frontmost_application_if"
@@ -138,6 +139,7 @@
                     "bundle_identifiers": [
                       "^com.microsoft.VSCode$",
                       "^com.microsoft.VSCodeInsiders$",
+                      "^com.todesktop.230313mzl4w4u92",
                       "^com.facebook.fbvscode$"
                     ],
                     "type": "frontmost_application_if"

@@ -27,7 +27,9 @@ function SetupVSCode()
 	keymap("n", "<Leader>xr", notify("references-view.findReferences"), { silent = true }) -- language references
 	keymap("n", "<Leader>xx", notify("workbench.actions.view.problems"), { silent = true }) -- language diagnostics
 	keymap("n", "gr", notify("editor.action.goToReferences"), { silent = true })
-	keymap("n", "gd", notify("editor.action.goToDefinition"), { silent = true })
+	keymap("n", "gd", notify("editor.action.revealDefinition"), { silent = true })
+	keymap("n", "<C-]>", notify("editor.action.revealDefinition"), { silent = true })
+	keymap("n", "<C-T>", notify("workbench.action.navigateBack"), { silent = true })
 	keymap("n", "<space>rn", notify("editor.action.rename"), { silent = true })
 	keymap("n", "<Leader>fm", notify("editor.action.formatDocument"), { silent = true })
 	keymap("n", "<Leader>ca", notify("editor.action.refactor"), { silent = true }) -- language code actions
