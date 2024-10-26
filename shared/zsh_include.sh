@@ -300,6 +300,7 @@ function export_secrets()
     esecret_jq LANGCHAIN_API_KEY
     esecret_jq ANTHROPIC_API_KEY
     esecret_jq OPENAI_API_KEY
+    esecret_jq EXA_API_KEY
     esecret_jq VAPI_API_KEY
     esecret_jq GOOGLE_API_KEY
     esecret_jq GROQ_API_KEY
