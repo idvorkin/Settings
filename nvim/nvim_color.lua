@@ -13,7 +13,6 @@ vim.filetype.add({
 	},
 })
 
--- Define syntax highlighting for .orgchart files
 vim.api.nvim_create_autocmd({ "FileType" }, {
 	pattern = "orgchart",
 	callback = function()
@@ -26,5 +25,7 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
       syntax match OrgChartNumbers '\v\|\d+:\d+\|'
       highlight link OrgChartNumbers Title
     ]])
+		-- Set foldmethod to indent
+		vim.opt_local.foldmethod = "indent"
 	end,
 })
