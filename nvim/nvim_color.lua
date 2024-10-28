@@ -5,3 +5,26 @@ vim.cmd(":colorscheme catppuccin-macchiato")
 options = {
 	-- ... the rest of your lualine config
 }
+
+-- Create filetype detection for .orgchart files
+vim.filetype.add({
+	extension = {
+		orgchart = "orgchart",
+	},
+})
+
+-- Define syntax highlighting for .orgchart files
+vim.api.nvim_create_autocmd({ "FileType" }, {
+	pattern = "orgchart",
+	callback = function()
+		-- Define the syntax matching
+		vim.cmd([[
+      " Define multi-line comments
+      syntax region OrgChartComment start="/\*" end="\*/" contains=@Spell
+      highlight link OrgChartComment Comment
+
+      syntax match OrgChartNumbers '\v\|\d+:\d+\|'
+      highlight link OrgChartNumbers Title
+    ]])
+	end,
+})
