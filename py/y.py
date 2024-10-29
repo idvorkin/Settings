@@ -164,6 +164,12 @@ def restart():
 
 
 @app.command()
+def reset():
+    """Alias for restart"""
+    restart()
+
+
+@app.command()
 def start():
     call_yabai("--start-service")
 
