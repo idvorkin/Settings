@@ -125,36 +125,43 @@ def send_key(key_code):
 
 @app.command()
 def hflip():
+    """Flip the current space horizontally along the y-axis"""
     call_yabai("-m space --mirror y-axis")
 
 
 @app.command()
 def swest():
+    """Switch to the space to the west (left) of current space"""
     send_key(123)
 
 
 @app.command()
 def seast():
+    """Switch to the space to the east (right) of current space"""
     send_key(124)
 
 
 @app.command()
 def fleft():
+    """Focus the window to the left of the current window"""
     call_yabai("-m window --focus west")
 
 
 @app.command()
 def fup():
+    """Focus the window above the current window"""
     call_yabai("-m window --focus north")
 
 
 @app.command()
 def fdown():
+    """Focus the window below the current window"""
     call_yabai("-m window --focus south")
 
 
 @app.command()
 def fright():
+    """Focus the window to the right of the current window"""
     call_yabai("-m window --focus east")
 
 
@@ -171,31 +178,37 @@ def reset():
 
 @app.command()
 def start():
+    """Start the yabai window manager service"""
     call_yabai("--start-service")
 
 
 @app.command()
 def stop():
+    """Stop the yabai window manager service"""
     call_yabai("--stop-service")
 
 
 @app.command()
 def rotate():
+    """Rotate the current space layout by 90 degrees"""
     call_yabai("-m space --rotate 90")
 
 
 @app.command()
 def zoom():
+    """Toggle fullscreen zoom for the focused window"""
     call_yabai("-m window --toggle zoom-fullscreen")
 
 
 @app.command()
 def close():
+    """Close the currently focused window"""
     call_yabai("-m window --close")
 
 
 @app.command()
 def cycle():
+    """Cycle through windows by repeatedly swapping with the previous window"""
     win_result = call_yabai("-m query --windows --window last")
     if win_result.returncode != 0:
         typer.echo("Failed to query yabai windows")
@@ -250,21 +263,25 @@ def get_left_most_window():
 
 @app.command()
 def third():
+    """Set the leftmost window width to 30% of the screen"""
     set_width(get_left_most_window(), 0.3)
 
 
 @app.command()
 def half():
+    """Set the leftmost window width to 50% of the screen"""
     set_width(get_left_most_window(), 0.5)
 
 
 @app.command()
 def t2():
+    """Set the leftmost window width to 66% of the screen (two thirds)"""
     set_width(get_left_most_window(), 2 / 3)
 
 
 @app.command()
 def debug():
+    """Print debug information about current windows and displays"""
     ic(get_displays())
     ic([w for w in get_windows().windows])
     active_window = [w for w in get_windows().windows if w.has_focus][0]
@@ -489,11 +506,13 @@ def jiggle_mouse():
 
 @app.command()
 def jiggle():
+    """Move the mouse cursor in a circular pattern"""
     jiggle_mouse()
 
 
 @app.command()
 def ghimgpaste(caption: str = ""):
+    """Save clipboard image to GitHub and copy markdown link to clipboard"""
     from datetime import datetime
     import os
 
@@ -530,6 +549,7 @@ class AlfredItems(BaseModel):
 
 @app.command()
 def alfred():
+    """Generate JSON output of all commands for Alfred workflow integration"""
     #  Build a json of commands to be called from an alfred plugin workflow
     # start by reflecting to find all commands in app.
     # all_commands = app.
