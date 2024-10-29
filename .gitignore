@@ -248,3 +248,4 @@ Session.vim
 tags
 ##### Vim Files -- 
 .aider*
+.env
