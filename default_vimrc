@@ -909,11 +909,11 @@ function! GptComplete(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') ra
       " Run pause command
       execute "!read -s -k '?GPT changes'"
 
-      " Erase the selected text, putting the cursor on last line.
-      execute ":".string(g:gpt_first_line).",".string(g:gpt_last_line)."d"
+      " Move to the line before where we want to insert
+      execute ":".string(g:gpt_first_line-1)
 
-      " Read file placing it before the last line
-      execute "-1r ".tempname_out
+      " Read file placing it after the current line
+      execute ":r ".tempname_out
 
       return
   endif
