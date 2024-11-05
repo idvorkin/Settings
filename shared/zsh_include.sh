@@ -406,7 +406,6 @@ source <(carapace _carapace)
 # Can't activate it in the directory or won't work?
 # Some reason need to activate it outside the script -not worth figuring out
 alias activate_env=". .venv/bin/activate"
-alias activate_pyenv=". ~/gits/nlp/.venv/bin/activate"
 alias nbdiffcode="nbdiff --ignore-metadata --ignore-details --ignore-output"
 
 unalias a # not sure why  a gets an alias
