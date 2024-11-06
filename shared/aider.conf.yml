@@ -245,3 +245,5 @@ vim: true
 
 ## Run aider in your browser
 #gui: false
+#
+read: CONVENTIONS.md
