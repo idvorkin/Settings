@@ -25,6 +25,7 @@ png-quant \
 docker-compose \
 lua-language-server \
 diff-so-fancy \
+fx \
 git-extras \
 imagemagick \
 git-delta \
