@@ -385,6 +385,8 @@ echo "starting evals"
 # TODO: consider doing this in a loop as it's really annoying to have 3 configurations
 eval_w_param_if_exists ~/homebrew/bin/brew shellenv
 eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
+eval_w_param_if_exists /opt/homebrew/.linuxbrew/bin/brew shellenv
+eval_w_param_if_exists /brew shellenv
 export STARSHIP_CONFIG=~/settings/shared/starship.toml
 eval "$(zoxide init zsh)"
 # unset MCFLY_DEBUG=
