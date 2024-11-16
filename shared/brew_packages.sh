@@ -20,6 +20,7 @@ yq \
 cpulimit \
 dua-cli \
 docker \
+google-cloud-sdk \
 png-quant \
 docker-compose \
 lua-language-server \
