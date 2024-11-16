@@ -24,6 +24,7 @@ brew install --cask nikitabobko/tap/aerospace
 
 brew tap FelixKratz/formulae
 brew install borders
+brew install koekeishiya/formulae/yabai
 
 brew install --cask karabiner-elements iterm2 alfred visual-studio-code docker microsoft-edge 1password meetingbar
 
