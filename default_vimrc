@@ -440,7 +440,7 @@ endfunc
 :iab etoday <C-R>=strftime('%Y-%m-%d')<CR>
 :iab esummarize  {%include summarize-page.html src="/TK" %}
 :iab eyoutube  {%include youtube.html src="TK" %}
-:cab rfiles :r !exa ~/rare_git/blob/ig66
+:cab rfiles :r !eza ~/rare_git/blob/ig66
 :iab epics {%include bi_table.html is="<cr><cr>" %}
 
 " Family journal, ig66
@@ -454,7 +454,7 @@ func! Ig66Files(week)
     :g/^/d
 
     :exe  expand(':lcd ~/rare_git/blob/ig66/'.a:week)
-    :exe  expand(':r !exa ~/rare_git/blob/ig66/'.a:week)
+    :exe  expand(':r !eza ~/rare_git/blob/ig66/'.a:week)
     " Put on trailing ; so joins(gj) work
     " Add a trailing semicolon
     :%s!$!;!
@@ -666,7 +666,7 @@ cab DdG  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k <CR>:!g
 " This is loaded in the html plugin, which I'm disabling.
 " search for the below string to find it.
 let g:loaded_2html_plugin = 'vim8.1_v1'
-" leaving the below in for an example of one time load only
+" leaving the below in for an ezample of one time load only
 if  !exists ("g:execute_on_first_load_only")
     " Can only delete it once
     let  g:execute_on_first_load_only = "1"
