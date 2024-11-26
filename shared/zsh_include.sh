@@ -2,13 +2,7 @@ function source_if_exists() {
     [ -f $1 ] && source $1
 }
 function eval_w_param_if_exists() {
-    [ -f $1 ] && eval $($1 $2)
-}
-function ghg-aider()
-{
-    trim_file_after_marker_to_new_file '.aider.chat.history.md' '# aider chat started at' '.aider.last.chat.md'
-    gh gist create -w .aider.last.chat.md
-    echo v0.1
+    [ -f $1 ] && eval $($1 $2 $3 $4 $5 $6 $7 $8 $9)
 }
 
 function charge() {
@@ -16,6 +10,41 @@ function charge() {
     system_profiler SPPowerDataType  | grep Watt
 }
 
+trim_file_after_marker_to_new_file() {
+  local input_file="$1"
+  local marker="$2"
+  local output_file="$3"
+
+  # Check if the input file exists
+  if [[ ! -f "$input_file" ]]; then
+    echo "Error: Input file '$input_file' does not exist."
+    return 1
+  fi
+
+  # Use awk to find the last occurrence of the marker and print from there
+  awk -v marker="$marker" '
+  {
+    if (index($0, marker) == 1) {
+      last_marker_line = NR  # Save the line number of the last marker
+      last_marker_content = $0  # Save the content of the last marker line
+    }
+    lines[NR] = $0  # Store each line in an array
+  }
+  END {
+    if (last_marker_line > 0) {
+      for (i = last_marker_line; i <= NR; i++) {
+        print lines[i]
+      }
+    }
+  }' "$input_file" > "$output_file"
+}
+
+function ghg-aider()
+{
+    trim_file_after_marker_to_new_file '.aider.chat.history.md' '# aider chat started at' '.aider.last.chat.md'
+    gh gist create -w .aider.last.chat.md
+    echo v0.1
+}
 gchanges() {
     # for directory in settings, idvorkin.github.io, nlp, tony_tesla, run changs command
     pushd ~/gits
@@ -225,57 +254,79 @@ function export_secrets()
     esecret_jq ONEBUSAWAY_API_KEY
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
 }
-
-
-function default_init() {
-
-
-
-export EDITOR=nvim
-
-# C-T search Files Fuzzy
-# C-R Search History fuzzy
-source_if_exists ~/.fzf.zsh
-source_if_exists ~/homebrew/etc/profile.d/z.sh
-
-PATH+=:~/.local/bin
-alias ghg-md-sink='gh gist create --filename=out.md -- '
-unalias image
-
+#
 # Use diff so fancy without needing to be in git
 diff-so-fancy() {
   git diff --no-index --color "$@"
 }
 
-trim_file_after_marker_to_new_file() {
-  local input_file="$1"
-  local marker="$2"
-  local output_file="$3"
+function safe_init()
+{
 
-  # Check if the input file exists
-  if [[ ! -f "$input_file" ]]; then
-    echo "Error: Input file '$input_file' does not exist."
-    return 1
-  fi
+    export EDITOR=nvim
+    PATH+=:~/.local/bin:/.cargo/bin
+    alias tam='tmux attach-session -t main || tmux new-session -s main'
+    alias tas='tmux attach-session -t servers || tmux new-session -s servers'
+    #
+    # Set alias that are always better
+    alias_if_exists cat bat
+    alias_if_exists ranger yazi
+    alias_if_exists ls eza
+    alias_if_exists df duf
+    alias_if_exists top htop
+    alias_if_exists ndcu gdu
+    alias_if_exists du dua
+    alias_if_other_exists cd z zoxide
+    alias_if_exists ps procs
+    # On mac, gpt is in sbin, use the installed from idvorkin_nlp version instead
+    alias_if_exists gpt ~/.local/bin/gpt
 
-  # Use awk to find the last occurrence of the marker and print from there
-  awk -v marker="$marker" '
-  {
-    if (index($0, marker) == 1) {
-      last_marker_line = NR  # Save the line number of the last marker
-      last_marker_content = $0  # Save the content of the last marker line
-    }
-    lines[NR] = $0  # Store each line in an array
-  }
-  END {
-    if (last_marker_line > 0) {
-      for (i = last_marker_line; i <= NR; i++) {
-        print lines[i]
-      }
-    }
-  }' "$input_file" > "$output_file"
-}
+    # Igor setups use Soed and Sodot as useful aliases
+    alias Soed='nvim ~/settings/shared/zsh_include.sh'
+    alias Sodot='.  ~/settings/shared/zsh_include.sh'
+    export COLORTERM=truecolor
 
+    set -o vi
+    set nobell
+
+    echo ++zfunc
+    for func in ~/.zfunc/*; do source $func; done
+    echo --zfunc
+
+    # Can't activate it in the directory or won't work?
+    # Some reason need to activate it outside the script -not worth figuring out
+    alias activate_env=". .venv/bin/activate"
+    alias nbdiffcode="nbdiff --ignore-metadata --ignore-details --ignore-output"
+
+    echo "++eval"
+    # TODO: consider doing this in a loop as it's really annoying to have 3 configurations
+    eval_w_param_if_exists ~/homebrew/bin/brew shellenv
+    eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
+    eval_w_param_if_exists /opt/homebrew/.linuxbrew/bin/brew shellenv
+    eval_w_param_if_exists /brew shellenv
+    export STARSHIP_CONFIG=~/settings/shared/starship.toml
+    eval_w_param_if_exists zoxide init zsh
+    eval_w_param_if_exists starship init zsh
+    # unset MCFLY_DEBUG=
+    # eval "$(mcfly init zsh)"
+    eval_w_param_if_exists atuin init zsh --disable-up-arrow
+    eval_w_param_if_exists thefuck --alias
+    eval_w_param_if_exists rbenv init -
+    eval_w_param_if_exists dasel completion zsh
+    echo "--eval
+
+} # end safe init
+
+
+function default_init() {
+
+
+# C-T search Files Fuzzy
+# C-R Search History fuzzy
+source_if_exists ~/.fzf.zsh
+
+alias ghg-md-sink='gh gist create --filename=out.md -- '
+unalias image
 
 
 alias alf="open '/Applications/Alfred 5.app/'"
@@ -289,8 +340,6 @@ alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCom
 alias sl='ssh lightsail'
 alias asl='autossh -M 20000 lightsail_no_forward'
 alias slnf='ssh lightsail_no_forward'
-alias tam='tmux attach-session -t main || tmux new-session -s main'
-alias tas='tmux attach-session -t servers || tmux new-session -s servers'
 alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
 alias xuilocal=" pipxu install -f . --editable"
 
@@ -319,25 +368,6 @@ if [[ "$(uname -a)" =~ "microsoft" ]]; then
 fi
 
 
-
-
-# Set alias that are always better
-alias_if_exists cat bat
-alias_if_exists ranger yazi
-alias_if_exists ls eza
-alias_if_exists df duf
-alias_if_exists top htop
-alias_if_exists ndcu gdu
-alias_if_exists du dua
-alias_if_other_exists cd z zoxide
-alias_if_exists ps procs
-# On mac, gpt is in sbin, use the installed from idvorkin_nlp version instead
-alias_if_exists gpt ~/.local/bin/gpt
-
-# Igor setups use Soed and Sodot as useful aliases
-alias Soed='nvim ~/settings/shared/zsh_include.sh'
-alias Sodot='.  ~/settings/shared/zsh_include.sh'
-
 echo "Random"
 
 # Some useful work aliases
@@ -358,10 +388,6 @@ export HOMEBREW_NO_AUTO_UPDATE=1
 
 # Setting this allows lip gloss to use truecolor
 # Man, what a PITA
-export COLORTERM=truecolor
-
-set -o vi
-set nobell
 
 #  shared zsh settings to be sourced
 # TMUX attach
@@ -373,38 +399,17 @@ bindkey -M viins 'fj' vi-cmd-mode
 source ~/settings/shared/fzf_git_keybindings.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-echo "starting evals"
-# TODO: consider doing this in a loop as it's really annoying to have 3 configurations
-eval_w_param_if_exists ~/homebrew/bin/brew shellenv
-eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
-eval_w_param_if_exists /opt/homebrew/.linuxbrew/bin/brew shellenv
-eval_w_param_if_exists /brew shellenv
-export STARSHIP_CONFIG=~/settings/shared/starship.toml
-eval "$(zoxide init zsh)"
-# unset MCFLY_DEBUG=
-# eval "$(mcfly init zsh)"
-eval "$(atuin init zsh --disable-up-arrow)"
-eval "$(starship init zsh)"
-eval "$(thefuck --alias)"
-eval "$(rbenv init -)"
-eval "$(dasel completion zsh)"
-
-echo ++zfunc
-for func in ~/.zfunc/*; do source $func; done
-echo --zfunc
 
 export CARAPACE_BRIDGES='zsh'
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
 
-# Can't activate it in the directory or won't work?
-# Some reason need to activate it outside the script -not worth figuring out
-alias activate_env=". .venv/bin/activate"
-alias nbdiffcode="nbdiff --ignore-metadata --ignore-details --ignore-output"
 
 unalias a # not sure why  a gets an alias
 echo "zsh_include complete"
 }
 
+
+safe_init
 default_init
 
