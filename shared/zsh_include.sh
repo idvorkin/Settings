@@ -313,7 +313,7 @@ function safe_init()
     eval_w_param_if_exists thefuck --alias
     eval_w_param_if_exists rbenv init -
     eval_w_param_if_exists dasel completion zsh
-    echo "--eval
+    echo "--eval"
 
 } # end safe init
 
