@@ -1,69 +1,9 @@
-# SETUP: Put these in your zshrc
-##################
-
-#  Helpful go to your by pressing gf on: ~/.zshrc
-
-# https://github.com/lukechilds/zsh-better-npm-completion
-# plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf gh)
-# . ~/settings/shared/zsh_include.sh
-
-# Source Brew
-# Brew default
-
 function source_if_exists() {
     [ -f $1 ] && source $1
 }
 function eval_w_param_if_exists() {
     [ -f $1 ] && eval $($1 $2)
 }
-
-
-export EDITOR=nvim
-
-# C-T search Files Fuzzy
-# C-R Search History fuzzy
-source_if_exists ~/.fzf.zsh
-source_if_exists ~/homebrew/etc/profile.d/z.sh
-
-PATH+=:~/.local/bin
-alias ghg-md-sink='gh gist create --filename=out.md -- '
-unalias image
-
-# Use diff so fancy without needing to be in git
-diff-so-fancy() {
-  git diff --no-index --color "$@"
-}
-
-trim_file_after_marker_to_new_file() {
-  local input_file="$1"
-  local marker="$2"
-  local output_file="$3"
-
-  # Check if the input file exists
-  if [[ ! -f "$input_file" ]]; then
-    echo "Error: Input file '$input_file' does not exist."
-    return 1
-  fi
-
-  # Use awk to find the last occurrence of the marker and print from there
-  awk -v marker="$marker" '
-  {
-    if (index($0, marker) == 1) {
-      last_marker_line = NR  # Save the line number of the last marker
-      last_marker_content = $0  # Save the content of the last marker line
-    }
-    lines[NR] = $0  # Store each line in an array
-  }
-  END {
-    if (last_marker_line > 0) {
-      for (i = last_marker_line; i <= NR; i++) {
-        print lines[i]
-      }
-    }
-  }' "$input_file" > "$output_file"
-}
-
-
 function ghg-aider()
 {
     trim_file_after_marker_to_new_file '.aider.chat.history.md' '# aider chat started at' '.aider.last.chat.md'
@@ -71,7 +11,6 @@ function ghg-aider()
     echo v0.1
 }
 
-alias alf="open '/Applications/Alfred 5.app/'"
 function charge() {
     pmset -g batt
     system_profiler SPPowerDataType  | grep Watt
@@ -87,47 +26,12 @@ gchanges() {
     done
 
 }
-
-alias hibernate="sudo pmset sleepnow"
-alias lg='lazygit'
-alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
-alias gpushall='for git_directory in * ; echo $git_directory && git -C $git_directory push'
-alias weather="curl wttr.in/seattle"
-alias dwc='pushd ~/gits/settings && python3 -c "from vim_python import * ;WCDailyPage()" && pushd ~/gits/igor2/750words '
-alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCommitDailyPage()" && pushd ~/gits/igor2/750words '
-alias sl='ssh lightsail'
-alias asl='autossh -M 20000 lightsail_no_forward'
-alias slnf='ssh lightsail_no_forward'
-alias tam='tmux attach-session -t main || tmux new-session -s main'
-alias tas='tmux attach-session -t servers || tmux new-session -s servers'
-alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
-alias xuilocal=" pipxu install -f . --editable"
-
-alias ghe="gh copilot explain"
-alias ghs="gh copilot suggest"
-
-
-# Looks like pbcopy just works over ssh/mosh now!
-# alias rpbcopy='~/settings/rpbcopy.sh'
-alias rpbpaste='~/settings/rpbpaste.sh'
-# alias rpbc='~/settings/rpbcopy.sh'
-# alias rpbc='~/settings/pbcopy'
-alias rpbp='~/settings/rpbpaste.sh'
-alias pbc='pbcopy'
-alias pbp='pbpaste'
-# Use rich markdown pager
-alias rmp='rich - -m'
-
-alias tmuxp="~/.local/bin/tmuxp"
-alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"
 function echomb() {
     echo $1 > ~/tmp/mb.in
     cat ~/tmp/mb_tmp | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!'  > ~/tmp/mb.out
     cat ~/tmp/mb.out | pbc
     cat ~/tmp/mb.out
 }
-
-unalias ddg
 function ddg() {
     dg grateful $1
 }
@@ -189,11 +93,6 @@ function do_wsl() {
 
 }
 
-
-if [[ "$(uname -a)" =~ "microsoft" ]]; then
-    do_wsl
-fi
-
 function gstatdaterange() {
     # $1 - start
     # $2 - end
@@ -238,25 +137,37 @@ function work_cli()
     cal dump
 }
 
+function rtd()
+{
+    ssh lightsail_no_forward cat /home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep ☐ | pbcopy
+    pbpaste
+}
+
+function nvday()
+{
+    nvim scp://ec2-user@lightsail//home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md
+}
 
 
+function dumpPrompts() {
+    # Use an array to explicitly handle glob expansion
+    local files=($1)
+    echo files
 
-# Set alias that are always better
-alias_if_exists cat bat
-alias_if_exists ranger yazi
-alias_if_exists ls eza
-alias_if_exists df duf
-alias_if_exists top htop
-alias_if_exists ndcu gdu
-alias_if_exists du dua
-alias_if_other_exists cd z zoxide
-alias_if_exists ps procs
-# On mac, gpt is in sbin, use the installed from idvorkin_nlp version instead
-alias_if_exists gpt ~/.local/bin/gpt
+    for file in "${files[@]}"; do
+        echo $file
+        cat "$file" | dasel -r json '.Recommendations.all().property(PromptToUseDuringReflection?)'
+    done
+}
 
-# Igor setups use Soed and Sodot as useful aliases
-alias Soed='nvim ~/settings/shared/zsh_include.sh'
-alias Sodot='.  ~/settings/shared/zsh_include.sh'
+function imgls()
+{
+    if [[ -n "$TMUX" ]]; then
+        timg --grid 4 --title -ps "$@"
+    else
+        timg --grid 4 --title "$@"
+    fi
+}
 
 function png_shrink()
 {
@@ -315,6 +226,118 @@ function export_secrets()
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
 }
 
+
+function default_init() {
+
+
+
+export EDITOR=nvim
+
+# C-T search Files Fuzzy
+# C-R Search History fuzzy
+source_if_exists ~/.fzf.zsh
+source_if_exists ~/homebrew/etc/profile.d/z.sh
+
+PATH+=:~/.local/bin
+alias ghg-md-sink='gh gist create --filename=out.md -- '
+unalias image
+
+# Use diff so fancy without needing to be in git
+diff-so-fancy() {
+  git diff --no-index --color "$@"
+}
+
+trim_file_after_marker_to_new_file() {
+  local input_file="$1"
+  local marker="$2"
+  local output_file="$3"
+
+  # Check if the input file exists
+  if [[ ! -f "$input_file" ]]; then
+    echo "Error: Input file '$input_file' does not exist."
+    return 1
+  fi
+
+  # Use awk to find the last occurrence of the marker and print from there
+  awk -v marker="$marker" '
+  {
+    if (index($0, marker) == 1) {
+      last_marker_line = NR  # Save the line number of the last marker
+      last_marker_content = $0  # Save the content of the last marker line
+    }
+    lines[NR] = $0  # Store each line in an array
+  }
+  END {
+    if (last_marker_line > 0) {
+      for (i = last_marker_line; i <= NR; i++) {
+        print lines[i]
+      }
+    }
+  }' "$input_file" > "$output_file"
+}
+
+
+
+alias alf="open '/Applications/Alfred 5.app/'"
+alias hibernate="sudo pmset sleepnow"
+alias lg='lazygit'
+alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
+alias gpushall='for git_directory in * ; echo $git_directory && git -C $git_directory push'
+alias weather="curl wttr.in/seattle"
+alias dwc='pushd ~/gits/settings && python3 -c "from vim_python import * ;WCDailyPage()" && pushd ~/gits/igor2/750words '
+alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCommitDailyPage()" && pushd ~/gits/igor2/750words '
+alias sl='ssh lightsail'
+alias asl='autossh -M 20000 lightsail_no_forward'
+alias slnf='ssh lightsail_no_forward'
+alias tam='tmux attach-session -t main || tmux new-session -s main'
+alias tas='tmux attach-session -t servers || tmux new-session -s servers'
+alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
+alias xuilocal=" pipxu install -f . --editable"
+
+alias ghe="gh copilot explain"
+alias ghs="gh copilot suggest"
+
+
+# Looks like pbcopy just works over ssh/mosh now!
+# alias rpbcopy='~/settings/rpbcopy.sh'
+alias rpbpaste='~/settings/rpbpaste.sh'
+# alias rpbc='~/settings/rpbcopy.sh'
+# alias rpbc='~/settings/pbcopy'
+alias rpbp='~/settings/rpbpaste.sh'
+alias pbc='pbcopy'
+alias pbp='pbpaste'
+# Use rich markdown pager
+alias rmp='rich - -m'
+
+alias tmuxp="~/.local/bin/tmuxp"
+alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"
+
+unalias ddg
+
+if [[ "$(uname -a)" =~ "microsoft" ]]; then
+    do_wsl
+fi
+
+
+
+
+# Set alias that are always better
+alias_if_exists cat bat
+alias_if_exists ranger yazi
+alias_if_exists ls eza
+alias_if_exists df duf
+alias_if_exists top htop
+alias_if_exists ndcu gdu
+alias_if_exists du dua
+alias_if_other_exists cd z zoxide
+alias_if_exists ps procs
+# On mac, gpt is in sbin, use the installed from idvorkin_nlp version instead
+alias_if_exists gpt ~/.local/bin/gpt
+
+# Igor setups use Soed and Sodot as useful aliases
+alias Soed='nvim ~/settings/shared/zsh_include.sh'
+alias Sodot='.  ~/settings/shared/zsh_include.sh'
+
 echo "Random"
 
 # Some useful work aliases
@@ -324,37 +347,6 @@ alias grtd="grep ☐"
 # open the output of pbpaste
 # alias pbo="open $(pbpaste)"
 alias copy_secrets_from_shell='scp lightsail:/home/ec2-user/gits/igor2/secretBox.json ~/gits/igor2/secretBox.json'
-function rtd()
-{
-    ssh lightsail_no_forward cat /home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md | grep ☐ | pbcopy
-    pbpaste
-}
-
-function nvday()
-{
-    nvim scp://ec2-user@lightsail//home/ec2-user/gits/igor2/750words/$(date +'%Y-%m-%d').md
-}
-
-
-function dumpPrompts() {
-    # Use an array to explicitly handle glob expansion
-    local files=($1)
-    echo files
-
-    for file in "${files[@]}"; do
-        echo $file
-        cat "$file" | dasel -r json '.Recommendations.all().property(PromptToUseDuringReflection?)'
-    done
-}
-
-function imgls()
-{
-    if [[ -n "$TMUX" ]]; then
-        timg --grid 4 --title -ps "$@"
-    else
-        timg --grid 4 --title "$@"
-    fi
-}
 
 # Useful stuff w/OSX Sound
 alias restart_audio='sudo launchctl kickstart -kp system/com.apple.audio.coreaudiod'
@@ -412,4 +404,7 @@ alias nbdiffcode="nbdiff --ignore-metadata --ignore-details --ignore-output"
 
 unalias a # not sure why  a gets an alias
 echo "zsh_include complete"
+}
+
+default_init
 
