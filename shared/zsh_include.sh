@@ -1,8 +1,13 @@
 function source_if_exists() {
     [ -f $1 ] && source $1
 }
+
 function eval_w_param_if_exists() {
-    [ -f $1 ] && eval $($1 $2 $3 $4 $5 $6 $7 $8 $9)
+    if [ -f "$1" ] || command -v "$1" >/dev/null 2>&1; then
+        eval "$("$1" "${@:2}")"
+    else
+         # echo "Error: '$1' is neither a valid file nor a recognized command."
+    fi
 }
 
 function charge() {
@@ -262,6 +267,7 @@ diff-so-fancy() {
 
 function safe_init()
 {
+    echo ++safe_init
 
     export EDITOR=nvim
     PATH+=:~/.local/bin:/.cargo/bin
@@ -321,10 +327,14 @@ function safe_init()
     eval_w_param_if_exists dasel completion zsh
     echo "--eval"
 
+    echo --safe_init
+
 } # end safe init
 
 
 function default_init() {
+
+echo  ++default_init
 
 
 # C-T search Files Fuzzy
@@ -412,7 +422,7 @@ source <(carapace _carapace)
 
 
 unalias a # not sure why  a gets an alias
-echo "zsh_include complete"
+echo  --default_init
 }
 
 
