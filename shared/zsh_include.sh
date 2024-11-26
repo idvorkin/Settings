@@ -289,9 +289,15 @@ function safe_init()
     set -o vi
     set nobell
 
-    echo ++zfunc
-    for func in ~/.zfunc/*; do source $func; done
-    echo --zfunc
+    echo "++zfunc"
+    if [ -d ~/.zfunc ] && [ "$(ls -A ~/.zfunc)" ]; then
+      for func in ~/.zfunc/*; do
+        source $func
+      done
+    else
+      echo "No functions found in ~/.zfunc"
+    fi
+    echo "--zfunc"
 
     # Can't activate it in the directory or won't work?
     # Some reason need to activate it outside the script -not worth figuring out
