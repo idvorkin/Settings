@@ -49,6 +49,7 @@ Host bedrock-4
 Host devbox
     Hostname devvm5807.prn0.facebook.com
     LocalForward 8087 devvm5807.prn0.facebook.com:8087
+    LocalForward 8011 localhost:8011
 
 Host freddy_prod
     Hostname devvm17926.prn0.facebook.com
