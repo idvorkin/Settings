@@ -559,5 +559,10 @@ def alfred():
     print(alfred_items.model_dump_json(indent=4))
 
 
+@app.command()
+def zz():
+    """Put the system to sleep"""
+    os.system("pmset sleepnow")
+
 if __name__ == "__main__":
     app()
