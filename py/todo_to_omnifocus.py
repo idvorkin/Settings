@@ -52,7 +52,13 @@ def add_task_to_omnifocus(task):
 
     url = "omnifocus:///add?" + str_parms
     ic("Running", url)
-    subprocess.run(["open", url], check=True)
+
+    try:
+        subprocess.run(["open", url], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}")
+        print(f"Failed to add task: {task}")
+        print("Continuing")
 
 
 @app.command()
