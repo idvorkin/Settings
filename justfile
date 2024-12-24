@@ -20,4 +20,4 @@ test-verbose:
 
 # Install the Python package globally using pipx
 global_install:
-    @cd py && pipx install .
+    @cd py && pipxu install -e -f .
