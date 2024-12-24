@@ -17,3 +17,7 @@ test_file FILE:
 
 # Recipe to run the test for YouTube template with verbose output
 test-verbose:
+
+# Install the Python package globally using pipx
+global_install:
+    @cd py && pipx install .
