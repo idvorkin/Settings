@@ -428,4 +428,5 @@ echo  --default_init
 
 safe_init
 default_init
+export_secrets
 
