@@ -426,6 +426,43 @@ echo  --default_init
 }
 
 
+function blog_think() {
+    # Ensure the API key is set
+    if [[ -z "$TONY_API_KEY" ]]; then
+        echo "Error: TONY_API_KEY is not set."
+        return 1
+    fi
+
+    # Define the temporary file for the raw response
+    local response_file="$HOME/tmp/random_blog_response.json"
+
+    http POST https://idvorkin--modal-blog-server-blog-handler.modal.run \
+        x-vapi-secret:$TONY_API_KEY \
+        action="random_blog_url_only" > $response_file
+
+    # Check if the request was successful
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Failed to fetch blog."
+        return 1
+    fi
+
+    # Extract the `result` field from the response
+    local url=`sed -n "s/.*'url': '\([^']*\)'.*/\1/p" $response_file`
+
+
+    # Check if content and URL were extracted
+    if [[ -z "$url" ]]; then
+        echo "Error: Failed to extract blog content or URL."
+        return 1
+    fi
+
+    # Use the trailing path from the URL as the filename
+    echo "$url"
+    think $url
+}
+
+
+
 safe_init
 default_init
 export_secrets
