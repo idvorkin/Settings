@@ -192,7 +192,7 @@ def info():
     elif is_vim_running(process_info):
         title = f"vi {short_path}"
     elif just_cmd := get_just_command(process_info):
-        title = f"{just_cmd} {short_path}"
+        title = just_cmd  # Just show the command name without the path
     elif process_info.get('name') == 'zsh' and not has_non_utility_children(process_info):
         # Only check for plain shell after checking for special apps
         title = f"z {short_path}"
