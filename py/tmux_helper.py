@@ -21,9 +21,6 @@ def set_tmux_title(title: str):
         except subprocess.CalledProcessError:
             pass  # Silently fail if tmux command fails
 
-# Import the Window and Windows models from y.py
-sys.path.append(str(Path(__file__).parent))
-from y import get_windows
 
 app = typer.Typer(help="A Tmux helper utility", no_args_is_help=True)
 
@@ -115,6 +112,23 @@ def get_short_path(cwd: str, git_repo: Optional[str]) -> str:
     
     return short_path
 
+def get_tmux_session_info():
+    """Get information about the current tmux session"""
+    try:
+        # Get current session name
+        session = subprocess.check_output(
+            ['tmux', 'display-message', '-p', '#{session_name}']
+        ).decode('utf-8').strip()
+        
+        # Get current window name
+        window = subprocess.check_output(
+            ['tmux', 'display-message', '-p', '#{window_name}']
+        ).decode('utf-8').strip()
+        
+        return {'session': session, 'window': window}
+    except subprocess.CalledProcessError:
+        return {'session': '', 'window': ''}
+
 class TmuxInfo(BaseModel):
     cwd: str
     short_path: str
@@ -126,9 +140,8 @@ class TmuxInfo(BaseModel):
 @app.command()
 def info():
     """Get current directory, latest running app, and window title as JSON"""
-    # Get the focused window information
-    windows = get_windows()
-    focused_window = next((w for w in windows.windows if w.has_focus), None)
+    # Get tmux session info instead of yabai window info
+    tmux_info = get_tmux_session_info()
     
     # Get current working directory using pwd
     try:
@@ -155,12 +168,12 @@ def info():
         if is_plain_shell:
             title = f"z {short_path}"
         else:
-            title = focused_window.title if focused_window else ""
+            title = tmux_info['window']
 
     info = TmuxInfo(
         cwd=cwd,
         short_path=short_path,
-        app=focused_window.app if focused_window else "",
+        app=tmux_info['session'],
         title=title,
         git_repo=get_git_repo_name(),
         process_tree=process_tree
