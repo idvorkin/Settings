@@ -51,8 +51,41 @@ def get_process_tree() -> list:
     except (subprocess.CalledProcessError, ValueError):
         return []
 
+def get_short_path(cwd: str, git_repo: Optional[str]) -> str:
+    # Define path mappings
+    path_mappings = {
+        'idvorkin.github.io': 'blog',
+        'idvorkin': 'me',
+        'settings': 'set',
+        # Add more mappings as needed
+    }
+
+    # If we're in a git repo, use that for the base name
+    if git_repo:
+        base_name = path_mappings.get(git_repo, git_repo)
+        # Get the path relative to git root
+        try:
+            rel_path = subprocess.check_output(
+                ['git', 'rev-parse', '--show-prefix'],
+                stderr=subprocess.DEVNULL
+            ).decode('utf-8').strip()
+            return f"{base_name}/{rel_path}" if rel_path else base_name
+        except subprocess.CalledProcessError:
+            return base_name
+    
+    # Not in a git repo, try to shorten the path
+    home = os.path.expanduser('~')
+    if cwd.startswith(home):
+        # Replace home directory with ~
+        short_path = '~' + cwd[len(home):]
+    else:
+        short_path = cwd
+    
+    return short_path
+
 class TmuxInfo(BaseModel):
     cwd: str
+    short_path: str
     app: str
     title: str
     git_repo: Optional[str] = None
@@ -73,6 +106,7 @@ def info():
 
     info = TmuxInfo(
         cwd=cwd,
+        short_path=get_short_path(cwd, get_git_repo_name()),
         app=focused_window.app if focused_window else "",
         title=focused_window.title if focused_window else "",
         git_repo=get_git_repo_name(),
