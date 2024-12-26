@@ -118,6 +118,20 @@ def get_short_path(cwd: str, git_repo: Optional[str]) -> str:
     
     return short_path
 
+def get_just_command(process_info: dict) -> str | None:
+    """Get the just command if it's running in the process tree"""
+    # Check current process
+    if process_info.get('name') == 'just':
+        cmd = process_info.get('cmdline', '').split()
+        if len(cmd) > 1:  # Make sure there's a command after 'just'
+            return cmd[1]  # Return the actual command being run
+    
+    # Check children recursively
+    for child in process_info.get('children', []):
+        if result := get_just_command(child):
+            return result
+    return None
+
 def is_utility_process(process: dict) -> bool:
     """Check if a process is a utility that shouldn't count against plain shell detection"""
     utility_processes = {
@@ -177,6 +191,8 @@ def info():
         title = f"ai {short_path}"
     elif is_vim_running(process_info):
         title = f"vi {short_path}"
+    elif just_cmd := get_just_command(process_info):
+        title = f"{just_cmd} {short_path}"
     elif process_info.get('name') == 'zsh' and not has_non_utility_children(process_info):
         # Only check for plain shell after checking for special apps
         title = f"z {short_path}"
