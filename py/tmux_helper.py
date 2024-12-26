@@ -35,26 +35,32 @@ def get_git_repo_name(cwd: str) -> Optional[str]:
     except subprocess.CalledProcessError:
         return None
 
-def is_aider_in_tree(process_tree) -> bool:
-    """Recursively check if aider is running in the process tree"""
-    for item in process_tree:
-        if isinstance(item, dict) and 'cmdline' in item:
-            if 'aider' in item['cmdline'].lower():
-                return True
-        elif isinstance(item, list):
-            if is_aider_in_tree(item):
-                return True
+def is_aider_running(process_info: dict) -> bool:
+    """Check if aider is running in the process tree"""
+    # Check current process
+    if 'aider' in process_info.get('cmdline', '').lower():
+        return True
+    
+    # Check children recursively
+    for child in process_info.get('children', []):
+        if 'aider' in child.get('cmdline', '').lower():
+            return True
+        if is_aider_running(child):  # Recursive check
+            return True
     return False
 
-def is_vim_in_tree(process_tree) -> bool:
-    """Recursively check if vim/nvim is running in the process tree"""
-    for item in process_tree:
-        if isinstance(item, dict) and 'cmdline' in item:
-            if any(editor in item['cmdline'].lower() for editor in ['vim', 'nvim']):
-                return True
-        elif isinstance(item, list):
-            if is_vim_in_tree(item):
-                return True
+def is_vim_running(process_info: dict) -> bool:
+    """Check if vim/nvim is running in the process tree"""
+    # Check current process
+    if any(editor in process_info.get('cmdline', '').lower() for editor in ['vim', 'nvim']):
+        return True
+    
+    # Check children recursively
+    for child in process_info.get('children', []):
+        if any(editor in child.get('cmdline', '').lower() for editor in ['vim', 'nvim']):
+            return True
+        if is_vim_running(child):  # Recursive check
+            return True
     return False
 
 def get_tmux_pane_pid() -> int:
@@ -166,13 +172,10 @@ def info():
     short_path = get_short_path(cwd, git_repo)
 
     # Check process tree for running applications
-    is_aider_running = 'aider' in process_info.get('cmdline', '').lower()
-    is_vim_running = any(editor in process_info.get('cmdline', '').lower() for editor in ['vim', 'nvim'])
-    
-    # Set title based on running processes - order matters!
-    if is_aider_running:
+    # Check process tree for running applications
+    if is_aider_running(process_info):
         title = f"ai {short_path}"
-    elif is_vim_running:
+    elif is_vim_running(process_info):
         title = f"vi {short_path}"
     elif process_info.get('name') == 'zsh' and not has_non_utility_children(process_info):
         # Only check for plain shell after checking for special apps
