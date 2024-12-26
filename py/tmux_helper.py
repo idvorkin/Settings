@@ -112,6 +112,20 @@ def get_short_path(cwd: str, git_repo: Optional[str]) -> str:
     
     return short_path
 
+def is_utility_process(process: dict) -> bool:
+    """Check if a process is a utility that shouldn't count against plain shell detection"""
+    utility_processes = {
+        'tmux_helper',
+        'pbcopy',
+        'python3.12'  # when running tmux_helper
+    }
+    return process.get('name', '') in utility_processes
+
+def has_non_utility_children(process_info: dict) -> bool:
+    """Check if the process has any children that aren't utility processes"""
+    children = process_info.get('children', [])
+    return any(not is_utility_process(child) for child in children)
+
 def get_tmux_session_info():
     """Get information about the current tmux session"""
     try:
@@ -161,10 +175,10 @@ def info():
     elif is_vim_running:
         title = f"vi {short_path}"
     else:
-        # Check if we're in a plain shell (just zsh)
+        # Check if we're in a plain shell (just zsh with only utility children)
         is_plain_shell = (
             process_info.get('name') == 'zsh' 
-            and not process_info.get('children', [])
+            and not has_non_utility_children(process_info)
         )
         if is_plain_shell:
             title = f"z {short_path}"
