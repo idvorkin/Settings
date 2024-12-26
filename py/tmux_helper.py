@@ -150,7 +150,12 @@ def info():
     elif is_vim_running:
         title = f"vi {short_path}"
     else:
-        title = focused_window.title if focused_window else ""
+        # Check if we're in a plain shell (no children processes)
+        is_plain_shell = len(process_tree) <= 1  # Just the shell process itself
+        if is_plain_shell:
+            title = f"z {short_path}"
+        else:
+            title = focused_window.title if focused_window else ""
 
     info = TmuxInfo(
         cwd=cwd,
