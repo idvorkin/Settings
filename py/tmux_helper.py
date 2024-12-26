@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 from pydantic import BaseModel
 import sys
+import psutil
 
 # Import the Window and Windows models from y.py
 sys.path.append(str(Path(__file__).parent))
@@ -25,11 +26,27 @@ def get_git_repo_name() -> Optional[str]:
     except subprocess.CalledProcessError:
         return None
 
+def get_process_tree() -> list:
+    def build_tree(pid):
+        try:
+            process = psutil.Process(pid)
+            children = process.children()
+            if not children:
+                return [process.name()]
+            return [process.name(), [build_tree(child.pid) for child in children]]
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            return []
+
+    # Get the current process and its parent
+    current_process = psutil.Process()
+    return build_tree(current_process.ppid())
+
 class TmuxInfo(BaseModel):
     cwd: str
     app: str
     title: str
     git_repo: Optional[str] = None
+    process_tree: list
 
 @app.command()
 def info():
@@ -48,7 +65,8 @@ def info():
         cwd=cwd,
         app=focused_window.app if focused_window else "",
         title=focused_window.title if focused_window else "",
-        git_repo=get_git_repo_name()
+        git_repo=get_git_repo_name(),
+        process_tree=get_process_tree()
     )
     
     print(json.dumps(info.model_dump(), indent=2))
