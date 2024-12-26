@@ -56,7 +56,6 @@ def get_short_path(cwd: str, git_repo: Optional[str]) -> str:
     path_mappings = {
         'idvorkin.github.io': 'blog',
         'idvorkin': 'me',
-        'settings': 'set',
         # Add more mappings as needed
     }
 
