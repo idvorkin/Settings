@@ -37,9 +37,14 @@ def get_process_tree() -> list:
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return []
 
-    # Get the current process and its parent
-    current_process = psutil.Process()
-    return build_tree(current_process.ppid())
+    # Get the pane process ID from tmux
+    try:
+        pane_pid = int(subprocess.check_output(
+            ['tmux', 'display-message', '-p', '#{pane_pid}']
+        ).decode('utf-8').strip())
+        return build_tree(pane_pid)
+    except (subprocess.CalledProcessError, ValueError):
+        return []
 
 class TmuxInfo(BaseModel):
     cwd: str
