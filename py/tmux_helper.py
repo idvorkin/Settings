@@ -26,6 +26,17 @@ def get_git_repo_name() -> Optional[str]:
     except subprocess.CalledProcessError:
         return None
 
+def is_aider_in_tree(process_tree) -> bool:
+    """Recursively check if aider is running in the process tree"""
+    for item in process_tree:
+        if isinstance(item, dict) and 'cmdline' in item:
+            if 'aider' in item['cmdline'].lower():
+                return True
+        elif isinstance(item, list):
+            if is_aider_in_tree(item):
+                return True
+    return False
+
 def get_process_tree() -> list:
     def build_tree(pid):
         try:
@@ -108,7 +119,7 @@ def info():
 
     # Check if aider is running in the process tree
     process_tree = get_process_tree()
-    is_aider_running = any('aider' in str(p).lower() for p in str(process_tree))
+    is_aider_running = is_aider_in_tree(process_tree)
 
     # Set title based on whether aider is running
     title = f"ai {short_path}" if is_aider_running else (focused_window.title if focused_window else "")
