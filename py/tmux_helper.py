@@ -169,21 +169,16 @@ def info():
     is_aider_running = 'aider' in process_info.get('cmdline', '').lower()
     is_vim_running = any(editor in process_info.get('cmdline', '').lower() for editor in ['vim', 'nvim'])
     
-    # Set title based on running processes
+    # Set title based on running processes - order matters!
     if is_aider_running:
         title = f"ai {short_path}"
     elif is_vim_running:
         title = f"vi {short_path}"
+    elif process_info.get('name') == 'zsh' and not has_non_utility_children(process_info):
+        # Only check for plain shell after checking for special apps
+        title = f"z {short_path}"
     else:
-        # Check if we're in a plain shell (just zsh with only utility children)
-        is_plain_shell = (
-            process_info.get('name') == 'zsh' 
-            and not has_non_utility_children(process_info)
-        )
-        if is_plain_shell:
-            title = f"z {short_path}"
-        else:
-            title = process_info.get('name', '')
+        title = process_info.get('name', '')
 
     info = TmuxInfo(
         cwd=cwd,
