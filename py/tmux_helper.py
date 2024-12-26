@@ -24,11 +24,12 @@ def set_tmux_title(title: str):
 
 app = typer.Typer(help="A Tmux helper utility", no_args_is_help=True)
 
-def get_git_repo_name() -> Optional[str]:
+def get_git_repo_name(cwd: str) -> Optional[str]:
     try:
         git_root = subprocess.check_output(
             ['git', 'rev-parse', '--show-toplevel'],
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
+            cwd=cwd  # Use the provided cwd
         ).decode('utf-8').strip()
         return os.path.basename(git_root)
     except subprocess.CalledProcessError:
@@ -147,7 +148,7 @@ def info():
     cwd = process_info.get('cwd', '')
     
     # Get the short path
-    git_repo = get_git_repo_name()
+    git_repo = get_git_repo_name(cwd)
     short_path = get_short_path(cwd, git_repo)
 
     # Check process tree for running applications
