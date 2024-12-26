@@ -10,6 +10,14 @@ from pydantic import BaseModel
 import sys
 import psutil
 
+def set_tmux_title(title: str):
+    """Set tmux pane title"""
+    if title:
+        try:
+            subprocess.run(['tmux', 'select-pane', '-T', title], check=True)
+        except subprocess.CalledProcessError:
+            pass  # Silently fail if tmux command fails
+
 # Import the Window and Windows models from y.py
 sys.path.append(str(Path(__file__).parent))
 from y import get_windows
@@ -151,6 +159,10 @@ def info():
     )
     
     print(json.dumps(info.model_dump(), indent=2))
+    
+    # Set the tmux pane title
+    if is_aider_running or is_vim_running:
+        set_tmux_title(title)
 
 if __name__ == "__main__":
     app()
