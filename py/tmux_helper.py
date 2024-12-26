@@ -134,7 +134,7 @@ class TmuxInfo(BaseModel):
     app: str
     title: str
     git_repo: Optional[str] = None
-    process_tree: list
+    process_tree: dict
 
 @app.command()
 def info():
