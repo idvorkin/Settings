@@ -3,6 +3,7 @@
 import typer
 import subprocess
 import json
+import os
 from pathlib import Path
 from typing import Optional
 from pydantic import BaseModel
@@ -14,10 +15,21 @@ from y import get_windows
 
 app = typer.Typer(help="A Tmux helper utility", no_args_is_help=True)
 
+def get_git_repo_name() -> Optional[str]:
+    try:
+        git_root = subprocess.check_output(
+            ['git', 'rev-parse', '--show-toplevel'],
+            stderr=subprocess.DEVNULL
+        ).decode('utf-8').strip()
+        return os.path.basename(git_root)
+    except subprocess.CalledProcessError:
+        return None
+
 class TmuxInfo(BaseModel):
     cwd: str
     app: str
     title: str
+    git_repo: Optional[str] = None
 
 @app.command()
 def info():
@@ -36,6 +48,7 @@ def info():
         cwd=cwd,
         app=focused_window.app if focused_window else "",
         title=focused_window.title if focused_window else "",
+        git_repo=get_git_repo_name()
     )
     
     print(json.dumps(info.model_dump(), indent=2))
