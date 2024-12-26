@@ -431,4 +431,7 @@ vim: true
 ## Specify which editor to use for the /editor command
 editor: vim
 architect: true
-read: CONVENTIONS.md
+read:
+  - CONVENTIONS.md
+  - /Users/idvorkin/settings/shared/CONVENTIONS.py.md
+  - /home/ec2-user/settings/shared/CONVENTIONS.py.md
