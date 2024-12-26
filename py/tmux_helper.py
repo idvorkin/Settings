@@ -168,9 +168,8 @@ def info():
     
     print(json.dumps(info.model_dump(), indent=2))
     
-    # Set the tmux pane title
-    if is_aider_running or is_vim_running:
-        set_tmux_title(title)
+    # Always set the tmux title
+    set_tmux_title(title)
 
 if __name__ == "__main__":
     app()
