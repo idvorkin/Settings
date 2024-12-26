@@ -161,8 +161,11 @@ def info():
     elif is_vim_running:
         title = f"vi {short_path}"
     else:
-        # Check if we're in a plain shell (no children)
-        is_plain_shell = not process_info.get('children', [])
+        # Check if we're in a plain shell (just zsh)
+        is_plain_shell = (
+            process_info.get('name') == 'zsh' 
+            and not process_info.get('children', [])
+        )
         if is_plain_shell:
             title = f"z {short_path}"
         else:
