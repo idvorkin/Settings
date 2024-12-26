@@ -37,6 +37,17 @@ def is_aider_in_tree(process_tree) -> bool:
                 return True
     return False
 
+def is_vim_in_tree(process_tree) -> bool:
+    """Recursively check if vim/nvim is running in the process tree"""
+    for item in process_tree:
+        if isinstance(item, dict) and 'cmdline' in item:
+            if any(editor in item['cmdline'].lower() for editor in ['vim', 'nvim']):
+                return True
+        elif isinstance(item, list):
+            if is_vim_in_tree(item):
+                return True
+    return False
+
 def get_process_tree() -> list:
     def build_tree(pid):
         try:
@@ -117,12 +128,18 @@ def info():
     # Get the short path
     short_path = get_short_path(cwd, get_git_repo_name())
 
-    # Check if aider is running in the process tree
+    # Check if aider or vim is running in the process tree
     process_tree = get_process_tree()
     is_aider_running = is_aider_in_tree(process_tree)
+    is_vim_running = is_vim_in_tree(process_tree)
 
-    # Set title based on whether aider is running
-    title = f"ai {short_path}" if is_aider_running else (focused_window.title if focused_window else "")
+    # Set title based on running processes
+    if is_aider_running:
+        title = f"ai {short_path}"
+    elif is_vim_running:
+        title = f"vi {short_path}"
+    else:
+        title = focused_window.title if focused_window else ""
 
     info = TmuxInfo(
         cwd=cwd,
