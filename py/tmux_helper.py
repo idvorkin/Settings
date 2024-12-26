@@ -56,30 +56,29 @@ def is_vim_in_tree(process_tree) -> bool:
                 return True
     return False
 
-def get_process_tree() -> list:
-    def build_tree(pid):
-        try:
-            process = psutil.Process(pid)
-            children = process.children()
-            # Include both name and cmdline for each process
-            process_info = {
-                'name': process.name(),
-                'cmdline': ' '.join(process.cmdline())
-            }
-            if not children:
-                return [process_info]
-            return [process_info, [build_tree(child.pid) for child in children]]
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            return []
-
-    # Get the pane process ID from tmux
+def get_tmux_pane_pid() -> int:
+    """Get the process ID of the current tmux pane"""
     try:
         pane_pid = int(subprocess.check_output(
             ['tmux', 'display-message', '-p', '#{pane_pid}']
         ).decode('utf-8').strip())
-        return build_tree(pane_pid)
+        return pane_pid
     except (subprocess.CalledProcessError, ValueError):
-        return []
+        return os.getpid()  # Fallback to current process if tmux command fails
+
+def get_process_info(pid: int) -> dict:
+    """Get detailed information about a process and its children"""
+    try:
+        process = psutil.Process(pid)
+        return {
+            'pid': pid,
+            'name': process.name(),
+            'cmdline': ' '.join(process.cmdline()),
+            'cwd': process.cwd(),
+            'children': [get_process_info(child.pid) for child in process.children()]
+        }
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return {}
 
 def get_short_path(cwd: str, git_repo: Optional[str]) -> str:
     # Define path mappings
@@ -140,43 +139,41 @@ class TmuxInfo(BaseModel):
 @app.command()
 def info():
     """Get current directory, latest running app, and window title as JSON"""
-    # Get tmux session info instead of yabai window info
-    tmux_info = get_tmux_session_info()
+    # Get the parent process ID from tmux
+    pane_pid = get_tmux_pane_pid()
+    process_info = get_process_info(pane_pid)
     
-    # Get current working directory using pwd
-    try:
-        cwd = subprocess.check_output(['pwd']).decode('utf-8').strip()
-    except subprocess.CalledProcessError:
-        cwd = ""
-
+    # Get current working directory from the process info
+    cwd = process_info.get('cwd', '')
+    
     # Get the short path
-    short_path = get_short_path(cwd, get_git_repo_name())
+    git_repo = get_git_repo_name()
+    short_path = get_short_path(cwd, git_repo)
 
-    # Check if aider or vim is running in the process tree
-    process_tree = get_process_tree()
-    is_aider_running = is_aider_in_tree(process_tree)
-    is_vim_running = is_vim_in_tree(process_tree)
-
+    # Check process tree for running applications
+    is_aider_running = 'aider' in process_info.get('cmdline', '').lower()
+    is_vim_running = any(editor in process_info.get('cmdline', '').lower() for editor in ['vim', 'nvim'])
+    
     # Set title based on running processes
     if is_aider_running:
         title = f"ai {short_path}"
     elif is_vim_running:
         title = f"vi {short_path}"
     else:
-        # Check if we're in a plain shell (no children processes)
-        is_plain_shell = len(process_tree) <= 1  # Just the shell process itself
+        # Check if we're in a plain shell (no children)
+        is_plain_shell = not process_info.get('children', [])
         if is_plain_shell:
             title = f"z {short_path}"
         else:
-            title = tmux_info['window']
+            title = process_info.get('name', '')
 
     info = TmuxInfo(
         cwd=cwd,
         short_path=short_path,
-        app=tmux_info['session'],
+        app=process_info.get('name', ''),
         title=title,
-        git_repo=get_git_repo_name(),
-        process_tree=process_tree
+        git_repo=git_repo,
+        process_tree=process_info
     )
     
     print(json.dumps(info.model_dump(), indent=2))
