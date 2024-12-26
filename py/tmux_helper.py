@@ -31,9 +31,14 @@ def get_process_tree() -> list:
         try:
             process = psutil.Process(pid)
             children = process.children()
+            # Include both name and cmdline for each process
+            process_info = {
+                'name': process.name(),
+                'cmdline': ' '.join(process.cmdline())
+            }
             if not children:
-                return [process.name()]
-            return [process.name(), [build_tree(child.pid) for child in children]]
+                return [process_info]
+            return [process_info, [build_tree(child.pid) for child in children]]
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return []
 
