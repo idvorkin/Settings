@@ -1,5 +1,6 @@
 -- Snippets
 -- OK, no clue how to make this work... project for another day.
+-- Force reload with \\s - see nvim_plugins.lua
 local ls = require("luasnip")
 local s = ls.snippet
 local sn = ls.snippet_node
@@ -87,5 +88,18 @@ local function all_snippets()
 	}
 end
 
+local function md_snippets()
+    return {
+		s("esummarize", {
+			t('{%include summarize-page.html src="/'),
+			i(1),
+			t('"%}'),
+		}),
+    }
+end
+
 ls.add_snippets("lua", lua_snippets(), { overwrite = true })
 ls.add_snippets("all", all_snippets(), { overwrite = true })
+ls.add_snippets("markdown", md_snippets(), { overwrite = true })
+
+-- When I source this should auto reload the snippets
