@@ -11,10 +11,13 @@ import sys
 import psutil
 
 def set_tmux_title(title: str):
-    """Set tmux pane title"""
+    """Set tmux window title"""
     if title:
         try:
-            subprocess.run(['tmux', 'select-pane', '-T', title], check=True)
+            # First disable automatic renaming
+            subprocess.run(['tmux', 'set-window-option', 'automatic-rename', 'off'], check=True)
+            # Then set the window title
+            subprocess.run(['tmux', 'rename-window', title], check=True)
         except subprocess.CalledProcessError:
             pass  # Silently fail if tmux command fails
 
