@@ -103,13 +103,23 @@ def info():
     except subprocess.CalledProcessError:
         cwd = ""
 
+    # Get the short path
+    short_path = get_short_path(cwd, get_git_repo_name())
+
+    # Check if aider is running in the process tree
+    process_tree = get_process_tree()
+    is_aider_running = any('aider' in str(p).lower() for p in str(process_tree))
+
+    # Set title based on whether aider is running
+    title = f"ai {short_path}" if is_aider_running else (focused_window.title if focused_window else "")
+
     info = TmuxInfo(
         cwd=cwd,
-        short_path=get_short_path(cwd, get_git_repo_name()),
+        short_path=short_path,
         app=focused_window.app if focused_window else "",
-        title=focused_window.title if focused_window else "",
+        title=title,
         git_repo=get_git_repo_name(),
-        process_tree=get_process_tree()
+        process_tree=process_tree
     )
     
     print(json.dumps(info.model_dump(), indent=2))
