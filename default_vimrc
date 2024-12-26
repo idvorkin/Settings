@@ -437,8 +437,6 @@ endfunc
 
 " Note can't use _ in ab, so using 'e' for expand
 " expand etoday to be today's date in YYYY-MM-DD format
-:iab etoday <C-R>=strftime('%Y-%m-%d')<CR>
-:iab esummarize  {%include summarize-page.html src="/TK" %}
 :iab eyoutube  {%include youtube.html src="TK" %}
 :cab rfiles :r !eza ~/rare_git/blob/ig66
 :iab epics {%include bi_table.html is="<cr><cr>" %}
@@ -948,7 +946,7 @@ function! SetupGPT()
     : cab ecsum call GptComplete("summary")<CR>
     : cab ecfix call GptComplete("fix", "", "GptSinkReplace")<CR>
     : cab ffix % call GptComplete("fix", "", "GptSinkReplace")<CR>
-    : cab flfix % !fix --llama <CR>
+    : cab flfix % !fix <CR>
     :cab egpt  !gpt3
 
     " Select section
