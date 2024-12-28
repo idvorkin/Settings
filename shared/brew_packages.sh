@@ -102,6 +102,8 @@ brew_packages="$brew_packages autossh"  # auto reconnect - like MOSH, but works 
 brew_packages="$brew_packages atuin"  # shell history, like mcfly, but slower
 brew_packages="$brew_packages pipx uv "  # uv is a replacement for pip, and WAAAAAY faster, especially usefulf or pix replacement
 
+brew_packages="$brew_packages mpv" # Great video player, mostly works from CLI
+
 echo $brew_packages
 
 pipx install pipxu # pipx upgrade
