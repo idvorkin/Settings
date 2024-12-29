@@ -233,7 +233,8 @@ function esecret_jq() {
     export "$1"=$(jq -r .$1 ~/gits/igor2/secretBox.json)
     # list the first 10 chars of the secret, which follows the = sign
     export SCRATCH=`export | grep $1`
-    echo ${SCRATCH:0:10},${SCRATCH:20:4}
+    # Skip echo since too noisy
+    # echo ${SCRATCH:0:10},${SCRATCH:20:4}
 }
 
 function curl_md() {

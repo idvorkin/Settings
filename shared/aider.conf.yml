@@ -123,7 +123,6 @@
 #edit-format: xxx
 
 ## Use architect edit format for the main chat
-#architect: false
 
 ## Specify the model to use for commit messages and chat history summarization (default depends on --model)
 #weak-model: xxx
@@ -431,7 +430,15 @@ vim: true
 ## Specify which editor to use for the /editor command
 editor: vim
 architect: true
+
+# Doesn't support relative path so hard-code
+# Add some relevant blog files as read only, weird, but only works when in blog dir, so that's fine.
 read:
   - CONVENTIONS.md
   - /Users/idvorkin/settings/shared/CONVENTIONS.py.md
   - /home/ec2-user/settings/shared/CONVENTIONS.py.md
+  - back-links.json
+  - _posts/2020-04-01-Igor-Eulogy.md
+  - _d/pride.md
+
+
