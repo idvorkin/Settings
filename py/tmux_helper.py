@@ -24,11 +24,11 @@ def set_tmux_title(title: str, pane_id: str | None = None):
     """Set tmux window title"""
     if title:
         try:
-            cmd_base = ['tmux']
-            target_flag = ['-t', pane_id] if pane_id else []
-            
             # First disable automatic renaming
-            subprocess.run([*cmd_base, *target_flag, 'set', 'automatic-rename', 'off'], check=True)
+            if pane_id:
+                subprocess.run(['tmux', 'set', '-t', pane_id, 'automatic-rename', 'off'], check=True)
+            else:
+                subprocess.run(['tmux', 'set', 'automatic-rename', 'off'], check=True)
             
             # Then set the window title
             # Note: We need to get the window ID from the pane ID
@@ -36,9 +36,9 @@ def set_tmux_title(title: str, pane_id: str | None = None):
                 window_id = subprocess.check_output(
                     ['tmux', 'display-message', '-t', pane_id, '-p', '#{window_id}']
                 ).decode('utf-8').strip()
-                subprocess.run([*cmd_base, 'rename-window', '-t', window_id, title], check=True)
+                subprocess.run(['tmux', 'rename-window', '-t', window_id, title], check=True)
             else:
-                subprocess.run([*cmd_base, 'rename-window', title], check=True)
+                subprocess.run(['tmux', 'rename-window', title], check=True)
         except subprocess.CalledProcessError:
             pass  # Silently fail if tmux command fails
 
