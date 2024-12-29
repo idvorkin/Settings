@@ -50,6 +50,8 @@ def generate_title(process_info: dict, short_path: str) -> str:
         return f"vi {short_path}"
     elif just_cmd := get_just_command(process_info):
         return just_cmd
+    elif python_cmd := get_python_command(process_info):
+        return python_cmd
     elif process_info.get('name') == 'zsh' and not has_non_utility_children(process_info):
         return f"z {short_path}"
     else:
@@ -153,6 +155,22 @@ def get_short_path(cwd: str, git_repo: Optional[str]) -> str:
         short_path = cwd
     
     return short_path
+
+def get_python_command(process_info: dict) -> str | None:
+    """Get the python script name if it's running in the process tree"""
+    # Check children for python processes
+    for child in process_info.get('children', []):
+        if child.get('name', '').startswith('python'):
+            cmdline = child.get('cmdline', '').split()
+            if len(cmdline) > 1:
+                script_name = Path(cmdline[1]).stem
+                return f"py {script_name}"
+    
+    # Check children recursively
+    for child in process_info.get('children', []):
+        if result := get_python_command(child):
+            return result
+    return None
 
 def get_just_command(process_info: dict) -> str | None:
     """Get the just command if it's running in the process tree"""
