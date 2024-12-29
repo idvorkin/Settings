@@ -10,17 +10,42 @@ from pydantic import BaseModel
 import sys
 import psutil
 
-def set_tmux_title(title: str):
+def get_all_tmux_panes() -> list[str]:
+    """Get all pane IDs from tmux"""
+    try:
+        panes = subprocess.check_output(
+            ['tmux', 'list-panes', '-a', '-F', '#{pane_id}']
+        ).decode('utf-8').strip().split('\n')
+        return panes
+    except subprocess.CalledProcessError:
+        return []
+
+def set_tmux_title(title: str, pane_id: str | None = None):
     """Set tmux window title"""
     if title:
         try:
+            cmd_base = ['tmux']
+            if pane_id:
+                cmd_base.extend(['-t', pane_id])
             # First disable automatic renaming
-            subprocess.run(['tmux', 'set-window-option', 'automatic-rename', 'off'], check=True)
+            subprocess.run([*cmd_base, 'set-window-option', 'automatic-rename', 'off'], check=True)
             # Then set the window title
-            subprocess.run(['tmux', 'rename-window', title], check=True)
+            subprocess.run([*cmd_base, 'rename-window', title], check=True)
         except subprocess.CalledProcessError:
             pass  # Silently fail if tmux command fails
 
+def generate_title(process_info: dict, short_path: str) -> str:
+    """Generate a title based on process information"""
+    if is_aider_running(process_info):
+        return f"ai {short_path}"
+    elif is_vim_running(process_info):
+        return f"vi {short_path}"
+    elif just_cmd := get_just_command(process_info):
+        return just_cmd
+    elif process_info.get('name') == 'zsh' and not has_non_utility_children(process_info):
+        return f"z {short_path}"
+    else:
+        return process_info.get('name', '')
 
 app = typer.Typer(help="A Tmux helper utility", no_args_is_help=True)
 
@@ -63,12 +88,15 @@ def is_vim_running(process_info: dict) -> bool:
             return True
     return False
 
-def get_tmux_pane_pid() -> int:
-    """Get the process ID of the current tmux pane"""
+def get_tmux_pane_pid(pane_id: str | None = None) -> int:
+    """Get the process ID of the specified tmux pane or current pane if none specified"""
     try:
-        pane_pid = int(subprocess.check_output(
-            ['tmux', 'display-message', '-p', '#{pane_pid}']
-        ).decode('utf-8').strip())
+        cmd = ['tmux', 'display-message']
+        if pane_id:
+            cmd.extend(['-t', pane_id])
+        cmd.extend(['-p', '#{pane_pid}'])
+        
+        pane_pid = int(subprocess.check_output(cmd).decode('utf-8').strip())
         return pane_pid
     except (subprocess.CalledProcessError, ValueError):
         return os.getpid()  # Fallback to current process if tmux command fails
@@ -185,19 +213,8 @@ def info():
     git_repo = get_git_repo_name(cwd)
     short_path = get_short_path(cwd, git_repo)
 
-    # Check process tree for running applications
-    # Check process tree for running applications
-    if is_aider_running(process_info):
-        title = f"ai {short_path}"
-    elif is_vim_running(process_info):
-        title = f"vi {short_path}"
-    elif just_cmd := get_just_command(process_info):
-        title = just_cmd  # Just show the command name without the path
-    elif process_info.get('name') == 'zsh' and not has_non_utility_children(process_info):
-        # Only check for plain shell after checking for special apps
-        title = f"z {short_path}"
-    else:
-        title = process_info.get('name', '')
+    # Generate title
+    title = generate_title(process_info, short_path)
 
     info = TmuxInfo(
         cwd=cwd,
@@ -212,6 +229,28 @@ def info():
     
     # Always set the tmux title
     set_tmux_title(title)
+
+@app.command()
+def rename_all():
+    """Rename all tmux panes based on their current state"""
+    panes = get_all_tmux_panes()
+    for pane_id in panes:
+        # Get process info for this pane
+        pane_pid = get_tmux_pane_pid(pane_id)
+        process_info = get_process_info(pane_pid)
+        
+        # Get current working directory from the process info
+        cwd = process_info.get('cwd', '')
+        
+        # Get the short path
+        git_repo = get_git_repo_name(cwd)
+        short_path = get_short_path(cwd, git_repo)
+        
+        # Generate title
+        title = generate_title(process_info, short_path)
+        
+        # Set the title for this pane
+        set_tmux_title(title, pane_id)
 
 if __name__ == "__main__":
     app()
