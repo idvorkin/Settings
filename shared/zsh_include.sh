@@ -349,7 +349,7 @@ unalias image
 alias alf="open '/Applications/Alfred 5.app/'"
 alias hibernate="sudo pmset sleepnow"
 alias lg='lazygit'
-alias recapture='fc -e - |& pbcopy'
+alias recapture='fc -e - |& pbc'
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 alias gpushall='for git_directory in * ; echo $git_directory && git -C $git_directory push'
 alias weather="curl wttr.in/seattle"
