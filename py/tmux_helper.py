@@ -60,6 +60,10 @@ def generate_title(process_info: dict, short_path: str) -> str:
 app = typer.Typer(help="A Tmux helper utility", no_args_is_help=True)
 
 def get_git_repo_name(cwd: str) -> Optional[str]:
+    # Don't try to run git commands if we don't have a valid directory
+    if not cwd:
+        return None
+        
     try:
         git_root = subprocess.check_output(
             ['git', 'rev-parse', '--show-toplevel'],
