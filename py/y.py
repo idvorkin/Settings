@@ -3,6 +3,7 @@
 from datetime import datetime
 import time
 import typer
+from rich import print
 import subprocess
 from subprocess import CompletedProcess
 from pathlib import Path
@@ -515,27 +516,50 @@ def ghimgpaste(caption: str = ""):
     """Save clipboard image to GitHub and copy markdown link to clipboard"""
     from datetime import datetime
     import os
-
+    
+    # Setup directory
     iclip_dir = Path("~/gits/ipaste").expanduser()
     ensure_directory_exists(iclip_dir)
+    
+    # Generate filename and save image
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-    error = os.system(f"pngpaste {iclip_dir}/{current_time}.png")
+    png_path = iclip_dir / f"{current_time}.png"
+    webp_path = iclip_dir / f"{current_time}.webp"
+    
+    # Try to paste the image
+    error = os.system(f"pngpaste {png_path}")
     if error:
-        print("Error pasting image")
+        print("[red]Error: No image found in clipboard[/red]")
         return
-
-    os.system(f"convert {iclip_dir}/{current_time}.png {iclip_dir}/{current_time}.webp")
-    os.system(f"rm {iclip_dir}/{current_time}.png")
-    os.system(f"cd {iclip_dir} && git fetch && git rebase")
-    os.system(f"cd {iclip_dir} && git add {current_time}.webp")
-    os.system(f"cd {iclip_dir} && git commit -m 'adding image {current_time}.webp'")
-    # do a push
-    os.system(f"cd {iclip_dir} && git push")
-    # Make a markdown include and write it to the clipboard
-    template = f"![{caption}](https://raw.githubusercontent.com/idvorkin/ipaste/main/{current_time}.webp)"
-    # put this on the clipboard
-    pyperclip.copy(template)
-    print(template)
+    
+    # Convert to webp
+    convert_result = os.system(f"magick convert {png_path} {webp_path}")
+    if convert_result != 0:
+        print("[red]Error converting image to webp[/red]")
+        return
+        
+    # Clean up PNG
+    png_path.unlink()
+    
+    # Git operations with error checking
+    try:
+        os.system(f"cd {iclip_dir} && git fetch && git pull --rebase")
+        os.system(f"cd {iclip_dir} && git add {current_time}.webp")
+        os.system(f'cd {iclip_dir} && git commit -m "adding image {current_time}.webp"')
+        push_result = os.system(f"cd {iclip_dir} && git push")
+        
+        if push_result != 0:
+            print("[red]Error pushing to repository. Check your git credentials.[/red]")
+            return
+            
+        # Generate markdown and copy to clipboard
+        template = f"![{caption}](https://raw.githubusercontent.com/idvorkin/ipaste/main/{current_time}.webp)"
+        pyperclip.copy(template)
+        print("[green]Successfully uploaded and copied markdown to clipboard![/green]")
+        print(template)
+        
+    except Exception as e:
+        print(f"[red]Error during git operations: {str(e)}[/red]")
 
 
 class AlfredItems(BaseModel):
