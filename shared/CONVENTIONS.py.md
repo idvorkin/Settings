@@ -56,7 +56,40 @@ Return Type: OrderDetailsResponse (which may include nested models like ProductI
 ### Testing
 
 When possible update the tests to reflect the new changes.
-Tests are in the test directory
+Tests are in the test directory.
+
+#### Test Organization and Structure
+- Use pytest as the testing framework
+- Organize tests into three categories:
+  - `tests/unit/`: For testing individual components in isolation
+  - `tests/integration/`: For testing component interactions
+  - `tests/e2e/`: For end-to-end testing of complete features
+
+#### Test Configuration
+- All test dependencies should be listed in pyproject.toml
+- Required test packages include:
+  - pytest
+  - pytest-xdist (for parallel execution)
+  - pytest-cov (for coverage reporting)
+  - pytest-asyncio (if testing async code)
+
+#### Test Execution
+- Tests should be designed to run in parallel using pytest-xdist
+- Run tests with: `pytest -n auto` for automatic parallel execution
+- Use markers to categorize tests:
+  ```python
+  @pytest.mark.unit
+  @pytest.mark.integration
+  @pytest.mark.e2e
+  ```
+
+#### Test Best Practices
+- Use fixtures for test setup and teardown
+- Keep tests independent and isolated
+- Follow AAA pattern (Arrange, Act, Assert)
+- Use meaningful test names that describe the scenario being tested
+- Avoid test interdependencies
+- Use parametrize for testing multiple scenarios
 
 ### Adding Libraries
 
