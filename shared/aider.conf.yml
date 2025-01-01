@@ -33,7 +33,7 @@
 #4: false
 
 ## Use gpt-4o model for the main chat
-#4o: false
+4o: true
 
 ## Use gpt-4o-mini model for the main chat
 #mini: false
