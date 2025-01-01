@@ -4,7 +4,6 @@ Add pyproject.toml, add missing dependancies to it, and new utiliies to it.
 
 # Coding conventions used in this project
 
-
 For CLIs, use a Typer app.
 Use `ic` for logging.
 Use Rich for pretty printing.
@@ -59,6 +58,7 @@ When possible update the tests to reflect the new changes.
 Tests are in the test directory.
 
 #### Test Organization and Structure
+
 - Use pytest as the testing framework
 - Organize tests into three categories:
   - `tests/unit/`: For testing individual components in isolation
@@ -66,6 +66,7 @@ Tests are in the test directory.
   - `tests/e2e/`: For end-to-end testing of complete features
 
 #### Test Configuration
+
 - All test dependencies should be listed in pyproject.toml
 - Required test packages include:
   - pytest
@@ -74,6 +75,7 @@ Tests are in the test directory.
   - pytest-asyncio (if testing async code)
 
 #### Test Execution
+
 - Tests should be designed to run in parallel using pytest-xdist
 - Run tests with: `pytest -n auto` for automatic parallel execution
 - Use markers to categorize tests:
@@ -84,6 +86,7 @@ Tests are in the test directory.
   ```
 
 #### Test Best Practices
+
 - Use fixtures for test setup and teardown
 - Keep tests independent and isolated
 - Follow AAA pattern (Arrange, Act, Assert)
@@ -101,3 +104,7 @@ When adding new scripts, be sure to add them to the scripts section in pyproject
 
 ### When running python,
 
+# Terminal Command Conventions
+
+1. For ANY commands that would use a pager or require user interaction, you should append ` | /bin/cat` to the command (NOT just `cat` as it's aliased to `bat`). Otherwise, the command will break. You MUST do this for: git, less, head, tail, more, etc.
+2. For commands that are long running/expected to run indefinitely until interruption, run them in the background.
