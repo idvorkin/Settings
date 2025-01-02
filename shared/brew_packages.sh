@@ -67,7 +67,9 @@ zip \
 yarn \
 rust \
 rbenv \
-yarn "
+yarn \
+difftastic \
+pngpaste "
 
 
 # http downloaders
