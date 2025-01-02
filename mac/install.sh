@@ -35,8 +35,11 @@ brew install --cask karabiner-elements iterm2 alfred visual-studio-code docker m
 # Display resolutoin shifting
 brew install jakehilborn/jakehilborn/displayplacer
 
-# Video player, better then vlc
+# Video player, better than vlc
 brew install iina
+
+# Video editing tool
+brew install --cask losslesscut
 
 # Install fonts
 brew tap homebrew/cask-fonts
