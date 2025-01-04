@@ -1075,4 +1075,10 @@ let g:neoformat_enabled_racket = ['fmt']
 autocmd FileType lua setlocal foldmethod=expr
 autocmd FileType lua setlocal foldexpr=nvim_treesitter#foldexpr()
 
+function! CleanupMarkdown()
+    " Remove \[ with just [, \] with just]
+    :%s/\\\[/[/ge
+    :%s/\\\]/]/ge
+endfunction
+
 " vim:foldmethod=indent:
