@@ -24,13 +24,12 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = ["a", "y", "vim_python", "omnifocus", "shorten", "tmux_helper"]
+py-modules = ["a", "y", "vim_python", "shorten", "tmux_helper"]
 
 [project.scripts]
 y = "y:app"
 a = "a:app"
 vim_python = "vim_python:app"
-omnifocus = "omnifocus:app"
 shorten = "shorten:app"
 tmux_helper = "tmux_helper:app"
 
