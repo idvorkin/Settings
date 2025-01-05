@@ -1079,6 +1079,11 @@ function! CleanupMarkdown()
     " Remove \[ with just [, \] with just]
     :%s/\\\[/[/ge
     :%s/\\\]/]/ge
+
+    " Write markdown to clean up the  **'s around titles in markdown, eg. ## **Project Impact**
+    :%s/^\(#\+ \)\*\*\(.*\)\*\*/\1\2/ge
+
+
 endfunction
 
 " vim:foldmethod=indent:
