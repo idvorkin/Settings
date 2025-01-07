@@ -217,7 +217,7 @@ require("copilot").setup({
 		},
 	},
 	filetypes = {
-		markdown = true,
+		markdown = false,
 	},
 })
 
