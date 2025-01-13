@@ -464,6 +464,17 @@ function blog_think() {
 }
 
 
+function FinickyGet(){
+    defaults read com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers | grep -C 7 "http"
+
+}
+function FinickySet(){
+    defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{"LSHandlerURLScheme" = "http"; "LSHandlerRoleAll" = "net.kassett.finicky";}'
+    defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{"LSHandlerURLScheme" = "https"; "LSHandlerRoleAll" = "net.kassett.finicky";}'
+}
+
+
+
 
 safe_init
 default_init
