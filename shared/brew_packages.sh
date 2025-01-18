@@ -162,7 +162,8 @@ python3 -m  pip install langchain langchain-openai langchain_anthropic  openai l
 
 # Install from cargo incase on linux docker on osx which does not support bottles
 curl https://sh.rustup.rs -sSf | sh
-cargo install zoxide bat duf eza mcfly dua procs htop starship dua yazi
+cargo install zoxide bat duf eza mcfly dua procs htop starship dua yazi television
+
 
 brew install --cask google-cloud-sdk
 brew install dustinblackman/tap/oatmeal
