@@ -15,15 +15,14 @@ brew install --cask alt-tab # windows like alt-tab handling
 brew install jordanbaird-ice # Collapse menu bar (replaces bartender)
 
 
-# window managers
-brew install --cask nikitabobko/tap/aerospace
+# window managers - I find aerospace isn't stable yet
+# brew install --cask nikitabobko/tap/aerospace
 
 
-
-# Janky borders
-
+# I like this highlight active window   with borders
 brew tap FelixKratz/formulae
 brew install borders
+
 brew install koekeishiya/formulae/yabai
 
 brew install --cask karabiner-elements iterm2 alfred visual-studio-code docker microsoft-edge 1password meetingbar
@@ -33,9 +32,11 @@ brew install --cask karabiner-elements iterm2 alfred visual-studio-code docker m
 # brew install blackhole-2ch
 
 # Display resolutoin shifting
-brew install jakehilborn/jakehilborn/displayplacer
+# Messes stuff up, ignore for now.
+# brew install jakehilborn/jakehilborn/displayplacer
 
 # Video player, better than vlc
+# Also check out mpv
 brew install iina
 
 # Video editing tool
@@ -51,7 +52,6 @@ git clone https://github.com/Karmenzind/monaco-nerd-fonts ~/rare_gits/monaco-ner
 
 # Show the keys being pressed
 brew install --cask keycastr
-
 
 # brew cask install osxfuse
 
