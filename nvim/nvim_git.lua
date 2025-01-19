@@ -63,6 +63,7 @@ function GitCommitAndPush()
 
 	-- Get the current file name
 	local current_file = vim.fn.bufname()
+	local current_win = vim.api.nvim_get_current_win()
 
 	-- Stage the file
 	vim.cmd("Gwrite")
@@ -94,10 +95,8 @@ function GitCommitAndPush()
 	vim.api.nvim_buf_set_option(preview_buf, "modifiable", false)
 	vim.api.nvim_buf_set_option(preview_buf, "filetype", "diff")
 
-	-- Open in a split
-	vim.cmd("split")
-	local win = vim.api.nvim_get_current_win()
-	vim.api.nvim_win_set_buf(win, preview_buf)
+	-- Use the current window
+	vim.api.nvim_win_set_buf(current_win, preview_buf)
 
 	-- Generate initial commit message
 	local commit_message = generate_commit_message()
@@ -110,7 +109,8 @@ function GitCommitAndPush()
 		})
 
 		if result == "n" then
-			vim.api.nvim_win_close(win, true)
+			-- Restore the original buffer
+			vim.cmd("e " .. current_file)
 			return
 		end
 
@@ -133,7 +133,8 @@ function GitCommitAndPush()
 
 		if vim.v.shell_error == 0 then
 			vim.fn.system("git push")
-			vim.api.nvim_win_close(win, true)
+			-- Restore the original buffer
+			vim.cmd("e " .. current_file)
 			print("Changes committed and pushed successfully")
 		else
 			print("Error during commit: " .. commit_result)
@@ -150,15 +151,21 @@ function GitCommitAndPush()
 	})
 
 	-- Set buffer-local options
-	vim.api.nvim_buf_set_keymap(preview_buf, "n", "<ESC>", ":q<CR>", opts)
+	vim.api.nvim_buf_set_keymap(preview_buf, "n", "<ESC>", "", {
+		callback = function()
+			vim.cmd("e " .. current_file)
+		end,
+		noremap = true,
+		silent = true,
+	})
 	vim.api.nvim_buf_set_option(preview_buf, "buflisted", false)
 	vim.api.nvim_buf_set_option(preview_buf, "buftype", "nofile")
 	vim.api.nvim_buf_set_option(preview_buf, "swapfile", false)
 
 	-- Set window-local options
-	vim.api.nvim_win_set_option(win, "number", true)
-	vim.api.nvim_win_set_option(win, "wrap", false)
-	vim.api.nvim_win_set_option(win, "cursorline", true)
+	vim.api.nvim_win_set_option(current_win, "number", true)
+	vim.api.nvim_win_set_option(current_win, "wrap", false)
+	vim.api.nvim_win_set_option(current_win, "cursorline", true)
 end
 
 local neogit = require("neogit")
