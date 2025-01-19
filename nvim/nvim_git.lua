@@ -89,8 +89,17 @@ function GitCommitAndPush()
 			return
 		end
 
-		-- default is blank
-		local commit_message = "Checkpoint " .. current_file
+		-- Try to generate commit message using git diff | commit, fallback to default if it fails
+		local commit_message = vim.fn.system("git diff --staged " .. current_file .. " | commit --oneline")
+		local success = vim.v.shell_error == 0
+
+		if not success or commit_message == "" then
+			commit_message = "Checkpoint " .. current_file
+		else
+			-- Remove trailing newline only if commit command succeeded
+			commit_message = commit_message:gsub("\n$", "")
+		end
+
 		if commit_confirm == "" or commit_confirm == "y" then
 			vim.cmd("!git commit " .. current_file .. " -m '" .. commit_message .. "' ")
 			vim.cmd("!git push")
