@@ -1,3 +1,4 @@
+# Flow Help Page: https://www.flow.app/help#documentation
 #!python3
 
 from datetime import datetime
@@ -17,6 +18,8 @@ import Quartz.CoreGraphics as CG
 import AppKit
 import math
 import os
+
+FLOW_HELP_URL = "https://www.flow.app/help#documentation"
 
 _ = """
 
@@ -588,5 +591,27 @@ def zz():
     """Put the system to sleep"""
     os.system("pmset sleepnow")
 
-if __name__ == "__main__":
-    app()
+@app.command()
+def flow_go():
+    """Start the Flow application or service."""
+    subprocess.run(["osascript", "-e", 'tell application "Flow" to start'])
+    print("Flow started")
+
+@app.command()
+def flow_stop():
+    """Stop the Flow application or service."""
+    subprocess.run(["osascript", "-e", 'tell application "Flow" to stop'])
+    print("Flow stopped")
+    flow_show()  # Call flow_show to display the status
+
+@app.command()
+def flow_show():
+    """Show the current status of the Flow application or service."""
+    subprocess.run(["osascript", "-e", 'tell application "Flow" to show'])
+    print("Flow status displayed")
+
+@app.command()
+def flow_rename(title: str):
+    """Rename the Flow session."""
+    subprocess.run(["osascript", "-e", f'tell application "Flow" to setTitle to "{title}"'])
+    print(f"Flow session renamed to '{title}'")
