@@ -102,47 +102,49 @@ function GitCommitAndPush()
 	-- Generate initial commit message
 	local commit_message = generate_commit_message()
 
+	-- Function to handle the commit process
+	local function handle_commit()
+		local result = vim.fn.input({
+			prompt = "Commit message [" .. commit_message .. "] (y/n/+/new message): ",
+			default = "",
+		})
+
+		if result == "n" then
+			vim.api.nvim_win_close(win, true)
+			return
+		end
+
+		if result == "+" then
+			commit_message = generate_commit_message()
+			return handle_commit()
+		end
+
+		local final_message = result
+		if result == "" or result == "y" then
+			final_message = commit_message
+		elseif #result <= 3 then
+			-- Ignore short messages that aren't y/n/+
+			return handle_commit()
+		end
+
+		-- Perform the commit
+		local commit_cmd = string.format("git commit %s -m '%s'", current_file, final_message)
+		local commit_result = vim.fn.system(commit_cmd)
+
+		if vim.v.shell_error == 0 then
+			vim.fn.system("git push")
+			vim.api.nvim_win_close(win, true)
+			print("Changes committed and pushed successfully")
+		else
+			print("Error during commit: " .. commit_result)
+			return handle_commit()
+		end
+	end
+
 	-- Setup keymaps for the preview window
 	local opts = { noremap = true, silent = true }
 	vim.api.nvim_buf_set_keymap(preview_buf, "n", "q", "", {
-		callback = function()
-			local result = vim.fn.input({
-				prompt = "Commit message [" .. commit_message .. "] (y/n/+/new message): ",
-				default = "",
-				completion = "custom,v:lua.GitCommitComplete",
-			})
-
-			if result == "n" then
-				vim.api.nvim_win_close(win, true)
-				return
-			end
-
-			if result == "+" then
-				commit_message = generate_commit_message()
-				-- Recursive call to handle the new message
-				return vim.api.nvim_buf_get_keymap(preview_buf, "n")[1].callback()
-			end
-
-			local final_message = result
-			if result == "" or result == "y" then
-				final_message = commit_message
-			elseif #result <= 3 then
-				-- Ignore short messages that aren't y/n/+
-				return
-			end
-
-			-- Perform the commit
-			local commit_cmd = string.format("git commit %s -m '%s'", current_file, final_message)
-			local commit_result = vim.fn.system(commit_cmd)
-
-			if vim.v.shell_error == 0 then
-				vim.fn.system("git push")
-				vim.api.nvim_win_close(win, true)
-				print("Changes committed and pushed successfully")
-			else
-				print("Error during commit: " .. commit_result)
-			end
-		end,
+		callback = handle_commit,
 		noremap = true,
 		silent = true,
 	})
