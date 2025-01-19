@@ -71,8 +71,19 @@ function GitCommitAndPush()
 	vim.cmd("!pre-commit run --files %")
 	vim.cmd("e!")
 
+	-- Function to check if we're in a specific repo
+	local function is_special_repo()
+		local git_dir = vim.fn.system("git rev-parse --git-dir")
+		local repo_path = vim.fn.fnamemodify(git_dir:gsub("\n", ""), ":h")
+		return repo_path:match("igor2$") or repo_path:match("work%-notes$")
+	end
+
 	-- Function to generate commit message
 	local function generate_commit_message()
+		if is_special_repo() then
+			return "Checkpoint " .. current_file
+		end
+		
 		local msg = vim.fn.system("git diff --staged " .. current_file .. " | commit --oneline")
 		local success = vim.v.shell_error == 0
 		if not success or msg == "" then
