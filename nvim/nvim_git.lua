@@ -84,7 +84,7 @@ function GitCommitAndPush()
 
 	-- Create preview buffer
 	local preview_buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_option(preview_buf, "bufhidden", "wipe")
+	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = preview_buf })
 
 	-- Get diff content
 	local diff_output = vim.fn.system("git diff --staged " .. current_file)
@@ -92,9 +92,8 @@ function GitCommitAndPush()
 
 	-- Set buffer content
 	vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, lines)
-	vim.api.nvim_buf_set_option(preview_buf, "modifiable", false)
-	vim.api.nvim_buf_set_option(preview_buf, "filetype", "diff")
-
+	vim.api.nvim_set_option_value("modifiable", false, { buf = preview_buf })
+	vim.api.nvim_set_option_value("filetype", "diff", { buf = preview_buf })
 	-- Use the current window
 	vim.api.nvim_win_set_buf(current_win, preview_buf)
 
@@ -158,14 +157,14 @@ function GitCommitAndPush()
 		noremap = true,
 		silent = true,
 	})
-	vim.api.nvim_buf_set_option(preview_buf, "buflisted", false)
-	vim.api.nvim_buf_set_option(preview_buf, "buftype", "nofile")
-	vim.api.nvim_buf_set_option(preview_buf, "swapfile", false)
+	vim.bo[preview_buf].buflisted = false
+	vim.bo[preview_buf].buftype = "nofile"
+	vim.bo[preview_buf].swapfile = false
 
 	-- Set window-local options
-	vim.api.nvim_win_set_option(current_win, "number", true)
-	vim.api.nvim_win_set_option(current_win, "wrap", false)
-	vim.api.nvim_win_set_option(current_win, "cursorline", true)
+	vim.wo[current_win].number = true
+	vim.wo[current_win].wrap = false
+	vim.wo[current_win].cursorline = true
 end
 
 local neogit = require("neogit")
