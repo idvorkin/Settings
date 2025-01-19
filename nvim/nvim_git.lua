@@ -61,60 +61,102 @@ function GitCommitAndPush()
 	-- Change directory to the directory of the current file
 	vim.cmd("lcd %:p:h")
 
+	-- Get the current file name
+	local current_file = vim.fn.bufname()
+
+	-- Stage the file
 	vim.cmd("Gwrite")
-	-- pre-commit as it may do an edit
+	-- Run pre-commit hooks
 	vim.cmd("!pre-commit run --files %")
-	-- reload the file
 	vim.cmd("e!")
 
-	-- Get the current file name, same as taking '%'
-	local current_file = vim.fn.bufname()
-	print(current_file)
-
-	-- Create a new buffer and run git diff in a terminal in that buffer
-	-- Use -1 to make it as big as possible, seems doesn't always work, use 999
-	vim.cmd("999new")
-	vim.bo.buftype = "nofile"
-	vim.bo.bufhidden = "hide"
-	vim.bo.swapfile = false
-	vim.cmd("terminal export PAGER=don_t_use_me && git diff --staged " .. current_file)
-	vim.api.nvim_buf_set_keymap(0, "n", "q", ":q<CR>", { noremap = true, silent = true })
-
-	-- Defining a global function within GitCommitAndPush() to make a closure
-	_G["ConfirmCommit"] = function()
-		-- Ask for commit
-		local commit_confirm = vim.fn.input("Do you want to commit " .. current_file .. "? (y/n) [y]: ")
-		--  exit if n pressed
-		if commit_confirm == "n" then
-			return
-		end
-
-		-- Try to generate commit message using git diff | commit, fallback to default if it fails
-		local commit_message = vim.fn.system("git diff --staged " .. current_file .. " | commit --oneline")
+	-- Function to generate commit message
+	local function generate_commit_message()
+		local msg = vim.fn.system("git diff --staged " .. current_file .. " | commit --oneline")
 		local success = vim.v.shell_error == 0
-
-		if not success or commit_message == "" then
-			commit_message = "Checkpoint " .. current_file
+		if not success or msg == "" then
+			return "Checkpoint " .. current_file
 		else
-			-- Remove trailing newline only if commit command succeeded
-			commit_message = commit_message:gsub("\n$", "")
-		end
-
-		if commit_confirm == "" or commit_confirm == "y" then
-			vim.cmd("!git commit " .. current_file .. " -m '" .. commit_message .. "' ")
-			vim.cmd("!git push")
-		end
-
-		-- if more then 3 chars passed, make that the commit message [filename] - what is passed in
-		if string.len(commit_confirm) > 3 then
-			commit_message = commit_confirm
-			vim.cmd("!git commit " .. current_file .. " -m '[" .. current_file .. "] " .. commit_message .. "' ")
-			vim.cmd("!git push")
+			return msg:gsub("\n$", "")
 		end
 	end
 
-	-- Ask user to press Enter to continue after they close the buffer
-	vim.api.nvim_exec([[ autocmd BufWinLeave <buffer> lua ConfirmCommit() ]], false)
+	-- Create preview buffer
+	local preview_buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_option(preview_buf, "bufhidden", "wipe")
+
+	-- Get diff content
+	local diff_output = vim.fn.system("git diff --staged " .. current_file)
+	local lines = vim.split(diff_output, "\n")
+
+	-- Set buffer content
+	vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, lines)
+	vim.api.nvim_buf_set_option(preview_buf, "modifiable", false)
+	vim.api.nvim_buf_set_option(preview_buf, "filetype", "diff")
+
+	-- Open in a split
+	vim.cmd("split")
+	local win = vim.api.nvim_get_current_win()
+	vim.api.nvim_win_set_buf(win, preview_buf)
+
+	-- Generate initial commit message
+	local commit_message = generate_commit_message()
+
+	-- Setup keymaps for the preview window
+	local opts = { noremap = true, silent = true }
+	vim.api.nvim_buf_set_keymap(preview_buf, "n", "q", "", {
+		callback = function()
+			local result = vim.fn.input({
+				prompt = "Commit message [" .. commit_message .. "] (y/n/+/new message): ",
+				default = "",
+				completion = "custom,v:lua.GitCommitComplete",
+			})
+
+			if result == "n" then
+				vim.api.nvim_win_close(win, true)
+				return
+			end
+
+			if result == "+" then
+				commit_message = generate_commit_message()
+				-- Recursive call to handle the new message
+				return vim.api.nvim_buf_get_keymap(preview_buf, "n")[1].callback()
+			end
+
+			local final_message = result
+			if result == "" or result == "y" then
+				final_message = commit_message
+			elseif #result <= 3 then
+				-- Ignore short messages that aren't y/n/+
+				return
+			end
+
+			-- Perform the commit
+			local commit_cmd = string.format("git commit %s -m '%s'", current_file, final_message)
+			local commit_result = vim.fn.system(commit_cmd)
+
+			if vim.v.shell_error == 0 then
+				vim.fn.system("git push")
+				vim.api.nvim_win_close(win, true)
+				print("Changes committed and pushed successfully")
+			else
+				print("Error during commit: " .. commit_result)
+			end
+		end,
+		noremap = true,
+		silent = true,
+	})
+
+	-- Set buffer-local options
+	vim.api.nvim_buf_set_keymap(preview_buf, "n", "<ESC>", ":q<CR>", opts)
+	vim.api.nvim_buf_set_option(preview_buf, "buflisted", false)
+	vim.api.nvim_buf_set_option(preview_buf, "buftype", "nofile")
+	vim.api.nvim_buf_set_option(preview_buf, "swapfile", false)
+
+	-- Set window-local options
+	vim.api.nvim_win_set_option(win, "number", true)
+	vim.api.nvim_win_set_option(win, "wrap", false)
+	vim.api.nvim_win_set_option(win, "cursorline", true)
 end
 
 local neogit = require("neogit")
