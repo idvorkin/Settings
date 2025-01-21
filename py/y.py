@@ -643,7 +643,7 @@ def flow_info(oneline: bool = False):
         and title_result.returncode == 0
     ):
         if oneline:
-            print(f"{title_result.stdout.strip()}: [{time_result.stdout.strip()}]")
+            print(f"{title_result.stdout.strip()} [{time_result.stdout.strip()}]")
         else:
             print(f"Remaining Time: {time_result.stdout.strip()}")
             print(f"Current Phase: {phase_result.stdout.strip()}")
