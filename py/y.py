@@ -30,9 +30,11 @@ _ = """
 
 app = typer.Typer(help="A Yabai helper", no_args_is_help=True)
 
+
 def ensure_directory_exists(path):
     """Create a directory if it doesn't exist."""
     os.makedirs(path, exist_ok=True)
+
 
 # AI Coding pro-tip, pump json into AI, and ask it to generate the pydantic types for you
 # Then use typing to avoid the long pain of type errors
@@ -439,7 +441,9 @@ def ssa():
     ensure_directory_exists(screenshots_dir)
 
     path = screenshots_dir / "latest.webp"
-    current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")[:-5]  # Get current time with milliseconds
+    current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")[
+        :-5
+    ]  # Get current time with milliseconds
     screenshot_path = screenshots_dir / f"screenshot_{current_time}.webp"
 
     # Capture the screenshot as PNG in memory
@@ -591,11 +595,13 @@ def zz():
     """Put the system to sleep"""
     os.system("pmset sleepnow")
 
+
 @app.command()
 def flow_go():
     """Start the Flow application or service."""
     subprocess.run(["osascript", "-e", 'tell application "Flow" to start'])
     print("Flow started")
+
 
 @app.command()
 def flow_stop():
@@ -604,14 +610,67 @@ def flow_stop():
     print("Flow stopped")
     flow_show()  # Call flow_show to display the status
 
+
 @app.command()
 def flow_show():
     """Show the current status of the Flow application or service."""
     subprocess.run(["osascript", "-e", 'tell application "Flow" to show'])
     print("Flow status displayed")
 
+
+@app.command()
+def flow_info(oneline: bool = False):
+    """Get remaining time, current phase, and session title from Flow."""
+    time_result = subprocess.run(
+        ["osascript", "-e", 'tell application "Flow" to getTime'],
+        capture_output=True,
+        text=True,
+    )
+    phase_result = subprocess.run(
+        ["osascript", "-e", 'tell application "Flow" to getPhase'],
+        capture_output=True,
+        text=True,
+    )
+    title_result = subprocess.run(
+        ["osascript", "-e", 'tell application "Flow" to getTitle'],
+        capture_output=True,
+        text=True,
+    )
+
+    if (
+        time_result.returncode == 0
+        and phase_result.returncode == 0
+        and title_result.returncode == 0
+    ):
+        if oneline:
+            print(f"{title_result.stdout.strip()}: [{time_result.stdout.strip()}]")
+        else:
+            print(f"Remaining Time: {time_result.stdout.strip()}")
+            print(f"Current Phase: {phase_result.stdout.strip()}")
+            print(f"Session Title: {title_result.stdout.strip()}")
+    else:
+        print("Failed to retrieve information from Flow.")
+
+
+@app.command()
+def flow_get_title():
+    """Get the session title from Flow."""
+    title_result = subprocess.run(
+        ["osascript", "-e", 'tell application "Flow" to getTitle'],
+        capture_output=True,
+        text=True,
+    )
+
+    if title_result.returncode == 0:
+        print(f"Session Title: {title_result.stdout.strip()}")
+    else:
+        print("Failed to retrieve session title from Flow.")
+
+
 @app.command()
 def flow_rename(title: str):
     """Rename the Flow session."""
-    subprocess.run(["osascript", "-e", f'tell application "Flow" to setTitle to "{title}"'])
+    subprocess.run(
+        ["osascript", "-e", f'tell application "Flow" to setTitle to "{title}"']
+    )
     print(f"Flow session renamed to '{title}'")
