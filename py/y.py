@@ -642,8 +642,13 @@ def flow_info(oneline: bool = False):
         and phase_result.returncode == 0
         and title_result.returncode == 0
     ):
+        phase = phase_result.stdout.strip()
+        time_remaining = time_result.stdout.strip()
         if oneline:
-            print(f"{title_result.stdout.strip()} [{time_result.stdout.strip()}]")
+            if phase == "Break":
+                print(f"Break [{time_remaining}]")
+            else:
+                print(f"{title_result.stdout.strip()} [{time_remaining}]")
         else:
             print(f"Remaining Time: {time_result.stdout.strip()}")
             print(f"Current Phase: {phase_result.stdout.strip()}")
