@@ -1,4 +1,6 @@
 # Justfile for running tests
+default:
+    @just --list
 
 # Recipe to run the test for YouTube template
 # nvim --headless -u nvim/tests/test_init.lua "PlenaryBustedDirectory nvim/tests/"
@@ -26,7 +28,5 @@ test_file FILE:
 
 # Recipe to run the test for YouTube template with verbose output
 test-verbose:
+    echo "Running tests with verbose output"
 
-# Install the Python package globally using pipx
-global_install:
-    @cd py && pipxu install -e -f .
