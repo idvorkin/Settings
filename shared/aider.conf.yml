@@ -18,7 +18,7 @@
 # Main model:
 
 ## Specify the model to use for the main chat
-#model: xxx
+model: chatgpt-4o-latest
 
 ## Use claude-3-opus-20240229 model for the main chat
 #opus: false
@@ -33,7 +33,7 @@
 #4: false
 
 ## Use gpt-4o model for the main chat
-4o: true
+# 4o: false
 
 ## Use gpt-4o-mini model for the main chat
 #mini: false
@@ -440,5 +440,3 @@ read:
   - back-links.json
   - _posts/2020-04-01-Igor-Eulogy.md
   - _d/pride.md
-
-
