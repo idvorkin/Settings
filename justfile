@@ -2,6 +2,15 @@
 
 # Recipe to run the test for YouTube template
 # nvim --headless -u nvim/tests/test_init.lua "PlenaryBustedDirectory nvim/tests/"
+# Install locally and globally
+install:
+    @cd py && uv venv
+    @cd py && . .venv/bin/activate
+    @cd py && uv pip install --upgrade --editable .
+
+global-install: install
+    @cd py && uv tool install --force  --editable . --python $(which python3.12)
+
 # Justfile
 
 # Run all tests in the tests/ directory using minimal_init
