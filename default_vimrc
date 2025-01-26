@@ -657,7 +657,7 @@ cab Pb :!black % <cr>
 
 
 " Common work flow: Switch to current  directory, git write, commit and push.
-cab DdC  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k  <CR>:!git commit %:p -m "Save %"<CR>:!git push<CR>
+cab ffo call MakeCommitMesage('--oneline')<CR>
 cab DdG  :lcd %:p:h<CR>:Gwrite<CR>:!git diff --staged %:p <CR> :!read -k <CR>:!git commit %:p <CR>:!git push<CR>
 
 " I never use ToHTML and it makes it harder to use Toc
@@ -995,9 +995,9 @@ autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage()<cr>
 autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffd :?---?,/---/d<cr>
 autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/,/--- \*\*9/d<cr>
 
-function! MakeCommitMesage()
-    let tempfile=tempname()
-    let gpt_from_git_diff = '!git diff --staged | commit'
+function! MakeCommitMesage(params)
+    let tempfile = tempname()
+    let gpt_from_git_diff = '!git diff --staged | commit ' . a:params
     execute gpt_from_git_diff . ' > ' . shellescape(tempfile)
     try
         silent execute 'read' tempfile
