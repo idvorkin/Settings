@@ -990,7 +990,7 @@ endfunc
 
 autocmd BufEnter *convo.md call SetupForConvo()
 autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>
-autocmd BufEnter *COMMIT_EDITMST :map ffo call MakeCommitMesage('--oneline')<CR>
+autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>
 
 " Refactor to share with convo maps
 autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffd :?---?,/---/d<cr>
