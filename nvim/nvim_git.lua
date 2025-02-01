@@ -93,20 +93,32 @@ function GitCommitAndPush()
 		end
 	end
 
-	-- Create preview buffer
+	-- Create a terminal buffer for colored diff output
 	local preview_buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = preview_buf })
-
-	-- Get diff content
-	local diff_output = vim.fn.system("git diff --staged " .. current_file)
-	local lines = vim.split(diff_output, "\n")
-
-	-- Set buffer content
-	vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, lines)
-	vim.api.nvim_set_option_value("modifiable", false, { buf = preview_buf })
-	vim.api.nvim_set_option_value("filetype", "diff", { buf = preview_buf })
+	
 	-- Use the current window
 	vim.api.nvim_win_set_buf(current_win, preview_buf)
+	
+	-- Open terminal with delta or git diff
+	local term_cmd = "git diff --staged " .. vim.fn.shellescape(current_file)
+	if vim.fn.executable("delta") == 1 then
+		term_cmd = term_cmd .. " | delta"
+	else
+		term_cmd = term_cmd .. " --color"
+	end
+	
+	local term_chan = vim.api.nvim_open_term(preview_buf, {})
+	vim.fn.jobstart(term_cmd, {
+		on_stdout = function(_, data)
+			if data then
+				vim.api.nvim_chan_send(term_chan, table.concat(data, "\n") .. "\n")
+			end
+		end,
+		on_exit = function()
+			vim.api.nvim_buf_set_option(preview_buf, "modifiable", false)
+		end,
+	})
 
 	-- Generate initial commit message
 	local commit_message = generate_commit_message()
@@ -160,7 +172,6 @@ function GitCommitAndPush()
 		silent = true,
 	})
 
-	-- Set buffer-local options
 	vim.api.nvim_buf_set_keymap(preview_buf, "n", "<ESC>", "", {
 		callback = function()
 			vim.cmd("e " .. current_file)
@@ -168,11 +179,13 @@ function GitCommitAndPush()
 		noremap = true,
 		silent = true,
 	})
+
+	-- Set buffer options
 	vim.bo[preview_buf].buflisted = false
-	vim.bo[preview_buf].buftype = "nofile"
+	vim.bo[preview_buf].buftype = "terminal"  -- Changed to terminal since we're using a terminal buffer
 	vim.bo[preview_buf].swapfile = false
 
-	-- Set window-local options
+	-- Set window options
 	vim.wo[current_win].number = true
 	vim.wo[current_win].wrap = false
 	vim.wo[current_win].cursorline = true
