@@ -352,6 +352,51 @@ alias lg='lazygit'
 alias recapture='fc -e - |& pbc'
 alias gfrall='for git_directory in * ; echo $git_directory && git -C $git_directory fr'
 alias gpushall='for git_directory in * ; echo $git_directory && git -C $git_directory push'
+
+function pgfrall() {
+    local errors=()
+    for git_directory in *; do
+        if [ -d "$git_directory/.git" ]; then
+            (git -C "$git_directory" fr 2>&1 || echo "ERROR in $git_directory: $?") &
+        fi
+    done
+    wait
+    for git_directory in *; do
+        if [ -d "$git_directory/.git" ]; then
+            local error_output=$(git -C "$git_directory" fr 2>&1 >/dev/null)
+            if [ $? -ne 0 ]; then
+                errors+=("Error in $git_directory: $error_output")
+            fi
+        fi
+    done
+    if [ ${#errors[@]} -ne 0 ]; then
+        echo "\nErrors occurred:"
+        printf '%s\n' "${errors[@]}"
+    fi
+}
+
+function pgpushall() {
+    local errors=()
+    for git_directory in *; do
+        if [ -d "$git_directory/.git" ]; then
+            (git -C "$git_directory" push 2>&1 || echo "ERROR in $git_directory: $?") &
+        fi
+    done
+    wait
+    for git_directory in *; do
+        if [ -d "$git_directory/.git" ]; then
+            local error_output=$(git -C "$git_directory" push 2>&1 >/dev/null)
+            if [ $? -ne 0 ]; then
+                errors+=("Error in $git_directory: $error_output")
+            fi
+        fi
+    done
+    if [ ${#errors[@]} -ne 0 ]; then
+        echo "\nErrors occurred:"
+        printf '%s\n' "${errors[@]}"
+    fi
+}
+
 alias weather="curl wttr.in/seattle"
 alias dwc='pushd ~/gits/settings && python3 -c "from vim_python import * ;WCDailyPage()" && pushd ~/gits/igor2/750words '
 alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCommitDailyPage()" && pushd ~/gits/igor2/750words '
