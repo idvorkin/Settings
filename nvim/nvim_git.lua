@@ -109,10 +109,31 @@ function GitCommitAndPush()
 	end
 	
 	local term_chan = vim.api.nvim_open_term(preview_buf, {})
+	local first_non_empty_line_sent = false
 	vim.fn.jobstart(term_cmd, {
 		on_stdout = function(_, data)
 			if data then
-				vim.api.nvim_chan_send(term_chan, table.concat(data, "\n") .. "\n")
+				-- Skip empty lines at the start
+				if not first_non_empty_line_sent then
+					-- Find first non-empty line
+					local start_idx = 1
+					while start_idx <= #data and data[start_idx]:match("^%s*$") do
+						start_idx = start_idx + 1
+					end
+					
+					if start_idx <= #data then
+						first_non_empty_line_sent = true
+						-- Send remaining lines
+						local remaining = {}
+						for i = start_idx, #data do
+							table.insert(remaining, data[i])
+						end
+						vim.api.nvim_chan_send(term_chan, table.concat(remaining, "\n") .. "\n")
+					end
+				else
+					-- After first non-empty line is sent, send all lines normally
+					vim.api.nvim_chan_send(term_chan, table.concat(data, "\n") .. "\n")
+				end
 			end
 		end,
 		on_exit = function()
