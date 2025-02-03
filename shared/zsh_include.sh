@@ -1,55 +1,118 @@
+#!/bin/zsh
+
 function source_if_exists() {
-    [ -f $1 ] && source $1
+    [ -f "$1" ] && source "$1"
 }
 
 function eval_w_param_if_exists() {
     if [ -f "$1" ] || command -v "$1" >/dev/null 2>&1; then
         eval "$("$1" "${@:2}")"
     else
-         # echo "Error: '$1' is neither a valid file nor a recognized command."
+        # echo "Error: '$1' is neither a valid file nor a recognized command."
+        return 0
     fi
 }
 
 function charge() {
     pmset -g batt
-    system_profiler SPPowerDataType  | grep Watt
+    system_profiler SPPowerDataType | grep Watt
 }
 
-trim_file_after_marker_to_new_file() {
-  local input_file="$1"
-  local marker="$2"
-  local output_file="$3"
+function trim_file_after_marker_to_new_file() {
+    local input_file="$1"
+    local marker="$2"
+    local output_file="$3"
 
-  # Check if the input file exists
-  if [[ ! -f "$input_file" ]]; then
-    echo "Error: Input file '$input_file' does not exist."
-    return 1
-  fi
+    # Check if the input file exists
+    if [[ ! -f "$input_file" ]]; then
+        echo "Error: Input file '$input_file' does not exist."
+        return 1
+    fi
 
-  # Use awk to find the last occurrence of the marker and print from there
-  awk -v marker="$marker" '
-  {
-    if (index($0, marker) == 1) {
-      last_marker_line = NR  # Save the line number of the last marker
-      last_marker_content = $0  # Save the content of the last marker line
+    # Use awk to find the last occurrence of the marker and print from there
+    awk -v marker="$marker" '
+    {
+        if (index($0, marker) == 1) {
+            last_marker_line = NR
+            last_marker_content = $0
+        }
+        lines[NR] = $0
     }
-    lines[NR] = $0  # Store each line in an array
-  }
-  END {
-    if (last_marker_line > 0) {
-      for (i = last_marker_line; i <= NR; i++) {
-        print lines[i]
-      }
-    }
-  }' "$input_file" > "$output_file"
+    END {
+        if (last_marker_line > 0) {
+            for (i = last_marker_line; i <= NR; i++) {
+                print lines[i]
+            }
+        }
+    }' "$input_file" > "$output_file"
 }
 
-function ghg-aider()
-{
+function ghg-aider() {
     trim_file_after_marker_to_new_file '.aider.chat.history.md' '# aider chat started at' '.aider.last.chat.md'
     gh gist create -w .aider.last.chat.md
     echo v0.1
 }
+
+function clone-gist() {
+    # Ensure gh is installed
+    if ! command -v gh &> /dev/null; then
+        echo "GitHub CLI (gh) is not installed. Please install it first."
+        return 1
+    fi
+
+    # Ensure fzf is installed
+    if ! command -v fzf &> /dev/null; then
+        echo "fzf is not installed. Please install it first."
+        return 1
+    fi
+
+    # Create base directory if it doesn't exist
+    local base_dir="$HOME/tmp/gists"
+    mkdir -p "$base_dir"
+
+    # Get gist selection using fzf
+    local selected_gist=$(gh gist list | fzf --height 40% --reverse)
+    
+    if [[ -z "$selected_gist" ]]; then
+        echo "No gist selected"
+        return 0
+    fi
+
+    # Extract gist ID and description
+    local gist_id=$(echo "$selected_gist" | awk '{print $1}')
+    local description=$(echo "$selected_gist" | cut -f2-)
+
+    # Create safe directory name from description:
+    # - Take first 40 chars
+    # - Convert to lowercase
+    # - Replace spaces and special chars with hyphens
+    # - Remove leading/trailing hyphens
+    local dir_name=$(echo "$description" | 
+        cut -c1-40 | 
+        tr '[:upper:]' '[:lower:]' | 
+        sed 's/[^a-z0-9]/-/g' | 
+        sed 's/--*/-/g' | 
+        sed 's/^-\|-$//g')
+
+    # Use gist ID if no valid directory name could be created
+    if [[ -z "$dir_name" ]]; then
+        dir_name="$gist_id"
+    fi
+
+    local target_dir="$base_dir/$dir_name"
+
+    # Create target directory and clone gist
+    if mkdir -p "$target_dir"; then
+        echo "Cloning gist into $target_dir..."
+        gh gist clone "$gist_id" "$target_dir"
+        echo "Done! Gist cloned to $target_dir"
+        cd "$target_dir"
+    else
+        echo "Failed to create directory $target_dir"
+        return 1
+    fi
+}
+
 gchanges() {
     # for directory in settings, idvorkin.github.io, nlp, tony_tesla, run changs command
     pushd ~/gits
@@ -443,7 +506,7 @@ alias copy_secrets_from_shell='scp lightsail:/home/ec2-user/gits/igor2/secretBox
 
 # Useful stuff w/OSX Sound
 alias restart_audio='sudo launchctl kickstart -kp system/com.apple.audio.coreaudiod'
-alias airpods_audio='SwitchAudioSource -s "Igor’s AirPods Pro" && SwitchAudioSource -t input -s "Igor’s AirPods Pro" '
+alias airpods_audio='SwitchAudioSource -s "Igor's AirPods Pro" && SwitchAudioSource -t input -s "Igor's AirPods Pro" '
 
 # Turn off auto update brew
 
