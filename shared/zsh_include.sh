@@ -53,7 +53,7 @@ function ghg-aider() {
     echo v0.1
 }
 
-function clone-gist() {
+function gist-clone() {
     # Ensure gh is installed
     if ! command -v gh &> /dev/null; then
         echo "GitHub CLI (gh) is not installed. Please install it first."
@@ -111,6 +111,41 @@ function clone-gist() {
         echo "Failed to create directory $target_dir"
         return 1
     fi
+}
+
+function gist-open() {
+    # First try to get gist ID from current directory if it's a git repo
+    if git rev-parse --git-dir > /dev/null 2>&1; then
+        # Check if this is a gist repository by looking at the remote URL
+        local gist_id=$(git remote -v | grep fetch | grep 'gist.github.com' | sed -E 's/.*\/([a-f0-9]+)\.git.*/\1/')
+        
+        if [[ ! -z "$gist_id" ]]; then
+            echo "Opening gist from current directory..."
+            gh gist view --web "$gist_id"
+            return 0
+        fi
+    fi
+
+    # If not in a gist directory, show list of gists to choose from
+    echo "Not in a gist directory, selecting from list..."
+    
+    # Ensure fzf is installed
+    if ! command -v fzf &> /dev/null; then
+        echo "fzf is not installed. Please install it first."
+        return 1
+    fi
+
+    # Get gist selection using fzf
+    local selected_gist=$(gh gist list | fzf --height 40% --reverse)
+    
+    if [[ -z "$selected_gist" ]]; then
+        echo "No gist selected"
+        return 0
+    fi
+
+    # Extract gist ID and open it
+    local gist_id=$(echo "$selected_gist" | awk '{print $1}')
+    gh gist view --web "$gist_id"
 }
 
 gchanges() {
