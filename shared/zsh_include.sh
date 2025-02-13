@@ -53,6 +53,50 @@ function ghg-aider() {
     echo v0.1
 }
 
+function gist-create() {
+    # Ensure gh is installed
+    if ! command -v gh &> /dev/null; then
+        echo "GitHub CLI (gh) is not installed. Please install it first."
+        return 1
+    fi
+
+    # If files were passed as arguments, use those
+    if [ $# -gt 0 ]; then
+        # Verify all files exist
+        for file in "$@"; do
+            if [ ! -f "$file" ]; then
+                echo "Error: File '$file' does not exist."
+                return 1
+            fi
+        done
+        
+        # Create gist with provided files
+        gh gist create -w "$@"
+        echo "Gist created successfully!"
+        return 0
+    fi
+
+    # If no files provided, use interactive selection
+    # Ensure fzf is installed for interactive mode
+    if ! command -v fzf &> /dev/null; then
+        echo "fzf is not installed. Please install it first."
+        return 1
+    fi
+
+    # Let user select files using fzf
+    local selected_files=$(find . -type f -not -path '*/\.*' | fzf --multi --height 40% --reverse)
+    
+    if [[ -z "$selected_files" ]]; then
+        echo "No files selected"
+        return 0
+    fi
+
+    # Create gist with selected files
+    echo "$selected_files" | xargs gh gist create -w
+
+    echo "Gist created successfully!"
+}
+
 function gist-clone() {
     # Ensure gh is installed
     if ! command -v gh &> /dev/null; then
