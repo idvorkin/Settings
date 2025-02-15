@@ -69,7 +69,7 @@ function gist-create() {
                 return 1
             fi
         done
-        
+
         # Create gist with provided files
         gh gist create -w "$@"
         echo "Gist created successfully!"
@@ -85,7 +85,7 @@ function gist-create() {
 
     # Let user select files using fzf
     local selected_files=$(find . -type f -not -path '*/\.*' | fzf --multi --height 40% --reverse)
-    
+
     if [[ -z "$selected_files" ]]; then
         echo "No files selected"
         return 0
@@ -116,7 +116,7 @@ function gist-clone() {
 
     # Get gist selection using fzf
     local selected_gist=$(gh gist list | fzf --height 40% --reverse)
-    
+
     if [[ -z "$selected_gist" ]]; then
         echo "No gist selected"
         return 0
@@ -131,11 +131,11 @@ function gist-clone() {
     # - Convert to lowercase
     # - Replace spaces and special chars with hyphens
     # - Remove leading/trailing hyphens
-    local dir_name=$(echo "$description" | 
-        cut -c1-40 | 
-        tr '[:upper:]' '[:lower:]' | 
-        sed 's/[^a-z0-9]/-/g' | 
-        sed 's/--*/-/g' | 
+    local dir_name=$(echo "$description" |
+        cut -c1-40 |
+        tr '[:upper:]' '[:lower:]' |
+        sed 's/[^a-z0-9]/-/g' |
+        sed 's/--*/-/g' |
         sed 's/^-\|-$//g')
 
     # Use gist ID if no valid directory name could be created
@@ -162,7 +162,7 @@ function gist-open() {
     if git rev-parse --git-dir > /dev/null 2>&1; then
         # Check if this is a gist repository by looking at the remote URL
         local gist_id=$(git remote -v | grep fetch | grep 'gist.github.com' | sed -E 's/.*\/([a-f0-9]+)\.git.*/\1/')
-        
+
         if [[ ! -z "$gist_id" ]]; then
             echo "Opening gist from current directory..."
             gh gist view --web "$gist_id"
@@ -172,7 +172,7 @@ function gist-open() {
 
     # If not in a gist directory, show list of gists to choose from
     echo "Not in a gist directory, selecting from list..."
-    
+
     # Ensure fzf is installed
     if ! command -v fzf &> /dev/null; then
         echo "fzf is not installed. Please install it first."
@@ -181,7 +181,7 @@ function gist-open() {
 
     # Get gist selection using fzf
     local selected_gist=$(gh gist list | fzf --height 40% --reverse)
-    
+
     if [[ -z "$selected_gist" ]]; then
         echo "No gist selected"
         return 0
@@ -388,6 +388,9 @@ function export_secrets()
     esecret_jq LANGCHAIN_API_KEY
     esecret_jq ANTHROPIC_API_KEY
     esecret_jq OPENAI_API_KEY
+    esecret_jq TWILIO_ACCOUNT_SID
+    esecret_jq TWILIO_AUTH_TOKEN
+    esecret_jq TWILIO_FROM_NUMBER
     esecret_jq EXA_API_KEY
     esecret_jq VAPI_API_KEY
     esecret_jq GOOGLE_API_KEY
