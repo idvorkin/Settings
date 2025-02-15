@@ -249,3 +249,5 @@ tags
 ##### Vim Files -- 
 .aider*
 .env
+
+.specstory
