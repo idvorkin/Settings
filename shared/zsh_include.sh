@@ -677,7 +677,7 @@ function specstory-save() {
     fi
 
     # Use fzf to select a file, showing files in reverse date order with preview
-    local selected_file=$(cd "$spec_dir" && eza --sort newest | \
+    local selected_file=$(cd "$spec_dir" && eza --sort oldest | \
         fzf --preview "cat {}" \
             --preview-window=right:70% \
             --height=80%)
@@ -694,6 +694,63 @@ function specstory-save() {
     # Copy the selected file to cursor logs in git root
     cp "$spec_dir/$selected_file" "$cursor_logs_dir/"
     echo "Copied $selected_file to $cursor_logs_dir/"
+}
+
+function specstory-git-latest() {
+    local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Not in a git repository"
+        return 1
+    fi
+
+    local spec_dir="$git_root/.specstory/history"
+    if [[ ! -d "$spec_dir" ]]; then
+        echo "Error: .specstory/history directory not found in git root"
+        return 1
+    fi
+
+    # Get the latest file by modification time
+    local latest_file=$(cd "$spec_dir" && eza -s modified -r | head -n 1)
+    if [[ -z "$latest_file" ]]; then
+        echo "No specstory files found"
+        return 1
+    fi
+
+    # Create cursor-logs directory in git root if it doesn't exist
+    local cursor_logs_dir="$git_root/cursor-logs"
+    mkdir -p "$cursor_logs_dir"
+
+    # Copy the latest file to cursor logs in git root
+    cp "$spec_dir/$latest_file" "$cursor_logs_dir/"
+    echo "Copied $latest_file to $cursor_logs_dir/"
+
+    # Just add the file to git
+    git -C "$git_root" add "cursor-logs/$latest_file"
+    echo "Added $latest_file to git staging area"
+}
+
+function specstory-view-latest() {
+    local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Not in a git repository"
+        return 1
+    fi
+
+    local spec_dir="$git_root/.specstory/history"
+    if [[ ! -d "$spec_dir" ]]; then
+        echo "Error: .specstory/history directory not found in git root"
+        return 1
+    fi
+
+    # Get the latest file by modification time
+    local latest_file=$(cd "$spec_dir" && eza -s modified -r | head -n 1)
+    if [[ -z "$latest_file" ]]; then
+        echo "No specstory files found"
+        return 1
+    fi
+
+    # Open the latest file in nvim
+    nvim "$spec_dir/$latest_file"
 }
 
 safe_init
