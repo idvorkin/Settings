@@ -660,8 +660,38 @@ function FinickySet(){
     defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{"LSHandlerURLScheme" = "https"; "LSHandlerRoleAll" = "net.kassett.finicky";}'
 }
 
+function specstory-save() {
+    local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Not in a git repository"
+        return 1
+    fi
 
+    local spec_dir="$git_root/.specstory/history"
+    if [[ ! -d "$spec_dir" ]]; then
+        echo "Error: .specstory/history directory not found in git root"
+        return 1
+    fi
 
+    # Use fzf to select a file, showing files in reverse date order with preview
+    local selected_file=$(cd "$spec_dir" && eza --sort newest | \
+        fzf --preview "cat {}" \
+            --preview-window=right:70% \
+            --height=80%)
+
+    if [[ -z "$selected_file" ]]; then
+        echo "No file selected"
+        return 0
+    fi
+
+    # Create cursor-logs directory in git root if it doesn't exist
+    local cursor_logs_dir="$git_root/cursor-logs"
+    mkdir -p "$cursor_logs_dir"
+
+    # Copy the selected file to cursor logs in git root
+    cp "$spec_dir/$selected_file" "$cursor_logs_dir/"
+    echo "Copied $selected_file to $cursor_logs_dir/"
+}
 
 safe_init
 default_init
