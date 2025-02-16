@@ -666,7 +666,15 @@ function FinickySet(){
 # Define the logs directory name once
 CHOP_LOGS_DIR="chop-logs"
 
-function specstory-save() {
+# Define shared FZF preview options for chop commands
+FZF_CHOP_OPTS=(
+    --preview 'bat --style=numbers --color=always {}'
+    --preview-window=right:70%
+    --height=80%
+    --bind 'ctrl-o:execute(tmux new-window nvim {})'
+)
+
+function chop-save() {
     local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
     if [[ $? -ne 0 ]]; then
         echo "Error: Not in a git repository"
@@ -681,9 +689,7 @@ function specstory-save() {
 
     # Use fzf to select a file, showing files in reverse date order with preview
     local selected_file=$(cd "$spec_dir" && eza --sort oldest | \
-        fzf --preview "cat {}" \
-            --preview-window=right:70% \
-            --height=80%)
+        fzf "${FZF_CHOP_OPTS[@]}")
 
     if [[ -z "$selected_file" ]]; then
         echo "No file selected"
@@ -699,7 +705,7 @@ function specstory-save() {
     echo "Copied $selected_file to $logs_dir/"
 }
 
-function specstory-git-latest() {
+function chop-git-latest() {
     local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
     if [[ $? -ne 0 ]]; then
         echo "Error: Not in a git repository"
@@ -732,7 +738,7 @@ function specstory-git-latest() {
     echo "Added $latest_file to git staging area"
 }
 
-function specstory-view-latest() {
+function chop-view-latest() {
     local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
     if [[ $? -ne 0 ]]; then
         echo "Error: Not in a git repository"
@@ -754,6 +760,41 @@ function specstory-view-latest() {
 
     # Open the latest file in nvim
     nvim "$spec_dir/$latest_file"
+}
+
+function chop-git-pick() {
+    local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Not in a git repository"
+        return 1
+    fi
+
+    local spec_dir="$git_root/.specstory/history"
+    if [[ ! -d "$spec_dir" ]]; then
+        echo "Error: .specstory/history directory not found in git root"
+        return 1
+    fi
+
+    # Use fzf to select a file, showing files in reverse date order with preview
+    local selected_file=$(cd "$spec_dir" && eza --sort oldest | \
+        fzf "${FZF_CHOP_OPTS[@]}")
+
+    if [[ -z "$selected_file" ]]; then
+        echo "No file selected"
+        return 0
+    fi
+
+    # Create logs directory in git root if it doesn't exist
+    local logs_dir="$git_root/$CHOP_LOGS_DIR"
+    mkdir -p "$logs_dir"
+
+    # Copy the selected file to logs directory in git root
+    cp "$spec_dir/$selected_file" "$logs_dir/"
+    echo "Copied $selected_file to $logs_dir/"
+
+    # Stage the file in git
+    git -C "$git_root" add "$CHOP_LOGS_DIR/$selected_file"
+    echo "Added $selected_file to git staging area"
 }
 
 safe_init
