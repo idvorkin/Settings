@@ -663,6 +663,9 @@ function FinickySet(){
     defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{"LSHandlerURLScheme" = "https"; "LSHandlerRoleAll" = "net.kassett.finicky";}'
 }
 
+# Define the logs directory name once
+CHOP_LOGS_DIR="chop-logs"
+
 function specstory-save() {
     local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
     if [[ $? -ne 0 ]]; then
@@ -687,13 +690,13 @@ function specstory-save() {
         return 0
     fi
 
-    # Create cursor-logs directory in git root if it doesn't exist
-    local cursor_logs_dir="$git_root/cursor-logs"
-    mkdir -p "$cursor_logs_dir"
+    # Create logs directory in git root if it doesn't exist
+    local logs_dir="$git_root/$CHOP_LOGS_DIR"
+    mkdir -p "$logs_dir"
 
-    # Copy the selected file to cursor logs in git root
-    cp "$spec_dir/$selected_file" "$cursor_logs_dir/"
-    echo "Copied $selected_file to $cursor_logs_dir/"
+    # Copy the selected file to logs directory in git root
+    cp "$spec_dir/$selected_file" "$logs_dir/"
+    echo "Copied $selected_file to $logs_dir/"
 }
 
 function specstory-git-latest() {
@@ -716,16 +719,16 @@ function specstory-git-latest() {
         return 1
     fi
 
-    # Create cursor-logs directory in git root if it doesn't exist
-    local cursor_logs_dir="$git_root/cursor-logs"
-    mkdir -p "$cursor_logs_dir"
+    # Create logs directory in git root if it doesn't exist
+    local logs_dir="$git_root/$CHOP_LOGS_DIR"
+    mkdir -p "$logs_dir"
 
-    # Copy the latest file to cursor logs in git root
-    cp "$spec_dir/$latest_file" "$cursor_logs_dir/"
-    echo "Copied $latest_file to $cursor_logs_dir/"
+    # Copy the latest file to logs directory in git root
+    cp "$spec_dir/$latest_file" "$logs_dir/"
+    echo "Copied $latest_file to $logs_dir/"
 
     # Just add the file to git
-    git -C "$git_root" add "cursor-logs/$latest_file"
+    git -C "$git_root" add "$CHOP_LOGS_DIR/$latest_file"
     echo "Added $latest_file to git staging area"
 }
 
