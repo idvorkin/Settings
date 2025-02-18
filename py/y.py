@@ -1,23 +1,84 @@
 # Flow Help Page: https://www.flow.app/help#documentation
-#!python3
+#!/usr/bin/env python3
 
-from datetime import datetime
-import time
-import typer
-from rich import print
-import subprocess
-from subprocess import CompletedProcess
-from pathlib import Path
-from icecream import ic
+import sys
 import json
-from typing import List
-from pydantic import BaseModel, Field
-import pyperclip
-import Quartz
-import Quartz.CoreGraphics as CG
-import AppKit
-import math
 import os
+from pathlib import Path
+import hashlib
+import pickle
+
+
+# Lazy loaded imports for full functionality
+def load_full_imports():
+    global typer, print, subprocess, CompletedProcess, ic, List, BaseModel, Field
+    global pyperclip, Quartz, CG, AppKit, math, datetime, time
+
+    from datetime import datetime
+    import time
+    import typer
+    from rich import print
+    import subprocess
+    from subprocess import CompletedProcess
+    from icecream import ic
+    from typing import List
+    from pydantic import BaseModel, Field
+    import pyperclip
+    import Quartz
+    import Quartz.CoreGraphics as CG
+    import AppKit
+    import math
+
+    return typer.Typer(help="A Yabai helper", no_args_is_help=True)
+
+
+def get_script_hash():
+    """Calculate hash of the current script file to detect changes."""
+    script_path = Path(__file__)
+    return hashlib.md5(script_path.read_bytes()).hexdigest()
+
+
+def get_cache_path():
+    """Get path to cache directory and ensure it exists."""
+    cache_dir = Path.home() / "tmp" / ".cache" / "y_script"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir / "alfred_commands.cache"
+
+
+def load_cached_commands():
+    """Load commands from cache if valid."""
+    cache_path = get_cache_path()
+    if not cache_path.exists():
+        print("Cache Status: Miss (No Cache)", file=sys.stderr)
+        return None
+
+    try:
+        with open(cache_path, "rb") as f:
+            cached_data = pickle.load(f)
+    except Exception as e:
+        print(f"Cache Status: Error ({str(e)})", file=sys.stderr)
+        return None
+
+    if cached_data["hash"] != get_script_hash():
+        print("Cache Status: Invalid (Script Changed)", file=sys.stderr)
+        return None
+
+    print("Cache Status: Hit", file=sys.stderr)
+    return cached_data["commands"]
+
+
+# Early exit for alfred command
+if len(sys.argv) != 2 or sys.argv[1] != "alfred":
+    # Not an alfred command, load full imports
+    app = load_full_imports()
+else:
+    # Handle alfred command
+    cached_result = load_cached_commands()
+    if cached_result:
+        print(cached_result)
+        sys.exit(0)
+    print("Cache Status: Miss", file=sys.stderr)
+    app = load_full_imports()
 
 FLOW_HELP_URL = "https://www.flow.app/help#documentation"
 
@@ -26,9 +87,6 @@ _ = """
 ~/settings/config/yabai/yabairc
 
 """
-
-
-app = typer.Typer(help="A Yabai helper", no_args_is_help=True)
 
 
 def ensure_directory_exists(path):
@@ -578,16 +636,41 @@ class AlfredItems(BaseModel):
     items: List[Item]
 
 
+def save_commands_cache(commands):
+    """Save commands to cache with current script hash."""
+    cache_data = {
+        "hash": get_script_hash(),
+        "commands": commands,
+        "timestamp": time.time(),
+    }
+    try:
+        with open(get_cache_path(), "wb") as f:
+            pickle.dump(cache_data, f)
+    except Exception as e:
+        print(f"Cache Save Error: {str(e)}", file=sys.stderr)
+
+
 @app.command()
 def alfred():
     """Generate JSON output of all commands for Alfred workflow integration"""
-    #  Build a json of commands to be called from an alfred plugin workflow
-    # start by reflecting to find all commands in app.
-    # all_commands = app.
+    # Try to load from cache first
+    cached_commands = load_cached_commands()
+    if cached_commands:
+        print(cached_commands)
+        return
+
+    print("Cache Status: Miss", file=sys.stderr)
+
+    # If no valid cache, generate commands
     commands = [c.callback.__name__.replace("_", "-") for c in app.registered_commands]  # type:ignore
     items = [AlfredItems.Item(title=c, subtitle=c, arg=c) for c in commands]
     alfred_items = AlfredItems(items=items)
-    print(alfred_items.model_dump_json(indent=4))
+    json_output = alfred_items.model_dump_json(indent=4)
+
+    # Save to cache for future use
+    save_commands_cache(json_output)
+
+    print(json_output)
 
 
 @app.command()
