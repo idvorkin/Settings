@@ -663,8 +663,8 @@ function FinickySet(){
     defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{"LSHandlerURLScheme" = "https"; "LSHandlerRoleAll" = "net.kassett.finicky";}'
 }
 
-# Define the logs directory name once
-CHOP_LOGS_DIR="chop-logs"
+# Define the logs directory name once, and have it be zz so it shows up last in diffs
+CHOP_LOGS_DIR="zz-chop-logs"
 
 # Define shared FZF preview options for chop commands
 FZF_CHOP_OPTS=(
