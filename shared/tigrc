@@ -1,0 +1,40 @@
+# Main view configuration
+set main-view = line-number:no,interval=5 id:yes date:relative author:abbreviated commit-title:yes,graph,refs,overflow=no
+set blame-view = date:default author:full file-name:auto id:yes,color line-number:yes,interval=1 text
+
+# General settings
+set tab-size = 4
+set split-view-height = 70%
+set diff-highlight = true
+set diff-options = -m --first-parent
+set mouse = true
+set refresh-mode = auto
+set ignore-case = true
+
+# Use delta for diffs
+set pager-view = text
+set diff-view = text
+set blame-view = text
+set pager = delta --dark --paging=never --word-diff
+
+# Key bindings
+bind generic g move-first-line
+bind generic G move-last-line
+bind main G move-last-line
+bind generic <C-f> move-page-down
+bind generic <C-b> move-page-up
+bind generic F ?git fetch %(remote)
+bind generic P ?git pull %(remote)
+bind generic U ?git push %(remote)
+bind generic c !git commit
+bind generic C !git commit --amend
+bind generic <C-r> refresh
+
+# Commit message editor
+set editor-line-number = yes
+
+# Copy commit ID with 'y'
+bind generic y @sh -c "echo -n %(commit) | pbcopy"
+
+# Open commit on GitHub with 'h'
+bind generic h @sh -c "gh browse %(commit)" 

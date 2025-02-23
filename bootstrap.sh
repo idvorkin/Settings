@@ -1,4 +1,3 @@
-
 # This is used by vs codespaces to setup....
 # Should be fast
 
@@ -35,6 +34,7 @@ git config --global push.autoSetupRemote 1
 git config --global alias.logc log master..
 git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate"
 ln -s -f ~/settings/shared/gitconfig ~/.gitconfig
+ln -s -f ~/settings/shared/tigrc ~/.tigrc
 
 ln -s -f ~/settings/default_vimrc ~/.vimrc
 ln -s -f ~/settings/shared/ranger_rc.conf ~/.config/ranger/rc.conf
