@@ -15,7 +15,6 @@ set ignore-case = true
 set pager-view = text
 set diff-view = text
 set blame-view = text
-set pager = delta --dark --paging=never --word-diff
 
 # Key bindings
 bind generic g move-first-line
