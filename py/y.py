@@ -598,7 +598,7 @@ def ghimgpaste(caption: str = ""):
         return
 
     # Convert to webp
-    convert_result = os.system(f"magick convert {png_path} {webp_path}")
+    convert_result = os.system(f"magick {png_path} {webp_path}")
     if convert_result != 0:
         print("[red]Error converting image to webp[/red]")
         return
