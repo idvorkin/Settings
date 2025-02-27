@@ -251,3 +251,5 @@ tags
 .env
 
 .specstory
+
+lazy-lock.json
