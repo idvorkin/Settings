@@ -47,12 +47,14 @@ local vscode_compatible_plugins = {
 
 		opts = {},
 	},
+	"reedes/vim-pencil",
 	"dhruvasagar/vim-table-mode",
 	-- :Rename a file
 	"danro/rename.vim",
 	-- Comment \cc
 	-- Uncomment \cu
 	"scrooloose/nerdcommenter",
+    "preservim/vim-markdown",
 
 	"panozzaj/vim-autocorrect",
 	{
@@ -80,7 +82,6 @@ local plugins = {
 	"rking/ag.vim",
 	"junegunn/limelight.vim",
 	"junegunn/goyo.vim",
-	"reedes/vim-pencil",
 	"catppuccin/nvim",
 
 	"folke/zen-mode.nvim",
@@ -402,6 +403,7 @@ plugins = appendTables(plugins, { "tpope/vim-surround" })
 
 local git_plugins = {
 	"tpope/vim-fugitive",
+    {'akinsho/git-conflict.nvim', version = "*", config = true},
 	{
 		"Rawnly/gist.nvim",
 		cmd = { "GistCreate", "GistCreateFromFile", "GistsList" },
