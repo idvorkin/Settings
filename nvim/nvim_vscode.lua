@@ -14,6 +14,26 @@ end
 vim.opt.rtp:prepend(lazypath)
 local keymap = vim.api.nvim_set_keymap
 
+-- Load the vscode_compatible_plugins from nvim_plugins.lua
+local settings_dir = os.getenv("HOME") .. "/settings/nvim/"
+dofile(settings_dir .. "nvim_shared.lua")
+
+-- Load plugins using the existing system
+local plugins_module = dofile(settings_dir .. "nvim_plugins.lua")
+
+-- Initialize vim-pencil and AutoCorrect fallbacks if needed
+vim.cmd([[
+  if !exists(':SoftPencil')
+    command! -nargs=0 SoftPencil echom "vim-pencil plugin not loaded"
+  endif
+  
+  if !exists('*AutoCorrect')
+    function! AutoCorrect()
+      echom "vim-autocorrect plugin not loaded"
+    endfunction
+  endif
+]])
+
 function SetupVSCode()
 	-- from: https://github.com/milanglacier/nvim/blob/f54b7356dc97cbf9b07a77d5db1ad199c2ff3f2e/lua/conf/vscode.lua#L29
 	local function notify(cmd)
