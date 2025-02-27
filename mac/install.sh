@@ -1,4 +1,3 @@
-
 # run shared install here.
 
 # Looks like we need CASK to do things that are findable.
@@ -59,6 +58,9 @@ brew install --cask keycastr
 # fix up key repeats
 
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+
+# Disable saving application state on logout
+defaults write com.apple.loginwindow TALLogoutSavesState -bool false
 
 # Mac only git setup
 git config --global credential.helper osxkeychain
