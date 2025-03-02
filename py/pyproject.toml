@@ -21,10 +21,13 @@ dependencies = [
     "typing-extensions",
     "pillow",
     "psutil",
+    "google-api-python-client",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
 ]
 
 [tool.setuptools]
-py-modules = ["a", "y", "vim_python", "shorten", "tmux_helper"]
+py-modules = ["a", "y", "vim_python", "shorten", "tmux_helper", "gmail_reader"]
 
 [project.scripts]
 y = "y:app"
@@ -32,6 +35,7 @@ a = "a:app"
 vim_python = "vim_python:app"
 shorten = "shorten:app"
 tmux_helper = "tmux_helper:app"
+gmail = "gmail_reader:app"
 
 [tool.uv]
 dev-dependencies = [
