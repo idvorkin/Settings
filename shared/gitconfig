@@ -7,18 +7,57 @@
 [user]
 	email = idvorkin@gmail.com
 	name = Igor Dvorkin
+
 [push]
 	default = simple
     autoSetupRemote = true
+    followTags = true
 
 [core]
     pager = delta
+    excludesfile = ~/.gitignore
 
 [interactive]
     diffFilter = delta --color-only
 
-[core]
-    # autocrlf=input
+[column]
+    ui = auto
+
+[branch]
+    sort = -committerdate
+
+[tag]
+    sort = version:refname
+
+[init]
+    defaultBranch = main
+
+[diff]
+    algorithm = histogram
+    colorMoved = plain
+    mnemonicPrefix = true
+    renames = true
+    tool = difftastic
+
+[fetch]
+    prune = true
+    pruneTags = true
+    all = true
+
+[help]
+    autocorrect = prompt
+
+[commit]
+    verbose = true
+
+[rerere]
+    enabled = true
+    autoupdate = true
+
+[rebase]
+    autoSquash = true
+    autoStash = true
+    updateRefs = true
 
 [alias]
 	co = checkout
@@ -28,9 +67,7 @@
 	st = status
 	logc = log
 	logp = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate
-	logc = log
 	fr = pull --rebase
-	logc = log
 
 [credential]
 	helper = store
@@ -55,19 +92,12 @@
 [pull]
 	rebase = true
 
-[interactive]
-    diffFilter = delta --color-only
-
 [delta]
     navigate = true  # use n and N to move between diff sections
     max-line-length  = 0 #
 
 [merge]
     conflictstyle = diff3
-
-[diff]
-    colorMoved = default
-    tool = difftastic
 
 [difftool]
 	prompt = false
