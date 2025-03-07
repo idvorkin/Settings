@@ -736,6 +736,10 @@ function chop-git-latest() {
     # Just add the file to git
     git -C "$git_root" add "$CHOP_LOGS_DIR/$latest_file"
     echo "Added $latest_file to git staging area"
+    
+    # Show the last 20 lines of the file
+    echo "Last 20 lines of the file:"
+    tail -20 "$logs_dir/$latest_file"
 }
 
 function chop-view-latest() {
