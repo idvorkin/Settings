@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = ["a", "y", "vim_python", "shorten", "tmux_helper", "gmail_reader"]
+py-modules = ["a", "y", "vim_python", "shorten", "tmux_helper", "gmail_reader", "chop"]
 
 [project.scripts]
 y = "y:app"
@@ -36,6 +36,7 @@ vim_python = "vim_python:app"
 shorten = "shorten:app"
 tmux_helper = "tmux_helper:app"
 gmail = "gmail_reader:app"
+chop = "chop:app"
 
 [tool.uv]
 dev-dependencies = [
