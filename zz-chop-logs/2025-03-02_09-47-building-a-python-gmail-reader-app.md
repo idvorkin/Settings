@@ -1967,12 +1967,12 @@ I'll run a pre-commit check on the code to identify any issues that should be fi
 _\*\*\*\*_
 
 ```bash
-cd /Users/idvorkin/settings/py && python -m flake8 gmail_reader.py
+cd $HOME/settings/py && python -m flake8 gmail_reader.py
 ```
 
 ```
-idvorkin-mbp:py idvorkin$ cd /Users/idvorkin/settings/py && python -m flake8 gmail_reader.py
-/Users/idvorkin/settings/py/.venv/bin/python: No module named flake8
+idvorkin-mbp:py idvorkin$ cd $HOME/settings/py && python -m flake8 gmail_reader.py
+$HOME/settings/py/.venv/bin/python: No module named flake8
 idvorkin-mbp:py idvorkin$
 ```
 
@@ -1997,11 +1997,11 @@ I understand now. You want me to run the `pre-commit` tool specifically, not jus
 _\*\*\*\*_
 
 ```bash
-cd /Users/idvorkin/settings/py && pre-commit run --files gmail_reader.py
+cd $HOME/settings/py && pre-commit run --files gmail_reader.py
 ```
 
 ```
-idvorkin-mbp:py idvorkin$ cd /Users/idvorkin/settings/py && pre-commit run --files gmail_reader.py
+idvorkin-mbp:py idvorkin$ cd $HOME/settings/py && pre-commit run --files gmail_reader.py
 ruff.....................................................................Failed
 - hook id: ruff
 - exit code: 1
@@ -2067,11 +2067,11 @@ Now let's run the pre-commit check again to make sure the issue is fixed:
 _\*\*\*\*_
 
 ```bash
-cd /Users/idvorkin/settings/py && pre-commit run --files gmail_reader.py
+cd $HOME/settings/py && pre-commit run --files gmail_reader.py
 ```
 
 ```
-idvorkin-mbp:py idvorkin$ cd /Users/idvorkin/settings/py && pre-commit run --files gmail_reader.py
+idvorkin-mbp:py idvorkin$ cd $HOME/settings/py && pre-commit run --files gmail_reader.py
 ruff.....................................................................Passed
 ruff-format..............................................................Passed
 prettier.................................................................Passed

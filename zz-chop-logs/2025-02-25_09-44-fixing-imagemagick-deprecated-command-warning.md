@@ -40,31 +40,31 @@ _\*\*\*\*_
         
 | File | Line | Match |
 |------|------|-------|
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L613 | `"title": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L614 | `"subtitle": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L615 | `"arg": "ghimgpaste"` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L801 | `"title": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L802 | `"subtitle": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L803 | `"arg": "ghimgpaste"` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1149 | `"title": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1150 | `"subtitle": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1151 | `"arg": "ghimgpaste"` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1337 | `"title": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1338 | `"subtitle": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1339 | `"arg": "ghimgpaste"` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1825 | `"title": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1826 | `"subtitle": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1827 | `"arg": "ghimgpaste"` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2031 | `"title": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2032 | `"subtitle": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2033 | `"arg": "ghimgpaste"` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2238 | `"title": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2239 | `"subtitle": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2240 | `"arg": "ghimgpaste"` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2425 | `"title": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2426 | `"subtitle": "ghimgpaste",` |
-| `file:///Users/idvorkin/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2427 | `"arg": "ghimgpaste"` |
-| `file:///Users/idvorkin/gits/settings/py/y.py` | L579 | `def ghimgpaste(caption: str = ""):` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L613 | `"title": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L614 | `"subtitle": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L615 | `"arg": "ghimgpaste"` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L801 | `"title": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L802 | `"subtitle": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L803 | `"arg": "ghimgpaste"` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1149 | `"title": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1150 | `"subtitle": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1151 | `"arg": "ghimgpaste"` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1337 | `"title": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1338 | `"subtitle": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1339 | `"arg": "ghimgpaste"` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1825 | `"title": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1826 | `"subtitle": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L1827 | `"arg": "ghimgpaste"` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2031 | `"title": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2032 | `"subtitle": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2033 | `"arg": "ghimgpaste"` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2238 | `"title": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2239 | `"subtitle": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2240 | `"arg": "ghimgpaste"` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2425 | `"title": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2426 | `"subtitle": "ghimgpaste",` |
+| `file://$HOME/gits/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L2427 | `"arg": "ghimgpaste"` |
+| `file://$HOME/gits/settings/py/y.py` | L579 | `def ghimgpaste(caption: str = ""):` |
 
 </details>
 

@@ -306,13 +306,13 @@ _****_
         
 | File | Line | Match |
 |------|------|-------|
-| `file:///Users/idvorkin/settings/default_vimrc` | L1058 | `autocmd BufRead,BufNewFile *.json setlocal foldmethod=indent foldnestmax=10 nofoldenable` |
-| `file:///Users/idvorkin/settings/default_vimrc` | L1075 | `autocmd FileType lua setlocal foldmethod=expr` |
-| `file:///Users/idvorkin/settings/default_vimrc` | L1087 | `" vim:foldmethod=indent:` |
-| `file:///Users/idvorkin/settings/nvim/init.vim` | L47 | `autocmd FileType lua setlocal foldmethod=syntax` |
-| `file:///Users/idvorkin/settings/nvim/nvim_color.lua` | L27 | `-- Set foldmethod to indent` |
-| `file:///Users/idvorkin/settings/nvim/nvim_color.lua` | L28 | `vim.opt_local.foldmethod = "indent"` |
-| `file:///Users/idvorkin/settings/_ivim.rc.vim` | L501 | `" vim:foldmethod=indent:` |
+| `file://$HOME/settings/default_vimrc` | L1058 | `autocmd BufRead,BufNewFile *.json setlocal foldmethod=indent foldnestmax=10 nofoldenable` |
+| `file://$HOME/settings/default_vimrc` | L1075 | `autocmd FileType lua setlocal foldmethod=expr` |
+| `file://$HOME/settings/default_vimrc` | L1087 | `" vim:foldmethod=indent:` |
+| `file://$HOME/settings/nvim/init.vim` | L47 | `autocmd FileType lua setlocal foldmethod=syntax` |
+| `file://$HOME/settings/nvim/nvim_color.lua` | L27 | `-- Set foldmethod to indent` |
+| `file://$HOME/settings/nvim/nvim_color.lua` | L28 | `vim.opt_local.foldmethod = "indent"` |
+| `file://$HOME/settings/_ivim.rc.vim` | L501 | `" vim:foldmethod=indent:` |
 
 </details>
 
@@ -1706,17 +1706,17 @@ To use the folding functionality:
 
 _**User**_
 
-Error detected while processing /Users/idvorkin/settings/nvim/init.vim[3]../Users/idvorkin/.vimrc[18]../opt/homebrew/C
+Error detected while processing $HOME/settings/nvim/init.vim[3]..$HOME/.vimrc[18]../opt/homebrew/C
 ellar/neovim/0.10.2_1/share/nvim/runtime/syntax/syntax.vim[44]..BufReadPost Autocommands for "*":
 Error executing lua callback: ...w/Cellar/neovim/0.10.2_1/share/nvim/runtime/filetype.lua:35: Error executing lua: ...
-w/Cellar/neovim/0.10.2_1/share/nvim/runtime/filetype.lua:36: /Users/idvorkin/settings/nvim/init.vim[3]../Users/idvorki
+w/Cellar/neovim/0.10.2_1/share/nvim/runtime/filetype.lua:36: $HOME/settings/nvim/init.vim[3]../Users/idvorki
 n/.vimrc[18]../opt/homebrew/Cellar/neovim/0.10.2_1/share/nvim/runtime/syntax/syntax.vim[44]..BufReadPost Autocommands
-for "*"..FileType Autocommands for "*"..function <SNR>1_LoadFTPlugin[20]..script /Users/idvorkin/settings/nvim/ftplugi
-n/gitcommit.lua: Vim(runtime):E5113: Error while calling lua chunk: /Users/idvorkin/settings/nvim/ftplugin/gitcommit.l
+for "*"..FileType Autocommands for "*"..function <SNR>1_LoadFTPlugin[20]..script $HOME/settings/nvim/ftplugi
+n/gitcommit.lua: Vim(runtime):E5113: Error while calling lua chunk: $HOME/settings/nvim/ftplugin/gitcommit.l
 ua:251: Expected 4 arguments
 stack traceback:
         [C]: in function 'nvim_buf_create_user_command'
-        /Users/idvorkin/settings/nvim/ftplugin/gitcommit.lua:251: in main chunk
+        $HOME/settings/nvim/ftplugin/gitcommit.lua:251: in main chunk
         [C]: in function 'nvim_cmd'
         ...w/Cellar/neovim/0.10.2_1/share/nvim/runtime/filetype.lua:36: in function <...w/Cellar/neovim/0.10.2_1/share
 /nvim/runtime/filetype.lua:35>
@@ -1735,17 +1735,17 @@ stack traceback:
         ...w/Cellar/neovim/0.10.2_1/share/nvim/runtime/filetype.lua:35: in function <...w/Cellar/neovim/0.10.2_1/share
 /nvim/runtime/filetype.lua:10>
 nvim_plugins done
-Error detected while processing /Users/idvorkin/settings/nvim/init.vim:
+Error detected while processing $HOME/settings/nvim/init.vim:
 line   58:
-E5113: Error while calling lua chunk: /Users/idvorkin/settings/nvim/init.vim[58]..BufReadPost Autocommands for "COMMIT
-_EDITMSG"..FileType Autocommands for "*"..function <SNR>1_LoadFTPlugin[20]..script /Users/idvorkin/settings/nvim/ftplu
-gin/gitcommit.lua: Vim(runtime):E5113: Error while calling lua chunk: /Users/idvorkin/settings/nvim/ftplugin/gitcommit
+E5113: Error while calling lua chunk: $HOME/settings/nvim/init.vim[58]..BufReadPost Autocommands for "COMMIT
+_EDITMSG"..FileType Autocommands for "*"..function <SNR>1_LoadFTPlugin[20]..script $HOME/settings/nvim/ftplu
+gin/gitcommit.lua: Vim(runtime):E5113: Error while calling lua chunk: $HOME/settings/nvim/ftplugin/gitcommit
 .lua:251: Expected 4 arguments
 stack traceback:
         [C]: in function 'nvim_buf_create_user_command'
-        /Users/idvorkin/settings/nvim/ftplugin/gitcommit.lua:251: in main chunk
+        $HOME/settings/nvim/ftplugin/gitcommit.lua:251: in main chunk
         [C]: in function '__newindex'
-        /Users/idvorkin/settings/nvim/ftdetect/gitcommit.lua:5: in function </Users/idvorkin/settings/nvim/ftdetect/gi
+        $HOME/settings/nvim/ftdetect/gitcommit.lua:5: in function <$HOME/settings/nvim/ftdetect/gi
 tcommit.lua:4>
         [C]: in function 'bufload'
         ...eovim/0.10.2_1/share/nvim/runtime/lua/vim/treesitter.lua:39: in function '_create_parser'
@@ -1806,12 +1806,12 @@ This should resolve the error you were seeing. Now you can use the `:FoldLLM` co
 
 _**User**_
 
-nvim_plugins done                                                                                                     Error detected while processing /Users/idvorkin/settings/nvim/init.vim:
-line   58:                                                                                                            E5113: Error while calling lua chunk: /Users/idvorkin/settings/nvim/init.vim[58]..BufWinEnter Autocommands for "COMMIT
-_EDITMSG": Vim(append):Error executing lua callback: vim/_editor.lua:0: /Users/idvorkin/settings/nvim/init.vim[58]..BufWinEnter Autocommands for "COMMIT_EDITMSG"..script nvim_exec2() called at BufWinEnter Autocommands for "COMMIT_EDITMS
+nvim_plugins done                                                                                                     Error detected while processing $HOME/settings/nvim/init.vim:
+line   58:                                                                                                            E5113: Error while calling lua chunk: $HOME/settings/nvim/init.vim[58]..BufWinEnter Autocommands for "COMMIT
+_EDITMSG": Vim(append):Error executing lua callback: vim/_editor.lua:0: $HOME/settings/nvim/init.vim[58]..BufWinEnter Autocommands for "COMMIT_EDITMSG"..script nvim_exec2() called at BufWinEnter Autocommands for "COMMIT_EDITMS
 G":0: Vim(normal):E490: No fold found                                                                                 stack traceback:
         [C]: in function 'nvim_exec2'                                                                                         vim/_editor.lua: in function 'cmd'
-        /Users/idvorkin/settings/nvim/ftplugin/gitcommit.lua:246: in function </Users/idvorkin/settings/nvim/ftplugin/gitcommit.lua:232>
+        $HOME/settings/nvim/ftplugin/gitcommit.lua:246: in function <$HOME/settings/nvim/ftplugin/gitcommit.lua:232>
         [C]: in function 'bufload'
         ...eovim/0.10.2_1/share/nvim/runtime/lua/vim/treesitter.lua:39: in function '_create_parser'
         ...eovim/0.10.2_1/share/nvim/runtime/lua/vim/treesitter.lua:108: in function 'get_parser'
@@ -1823,7 +1823,7 @@ G":0: Vim(normal):E490: No fold found                                           
         ...vim/lazy/nvim-treesitter/lua/nvim-treesitter/configs.lua:438: in function 'accumulator'
         ...vim/lazy/nvim-treesitter/lua/nvim-treesitter/configs.lua:246: in function 'recurse_modules'
         ...vim/lazy/nvim-treesitter/lua/nvim-treesitter/configs.lua:435: in function 'setup'
-        /Users/idvorkin/.config/nvim/nvim_init.lua:80: in main chunk
+        $HOME/.config/nvim/nvim_init.lua:80: in main chunk
 stack traceback:
         [C]: in function 'bufload'
         ...eovim/0.10.2_1/share/nvim/runtime/lua/vim/treesitter.lua:39: in function '_create_parser'
@@ -1927,9 +1927,9 @@ thod'
 stack traceback:
         [C]: in function 'nvim_exec2'
         vim/_editor.lua: in function 'cmd'
-        /Users/idvorkin/settings/nvim/ftplugin/gitcommit.lua:212: in function 'unfold_first_commit_message'
-        /Users/idvorkin/settings/nvim/ftplugin/gitcommit.lua:165: in function 'fold_llm_commit_messages'
-        /Users/idvorkin/settings/nvim/ftplugin/gitcommit.lua:265: in function </Users/idvorkin/settings/nvim/ftplugin/
+        $HOME/settings/nvim/ftplugin/gitcommit.lua:212: in function 'unfold_first_commit_message'
+        $HOME/settings/nvim/ftplugin/gitcommit.lua:165: in function 'fold_llm_commit_messages'
+        $HOME/settings/nvim/ftplugin/gitcommit.lua:265: in function <$HOME/settings/nvim/ftplugin/
 gitcommit.lua:264>
 
 ---

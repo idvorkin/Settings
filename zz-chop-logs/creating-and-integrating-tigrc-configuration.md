@@ -251,7 +251,7 @@ _**User**_
 ❮ tig
 tig warning: ~/.tigrc:13: show-date is obsolete; see tigrc(5) for how to set the date column option
 tig warning: ~/.tigrc:14: show-author is obsolete; see tigrc(5) for how to set the author column option
-tig warning: Errors while loading /Users/idvorkin/.tigrc.
+tig warning: Errors while loading $HOME/.tigrc.
 
 
 ---

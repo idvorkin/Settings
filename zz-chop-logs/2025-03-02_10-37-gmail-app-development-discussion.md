@@ -241,106 +241,106 @@ _\*\*\*\*_
         
 | File | Line | Match |
 |------|------|-------|
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L361 | `+ @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L396 | `+ @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L459 | `+ @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L506 | `+ @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L560 | `+ @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L592 | `+ @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1370 | `+ @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1475 | `@app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1596 | `+ @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1777 | `- @app.command()` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1845 | `@app.command()` |
-| `file:///Users/idvorkin/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L118 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/shorten.py` | L77 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L273 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L323 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L395 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L461 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L522 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L551 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L590 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L57 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L63 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L69 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L74 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L79 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L85 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L90 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L95 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L100 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L105 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L110 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L115 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L120 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L125 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L130 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L135 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L153 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L158 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L164 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L170 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L176 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L181 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L186 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L191 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L196 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L242 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L249 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L256 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L261 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L268 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L274 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L280 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L286 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L292 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L297 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L302 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L307 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L312 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L317 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L322 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L327 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L332 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L366 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L371 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L406 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L438 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/a.py` | L449 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/vim_python.py` | L69 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/vim_python.py` | L81 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/vim_python.py` | L92 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/vim_python.py` | L106 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/vim_python.py` | L130 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L189 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L195 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L201 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L207 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L213 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L219 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L225 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L231 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L236 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L242 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L248 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L254 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L260 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L266 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L272 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L327 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L333 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L339 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L345 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L407 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L413 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L477 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L572 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L578 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L652 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L675 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L681 | `@app.command()` |
-| `file:///Users/idvorkin/settings/py/y.py` | L688 | `@app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L361 | `+ @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L396 | `+ @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L459 | `+ @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L506 | `+ @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L560 | `+ @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L592 | `+ @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1370 | `+ @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1475 | `@app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1596 | `+ @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1777 | `- @app.command()` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1845 | `@app.command()` |
+| `file://$HOME/settings/chop-logs/alfred-command-caching-optimization-plan.md` | L118 | `@app.command()` |
+| `file://$HOME/settings/py/shorten.py` | L77 | `@app.command()` |
+| `file://$HOME/settings/py/gmail_reader.py` | L273 | `@app.command()` |
+| `file://$HOME/settings/py/gmail_reader.py` | L323 | `@app.command()` |
+| `file://$HOME/settings/py/gmail_reader.py` | L395 | `@app.command()` |
+| `file://$HOME/settings/py/gmail_reader.py` | L461 | `@app.command()` |
+| `file://$HOME/settings/py/gmail_reader.py` | L522 | `@app.command()` |
+| `file://$HOME/settings/py/gmail_reader.py` | L551 | `@app.command()` |
+| `file://$HOME/settings/py/gmail_reader.py` | L590 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L57 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L63 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L69 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L74 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L79 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L85 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L90 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L95 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L100 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L105 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L110 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L115 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L120 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L125 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L130 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L135 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L153 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L158 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L164 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L170 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L176 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L181 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L186 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L191 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L196 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L242 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L249 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L256 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L261 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L268 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L274 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L280 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L286 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L292 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L297 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L302 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L307 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L312 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L317 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L322 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L327 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L332 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L366 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L371 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L406 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L438 | `@app.command()` |
+| `file://$HOME/settings/py/a.py` | L449 | `@app.command()` |
+| `file://$HOME/settings/py/vim_python.py` | L69 | `@app.command()` |
+| `file://$HOME/settings/py/vim_python.py` | L81 | `@app.command()` |
+| `file://$HOME/settings/py/vim_python.py` | L92 | `@app.command()` |
+| `file://$HOME/settings/py/vim_python.py` | L106 | `@app.command()` |
+| `file://$HOME/settings/py/vim_python.py` | L130 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L189 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L195 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L201 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L207 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L213 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L219 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L225 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L231 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L236 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L242 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L248 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L254 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L260 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L266 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L272 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L327 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L333 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L339 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L345 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L407 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L413 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L477 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L572 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L578 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L652 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L675 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L681 | `@app.command()` |
+| `file://$HOME/settings/py/y.py` | L688 | `@app.command()` |
 | `untitled:Untitled-1` | L947 | `@app.command()` |
 | `untitled:Untitled-1` | L975 | `@app.command()` |
 | `untitled:Untitled-1` | L1825 | `@app.command()` |
@@ -674,18 +674,18 @@ _\*\*\*\*_
         
 | File | Line | Match |
 |------|------|-------|
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L397 | `+ def list_emails(` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L460 | `+ def read_email(` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1371 | `+ def kindle_notebook(` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1476 | `def kindle_notebook(` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1481 | `+     output_dir: str = typer.Option("~/kindle_notebooks", help="Directory to save attachments")` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1605 | `+         "  [green]gmail kindle-notebook --save-attachments[/green] - Save notebook attachments to ~/kindle_notebooks\n"` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1653 | `This will save all attachments from Kindle notebook emails to `~/kindle_notebooks` by default.` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1698 | `def kindle_notebook(` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1702 | `-     output_dir: str = typer.Option("~/kindle_notebooks", help="Directory to save attachments")` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1786 | `-         "  [green]gmail kindle-notebook --save-attachments[/green] - Save notebook attachments to ~/kindle_notebooks\n"` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1846 | `def kindle_notebook(` |
-| `file:///Users/idvorkin/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1863 | `The `kindle_notebook` command is now much simpler and focused on its core functionality: searching for emails from Amazon Kindle containing "You sent a file" and displaying them in a table.` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L397 | `+ def list_emails(` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L460 | `+ def read_email(` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1371 | `+ def kindle_notebook(` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1476 | `def kindle_notebook(` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1481 | `+     output_dir: str = typer.Option("~/kindle_notebooks", help="Directory to save attachments")` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1605 | `+         "  [green]gmail kindle-notebook --save-attachments[/green] - Save notebook attachments to ~/kindle_notebooks\n"` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1653 | `This will save all attachments from Kindle notebook emails to `~/kindle_notebooks` by default.` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1698 | `def kindle_notebook(` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1702 | `-     output_dir: str = typer.Option("~/kindle_notebooks", help="Directory to save attachments")` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1786 | `-         "  [green]gmail kindle-notebook --save-attachments[/green] - Save notebook attachments to ~/kindle_notebooks\n"` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1846 | `def kindle_notebook(` |
+| `file://$HOME/settings/zz-chop-logs/2025-03-02_09-47-building-a-python-gmail-reader-app.md` | L1863 | `The `kindle_notebook` command is now much simpler and focused on its core functionality: searching for emails from Amazon Kindle containing "You sent a file" and displaying them in a table.` |
 
 </details>
 
@@ -720,8 +720,8 @@ _\*\*\*\*_
         
 | File | Line | Match |
 |------|------|-------|
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L692 | `"\n[italic]To read a specific email, use:[/italic] gmail read-email EMAIL_ID"` |
-| `file:///Users/idvorkin/settings/py/gmail_reader.py` | L692 | `"\n[italic]To read a specific email, use:[/italic] gmail read-email EMAIL_ID"` |
+| `file://$HOME/settings/py/gmail_reader.py` | L692 | `"\n[italic]To read a specific email, use:[/italic] gmail read-email EMAIL_ID"` |
+| `file://$HOME/settings/py/gmail_reader.py` | L692 | `"\n[italic]To read a specific email, use:[/italic] gmail read-email EMAIL_ID"` |
 
 </details>
 

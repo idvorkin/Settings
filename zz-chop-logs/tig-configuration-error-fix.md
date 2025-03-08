@@ -8,7 +8,7 @@ Fix:
 
 ❯ tig
 tig warning: ~/.tigrc:18: Unknown option name: pager
-tig warning: Errors while loading /Users/idvorkin/.tigrc.
+tig warning: Errors while loading $HOME/.tigrc.
 
 ---
 
@@ -191,7 +191,7 @@ STill getting:
 igors-Mac-mini in settings on  master [$!?] via  v23.2.0 on ☁️   took 16s
 ❮ tig
 tig warning: ~/.tigrc:21: Unknown option name: pager
-tig warning: Errors while loading /Users/idvorkin/.tigrc.
+tig warning: Errors while loading $HOME/.tigrc.
 
 ---
 
@@ -292,7 +292,7 @@ _**User**_
 igors-Mac-mini in settings on  master [$!?] via  v23.2.0 on ☁️
 ❯ tig
 tig warning: ~/.tigrc:21: Unknown option name: git-pager
-tig warning: Errors while loading /Users/idvorkin/.tigrc.
+tig warning: Errors while loading $HOME/.tigrc.
 
 
 ---

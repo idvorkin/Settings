@@ -83,10 +83,10 @@ _****_
         
 | File | Line | Match |
 |------|------|-------|
-| `file:///Users/idvorkin/settings/default_vimrc` | L530 | `" Always enable softpencil` |
-| `file:///Users/idvorkin/settings/default_vimrc` | L532 | `autocmd BufEnter *md :exe ":SoftPencil"` |
-| `file:///Users/idvorkin/settings/_ivim.rc.vim` | L329 | `" Always enable softpencil` |
-| `file:///Users/idvorkin/settings/_ivim.rc.vim` | L334 | `autocmd BufEnter *md :exe ":SoftPencil"` |
+| `file://$HOME/settings/default_vimrc` | L530 | `" Always enable softpencil` |
+| `file://$HOME/settings/default_vimrc` | L532 | `autocmd BufEnter *md :exe ":SoftPencil"` |
+| `file://$HOME/settings/_ivim.rc.vim` | L329 | `" Always enable softpencil` |
+| `file://$HOME/settings/_ivim.rc.vim` | L334 | `autocmd BufEnter *md :exe ":SoftPencil"` |
 
 </details>
 
@@ -141,13 +141,13 @@ _****_
         
 | File | Line | Match |
 |------|------|-------|
-| `file:///Users/idvorkin/settings/default_vimrc` | L81 | `Plugin 'reedes/vim-pencil'` |
-| `file:///Users/idvorkin/settings/default_vimrc` | L749 | `iplug add 'https://github.com/reedes/vim-pencil'` |
-| `file:///Users/idvorkin/settings/nvim/lazy-lock.json` | L90 | `"vim-pencil": { "branch": "master", "commit": "6d70438a8886eaf933c38a7a43a61adb0a7815ed" },` |
-| `file:///Users/idvorkin/settings/nvim/nvim_plugins.lua` | L82 | `"reedes/vim-pencil",` |
-| `file:///Users/idvorkin/settings/_ivim.rc.vim` | L105 | `" Bundle 'reedes/vim-pencil'` |
-| `file:///Users/idvorkin/settings/_ivim.rc.vim` | L331 | `so ~/.vim/bundle/vim-pencil/plugin/pencil.vim` |
-| `file:///Users/idvorkin/settings/_ivim.rc.vim` | L437 | `iplug add 'https://github.com/reedes/vim-pencil'` |
+| `file://$HOME/settings/default_vimrc` | L81 | `Plugin 'reedes/vim-pencil'` |
+| `file://$HOME/settings/default_vimrc` | L749 | `iplug add 'https://github.com/reedes/vim-pencil'` |
+| `file://$HOME/settings/nvim/lazy-lock.json` | L90 | `"vim-pencil": { "branch": "master", "commit": "6d70438a8886eaf933c38a7a43a61adb0a7815ed" },` |
+| `file://$HOME/settings/nvim/nvim_plugins.lua` | L82 | `"reedes/vim-pencil",` |
+| `file://$HOME/settings/_ivim.rc.vim` | L105 | `" Bundle 'reedes/vim-pencil'` |
+| `file://$HOME/settings/_ivim.rc.vim` | L331 | `so ~/.vim/bundle/vim-pencil/plugin/pencil.vim` |
+| `file://$HOME/settings/_ivim.rc.vim` | L437 | `iplug add 'https://github.com/reedes/vim-pencil'` |
 
 </details>
 
@@ -441,10 +441,10 @@ _****_
         
 | File | Line | Match |
 |------|------|-------|
-| `file:///Users/idvorkin/settings/default_vimrc` | L180 | `Plugin 'panozzaj/vim-autocorrect'` |
-| `file:///Users/idvorkin/settings/default_vimrc` | L533 | `autocmd BufEnter *md :exe ":call AutoCorrect()"` |
-| `file:///Users/idvorkin/settings/nvim/lazy-lock.json` | L82 | `"vim-autocorrect": { "branch": "master", "commit": "28ef54d5cdd2d1021d54c90d80eb1a7d02fb58bc" },` |
-| `file:///Users/idvorkin/settings/nvim/nvim_plugins.lua` | L56 | `"panozzaj/vim-autocorrect",` |
+| `file://$HOME/settings/default_vimrc` | L180 | `Plugin 'panozzaj/vim-autocorrect'` |
+| `file://$HOME/settings/default_vimrc` | L533 | `autocmd BufEnter *md :exe ":call AutoCorrect()"` |
+| `file://$HOME/settings/nvim/lazy-lock.json` | L82 | `"vim-autocorrect": { "branch": "master", "commit": "28ef54d5cdd2d1021d54c90d80eb1a7d02fb58bc" },` |
+| `file://$HOME/settings/nvim/nvim_plugins.lua` | L56 | `"panozzaj/vim-autocorrect",` |
 
 </details>
 

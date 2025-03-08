@@ -656,8 +656,8 @@ _****_
 
 _**User**_
 
-5113: Error while calling lua chunk: /Users/idvorkin/settings/nvim/init.vim[58]..BufReadPost Autocommands for "COMMIT
-_EDITMSG"..FileType Autocommands for "*"..function <SNR>1_LoadFTPlugin[20]..script /Users/idvorkin/settings/nvim/ftplu
+5113: Error while calling lua chunk: $HOME/settings/nvim/init.vim[58]..BufReadPost Autocommands for "COMMIT
+_EDITMSG"..FileType Autocommands for "*"..function <SNR>1_LoadFTPlugin[20]..script $HOME/settings/nvim/ftplu
 gin/gitcommit.lua: Vim(runtime):E5113: Error while calling lua chunk: vim/_options.lua:0: Invalid option type 'number'
  for 'foldcolumn', should be string
 stack traceback:
@@ -666,7 +666,7 @@ stack traceback:
         vim/_options.lua: in function ''
         vim/_options.lua: in function '_set'
         vim/_options.lua: in function '__newindex'
-        /Users/idvorkin/settings/nvim/ftplugin/gitcommit.lua:9: in main chunk
+        $HOME/settings/nvim/ftplugin/gitcommit.lua:9: in main chunk
         [C]: in function '__newindex'
 
 ---
