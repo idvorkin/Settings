@@ -1,4 +1,3 @@
-
 export brew_packages="\
 tmux \
 zoxide \
@@ -97,6 +96,7 @@ brew_packages="$brew_packages pandoc" # Convert between file formats
 # Markdown viewer, should include bat
 brew_packages="$brew_packages glow"
 brew_packages="$brew_packages rich"
+brew_packages="$brew_packages grip" # GitHub Markdown preview tool
 
 brew_packages="$brew_packages yazi" # CLI file viewer
 

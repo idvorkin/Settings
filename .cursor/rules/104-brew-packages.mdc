@@ -1,0 +1,38 @@
+---
+description: ALWAYS use shared/brew_packages.sh when adding non-cask Homebrew packages
+globs: "**/*.sh"
+tags: [brew, homebrew, packages, installation]
+priority: 2
+version: 1.0.0
+---
+
+# Homebrew Package Management
+
+## Context
+- When adding new Homebrew packages to the system configuration
+- When modifying existing package lists
+
+## Requirements
+- Add non-cask Homebrew packages to the `shared/brew_packages.sh` file instead of individual Homebrew commands
+- Add packages using the format: `brew_packages="$brew_packages package_name" # Optional comment about the package`
+- Group packages by category with appropriate comments when possible
+- Do not modify the `mac/install.sh` file for regular Homebrew packages (only cask packages go there)
+
+## Examples
+
+<example>
+# Correct way to add a new non-cask package (in shared/brew_packages.sh)
+# Markdown viewers
+brew_packages="$brew_packages glow"
+brew_packages="$brew_packages grip" # GitHub Markdown preview tool
+</example>
+
+<example type="invalid">
+# Incorrect way to add a non-cask package (in mac/install.sh)
+brew install grip # GitHub Markdown preview tool
+</example>
+
+<example>
+# Correct way to add a cask package (in mac/install.sh)
+brew install --cask visual-studio-code
+</example> 
