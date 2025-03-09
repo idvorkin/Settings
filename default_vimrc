@@ -989,6 +989,7 @@ func! SetupForConvo()
 endfunc
 
 autocmd BufEnter *convo.md call SetupForConvo()
+" Use newer implementation for better no-wrap support
 autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>
 autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>
 
@@ -996,9 +997,13 @@ autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>
 autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffd :?---?,/---/d<cr>
 autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/,/--- \*\*9/d<cr>
 
+" Function to generate a commit message using 'commit' tool
+" Uses the git diff of staged changes
+" Prevents terminal line wrapping by setting COLUMNS=500
 function! MakeCommitMesage(params)
     let tempfile = tempname()
-    let gpt_from_git_diff = '!git diff --staged | commit ' . a:params
+    " Set terminal width to prevent wrapping - this is the only change needed
+    let gpt_from_git_diff = '!export COLUMNS=500 && stty cols 500 2>/dev/null; git diff --staged | commit ' . a:params
     execute gpt_from_git_diff . ' > ' . shellescape(tempfile)
     try
         silent execute 'read' tempfile
