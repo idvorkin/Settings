@@ -59,7 +59,7 @@ def LocalToRemote(file):
 
 
 def make_remote_call(commands):
-    cmd = "ssh lightsail_no_forward /home/linuxbrew/.linuxbrew/bin/python3.11 /home/ec2-user/settings/py/vim_python.py "
+    cmd = "ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python "
     # Print the cmd to stderr
     # print(cmd + commands, file=sys.stderr)
     out = subprocess.run(cmd + commands, shell=True, capture_output=True)
