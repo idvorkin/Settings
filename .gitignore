@@ -253,3 +253,6 @@ tags
 .specstory
 
 lazy-lock.json
+
+# Private individual user cursor rules
+.cursor/rules/_*.mdc
