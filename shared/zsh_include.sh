@@ -296,6 +296,7 @@ function rhyme()
 function go_home()
 {
     pkill -9 Workplace
+    pkill -9 Chrome
     pkill Outlook
     # figure out how to kill the tabs ...
 }
