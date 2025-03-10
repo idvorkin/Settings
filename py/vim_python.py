@@ -68,12 +68,45 @@ def make_remote_call(commands):
 
 
 @app.command()
-def MakeDailyPage(daysoffset: int = 0, remote: bool = False):
-    new_file, directory = MakeTemplatePage(
-        NowPST() + timedelta(days=daysoffset), "750words", "daily_template"
-    )
+def MakeDailyPage(
+    daysoffset: int | None = None, date: str | None = None, remote: bool = False
+):
+    """
+    Create a daily page for either an offset from today or a specific date.
+    Only one of daysoffset or date can be provided.
+    If neither is provided, defaults to today.
+    If date is provided without year (e.g. "3-25"), defaults to current year.
+
+    Args:
+        daysoffset: Number of days offset from today (mutually exclusive with date)
+        date: Date in YYYY-MM-DD or MM-DD format (mutually exclusive with daysoffset)
+        remote: Whether to create the page remotely
+    """
+    if daysoffset is not None and date is not None:
+        print("Error: Cannot specify both daysoffset and date")
+        return
+
+    if date is not None:
+        try:
+            # Try full date format first
+            target_date = datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            try:
+                # Try month-day format, defaulting to current year
+                current_year = NowPST().year
+                target_date = datetime.strptime(f"{current_year}-{date}", "%Y-%m-%d")
+            except ValueError:
+                print("Error: date must be in YYYY-MM-DD or MM-DD format")
+                return
+    else:
+        target_date = NowPST() + timedelta(days=daysoffset or 0)
+
+    new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
     if remote:
-        make_remote_call(f"makedailypage --daysoffset={daysoffset}")
+        if date is not None:
+            make_remote_call(f"makedailypage --date={date}")
+        else:
+            make_remote_call(f"makedailypage --daysoffset={daysoffset}")
         print(LocalToRemote(new_file))
     else:
         print(new_file)
@@ -118,8 +151,10 @@ def profile_io(n: int = 3):
             tmp_file_path = tmp_file.name
         write_time = time.time()
 
+        # Read and verify content to measure actual read operation
         with open(tmp_file_path, "r") as file:
             content = file.read()
+            assert content == "This is a test file"
 
         read_time = time.time()
 
