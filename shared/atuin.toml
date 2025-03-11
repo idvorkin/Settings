@@ -1,0 +1,18 @@
+# Atuin configuration file
+
+# Don't record commands matching these patterns
+history_filter = [
+    "^yt-dlp"
+]
+
+# Style
+style = "auto"
+
+# Search mode (full_text or fuzzy)
+search_mode = "fuzzy"
+
+# Show a preview of the command before executing from search
+show_preview = true
+
+# Enable up key binding
+key_binding_mode = "auto" 
