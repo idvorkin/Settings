@@ -2,7 +2,8 @@
 
 # Don't record commands matching these patterns
 history_filter = [
-    "^yt-dlp"
+    "^yt-dlp",
+    "pornhub"
 ]
 
 # Style
