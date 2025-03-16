@@ -672,7 +672,7 @@ precommit-update-all() {
     local dir
     dir=$(dirname "$config_file")
     echo "Processing $dir..."
-    update_precommit_dir "$dir"
+    precommit-update-dir "$dir"
   done
 
   echo "Done updating all pre-commit configurations."
