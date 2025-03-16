@@ -138,5 +138,26 @@ require("neotest").setup({
 	},
 })
 
+local hostname = vim.fn.hostname()
+
+function CheckCopilotHost()
+	local allowed_hosts = { "dog", "cat" }
+	local is_allowed = false
+
+	for _, host in ipairs(allowed_hosts) do
+		if hostname:lower() == host:lower() then
+			is_allowed = true
+			break
+		end
+	end
+
+	if not is_allowed then
+		print("Disabling Copilot on host: " .. hostname)
+		vim.cmd("Copilot disable")
+	end
+end
+
+CheckCopilotHost()
+
 -- vim.opt.laststatus = 3
 print("nvim_init.lua loaded")
