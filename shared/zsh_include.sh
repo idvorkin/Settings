@@ -666,6 +666,51 @@ function FinickySet(){
     defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{"LSHandlerURLScheme" = "https"; "LSHandlerRoleAll" = "net.kassett.finicky";}'
 }
 
+# Function to update pre-commit hooks in all subdirectories
+precommit-update-all() {
+  find . -type f -name ".pre-commit-config.yaml" | while read -r config_file; do
+    local dir
+    dir=$(dirname "$config_file")
+    echo "Processing $dir..."
+    update_precommit_dir "$dir"
+  done
+
+  echo "Done updating all pre-commit configurations."
+}
+
+# Function to update pre-commit hooks within a specific directory
+precommit-update-dir() {
+  local dir="$1"
+  cd "$dir" || return 1
+
+  # Stash existing changes if needed
+  if ! git diff --quiet; then
+    echo "Stashing existing changes..."
+    git stash push -m "pre-commit-update"
+  fi
+
+  # Run pre-commit autoupdate
+  pre-commit autoupdate
+
+  # Check if updates were made and commit changes
+  if ! git diff --quiet; then
+    git add .pre-commit-config.yaml
+    git commit -m "pre-commit autoupdate to latest"
+    echo "Committed updates for $dir."
+  else
+    echo "No updates were made for $dir."
+  fi
+
+  # Restore stashed changes if there were any
+  if git stash list | grep -q "pre-commit-update"; then
+    echo "Restoring stashed changes..."
+    git stash pop
+  fi
+
+  cd - > /dev/null
+}
+
+
 safe_init
 default_init
 export_secrets
