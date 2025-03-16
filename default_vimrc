@@ -594,6 +594,8 @@ command! IgDaily :n! `vim_python makedailypage`
 command! IgRDaily :n! `vim_python makedailypage --remote`
 command! IgRYesterday :n! `vim_python makedailypage --remote --daysoffset=-1`
 command! IgYesterday :n! `vim_python makedailypage --daysoffset=-1`
+command! -nargs=1 IgDate :n! `vim_python makedailypage --date=<args>`
+command! -nargs=1 IgDailyOffset :n! `vim_python makedailypage --daysoffset=<args>`
 command! -nargs=1 IgRDate :n! `vim_python makedailypage --date=<args> --remote`
 command! Ig3 :resize 10<cr>
 function! OpenConvoFile()
