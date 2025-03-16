@@ -812,9 +812,9 @@ def stats():
 @app.command()
 def notebook_to_clip(
     days: int = typer.Option(30, help="Show emails from the last N days"),
-    journal: bool = typer.Option(False, help="Run 'journal found.pdf' after copying link"),
+    journal: bool = typer.Option(False, help="Run 'journal' with the found URL"),
 ):
-    """List Kindle notebook emails, let user select one, and copy download link to clipboard"""
+    """List Kindle notebook emails, let user select one, and copy download link to clipboard or journal it"""
     try:
         service = authenticate()
 
@@ -889,27 +889,27 @@ def notebook_to_clip(
             # Just one link found
             selected_url = matches[0][0]
 
-        # Copy URL to clipboard
-        clipboard_success = copy_to_clipboard(selected_url)
-        if clipboard_success:
-            console.print(
-                f"[green]Download link copied to clipboard:[/green] {selected_url}"
-            )
-            
-            # Run journal command if requested
-            if journal:
-                try:
-                    console.print("[cyan]Running journal command...[/cyan]")
-                    subprocess.run(["journal", "found.pdf"], check=True)
-                    console.print("[green]Journal command completed successfully[/green]")
-                except subprocess.CalledProcessError as e:
-                    console.print(f"[red]Error running journal command: {e}[/red]")
-                except FileNotFoundError:
-                    console.print("[red]Error: 'journal' command not found[/red]")
+        # Handle the URL based on user preference
+        if journal:
+            try:
+                console.print("[cyan]Running journal command with URL...[/cyan]")
+                subprocess.run(["journal", selected_url], check=True)
+                console.print("[green]Journal command completed successfully[/green]")
+            except subprocess.CalledProcessError as e:
+                console.print(f"[red]Error running journal command: {e}[/red]")
+            except FileNotFoundError:
+                console.print("[red]Error: 'journal' command not found[/red]")
         else:
-            console.print(
-                f"[yellow]Here's the URL (manual copy required):[/yellow] {selected_url}"
-            )
+            # Copy URL to clipboard
+            clipboard_success = copy_to_clipboard(selected_url)
+            if clipboard_success:
+                console.print(
+                    f"[green]Download link copied to clipboard:[/green] {selected_url}"
+                )
+            else:
+                console.print(
+                    f"[yellow]Here's the URL (manual copy required):[/yellow] {selected_url}"
+                )
 
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
