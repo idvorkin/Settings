@@ -24,6 +24,8 @@ I use ish as my ssh client, with some minor tweaks:
 
 ## Windows
 
+**Use WSL Instead**
+
 1) Install chocolatey (new admin window)
 
     @powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
