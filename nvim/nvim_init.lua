@@ -141,7 +141,7 @@ require("neotest").setup({
 local hostname = vim.fn.hostname()
 
 function CheckCopilotHost()
-	local allowed_hosts = { "ip-172-26-0-134.us-west-2.compute.internal", "cat" }
+	local allowed_hosts = { "ip-172-26-0-134.us-west-2.compute.internal", "igors-Mac-mini.local" }
 	local is_allowed = false
 
 	for _, host in ipairs(allowed_hosts) do
