@@ -35,6 +35,7 @@ git config --global alias.logc log master..
 git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate"
 ln -s -f ~/settings/shared/gitconfig ~/.gitconfig
 ln -s -f ~/settings/shared/tigrc ~/.tigrc
+ln -s -f ~/settings/shared/bottomrc.toml ~/.config/bottom/bottom.toml
 
 ln -s -f ~/settings/default_vimrc ~/.vimrc
 ln -s -f ~/settings/shared/ranger_rc.conf ~/.config/ranger/rc.conf
@@ -46,6 +47,7 @@ ln -s -f ~/settings/mac/.inputrc ~/.inputrc
 ln -s -f ~/settings/tmuxp ~/.tmuxp
 mkdir ~/.hammerspoon
 mkdir ~/.ssh
+mkdir -p ~/.config/bottom
 
 ln -s -f ~/settings/mac/hammerspoon/init.lua ~/.hammerspoon/init.lua
 mkdir -p ~/.config/atuin

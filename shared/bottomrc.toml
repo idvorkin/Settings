@@ -1,0 +1,89 @@
+# Bottom configuration file
+
+# Display options
+[flags]
+# Hide the average CPU usage.
+hide_avg_cpu = false
+# Whether to use dot markers for graphs.
+dot_marker = false
+# Enables mouse capabilities.
+use_mouse = true
+# Hides the current time in the statusbar.
+hide_time = false
+# Whether to show memory values in the processes widget.
+mem_as_value = true
+# Whether to show tree mode by default in the processes widget.
+tree = false
+# Whether to show the process widget in a default expanded view.
+expanded = true
+# Whether to show the process widget in a default expanded view.
+expanded_on_startup = true
+
+# Layout options
+[display]
+# Show memory values in the processes widget as values by default.
+mem_as_value = true
+# Show tree mode by default in the processes widget.
+tree = false
+# Shows the battery widget.
+battery = false
+# Shows the network widget.
+network_use_bytes = true
+# Shows the processes widget.
+process_command = true
+# Shows the disk widget.
+disk_show = false
+# Shows the temperature widget (disabled as requested).
+temperature_type = "disabled"
+# Shows the cpu widget.
+show_average_cpu = true
+# Shows the memory widget.
+memory_use_current = true
+
+# Color options
+[colors]
+# Represents the colour of table headers and borders.
+table_header_color = "LightBlue"
+# Represents the colour of the selected item.
+selected_text_color = "Black"
+# Represents the background colour of the selected item.
+selected_bg_color = "LightBlue"
+# Represents the colour of the widget titles.
+widget_title_color = "Gray"
+# Represents the colour of the border of unselected widgets.
+border_color = "Gray"
+# Represents the colour of the border of selected widgets.
+highlighted_border_color = "LightBlue"
+# Represents the colour of text.
+text_color = "Gray"
+# Represents the colour of graphs.
+graph_color = "Gray"
+# Represents the colour of high values.
+high_color = "Red"
+# Represents the colour of medium values.
+medium_color = "Yellow"
+# Represents the colour of low values.
+low_color = "Green"
+
+# Keybindings
+[keybindings]
+# Quits the application.
+"q" = "quit"
+# Cycles through widgets.
+"Tab" = "cycle"
+# Moves up.
+"Up" = "up"
+"k" = "up"
+# Moves down.
+"Down" = "down"
+"j" = "down"
+# Expands a widget.
+"e" = "expand"
+# Shows help menu.
+"?" = "help"
+# Toggles tree mode in the processes widget.
+"t" = "toggle_tree"
+# Sorts the process widget.
+"p" = "sort_processes"
+# Toggles the process widget in a default expanded view.
+"P" = "toggle_process_expanded" 

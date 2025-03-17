@@ -419,7 +419,7 @@ function safe_init()
     echo ++safe_init
 
     export EDITOR=nvim
-    PATH+=:~/.local/bin:/.cargo/bin
+    PATH+=:~/.local/bin:~/.cargo/bin
     alias tam='tmux attach-session -t main || tmux new-session -s main'
     alias tas='tmux attach-session -t servers || tmux new-session -s servers'
     #
