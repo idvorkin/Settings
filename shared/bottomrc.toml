@@ -31,14 +31,37 @@ battery = false
 network_use_bytes = true
 # Shows the processes widget.
 process_command = true
-# Shows the disk widget.
+# Completely hide the disk widget.
 disk_show = false
-# Shows the temperature widget (disabled as requested).
+# Completely disable the temperature widget.
 temperature_type = "disabled"
+# Disable the temperature widget.
+hide_temperature_widget = true
 # Shows the cpu widget.
 show_average_cpu = true
 # Shows the memory widget.
 memory_use_current = true
+
+# Custom layout - explicitly define which widgets to show and their arrangement
+[[row]]
+ratio = 30
+[[row.child]]
+type = "cpu"
+
+[[row]]
+ratio = 30
+[[row.child]]
+type = "memory"
+ratio = 1
+[[row.child]]
+type = "network"
+ratio = 1
+
+[[row]]
+ratio = 40
+[[row.child]]
+type = "processes"
+default = true
 
 # Color options
 [colors]
@@ -86,4 +109,4 @@ low_color = "Green"
 # Sorts the process widget.
 "p" = "sort_processes"
 # Toggles the process widget in a default expanded view.
-"P" = "toggle_process_expanded" 
+"P" = "toggle_process_expanded"
