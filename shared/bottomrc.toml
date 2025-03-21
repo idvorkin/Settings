@@ -121,4 +121,4 @@ low_color = "Green"
 # Zooms out on graphs.
 "-" = "zoom_out"
 # Toggles full-screen mode for the selected widget.
-"f" = "toggle_expanded"
+"z" = "toggle_expanded"
