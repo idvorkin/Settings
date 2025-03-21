@@ -32,7 +32,7 @@ network_use_bytes = true
 # Shows the processes widget.
 process_command = true
 # Completely hide the disk widget.
-disk_show = false
+disk_show = true
 # Completely disable the temperature widget.
 temperature_type = "disabled"
 # Disable the temperature widget.
@@ -52,6 +52,9 @@ type = "cpu"
 ratio = 30
 [[row.child]]
 type = "memory"
+ratio = 1
+[[row.child]]
+type = "disk"
 ratio = 1
 [[row.child]]
 type = "network"
