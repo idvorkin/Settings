@@ -49,16 +49,18 @@ ratio = 30
 type = "cpu"
 
 [[row]]
-ratio = 30
+ratio = 15
 [[row.child]]
 type = "memory"
 ratio = 1
 [[row.child]]
-type = "disk"
-ratio = 1
-[[row.child]]
 type = "network"
 ratio = 1
+
+[[row]]
+ratio = 15
+[[row.child]]
+type = "disk"
 
 [[row]]
 ratio = 40
