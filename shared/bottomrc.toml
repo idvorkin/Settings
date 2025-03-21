@@ -120,3 +120,5 @@ low_color = "Green"
 "=" = "zoom_in"  # Alternative key for zoom in
 # Zooms out on graphs.
 "-" = "zoom_out"
+# Toggles full-screen mode for the selected widget.
+"f" = "toggle_expanded"
