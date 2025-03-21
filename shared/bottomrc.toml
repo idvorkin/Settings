@@ -115,3 +115,8 @@ low_color = "Green"
 "p" = "sort_processes"
 # Toggles the process widget in a default expanded view.
 "P" = "toggle_process_expanded"
+# Zooms in on graphs.
+"+" = "zoom_in"
+"=" = "zoom_in"  # Alternative key for zoom in
+# Zooms out on graphs.
+"-" = "zoom_out"
