@@ -151,8 +151,10 @@ function CheckCopilotHost()
 		end
 	end
 
-	if not is_allowed then
-		print("Disabling Copilot on host: " .. hostname)
+	if is_allowed then
+		print("Enabling Copilot on host: " .. hostname)
+	else
+		print("Disabling  Copilot on host: " .. hostname)
 		vim.cmd("Copilot disable")
 	end
 end
