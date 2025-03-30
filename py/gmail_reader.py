@@ -94,6 +94,7 @@ def authenticate():
     from google.auth.transport.requests import Request
     from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
+    from google.auth.exceptions import RefreshError
 
     # Define the scopes
     SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
@@ -103,34 +104,48 @@ def authenticate():
 
     # Check if token file exists
     if token_path.exists():
-        with open(token_path, "rb") as token:
-            creds = pickle.load(token)
+        try:
+            with open(token_path, "rb") as token:
+                creds = pickle.load(token)
 
-    # If credentials don't exist or are invalid, get new ones
+            # Try to refresh token if expired
+            if creds and creds.expired and creds.refresh_token:
+                try:
+                    creds.refresh(Request())
+                except RefreshError as e:
+                    if "invalid_grant" in str(e):
+                        console.print("[yellow]Token expired. Need to reauthenticate.[/yellow]")
+                        # Delete the invalid token file
+                        token_path.unlink()
+                        creds = None
+                    else:
+                        raise
+        except Exception as e:
+            console.print(f"[yellow]Error reading token: {e}. Will create new token.[/yellow]")
+            creds = None
+
+    # If no valid credentials available, let the user log in
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            credentials_path = get_credentials_path()
-            if not credentials_path.exists():
-                console.print(
-                    Panel(
-                        "[bold red]Credentials file not found![/bold red]\n\n"
-                        "You need to create a project in Google Cloud Console and download credentials:\n"
-                        "1. Go to [link=https://console.cloud.google.com/]Google Cloud Console[/link]\n"
-                        "2. Create a new project\n"
-                        "3. Enable the Gmail API\n"
-                        "4. Create OAuth 2.0 credentials (Desktop app)\n"
-                        "5. Download the credentials.json file\n"
-                        f"6. Save it to: [bold]{credentials_path}[/bold]"
-                    )
+        credentials_path = get_credentials_path()
+        if not credentials_path.exists():
+            console.print(
+                Panel(
+                    "[bold red]Credentials file not found![/bold red]\n\n"
+                    "You need to create a project in Google Cloud Console and download credentials:\n"
+                    "1. Go to [link=https://console.cloud.google.com/]Google Cloud Console[/link]\n"
+                    "2. Create a new project\n"
+                    "3. Enable the Gmail API\n"
+                    "4. Create OAuth 2.0 credentials (Desktop app)\n"
+                    "5. Download the credentials.json file\n"
+                    f"6. Save it to: [bold]{credentials_path}[/bold]"
                 )
-                raise typer.Exit(1)
-
-            flow = InstalledAppFlow.from_client_secrets_file(
-                str(credentials_path), SCOPES
             )
-            creds = flow.run_local_server(port=0)
+            raise typer.Exit(1)
+
+        flow = InstalledAppFlow.from_client_secrets_file(
+            str(credentials_path), SCOPES
+        )
+        creds = flow.run_local_server(port=0)
 
         # Save the credentials for the next run
         with open(token_path, "wb") as token:
@@ -913,6 +928,46 @@ def notebook_to_clip(
 
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
+
+
+@app.command()
+def config():
+    """Show configuration directories and files used by Gmail Reader"""
+    config_dir = Path.home() / ".config" / "gmail_reader"
+    token_path = get_token_path()
+    credentials_path = get_credentials_path()
+
+    # Create table
+    table = Table(title="Gmail Reader Configuration")
+    table.add_column("Item", style="cyan")
+    table.add_column("Path", style="green")
+    table.add_column("Status", style="yellow")
+
+    # Add config directory
+    table.add_row(
+        "Config Directory",
+        str(config_dir),
+        "✓ Exists" if config_dir.exists() else "✗ Not Found"
+    )
+
+    # Add token file
+    table.add_row(
+        "Token File",
+        str(token_path),
+        "✓ Exists" if token_path.exists() else "✗ Not Found"
+    )
+
+    # Add credentials file
+    table.add_row(
+        "Credentials File",
+        str(credentials_path),
+        "✓ Exists" if credentials_path.exists() else "✗ Not Found"
+    )
+
+    console.print(table)
+
+    if not credentials_path.exists():
+        console.print("\n[yellow]Note:[/yellow] To set up Gmail Reader, run: [bold]gmail setup[/bold]")
 
 
 if __name__ == "__main__":
