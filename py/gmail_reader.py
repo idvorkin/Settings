@@ -825,11 +825,13 @@ def stats():
 
 
 @app.command()
-def notebook_to_clip(
+def notebook(
     days: int = typer.Option(30, help="Show emails from the last N days"),
-    journal: bool = typer.Option(False, help="Run 'journal' with the found URL"),
+    journal: bool = typer.Option(
+        True, help="Run 'journal' with the found URL (press Ctrl+C to cancel)"
+    ),
 ):
-    """List Kindle notebook emails, let user select one, and copy download link to clipboard or journal it"""
+    """List Kindle notebook emails, let user select one, and journal it (or copy to clipboard with --journal=False)"""
     try:
         service = authenticate()
 
@@ -884,7 +886,7 @@ def notebook_to_clip(
             console.print("[bold]Multiple download links found:[/bold]")
             for i, (url, text) in enumerate(matches):
                 console.print(
-                    f"{i+1}. [green]Text:[/green] {text.strip() or 'No text'}"
+                    f"{i + 1}. [green]Text:[/green] {text.strip() or 'No text'}"
                 )
                 console.print(f"   [blue]URL:[/blue] {url}")
                 console.print("-" * 30)
@@ -907,9 +909,27 @@ def notebook_to_clip(
         # Handle the URL based on user preference
         if journal:
             try:
-                console.print("[cyan]Running journal command with URL...[/cyan]")
+                console.print(
+                    "[cyan]Running journal command with URL... (press Ctrl+C to cancel and copy to clipboard)[/cyan]"
+                )
+                start_time = datetime.now()
                 subprocess.run(["journal", selected_url], check=True)
-                console.print("[green]Journal command completed successfully[/green]")
+                end_time = datetime.now()
+                duration = end_time - start_time
+                console.print(
+                    f"[green]Journal command completed successfully in {duration.total_seconds():.2f} seconds[/green]"
+                )
+            except KeyboardInterrupt:
+                # Handle Ctrl+C by copying to clipboard instead
+                clipboard_success = copy_to_clipboard(selected_url)
+                if clipboard_success:
+                    console.print(
+                        f"[green]Journal canceled. Download link copied to clipboard:[/green] {selected_url}"
+                    )
+                else:
+                    console.print(
+                        f"[yellow]Journal canceled. Here's the URL (manual copy required):[/yellow] {selected_url}"
+                    )
             except subprocess.CalledProcessError as e:
                 console.print(f"[red]Error running journal command: {e}[/red]")
             except FileNotFoundError:
