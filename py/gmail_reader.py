@@ -919,6 +919,7 @@ def notebook(
                 console.print(
                     f"[green]Journal command completed successfully in {duration.total_seconds():.2f} seconds[/green]"
                 )
+                console.print(f"[green]Processed:[/green] {selected_email.subject}")
             except KeyboardInterrupt:
                 # Handle Ctrl+C by copying to clipboard instead
                 clipboard_success = copy_to_clipboard(selected_url)
