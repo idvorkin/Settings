@@ -65,7 +65,7 @@ brew_packages="$brew_packages httpie" # Another downloader, cli is http
 brew_packages="$brew_packages dasel" # jq replacement
 
 # System info & monitoring
-brew_packages="$brew_packages neofetch" # Show system info
+brew_packages="$brew_packages fastfetch" # Show system info (faster alternative to neofetch)
 
 # Terminal-based image viewers
 brew_packages="$brew_packages viu"
