@@ -8,7 +8,7 @@ import random
 import subprocess
 from zoneinfo import ZoneInfo
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 
 
 def pathBasedAtIgor2(filepath):
@@ -69,44 +69,46 @@ def make_remote_call(commands):
 
 @app.command()
 def MakeDailyPage(
-    daysoffset: int | None = None, date: str | None = None, remote: bool = False
+    date_input: str = typer.Argument(
+        None, help="Date input: number (days offset), YYYY-MM-DD, or MM-DD format"
+    ),
+    remote: bool = typer.Option(False, help="Create the page remotely"),
 ):
     """
-    Create a daily page for either an offset from today or a specific date.
-    Only one of daysoffset or date can be provided.
-    If neither is provided, defaults to today.
-    If date is provided without year (e.g. "3-25"), defaults to current year.
-
-    Args:
-        daysoffset: Number of days offset from today (mutually exclusive with date)
-        date: Date in YYYY-MM-DD or MM-DD format (mutually exclusive with daysoffset)
-        remote: Whether to create the page remotely
+    Create a daily page for a date.
+    If no date is provided, creates a page for today.
     """
-    if daysoffset is not None and date is not None:
-        print("Error: Cannot specify both daysoffset and date")
-        return
-
-    if date is not None:
-        try:
-            # Try full date format first
-            target_date = datetime.strptime(date, "%Y-%m-%d")
-        except ValueError:
-            try:
-                # Try month-day format, defaulting to current year
-                current_year = NowPST().year
-                target_date = datetime.strptime(f"{current_year}-{date}", "%Y-%m-%d")
-            except ValueError:
-                print("Error: date must be in YYYY-MM-DD or MM-DD format")
-                return
+    # Handle the date input
+    if date_input is None:
+        target_date = NowPST()
     else:
-        target_date = NowPST() + timedelta(days=daysoffset or 0)
+        # Check if input is a number (days offset)
+        try:
+            days_offset = int(date_input)
+            # Negative the offset to go backwards in time for positive numbers
+            target_date = NowPST() - timedelta(days=days_offset)
+        except ValueError:
+            # Not a number, try parsing as a date
+            try:
+                # Try full date format first
+                target_date = datetime.strptime(date_input, "%Y-%m-%d")
+            except ValueError:
+                try:
+                    # Try month-day format, defaulting to current year
+                    current_year = NowPST().year
+                    target_date = datetime.strptime(
+                        f"{current_year}-{date_input}", "%Y-%m-%d"
+                    )
+                except ValueError:
+                    print(
+                        "Error: date must be a number (days offset), YYYY-MM-DD, or MM-DD format"
+                    )
+                    return
 
     new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
     if remote:
-        if date is not None:
-            make_remote_call(f"makedailypage --date={date}")
-        else:
-            make_remote_call(f"makedailypage --daysoffset={daysoffset}")
+        # For remote calls, use the same input format
+        make_remote_call(f"makedailypage {date_input}")
         print(LocalToRemote(new_file))
     else:
         print(new_file)

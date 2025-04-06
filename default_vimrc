@@ -590,13 +590,10 @@ let g:ale_fixers = {
 " Scripting reference
 " https://devhints.io/vimscript
 " :py3file ~/settings/vim_python.py
-command! IgDaily :n! `vim_python makedailypage`
-command! IgRDaily :n! `vim_python makedailypage --remote`
-command! IgRYesterday :n! `vim_python makedailypage --remote --daysoffset=-1`
-command! IgYesterday :n! `vim_python makedailypage --daysoffset=-1`
-command! -nargs=1 IgDate :n! `vim_python makedailypage --date=<args>`
-command! -nargs=1 IgDailyOffset :n! `vim_python makedailypage --daysoffset=<args>`
-command! -nargs=1 IgRDate :n! `vim_python makedailypage --date=<args> --remote`
+command! -nargs=? IgDaily :n! `vim_python makedailypage <args>`
+command! -nargs=? IgRDaily :n! `vim_python makedailypage <args> --remote`
+command! IgYesterday :n! `vim_python makedailypage 1`
+command! IgRYesterday :n! `vim_python makedailypage 1 --remote`
 command! Ig3 :resize 10<cr>
 function! OpenConvoFile()
     let bufexists = 0
@@ -642,7 +639,6 @@ command! IgWeekly :n! `vim_python makeweeklyreport`
 command! IgRWeekly :n! `vim_python makeweeklyreport --remote`
 command! IgRYesterweek :n! `vim_python makeweeklyreport --remote --weekoffset -1`
 command! IgYesterweek :n! `vim_python makeweeklyreport --weekoffset -1`
-command! IgYesterday :n! `vim_python makedailypage --daysoffset -1`
 cab Ddt !python3 ~/gits/nlp/dump_grateful.py todo --markdown
 cab Ddg !python3 ~/gits/nlp/dump_grateful.py grateful
 cab Dda !python3 ~/gits/nlp/dump_grateful.py awesome
