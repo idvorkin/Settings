@@ -477,6 +477,14 @@ local git_plugins = {
 			},
 		},
 	},
+    {
+        "olimorris/codecompanion.nvim",
+        config = true,
+        dependencies = {
+            "nvim-lua/plenary.nvim",
+            "nvim-treesitter/nvim-treesitter",
+        },
+    },
 }
 plugins = appendTables(plugins, git_plugins)
 -- cmp and friends
