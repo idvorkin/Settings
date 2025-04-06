@@ -596,7 +596,7 @@ alias airpods_audio='SwitchAudioSource -s "Igor's AirPods Pro" && SwitchAudioSou
 
 # Better Display cli is the only way fix my resolution
 # https://github.com/waydabber/betterdisplaycli?tab=readme-ov-file
-alias lg-fix='betterdisplaycli set  --resolution=3840x2160 --refreshRate=50Hz '
+alias lg-fix='betterdisplaycli set  --resolution=3840x2160 --refreshRate=59.94Hz '
 alias lg-show='betterdisplaycli get  --resolution --refreshRate'
 
 # Turn off auto update brew
