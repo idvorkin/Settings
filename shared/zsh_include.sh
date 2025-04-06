@@ -431,6 +431,7 @@ function safe_init()
     alias_if_exists top htop
     alias_if_exists ndcu gdu
     alias_if_exists du dua
+    alias_if_exists neofetch fastfetch
     alias_if_other_exists cd z zoxide
     alias_if_exists ps procs
     # On mac, gpt is in sbin, use the installed from idvorkin_nlp version instead
@@ -592,6 +593,11 @@ alias copy_secrets_from_shell='scp lightsail:/home/ec2-user/gits/igor2/secretBox
 # Useful stuff w/OSX Sound
 alias restart_audio='sudo launchctl kickstart -kp system/com.apple.audio.coreaudiod'
 alias airpods_audio='SwitchAudioSource -s "Igor's AirPods Pro" && SwitchAudioSource -t input -s "Igor's AirPods Pro" '
+
+# Better Display cli is the only way fix my resolution
+# https://github.com/waydabber/betterdisplaycli?tab=readme-ov-file
+alias lg-fix='betterdisplaycli set  --resolution=3840x2160 --refreshRate=50Hz '
+alias lg-show='betterdisplaycli get  --resolution --refresh-rate'
 
 # Turn off auto update brew
 
