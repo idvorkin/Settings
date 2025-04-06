@@ -54,7 +54,7 @@ local vscode_compatible_plugins = {
 	-- Comment \cc
 	-- Uncomment \cu
 	"scrooloose/nerdcommenter",
-    "preservim/vim-markdown",
+	"preservim/vim-markdown",
 
 	"panozzaj/vim-autocorrect",
 	{
@@ -403,7 +403,7 @@ plugins = appendTables(plugins, { "tpope/vim-surround" })
 
 local git_plugins = {
 	"tpope/vim-fugitive",
-    {'akinsho/git-conflict.nvim', version = "*", config = true},
+	{ "akinsho/git-conflict.nvim", version = "*", config = true },
 	{
 		"Rawnly/gist.nvim",
 		cmd = { "GistCreate", "GistCreateFromFile", "GistsList" },
@@ -452,16 +452,7 @@ local git_plugins = {
 		"yetone/avante.nvim",
 		event = "VeryLazy",
 		build = "make",
-		opts = {
-			-- add any opts here
-			behaviour = {
-				auto_suggestions = false, -- Experimental stage
-				auto_set_highlight_group = true,
-				auto_set_keymaps = true,
-				auto_apply_diff_after_generation = false,
-				support_paste_from_clipboard = false,
-			},
-		},
+		opts = {},
 		dependencies = {
 			"nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
 			"stevearc/dressing.nvim",
