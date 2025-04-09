@@ -24,7 +24,15 @@ brew install borders
 
 brew install koekeishiya/formulae/yabai
 
-brew install --cask karabiner-elements iterm2 alfred docker microsoft-edge 1password meetingbar
+brew install --cask karabiner-elements
+brew install --cask iterm2
+brew install --cask alfred
+brew install --cask docker
+brew install --cask microsoft-edge
+brew install --cask 1password
+brew install --cask meetingbar
+brew install --cask cursor
+brew install --cask capcut
 
 # Switch between audio input and output - these mess stuff up, get rid of 'em.
 # brew install switchaudio-osx
