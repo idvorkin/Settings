@@ -22,6 +22,7 @@ yt-dlp \
 gdu \
 yq \
 cpulimit \
+carapace \
 docker \
 png-quant \
 docker-compose \
