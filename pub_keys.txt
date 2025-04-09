@@ -18,3 +18,5 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC6S0fihC+xC/b1hJe+xu9+fDdYto9l4EyVGV7mpd6K
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICyx9NajemJXy9DDiilXSwiRUKbMtyLDk3jSkDEAkGV2 idvorkin@igors-Mac-mini.local
 
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAIwhHcqpF7g0RmBiUMF2FxGBlOJZQ53CpvnSljBr2bO idvorkin@idvorkin-mbp-13-m1
+
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOAEc9nxAJyTOZqzDCg05AEigjit1Tn1DhC2RhdyIEed idvorkin@Igors-MacBook-Air.local
