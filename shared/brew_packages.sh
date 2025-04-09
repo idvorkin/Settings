@@ -30,6 +30,7 @@ diff-so-fancy \
 fx \
 git-extras \
 git-delta \
+just \
 imagemagick \
 python3 \
 asciinema \

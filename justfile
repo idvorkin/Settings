@@ -11,7 +11,7 @@ install:
     @cd py && uv pip install --upgrade --editable .
 
 global-install: install
-    @cd py && uv tool install --force  --editable . --python $(which python3.12)
+    @cd py && uv tool install --force  --editable .
 
 # Justfile
 

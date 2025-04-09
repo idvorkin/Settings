@@ -24,7 +24,7 @@ brew install borders
 
 brew install koekeishiya/formulae/yabai
 
-brew install --cask karabiner-elements iterm2 alfred visual-studio-code docker microsoft-edge 1password meetingbar
+brew install --cask karabiner-elements iterm2 alfred docker microsoft-edge 1password meetingbar
 
 # Switch between audio input and output - these mess stuff up, get rid of 'em.
 # brew install switchaudio-osx
@@ -65,8 +65,3 @@ defaults write com.apple.loginwindow TALLogoutSavesState -bool false
 # Mac only git setup
 git config --global credential.helper osxkeychain
 
-
-# setup xcode
-git clone https://github.com/XVimProject/XVim.git  ~/gits/XVim
-cd ~/gits/XVim
-#make
