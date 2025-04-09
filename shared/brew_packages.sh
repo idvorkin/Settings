@@ -123,15 +123,15 @@ gh extension install github/gh-copilot
 # Add some npm packages
 npm install --global fkill-cli
 
-# Install pipx tools
+# Install Python tools
 echo "Setting up Python tools..."
 pipx install pipxu # pipx upgrade tool
-pipxu install aider-chat # Code Writing helper
-pipxu install ruff # Fast Python linter
-pipxu install httpx # HTTP client with CLI
-pipxu install pre-commit # Git pre-commit hooks framework
-pipxu install jupyterlab # Jupyter notebook interface
-pipxu install rich-cli # Terminal formatting tool
+uv tool install --force --python python3.12 aider-chat # Code Writing helper
+uv tool install --force ruff # Fast Python linter
+uv tool install --force httpx # HTTP client with CLI
+uv tool install --force pre-commit # Git pre-commit hooks framework
+uv tool install --force jupyterlab # Jupyter notebook interface
+uv tool install --force rich-cli # Terminal formatting tool
 
 # Cloud tools
 echo "Installing cloud tools..."
@@ -139,9 +139,9 @@ brew install --cask google-cloud-sdk
 
 echo "Setup completed successfully!"
 
-# Note: Other Python CLI tools that can be installed via pipx if needed:
-# - black: Code formatter
-# - mypy: Static type checker
-# - poetry: Python package manager
-# - uvicorn: ASGI server
-# - pudb: Console-based visual debugger
+# Additional Python tools installed with uv:
+uv tool install --force black # Code formatter
+uv tool install --force mypy # Static type checker
+uv tool install --force poetry # Python package manager
+uv tool install --force uvicorn # ASGI server
+uv tool install --force pudb # Console-based visual debugger

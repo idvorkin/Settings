@@ -33,6 +33,7 @@ brew install --cask 1password
 brew install --cask meetingbar
 brew install --cask cursor
 brew install --cask capcut
+brew install --cask signal
 
 # Switch between audio input and output - these mess stuff up, get rid of 'em.
 # brew install switchaudio-osx
