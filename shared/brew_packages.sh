@@ -10,7 +10,7 @@ source "$HOME/.cargo/env"
 
 # Install packages via cargo for better cross-platform compatibility
 echo "Installing Rust packages via cargo..."
-cargo install zoxide bat duf eza mcfly dua procs htop starship yazi television bottom rg
+cargo install zoxide bat eza mcfly dua procs htop starship yazi television bottom rg
 
 # Define the remaining brew packages
 export brew_packages="\
@@ -64,6 +64,8 @@ brew_packages="$brew_packages httpie" # Another downloader, cli is http
 
 # Data editors
 brew_packages="$brew_packages dasel" # jq replacement
+brew_packages="$brew_packages jq"
+brew_packages="$brew_packages duf"
 
 # System info & monitoring
 brew_packages="$brew_packages fastfetch" # Show system info (faster alternative to neofetch)
