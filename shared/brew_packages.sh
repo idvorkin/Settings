@@ -36,6 +36,7 @@ python3 \
 asciinema \
 asciiquarium \
 ffmpeg \
+pre-commit \
 fselect \
 btop \
 lazydocker \
