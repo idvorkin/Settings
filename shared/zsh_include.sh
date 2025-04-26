@@ -601,6 +601,56 @@ alias airpods_audio='SwitchAudioSource -s "Igor's AirPods Pro" && SwitchAudioSou
 alias lg-fix='betterdisplaycli set  --resolution=3840x2160 --refreshRate=59.94Hz '
 alias lg-show='betterdisplaycli get  --resolution --refreshRate'
 
+# Function to select from display resolution presets
+function lg-presets() {
+    local presets=(
+        "4K (3840x2160 @ 59.94Hz)"
+        "1440p (2560x1440 @ 60Hz)"
+        "1080p (1920x1080 @ 60Hz)"
+        "Custom"
+        "Show current"
+    )
+    
+    # Use fzf to select a preset if available, otherwise fall back to select
+    if command -v fzf &> /dev/null; then
+        local selected=$(printf "%s\n" "${presets[@]}" | fzf --height 40% --reverse --prompt="Select display preset: ")
+    else
+        echo "Select a display preset:"
+        select selected in "${presets[@]}"; do
+            break
+        done
+    fi
+    
+    case "$selected" in
+        "4K (3840x2160 @ 59.94Hz)")
+            betterdisplaycli set --resolution=3840x2160 --refreshRate=59.94Hz
+            echo "Set display to 4K (3840x2160 @ 59.94Hz)"
+            ;;
+        "1440p (2560x1440 @ 60Hz)")
+            betterdisplaycli set --resolution=2560x1440 --refreshRate=60Hz
+            echo "Set display to 1440p (2560x1440 @ 60Hz)"
+            ;;
+        "1080p (1920x1080 @ 60Hz)")
+            betterdisplaycli set --resolution=1920x1080 --refreshRate=60Hz
+            echo "Set display to 1080p (1920x1080 @ 60Hz)"
+            ;;
+        "Custom")
+            echo "Enter custom resolution (e.g., 3840x2160):"
+            read resolution
+            echo "Enter refresh rate (e.g., 60Hz):"
+            read refreshRate
+            betterdisplaycli set --resolution=$resolution --refreshRate=$refreshRate
+            echo "Set display to $resolution @ $refreshRate"
+            ;;
+        "Show current")
+            betterdisplaycli get --resolution --refreshRate
+            ;;
+        *)
+            echo "No preset selected or invalid selection"
+            ;;
+    esac
+}
+
 # Turn off auto update brew
 
 export HOMEBREW_NO_AUTO_UPDATE=1
