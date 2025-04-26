@@ -112,12 +112,13 @@ def MakeDailyPage(
         result = subprocess.run(f"ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python {cmd}", 
                                shell=True, capture_output=True, text=True)
         if result.returncode == 0:
-            # Print the remote command's output
+            # Print the remote command's output to stderr
+            import sys
             if result.stdout:
-                print(f"Remote output: {result.stdout.strip()}")
+                print(f"Remote output: {result.stdout.strip()}", file=sys.stderr)
             print(LocalToRemote(new_file))
         else:
-            print(f"Remote command failed with error: {result.stderr}")
+            print(f"Remote command failed with error: {result.stderr}", file=sys.stderr)
     else:
         print(new_file)
 
