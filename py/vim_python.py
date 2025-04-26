@@ -108,8 +108,16 @@ def MakeDailyPage(
     new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
     if remote:
         # For remote calls, use the same input format
-        make_remote_call(f"makedailypage {date_input}")
-        print(LocalToRemote(new_file))
+        cmd = f"makedailypage {date_input}" if date_input else "makedailypage"
+        result = subprocess.run(f"ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python {cmd}", 
+                               shell=True, capture_output=True, text=True)
+        if result.returncode == 0:
+            # Print the remote command's output
+            if result.stdout:
+                print(f"Remote output: {result.stdout.strip()}")
+            print(LocalToRemote(new_file))
+        else:
+            print(f"Remote command failed with error: {result.stderr}")
     else:
         print(new_file)
 
