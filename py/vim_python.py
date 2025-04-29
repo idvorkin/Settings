@@ -105,11 +105,11 @@ def MakeDailyPage(
                     )
                     return
 
-    new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
     if remote:
         # For remote calls, use the same input format
+<<<<<<< HEAD
         cmd = f"makedailypage {date_input}" if date_input else "makedailypage"
-        result = subprocess.run(f"ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python {cmd}", 
+        result = subprocess.run(f"ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python {cmd}",
                                shell=True, capture_output=True, text=True)
         if result.returncode == 0:
             # Print the remote command's output to stderr
@@ -119,7 +119,10 @@ def MakeDailyPage(
             print(LocalToRemote(new_file))
         else:
             print(f"Remote command failed with error: {result.stderr}", file=sys.stderr)
+        make_remote_call(f"makedailypage {date_input}")
+        print(LocalToRemote(new_file))
     else:
+        new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
         print(new_file)
 
 
@@ -148,12 +151,15 @@ def MakeWeeklyReport(
     now = NowPST()
     startOfWeek = now - timedelta(days=now.weekday()) + timedelta(days=weekoffset * 7)
 
-    # Make to start of week.
-    new_file, directory = MakeTemplatePage(startOfWeek, "week_report", "week_template")
     if remote:
-        make_remote_call(f"makeweeklyreport --weekoffset={weekoffset}")
-        print(LocalToRemote(new_file))
+        make_remote_call(f"makeweeklyreport {weekoffset}")
+        # Calculate the expected file path on the remote server
+        date_str = startOfWeek.strftime("%Y-%m-%d")
+        remote_file = f"scp://ec2-user@lightsail//home/ec2-user/gits/igor2/week_report/{date_str}.md"
+        print(remote_file)
     else:
+        # Make to start of week.
+        new_file, directory = MakeTemplatePage(startOfWeek, "week_report", "week_template")
         print(new_file)
 
 
