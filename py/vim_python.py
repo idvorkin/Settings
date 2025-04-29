@@ -106,24 +106,25 @@ def MakeDailyPage(
                     )
                     return
 
+    # Create the file locally first to get the path
+    new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
+    
     if remote:
         # For remote calls, use the same input format
-<<<<<<< HEAD
         cmd = f"makedailypage {date_input}" if date_input else "makedailypage"
-        result = subprocess.run(f"ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python {cmd}",
-                               shell=True, capture_output=True, text=True)
+        import sys
+        result = subprocess.run(
+            f"ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python {cmd}",
+            shell=True, capture_output=True, text=True
+        )
         if result.returncode == 0:
             # Print the remote command's output to stderr
-            import sys
             if result.stdout:
                 print(f"Remote output: {result.stdout.strip()}", file=sys.stderr)
             print(LocalToRemote(new_file))
         else:
             print(f"Remote command failed with error: {result.stderr}", file=sys.stderr)
-        make_remote_call(f"makedailypage {date_input}")
-        print(LocalToRemote(new_file))
     else:
-        new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
         print(new_file)
 
 
@@ -213,6 +214,39 @@ def make_convo():
         # Close the temporary file
         os.close(temp_file)
     print(temp_path)
+
+
+@app.command()
+def WCDailyPage():
+    """
+    Create a daily page for today and open it for word count.
+    This function is used by the 'dwc' alias.
+    """
+    target_date = NowPST()
+    new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
+    print(new_file)
+
+
+@app.command()
+def GitCommitDailyPage():
+    """
+    Create a daily page for today and prepare it for git commit.
+    This function is used by the 'dgc' alias.
+    """
+    target_date = NowPST()
+    new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
+    
+    # Change to the directory containing the file
+    chdir(path.dirname(new_file))
+    
+    # Add the file to git
+    try:
+        subprocess.run(["git", "add", path.basename(new_file)], check=True)
+        print(f"Added {path.basename(new_file)} to git staging area")
+    except subprocess.CalledProcessError as e:
+        print(f"Error adding file to git: {e}")
+    
+    print(new_file)
 
 
 if __name__ == "__main__":
