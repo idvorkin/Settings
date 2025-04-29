@@ -135,12 +135,21 @@ def RandomBlogPost():
 
 
 @app.command()
-def MakeWeeklyReport(weekoffset: int = 0, remote: bool = False):
+def MakeWeeklyReport(
+    weekoffset: int = typer.Argument(
+        0, help="Week offset: number of weeks from current week (negative for past weeks)"
+    ),
+    remote: bool = typer.Option(False, help="Create the weekly report remotely"),
+):
+    """
+    Create a weekly report for a specific week.
+    If no week offset is provided, creates a report for the current week.
+    """
     now = NowPST()
     startOfWeek = now - timedelta(days=now.weekday()) + timedelta(days=weekoffset * 7)
 
-    # Make to sart of week.
-    new_file, path = MakeTemplatePage(startOfWeek, "week_report", "week_template")
+    # Make to start of week.
+    new_file, directory = MakeTemplatePage(startOfWeek, "week_report", "week_template")
     if remote:
         make_remote_call(f"makeweeklyreport --weekoffset={weekoffset}")
         print(LocalToRemote(new_file))
