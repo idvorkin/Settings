@@ -830,6 +830,9 @@ def notebook(
     journal: bool = typer.Option(
         True, help="Run 'journal' with the found URL (press Ctrl+C to cancel)"
     ),
+    list_url_only: bool = typer.Option(
+        False, help="Just list the URL without copying or journaling"
+    ),
 ):
     """List Kindle notebook emails, let user select one, and journal it (or copy to clipboard with --journal=False)"""
     try:
@@ -907,7 +910,10 @@ def notebook(
             selected_url = matches[0][0]
 
         # Handle the URL based on user preference
-        if journal:
+        if list_url_only:
+            # Just print the URL without any additional actions
+            console.print(f"[bold]URL:[/bold] {selected_url}")
+        elif journal:
             try:
                 console.print(
                     "[cyan]Running journal command with URL... (press Ctrl+C to cancel and copy to clipboard)[/cyan]"
