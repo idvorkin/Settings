@@ -830,7 +830,7 @@ def notebook(
     journal: bool = typer.Option(
         True, help="Run 'journal' with the found URL (press Ctrl+C to cancel)"
     ),
-    list_url_only: bool = typer.Option(
+    url_only: bool = typer.Option(
         False, help="Just list the URL without copying or journaling"
     ),
 ):
@@ -910,7 +910,7 @@ def notebook(
             selected_url = matches[0][0]
 
         # Handle the URL based on user preference
-        if list_url_only:
+        if url_only:
             # Just print the URL without any additional actions
             console.print(f"[bold]URL:[/bold] {selected_url}")
         elif journal:
