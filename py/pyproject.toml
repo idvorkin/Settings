@@ -9,6 +9,7 @@ description = "A collection of Igor's Python scripts"
 authors = [{name = "Igor Dvorkin"}]
 dependencies = [
     "typer",
+    "click==8.1.8", # 8.2 seems borked
     "httpx",
     "typing-extensions",
     "rich",
