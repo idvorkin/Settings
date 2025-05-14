@@ -23,6 +23,7 @@ from pydantic import BaseModel
 import importlib.util
 import subprocess
 import sys
+import time
 
 app = typer.Typer(
     help="Gmail Reader - Access and manage your Gmail from the command line",
@@ -522,6 +523,37 @@ def copy_to_clipboard(text):
         return False
 
 
+def ping_url(url, attempts=2, delay=1):
+    """Ping a URL to warm it up
+    
+    Args:
+        url: URL to ping
+        attempts: Number of ping attempts
+        delay: Delay between attempts in seconds
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        import requests
+        console.print(f"[cyan]Warming up URL with {attempts} pings (delay: {delay}s)...[/cyan]")
+        
+        for i in range(attempts):
+            try:
+                response = requests.head(url, timeout=5)
+                console.print(f"[cyan]Ping {i+1}/{attempts}: Status {response.status_code}[/cyan]")
+            except Exception as e:
+                console.print(f"[yellow]Ping {i+1}/{attempts} failed: {str(e)}[/yellow]")
+            
+            if i < attempts - 1:  # Don't sleep after the last attempt
+                time.sleep(delay)
+                
+        return True
+    except Exception as e:
+        console.print(f"[yellow]URL warm-up failed: {str(e)}[/yellow]")
+        return False
+
+
 @app.command()
 def kindle(
     max_results: int = typer.Option(
@@ -915,6 +947,9 @@ def notebook(
             console.print(f"[bold]URL:[/bold] {selected_url}")
         elif journal:
             try:
+                # Warm up the URL first
+                ping_url(selected_url, attempts=2, delay=1)
+                
                 console.print(
                     "[cyan]Running journal command with URL... (press Ctrl+C to cancel and copy to clipboard)[/cyan]"
                 )
