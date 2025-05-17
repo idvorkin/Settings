@@ -675,5 +675,6 @@ function ReloadSnippets()
 end
 
 vim.lsp.enable({"pyrefly"})
+vim.lsp.enable({"tsserver"})
 ReloadSnippets()
 vim.api.nvim_set_keymap("n", "<leader><leader>s", ":lua ReloadSnippets()<cr>", {})
