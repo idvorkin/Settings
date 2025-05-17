@@ -102,9 +102,58 @@ When adding a new library, ensure it's in pyproject.toml
 
 When adding new scripts, be sure to add them to the scripts section in pyproject.toml
 
-### When running python,
+### When running python
 
-# Terminal Command Conventions
+Run it via shebang when avaialble
+Run it via uv if not
+
+### Terminal Command Conventions
 
 1. For ANY commands that would use a pager or require user interaction, you should append ` | /bin/cat` to the command (NOT just `cat` as it's aliased to `bat`). Otherwise, the command will break. You MUST do this for: git, less, head, tail, more, etc.
 2. For commands that are long running/expected to run indefinitely until interruption, run them in the background.
+
+# Using `uv` Shebang and Dependency Block in Python Scripts
+
+Use a modern approach for environment and dependency management by leveraging the `uv` tool.
+
+## Shebang Format
+
+The script begins with:
+
+```python
+#!uv run
+```
+
+This tells the operating system to execute the script using `uv run`, which manages dependencies and the Python environment automatically.
+
+## Dependency Block
+
+Immediately after the shebang, a special comment block specifies the required Python version and dependencies:
+
+```python
+# /// script
+# requires-python = ">=3.8"
+# dependencies = [
+#     "typer",
+#     "icecream",
+#     "rich",
+#     "langchain",
+#     "langchain-core",
+#     "langchain-community",
+#     "langchain-openai",
+#     "openai",
+#     "loguru",
+#     "pydantic",
+#     "requests",
+# ]
+# ///
+```
+
+- List all third-party packages imported in the script.
+- If you add or remove imports, update this block accordingly.
+- If you use additional tools (e.g., `pudb` for debugging), add them to the list as needed.
+
+## Benefits
+
+- Anyone with `uv` installed can run the script directly without manual environment setup.
+- Ensures reproducibility and reduces dependency issues.
