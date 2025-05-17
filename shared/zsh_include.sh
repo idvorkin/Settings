@@ -395,6 +395,7 @@ function export_secrets()
     esecret_jq TWILIO_AUTH_TOKEN
     esecret_jq TWILIO_FROM_NUMBER
     esecret_jq EXA_API_KEY
+    esecret_jq GITHUB_PERSONAL_ACCESS_TOKEN
     esecret_jq VAPI_API_KEY
     esecret_jq GOOGLE_API_KEY
     esecret_jq GROQ_API_KEY
@@ -610,7 +611,7 @@ function lg-presets() {
         "Custom"
         "Show current"
     )
-    
+
     # Use fzf to select a preset if available, otherwise fall back to select
     if command -v fzf &> /dev/null; then
         local selected=$(printf "%s\n" "${presets[@]}" | fzf --height 40% --reverse --prompt="Select display preset: ")
@@ -620,7 +621,7 @@ function lg-presets() {
             break
         done
     fi
-    
+
     case "$selected" in
         "4K (3840x2160 @ 59.94Hz)")
             betterdisplaycli set --resolution=3840x2160 --refreshRate=59.94Hz
