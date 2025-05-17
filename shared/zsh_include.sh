@@ -429,7 +429,7 @@ function safe_init()
     alias_if_exists ranger yazi
     alias_if_exists ls eza
     alias_if_exists df duf
-    alias_if_exists top htop
+    alias_if_exists top btm
     alias_if_exists ndcu gdu
     alias_if_exists du dua
     alias_if_exists neofetch fastfetch
@@ -495,7 +495,6 @@ echo  ++default_init
 source_if_exists ~/.fzf.zsh
 
 alias ghg-md-sink='gh gist create --filename=out.md -- '
-unalias image
 
 
 alias alf="open '/Applications/Alfred 5.app/'"
@@ -575,8 +574,6 @@ alias rmp='rich - -m'
 
 alias tmuxp="~/.local/bin/tmuxp"
 alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"
-
-unalias ddg
 
 if [[ "$(uname -a)" =~ "microsoft" ]]; then
     do_wsl
