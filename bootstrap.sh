@@ -69,6 +69,10 @@ ln -s -f ~/settings/config/yazi ~/.config/yazi
 ln -s -f ~/settings/config/bat ~/.config/bat
 ln -s -f ~/settings/config/mcphub ~/.config/mcphub
 
+# Cursor config (official location is ~/.cursor but also link to ~/.config/cursor for consistency)
+ln -s -f ~/settings/config/cursor ~/.config/cursor
+ln -s -f ~/settings/config/cursor ~/.cursor
+
 # Mac goodies
 ln -s -f ~/settings/config/yabai ~/.config/yabai
 mkdir ~/.config/borders

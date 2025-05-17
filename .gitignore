@@ -256,3 +256,5 @@ lazy-lock.json
 
 # Private individual user cursor rules
 .cursor/rules/_*.mdc
+# SpecStory explanation file
+.specstory/.what-is-this.md
