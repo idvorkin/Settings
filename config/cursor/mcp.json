@@ -1,4 +1,3 @@
-
 {
   "mcpServers": {
     "playwright": {
@@ -12,6 +11,10 @@
       "args": [
         "stdio"
       ]
+    },
+    "github": {
+      "command": "~/gits/settings/mcp_servers/github-mcp-server.sh",
+      "args": []
     }
   }
 }
