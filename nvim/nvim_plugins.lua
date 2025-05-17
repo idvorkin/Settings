@@ -674,5 +674,6 @@ function ReloadSnippets()
 	dofile(settings_dir .. "snippets.lua")
 end
 
+vim.lsp.enable({"pyrefly"})
 ReloadSnippets()
 vim.api.nvim_set_keymap("n", "<leader><leader>s", ":lua ReloadSnippets()<cr>", {})
