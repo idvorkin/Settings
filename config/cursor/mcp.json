@@ -6,6 +6,12 @@
       "args": [
         "@playwright/mcp@latest"
       ]
+    },
+    "ask_igor": {
+      "command": "askig_mcp",
+      "args": [
+        "stdio"
+      ]
     }
   }
 }
