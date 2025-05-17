@@ -103,6 +103,9 @@ brew_packages="$brew_packages mpv" # Great video player, mostly works from CLI
 # Fun visualization tools
 brew_packages="$brew_packages cmatrix" # Matrix-like terminal animation
 
+# Password management
+brew_packages="$brew_packages 1password-cli" # 1Password command-line interface
+
 echo "Installing remaining brew packages..."
 echo $brew_packages
 
