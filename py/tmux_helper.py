@@ -164,7 +164,7 @@ def get_python_command(process_info: dict) -> str | None:
     """Get the python script name if it's running in the process tree"""
     # Check children for python processes
     for child in process_info.get('children', []):
-        if child.get('name', '').startswith('python'):
+        if child.get('name', '').lower().startswith('python'):
             cmdline = child.get('cmdline', '').split()
             if len(cmdline) > 1:
                 script_name = Path(cmdline[1]).stem
