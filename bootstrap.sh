@@ -67,6 +67,7 @@ ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 ln -s -f ~/settings/config/carapace/ ~/.config/carapace
 ln -s -f ~/settings/config/yazi ~/.config/yazi
 ln -s -f ~/settings/config/bat ~/.config/bat
+ln -s -f ~/settings/config/mcphub ~/.config/mcphub
 
 # Mac goodies
 ln -s -f ~/settings/config/yabai ~/.config/yabai
