@@ -1,0 +1,23 @@
+{
+  "nativeMCPServers": [],
+  "mcpServers": {
+    "ask_igor": {
+      "args": ["stdio"],
+      "command": "askig_mcp"
+    },
+    "github": {
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "command": "docker",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<YOUR_TOKEN>"
+      }
+    }
+  }
+}
