@@ -258,3 +258,5 @@ lazy-lock.json
 .cursor/rules/_*.mdc
 # SpecStory explanation file
 .specstory/.what-is-this.md
+# Cursor extensions directory
+config/cursor/extensions/
