@@ -40,7 +40,6 @@ ln -s -f ~/settings/shared/bottomrc.toml ~/.config/bottom/bottom.toml
 ln -s -f ~/settings/default_vimrc ~/.vimrc
 ln -s -f ~/settings/shared/ranger_rc.conf ~/.config/ranger/rc.conf
 mkdir ~/.config
-ln -s -f ~/settings/nvim ~/.config/nvim
 ln -s -f ~/settings/shared/litecli_config ~/.config/litecli/config
 ln -s -f ~/settings/mac/.xvimrc ~/.xvimrc
 ln -s -f ~/settings/mac/.inputrc ~/.inputrc
@@ -64,6 +63,7 @@ ln -s -f ~/settings/shared/aider.conf.yml ~/.aider.conf.yml
 ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 
 # Todo consider enumerating the directory and linking all of them
+ln -s -f ~/settings/nvim ~/.config/nvim
 ln -s -f ~/settings/config/carapace/ ~/.config/carapace
 ln -s -f ~/settings/config/yazi ~/.config/yazi
 ln -s -f ~/settings/config/bat ~/.config/bat
