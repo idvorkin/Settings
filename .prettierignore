@@ -1,1 +1,15 @@
+# Files handled by Biome (JS/TS/JSX/TSX/JSON/CSS/GraphQL)
+*.js
+*.jsx
+*.ts
+*.tsx
+*.json
+*.css
+*.scss
+*.less
+*.graphql
+*.gql
+
+# Existing exclusions
+.specstory/**
 zz-chop-logs/ 
