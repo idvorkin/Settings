@@ -17,7 +17,6 @@
 #############
 # Main model:
 
-
 ########################
 # API Keys and settings:
 
@@ -97,7 +96,7 @@ model: claude-sonnet-4-20250514
 #editor-model: xxx
 
 ## Specify the edit format for the editor model (default: depends on editor model)
-#editor-edit-format: xxx
+editor-edit-format: editor-diff
 
 ## Only work with models that have meta-data available (default: True)
 #show-model-warnings: true
