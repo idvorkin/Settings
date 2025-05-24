@@ -17,41 +17,6 @@
 #############
 # Main model:
 
-## Specify the model to use for the main chat
-#model: chatgpt-4o-latest
-
-## Use claude-3-opus-20240229 model for the main chat
-#opus: false
-
-## Use claude-3-5-sonnet-20241022 model for the main chat
-sonnet: true
-
-## Use claude-3-5-haiku-20241022 model for the main chat
-#haiku: false
-
-## Use gpt-4-0613 model for the main chat
-#4: false
-
-## Use gpt-4o model for the main chat
-# 4o: false
-
-## Use gpt-4o-mini model for the main chat
-#mini: false
-
-## Use gpt-4-1106-preview model for the main chat
-#4-turbo: false
-
-## Use gpt-3.5-turbo model for the main chat
-#35turbo: false
-
-## Use deepseek/deepseek-coder model for the main chat
-#deepseek: false
-
-## Use o1-mini model for the main chat
-#o1-mini: false
-
-## Use o1-preview model for the main chat
-#o1-preview: false
 
 ########################
 # API Keys and settings:
@@ -95,6 +60,7 @@ sonnet: true
 
 #################
 # Model settings:
+model: claude-sonnet-4-20250514
 
 ## List known models which match the (partial) MODEL name
 #list-models: xxx
