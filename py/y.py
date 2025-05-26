@@ -46,7 +46,6 @@ def load_full_imports():
 
     return typer.Typer(
         help="A Yabai helper - Window management and screenshot utilities",
-        add_completion=False,
         no_args_is_help=True,
     )
 
@@ -87,16 +86,16 @@ def load_cached_commands():
 
 
 # Early exit for alfred command
-if len(sys.argv) != 2 or sys.argv[1] != "alfred":
-    # Not an alfred command, load full imports
-    app = load_full_imports()
-else:
+if len(sys.argv) >= 2 and sys.argv[1] == "alfred":
     # Handle alfred command
     cached_result = load_cached_commands()
     if cached_result:
         print(cached_result)
         sys.exit(0)
     print("Cache Status: Miss", file=sys.stderr)
+    app = load_full_imports()
+else:
+    # Not an alfred command, load full imports
     app = load_full_imports()
 
 FLOW_HELP_URL = "https://www.flow.app/help#documentation"
