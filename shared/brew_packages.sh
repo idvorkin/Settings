@@ -80,6 +80,7 @@ brew_packages="$brew_packages timg"
 brew_packages="$brew_packages gh" # official github cli
 brew_packages="$brew_packages cloc" # count lines of code
 brew_packages="$brew_packages tig" # git history viewer
+brew_packages="$brew_packages llm" # Simon Willison's LLM command-line tool
 
 # Document conversion
 brew_packages="$brew_packages pandoc" # Convert between file formats
