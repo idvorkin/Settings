@@ -850,14 +850,14 @@
 						]
 					},
 					{
-						"description": "Open Console to C-J",
+						"description": "Browser: Open Console to C-J",
 						"manipulators": [
 							{
 								"conditions": [
 									{
 										"bundle_identifiers": [
 											"^org\\.mozilla\\.firefox$",
-											"^com\\.microsoft\\.Edge",
+											"^com\\.microsoft\\.edgemac$",
 											"^com\\.google\\.Chrome$",
 											"^com\\.apple\\.Safari$"
 										],
@@ -889,7 +889,7 @@
 									{
 										"bundle_identifiers": [
 											"^org\\.mozilla\\.firefox$",
-											"^com\\.microsoft\\.Edge",
+											"^com\\.microsoft\\.edgemac$",
 											"^com\\.google\\.Chrome$",
 											"^com\\.apple\\.Safari$"
 										],
@@ -907,6 +907,80 @@
 									{
 										"key_code": "j",
 										"modifiers": ["left_alt", "left_gui"]
+									}
+								],
+								"type": "basic"
+							}
+						]
+					},
+					{
+						"description": "Browser: M-', C-', and Caps-' to Escape",
+						"manipulators": [
+							{
+								"conditions": [
+									{
+										"bundle_identifiers": [
+											"^org\\.mozilla\\.firefox$",
+											"^com\\.microsoft\\.edgemac$",
+											"^com\\.google\\.Chrome$",
+											"^com\\.apple\\.Safari$"
+										],
+										"type": "frontmost_application_if"
+									}
+								],
+								"from": {
+									"key_code": "quote",
+									"modifiers": { "mandatory": ["left_command"] }
+								},
+								"to": [
+									{
+										"key_code": "escape"
+									}
+								],
+								"type": "basic"
+							},
+							{
+								"conditions": [
+									{
+										"bundle_identifiers": [
+											"^org\\.mozilla\\.firefox$",
+											"^com\\.microsoft\\.edgemac$",
+											"^com\\.google\\.Chrome$",
+											"^com\\.apple\\.Safari$"
+										],
+										"type": "frontmost_application_if"
+									}
+								],
+								"from": {
+									"key_code": "quote",
+									"modifiers": { "mandatory": ["left_control"] }
+								},
+								"to": [
+									{
+										"key_code": "escape"
+									}
+								],
+								"type": "basic"
+							},
+							{
+								"conditions": [
+									{
+										"bundle_identifiers": [
+											"^org\\.mozilla\\.firefox$",
+											"^com\\.microsoft\\.edgemac$",
+											"^com\\.google\\.Chrome$",
+											"^com\\.apple\\.Safari$"
+										],
+										"type": "frontmost_application_if"
+									}
+								],
+								"from": {
+									"key_code": "quote",
+									"modifiers": { "mandatory": ["caps_lock"] }
+								},
+								"to": [
+									{
+										"key_code": "escape"
 									}
 								],
 								"type": "basic"
