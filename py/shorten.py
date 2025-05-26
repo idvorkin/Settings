@@ -1,4 +1,14 @@
-#!python3
+#!uv run
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "typer",
+#     "pydantic",
+#     "httpx",
+#     "pyperclip",
+#     "icecream",
+# ]
+# ///
 
 from typing_extensions import Optional
 import typer
@@ -7,8 +17,10 @@ import json
 from pydantic import BaseModel, Field, HttpUrl
 import httpx
 from datetime import datetime
+
 try:
     import pyperclip
+
     pyperclip_available = True
 except ImportError:
     pyperclip_available = False
@@ -19,16 +31,23 @@ app = typer.Typer(help="A Shortening helper")
 
 # Read from secretbox, which is a json file, with key TINURL_TOKEN
 
-token = json.loads( (Path.home()/ "gits/igor2/secretBox.json").read_text())["TINYURL_API_KEY"]
-
+token = json.loads((Path.home() / "gits/igor2/secretBox.json").read_text())[
+    "TINYURL_API_KEY"
+]
 
 
 class TinyUrlRequest(BaseModel):
     url: HttpUrl = Field(..., description="The long URL to be shortened")
-    domain: Optional[str] = Field(None, description="Optional domain for the shortened URL")
-    alias: Optional[str] = Field(None, description="Optional custom alias for the shortened URL")
+    domain: Optional[str] = Field(
+        None, description="Optional domain for the shortened URL"
+    )
+    alias: Optional[str] = Field(
+        None, description="Optional custom alias for the shortened URL"
+    )
     tags: Optional[str] = Field(None, description="Optional tags for categorization")
-    expires_at: Optional[datetime] = Field(None, description="Optional expiration date and time for the shortened URL")
+    expires_at: Optional[datetime] = Field(
+        None, description="Optional expiration date and time for the shortened URL"
+    )
 
 
 # generated via gpt.py2json (https://tinyurl.com/23dl535z)
@@ -53,6 +72,7 @@ class TinyUrlResponse(BaseModel):
     data: Data
     errors: list[str]
 
+
 def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
     url = "https://api.tinyurl.com/create"  # Endpoint for the TinyURL API
 
@@ -63,7 +83,7 @@ def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
 
     # Convert the request data to a dictionary and ensure all URLs are strings
     request_data_dict = request_data.dict()
-    request_data_dict['url'] = str(request_data_dict['url'])
+    request_data_dict["url"] = str(request_data_dict["url"])
 
     response = httpx.post(url, headers=headers, json=request_data_dict)
 
@@ -76,12 +96,18 @@ def shorten_url(api_key: str, request_data: TinyUrlRequest) -> TinyUrlResponse:
 
 
 @app.command()
-def shorten(url, paste: bool = typer.Option(False, "--paste", help="Copy the shortened URL to clipboard")):
+def shorten(
+    url,
+    paste: bool = typer.Option(
+        False, "--paste", help="Copy the shortened URL to clipboard"
+    ),
+):
     short = shorten_url(token, TinyUrlRequest(url=url))
     tiny_url = short.data.tiny_url
     print(tiny_url)
     if paste and pyperclip_available:
         pyperclip.copy(tiny_url)
+
 
 if __name__ == "__main__":
     app()

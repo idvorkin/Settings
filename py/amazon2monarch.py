@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+#!uv run
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "typer",
+#     "rich",
+#     "icecream",
+# ]
+# ///
 
 import csv
 import typer

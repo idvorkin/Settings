@@ -1,4 +1,15 @@
-#!/usr/bin/env python3
+#!uv run
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "typer",
+#     "rich",
+#     "pydantic",
+#     "google-api-python-client",
+#     "google-auth-httplib2",
+#     "google-auth-oauthlib",
+# ]
+# ///
 """
 Gmail Reader - A command-line application to read and manage Gmail emails.
 
@@ -115,14 +126,18 @@ def authenticate():
                     creds.refresh(Request())
                 except RefreshError as e:
                     if "invalid_grant" in str(e):
-                        console.print("[yellow]Token expired. Need to reauthenticate.[/yellow]")
+                        console.print(
+                            "[yellow]Token expired. Need to reauthenticate.[/yellow]"
+                        )
                         # Delete the invalid token file
                         token_path.unlink()
                         creds = None
                     else:
                         raise
         except Exception as e:
-            console.print(f"[yellow]Error reading token: {e}. Will create new token.[/yellow]")
+            console.print(
+                f"[yellow]Error reading token: {e}. Will create new token.[/yellow]"
+            )
             creds = None
 
     # If no valid credentials available, let the user log in
@@ -143,9 +158,7 @@ def authenticate():
             )
             raise typer.Exit(1)
 
-        flow = InstalledAppFlow.from_client_secrets_file(
-            str(credentials_path), SCOPES
-        )
+        flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
         creds = flow.run_local_server(port=0)
 
         # Save the credentials for the next run
@@ -525,29 +538,36 @@ def copy_to_clipboard(text):
 
 def ping_url(url, attempts=2, delay=1):
     """Ping a URL to warm it up
-    
+
     Args:
         url: URL to ping
         attempts: Number of ping attempts
         delay: Delay between attempts in seconds
-        
+
     Returns:
         True if successful, False otherwise
     """
     try:
         import requests
-        console.print(f"[cyan]Warming up URL with {attempts} pings (delay: {delay}s)...[/cyan]")
-        
+
+        console.print(
+            f"[cyan]Warming up URL with {attempts} pings (delay: {delay}s)...[/cyan]"
+        )
+
         for i in range(attempts):
             try:
                 response = requests.head(url, timeout=5)
-                console.print(f"[cyan]Ping {i+1}/{attempts}: Status {response.status_code}[/cyan]")
+                console.print(
+                    f"[cyan]Ping {i + 1}/{attempts}: Status {response.status_code}[/cyan]"
+                )
             except Exception as e:
-                console.print(f"[yellow]Ping {i+1}/{attempts} failed: {str(e)}[/yellow]")
-            
+                console.print(
+                    f"[yellow]Ping {i + 1}/{attempts} failed: {str(e)}[/yellow]"
+                )
+
             if i < attempts - 1:  # Don't sleep after the last attempt
                 time.sleep(delay)
-                
+
         return True
     except Exception as e:
         console.print(f"[yellow]URL warm-up failed: {str(e)}[/yellow]")
@@ -949,7 +969,7 @@ def notebook(
             try:
                 # Warm up the URL first
                 ping_url(selected_url, attempts=2, delay=1)
-                
+
                 console.print(
                     "[cyan]Running journal command with URL... (press Ctrl+C to cancel and copy to clipboard)[/cyan]"
                 )
@@ -1009,27 +1029,29 @@ def config():
     table.add_row(
         "Config Directory",
         str(config_dir),
-        "✓ Exists" if config_dir.exists() else "✗ Not Found"
+        "✓ Exists" if config_dir.exists() else "✗ Not Found",
     )
 
     # Add token file
     table.add_row(
         "Token File",
         str(token_path),
-        "✓ Exists" if token_path.exists() else "✗ Not Found"
+        "✓ Exists" if token_path.exists() else "✗ Not Found",
     )
 
     # Add credentials file
     table.add_row(
         "Credentials File",
         str(credentials_path),
-        "✓ Exists" if credentials_path.exists() else "✗ Not Found"
+        "✓ Exists" if credentials_path.exists() else "✗ Not Found",
     )
 
     console.print(table)
 
     if not credentials_path.exists():
-        console.print("\n[yellow]Note:[/yellow] To set up Gmail Reader, run: [bold]gmail setup[/bold]")
+        console.print(
+            "\n[yellow]Note:[/yellow] To set up Gmail Reader, run: [bold]gmail setup[/bold]"
+        )
 
 
 if __name__ == "__main__":

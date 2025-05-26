@@ -1,4 +1,12 @@
-#!python3
+#!uv run
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "typer",
+#     "requests",
+#     "html2text",
+# ]
+# ///
 
 import sys
 import requests

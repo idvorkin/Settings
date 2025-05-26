@@ -1,4 +1,12 @@
-#!python3.12
+#!uv run
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "typer",
+#     "icecream",
+#     "pydantic",
+# ]
+# ///
 
 from __future__ import annotations
 import typer

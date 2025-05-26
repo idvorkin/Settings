@@ -1,4 +1,10 @@
-#!python3.11
+#!uv run
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "typer",
+# ]
+# ///
 
 from datetime import datetime, timedelta
 from os import path, chdir
@@ -60,6 +66,7 @@ def LocalToRemote(file):
 
 def make_remote_call(commands):
     import sys
+
     cmd = "ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python "
     # Print the cmd to stderr
     # print(cmd + commands, file=sys.stderr)
@@ -108,14 +115,17 @@ def MakeDailyPage(
 
     # Create the file locally first to get the path
     new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
-    
+
     if remote:
         # For remote calls, use the same input format
         cmd = f"makedailypage {date_input}" if date_input else "makedailypage"
         import sys
+
         result = subprocess.run(
             f"ssh lightsail_no_forward /home/ec2-user/.local/bin/vim_python {cmd}",
-            shell=True, capture_output=True, text=True
+            shell=True,
+            capture_output=True,
+            text=True,
         )
         if result.returncode == 0:
             # Print the remote command's output to stderr
@@ -142,7 +152,8 @@ def RandomBlogPost():
 @app.command()
 def MakeWeeklyReport(
     weekoffset: int = typer.Argument(
-        0, help="Week offset: number of weeks from current week (negative for past weeks)"
+        0,
+        help="Week offset: number of weeks from current week (negative for past weeks)",
     ),
     remote: bool = typer.Option(False, help="Create the weekly report remotely"),
 ):
@@ -161,7 +172,9 @@ def MakeWeeklyReport(
         print(remote_file)
     else:
         # Make to start of week.
-        new_file, directory = MakeTemplatePage(startOfWeek, "week_report", "week_template")
+        new_file, directory = MakeTemplatePage(
+            startOfWeek, "week_report", "week_template"
+        )
         print(new_file)
 
 
@@ -235,17 +248,17 @@ def GitCommitDailyPage():
     """
     target_date = NowPST()
     new_file, directory = MakeTemplatePage(target_date, "750words", "daily_template")
-    
+
     # Change to the directory containing the file
     chdir(path.dirname(new_file))
-    
+
     # Add the file to git
     try:
         subprocess.run(["git", "add", path.basename(new_file)], check=True)
         print(f"Added {path.basename(new_file)} to git staging area")
     except subprocess.CalledProcessError as e:
         print(f"Error adding file to git: {e}")
-    
+
     print(new_file)
 
 
