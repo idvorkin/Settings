@@ -260,3 +260,5 @@ lazy-lock.json
 .specstory/.what-is-this.md
 # Cursor extensions directory
 config/cursor/extensions/
+
+zz-chop-conventions
