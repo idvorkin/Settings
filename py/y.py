@@ -212,13 +212,17 @@ def hflip():
     call_yabai("-m space --mirror y-axis")
 
 
-@app.command()
-def swest():
-    """Switch to the space to the west (left) of current space (cycles around)"""
+# Constants
+MIN_SPACES_FOR_SWITCHING = 1
+MIN_DISPLAYS_FOR_SWITCHING = 1
+
+
+def _switch_space_on_display(direction: int):
+    """Helper function to switch spaces on current display. Direction: -1 for west, 1 for east."""
     current_display = get_active_display()
     spaces_on_display = [s for s in get_spaces() if s["display"] == current_display.id]
 
-    if len(spaces_on_display) <= 1:
+    if len(spaces_on_display) <= MIN_SPACES_FOR_SWITCHING:
         return  # No point in switching if only one space
 
     # Sort spaces by index to ensure proper order
@@ -228,32 +232,22 @@ def swest():
     current_index = next(
         i for i, s in enumerate(spaces_on_display) if s["id"] == current_space["id"]
     )
-    prev_index = (current_index - 1) % len(spaces_on_display)
-    prev_space_id = spaces_on_display[prev_index]["id"]
+    target_index = (current_index + direction) % len(spaces_on_display)
+    target_space_id = spaces_on_display[target_index]["id"]
 
-    call_yabai(f"-m space --focus {prev_space_id}")
+    call_yabai(f"-m space --focus {target_space_id}")
+
+
+@app.command()
+def swest():
+    """Switch to the space to the west (left) of current space (cycles around)"""
+    _switch_space_on_display(-1)
 
 
 @app.command()
 def seast():
     """Switch to the space to the east (right) of current space (cycles around)"""
-    current_display = get_active_display()
-    spaces_on_display = [s for s in get_spaces() if s["display"] == current_display.id]
-
-    if len(spaces_on_display) <= 1:
-        return  # No point in switching if only one space
-
-    # Sort spaces by index to ensure proper order
-    spaces_on_display.sort(key=lambda s: s["index"])
-
-    current_space = get_current_space()
-    current_index = next(
-        i for i, s in enumerate(spaces_on_display) if s["id"] == current_space["id"]
-    )
-    next_index = (current_index + 1) % len(spaces_on_display)
-    next_space_id = spaces_on_display[next_index]["id"]
-
-    call_yabai(f"-m space --focus {next_space_id}")
+    _switch_space_on_display(1)
 
 
 @app.command()
@@ -342,38 +336,35 @@ def cycle():
             break
 
 
-@app.command()
-def wprev():
-    """Move focused window to previous display (cycles around)"""
+def _cycle_display(direction: int, action: str):
+    """Helper function to cycle through displays. Direction: -1 for prev, 1 for next. Action: 'window' or 'display'."""
     displays = get_displays().displays
-    if len(displays) <= 1:
-        return  # No point in moving if only one display
+    if len(displays) <= MIN_DISPLAYS_FOR_SWITCHING:
+        return  # No point in moving/switching if only one display
 
     current_display = get_active_display()
     current_index = next(
         i for i, d in enumerate(displays) if d.id == current_display.id
     )
-    prev_index = (current_index - 1) % len(displays)
-    prev_display_id = displays[prev_index].id
+    target_index = (current_index + direction) % len(displays)
+    target_display_id = displays[target_index].id
 
-    call_yabai(f"-m window --display {prev_display_id}")
+    if action == "window":
+        call_yabai(f"-m window --display {target_display_id}")
+    else:  # action == "display"
+        call_yabai(f"-m display --focus {target_display_id}")
+
+
+@app.command()
+def wprev():
+    """Move focused window to previous display (cycles around)"""
+    _cycle_display(-1, "window")
 
 
 @app.command()
 def wnext():
     """Move focused window to next display (cycles around)"""
-    displays = get_displays().displays
-    if len(displays) <= 1:
-        return  # No point in moving if only one display
-
-    current_display = get_active_display()
-    current_index = next(
-        i for i, d in enumerate(displays) if d.id == current_display.id
-    )
-    next_index = (current_index + 1) % len(displays)
-    next_display_id = displays[next_index].id
-
-    call_yabai(f"-m window --display {next_display_id}")
+    _cycle_display(1, "window")
 
 
 @app.command()
@@ -385,35 +376,13 @@ def wrecent():
 @app.command()
 def dprev():
     """Focus previous display (cycles around)"""
-    displays = get_displays().displays
-    if len(displays) <= 1:
-        return  # No point in switching if only one display
-
-    current_display = get_active_display()
-    current_index = next(
-        i for i, d in enumerate(displays) if d.id == current_display.id
-    )
-    prev_index = (current_index - 1) % len(displays)
-    prev_display_id = displays[prev_index].id
-
-    call_yabai(f"-m display --focus {prev_display_id}")
+    _cycle_display(-1, "display")
 
 
 @app.command()
 def dnext():
     """Focus next display (cycles around)"""
-    displays = get_displays().displays
-    if len(displays) <= 1:
-        return  # No point in switching if only one display
-
-    current_display = get_active_display()
-    current_index = next(
-        i for i, d in enumerate(displays) if d.id == current_display.id
-    )
-    next_index = (current_index + 1) % len(displays)
-    next_display_id = displays[next_index].id
-
-    call_yabai(f"-m display --focus {next_display_id}")
+    _cycle_display(1, "display")
 
 
 @app.command()
@@ -588,68 +557,70 @@ def sss():
     os.system("screencapture -i -c")
 
 
+def _get_current_quadrant(window_frame: Frame, display_frame: Frame) -> int:
+    """Calculate which quadrant the window is currently in."""
+    x_mid = display_frame.x + display_frame.w / 2
+    y_mid = display_frame.y + display_frame.h / 2
+
+    is_left = window_frame.x < x_mid
+    is_top = window_frame.y < y_mid
+
+    if is_left and is_top:
+        return 0  # Top-left
+    elif not is_left and is_top:
+        return 1  # Top-right
+    elif is_left and not is_top:
+        return 2  # Bottom-left
+    else:
+        return 3  # Bottom-right
+
+
+def _get_quadrant_positions(
+    display_frame: Frame, window_frame: Frame
+) -> List[tuple[float, float]]:
+    """Get positions for each quadrant, 10 pixels away from corners."""
+    margin = 10
+    return [
+        (display_frame.x + margin, display_frame.y + margin),  # Top-left
+        (
+            display_frame.x + display_frame.w - window_frame.w - margin,
+            display_frame.y + margin,
+        ),  # Top-right
+        (
+            display_frame.x + margin,
+            display_frame.y + display_frame.h - window_frame.h - margin,
+        ),  # Bottom-left
+        (
+            display_frame.x + display_frame.w - window_frame.w - margin,
+            display_frame.y + display_frame.h - window_frame.h - margin,
+        ),  # Bottom-right
+    ]
+
+
 @app.command()
 def hm_rotate(
     turns: Annotated[int, typer.Argument(help="Number of turns to rotate")] = 1,
     corner: Annotated[bool, typer.Option(help="Move to corner position")] = False,
 ):
     """Rotate hand mirror window to the next corner"""
-
     hand_mirror_windows = [w for w in get_windows().windows if w.app == "Hand Mirror"]
     if not hand_mirror_windows or len(hand_mirror_windows) != 1:
         ic("Hand mirror not as expected")
         ic(hand_mirror_windows)
         return
 
-    # find the quadrant of the screen it is in, then rotate it to be in turns
-    # later quadrants
     hand_mirror_window = hand_mirror_windows[0]
     display = get_displays().displays[hand_mirror_window.display - 1]
 
-    # Calculate which quadrant the window is currently in
-    x_mid = display.frame.x + display.frame.w / 2
-    y_mid = display.frame.y + display.frame.h / 2
-
-    current_quadrant = 0
-    if hand_mirror_window.frame.x < x_mid:
-        if hand_mirror_window.frame.y < y_mid:
-            current_quadrant = 0  # Top-left
-        else:
-            current_quadrant = 2  # Bottom-left
-    else:
-        if hand_mirror_window.frame.y < y_mid:
-            current_quadrant = 1  # Top-right
-        else:
-            current_quadrant = 3  # Bottom-right
-
-    # Calculate the new quadrant
+    current_quadrant = _get_current_quadrant(hand_mirror_window.frame, display.frame)
     new_quadrant = (current_quadrant + turns) % 4
 
-    # Define new positions for each quadrant
-    # the per quadrant positions , shoudl be 10 pixels away from the corner
-
-    quadrant_positions = [
-        (display.frame.x + 10, display.frame.y + 10),  # Top-left
-        (
-            display.frame.x + display.frame.w - hand_mirror_window.frame.w - 10,
-            display.frame.y + 10,
-        ),  # Top-right
-        (
-            display.frame.x + 10,
-            display.frame.y + display.frame.h - hand_mirror_window.frame.h - 10,
-        ),  # Bottom-left
-        (
-            display.frame.x + display.frame.w - hand_mirror_window.frame.w - 10,
-            display.frame.y + display.frame.h - hand_mirror_window.frame.h - 10,
-        ),  # Bottom-right
-    ]
-
+    quadrant_positions = _get_quadrant_positions(
+        display.frame, hand_mirror_window.frame
+    )
     new_x, new_y = quadrant_positions[new_quadrant]
 
-    # Move the window to the new position
     call_yabai(f"-m window {hand_mirror_window.id} --move abs:{new_x}:{new_y}")
-
-    # call_yabai(f"-m window {hand_mirror_window.id} --move abs:0:0")
 
 
 @app.command()
@@ -658,41 +629,38 @@ def ssa():
     from PIL import Image
     import io
 
-    # So if I'm calle from Alfred, the Alfred window might still be on top,
-    # I can eithe rlook for it, or just sleep, for 0.1s, lets do that
+    # Wait for Alfred window to disappear if called from Alfred
     time.sleep(0.1)
 
     dimensions = get_foreground_window_dimensions()
     ic(dimensions)
-    if dimensions:
-        print(
-            f"Active window dimensions: x={dimensions[0]}, y={dimensions[1]}, width={dimensions[2]}, height={dimensions[3]}"
-        )
-    else:
+    if not dimensions:
         print("No active window found")
         return
+
+    print(
+        f"Active window dimensions: x={dimensions[0]}, y={dimensions[1]}, width={dimensions[2]}, height={dimensions[3]}"
+    )
 
     screenshots_dir = Path.home() / "tmp" / "screenshots"
     ensure_directory_exists(screenshots_dir)
 
-    path = screenshots_dir / "latest.webp"
-    current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")[
-        :-5
-    ]  # Get current time with milliseconds
+    current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")[:-5]
     screenshot_path = screenshots_dir / f"screenshot_{current_time}.webp"
+    latest_path = screenshots_dir / "latest.webp"
 
     # Capture the screenshot as PNG in memory
     png_data = capture_foreground_window_to_memory()
 
-    # Convert PNG to WebP
+    # Convert PNG to WebP and save
     with Image.open(io.BytesIO(png_data)) as img:
         img.save(str(screenshot_path), "WEBP")
-        img.save(str(path), "WEBP")
+        img.save(str(latest_path), "WEBP")
 
     print(f"Screenshot saved to: {screenshot_path}")
 
     # Load the WebP image and copy to clipboard
-    img = AppKit.NSImage.alloc().initWithContentsOfFile_(str(path))
+    img = AppKit.NSImage.alloc().initWithContentsOfFile_(str(latest_path))
     pb = AppKit.NSPasteboard.generalPasteboard()
     pb.clearContents()
     pb.writeObjects_([img])
@@ -753,6 +721,21 @@ def jiggle():
     jiggle_mouse()
 
 
+def _execute_git_operations(iclip_dir: Path, filename: str) -> bool:
+    """Execute git operations for uploading image. Returns True on success."""
+    commands = [
+        f"cd {iclip_dir} && git fetch && git pull --rebase",
+        f"cd {iclip_dir} && git add {filename}",
+        f'cd {iclip_dir} && git commit -m "adding image {filename}"',
+        f"cd {iclip_dir} && git push",
+    ]
+
+    for cmd in commands:
+        if os.system(cmd) != 0:
+            return False
+    return True
+
+
 @app.command()
 def ghimgpaste(
     caption: Annotated[str, typer.Argument(help="Caption for the image")] = "",
@@ -771,14 +754,12 @@ def ghimgpaste(
     webp_path = iclip_dir / f"{current_time}.webp"
 
     # Try to paste the image
-    error = os.system(f"pngpaste {png_path}")
-    if error:
+    if os.system(f"pngpaste {png_path}") != 0:
         print("[red]Error: No image found in clipboard[/red]")
         return
 
     # Convert to webp
-    convert_result = os.system(f"magick {png_path} {webp_path}")
-    if convert_result != 0:
+    if os.system(f"magick {png_path} {webp_path}") != 0:
         print("[red]Error converting image to webp[/red]")
         return
 
@@ -787,12 +768,7 @@ def ghimgpaste(
 
     # Git operations with error checking
     try:
-        os.system(f"cd {iclip_dir} && git fetch && git pull --rebase")
-        os.system(f"cd {iclip_dir} && git add {current_time}.webp")
-        os.system(f'cd {iclip_dir} && git commit -m "adding image {current_time}.webp"')
-        push_result = os.system(f"cd {iclip_dir} && git push")
-
-        if push_result != 0:
+        if not _execute_git_operations(iclip_dir, f"{current_time}.webp"):
             print("[red]Error pushing to repository. Check your git credentials.[/red]")
             return
 
