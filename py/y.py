@@ -347,12 +347,14 @@ def _cycle_display(direction: int, action: str):
         i for i, d in enumerate(displays) if d.id == current_display.id
     )
     target_index = (current_index + direction) % len(displays)
-    target_display_id = displays[target_index].id
+    target_display = displays[target_index]
 
     if action == "window":
-        call_yabai(f"-m window --display {target_display_id}")
+        # For windows, use display ID
+        call_yabai(f"-m window --display {target_display.id}")
     else:  # action == "display"
-        call_yabai(f"-m display --focus {target_display_id}")
+        # For display focus, use arrangement index (1-based)
+        call_yabai(f"-m display --focus {target_index + 1}")
 
 
 @app.command()
