@@ -231,7 +231,7 @@ src/Web/Scripts/*js.map
 src/E2ETests/*js
 src/E2ETests/*js.map
 
-##### Vim Files ++ 
+##### Vim Files ++
 # Swap
 [._]*.s[a-v][a-z]
 [._]*.sw[a-p]
@@ -246,7 +246,7 @@ Session.vim
 *~
 # Auto-generated tag files
 tags
-##### Vim Files -- 
+##### Vim Files --
 .aider*
 .env
 
@@ -261,4 +261,4 @@ lazy-lock.json
 # Cursor extensions directory
 config/cursor/extensions/
 
-zz-chop-conventions
+# zz-chop-conventions
