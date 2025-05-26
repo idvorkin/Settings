@@ -1,5 +1,19 @@
+#!uv run
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "typer",
+#     "rich",
+#     "icecream",
+#     "pydantic",
+#     "pyperclip",
+#     "pyobjc-framework-Quartz",
+#     "pyobjc-framework-Cocoa",
+#     "pillow",
+# ]
+# ///
+
 # Flow Help Page: https://www.flow.app/help#documentation
-#!/usr/bin/env python3
 
 import sys
 import json
@@ -12,11 +26,12 @@ import pickle
 # Lazy loaded imports for full functionality
 def load_full_imports():
     global typer, print, subprocess, CompletedProcess, ic, List, BaseModel, Field
-    global pyperclip, Quartz, CG, AppKit, math, datetime, time
+    global pyperclip, Quartz, CG, AppKit, math, datetime, time, Annotated
 
     from datetime import datetime
     import time
     import typer
+    from typing_extensions import Annotated
     from rich import print
     import subprocess
     from subprocess import CompletedProcess
@@ -29,7 +44,11 @@ def load_full_imports():
     import AppKit
     import math
 
-    return typer.Typer(help="A Yabai helper", no_args_is_help=True)
+    return typer.Typer(
+        help="A Yabai helper - Window management and screenshot utilities",
+        add_completion=False,
+        no_args_is_help=True,
+    )
 
 
 def get_script_hash():
@@ -195,14 +214,46 @@ def hflip():
 
 @app.command()
 def swest():
-    """Switch to the space to the west (left) of current space"""
-    send_key(123)
+    """Switch to the space to the west (left) of current space (cycles around)"""
+    current_display = get_active_display()
+    spaces_on_display = [s for s in get_spaces() if s["display"] == current_display.id]
+
+    if len(spaces_on_display) <= 1:
+        return  # No point in switching if only one space
+
+    # Sort spaces by index to ensure proper order
+    spaces_on_display.sort(key=lambda s: s["index"])
+
+    current_space = get_current_space()
+    current_index = next(
+        i for i, s in enumerate(spaces_on_display) if s["id"] == current_space["id"]
+    )
+    prev_index = (current_index - 1) % len(spaces_on_display)
+    prev_space_id = spaces_on_display[prev_index]["id"]
+
+    call_yabai(f"-m space --focus {prev_space_id}")
 
 
 @app.command()
 def seast():
-    """Switch to the space to the east (right) of current space"""
-    send_key(124)
+    """Switch to the space to the east (right) of current space (cycles around)"""
+    current_display = get_active_display()
+    spaces_on_display = [s for s in get_spaces() if s["display"] == current_display.id]
+
+    if len(spaces_on_display) <= 1:
+        return  # No point in switching if only one space
+
+    # Sort spaces by index to ensure proper order
+    spaces_on_display.sort(key=lambda s: s["index"])
+
+    current_space = get_current_space()
+    current_index = next(
+        i for i, s in enumerate(spaces_on_display) if s["id"] == current_space["id"]
+    )
+    next_index = (current_index + 1) % len(spaces_on_display)
+    next_space_id = spaces_on_display[next_index]["id"]
+
+    call_yabai(f"-m space --focus {next_space_id}")
 
 
 @app.command()
@@ -291,6 +342,117 @@ def cycle():
             break
 
 
+@app.command()
+def wprev():
+    """Move focused window to previous display (cycles around)"""
+    displays = get_displays().displays
+    if len(displays) <= 1:
+        return  # No point in moving if only one display
+
+    current_display = get_active_display()
+    current_index = next(
+        i for i, d in enumerate(displays) if d.id == current_display.id
+    )
+    prev_index = (current_index - 1) % len(displays)
+    prev_display_id = displays[prev_index].id
+
+    call_yabai(f"-m window --display {prev_display_id}")
+
+
+@app.command()
+def wnext():
+    """Move focused window to next display (cycles around)"""
+    displays = get_displays().displays
+    if len(displays) <= 1:
+        return  # No point in moving if only one display
+
+    current_display = get_active_display()
+    current_index = next(
+        i for i, d in enumerate(displays) if d.id == current_display.id
+    )
+    next_index = (current_index + 1) % len(displays)
+    next_display_id = displays[next_index].id
+
+    call_yabai(f"-m window --display {next_display_id}")
+
+
+@app.command()
+def wrecent():
+    """Move focused window to most recently focused display"""
+    call_yabai("-m window --display recent")
+
+
+@app.command()
+def dprev():
+    """Focus previous display (cycles around)"""
+    displays = get_displays().displays
+    if len(displays) <= 1:
+        return  # No point in switching if only one display
+
+    current_display = get_active_display()
+    current_index = next(
+        i for i, d in enumerate(displays) if d.id == current_display.id
+    )
+    prev_index = (current_index - 1) % len(displays)
+    prev_display_id = displays[prev_index].id
+
+    call_yabai(f"-m display --focus {prev_display_id}")
+
+
+@app.command()
+def dnext():
+    """Focus next display (cycles around)"""
+    displays = get_displays().displays
+    if len(displays) <= 1:
+        return  # No point in switching if only one display
+
+    current_display = get_active_display()
+    current_index = next(
+        i for i, d in enumerate(displays) if d.id == current_display.id
+    )
+    next_index = (current_index + 1) % len(displays)
+    next_display_id = displays[next_index].id
+
+    call_yabai(f"-m display --focus {next_display_id}")
+
+
+@app.command()
+def drecent():
+    """Focus most recently focused display"""
+    call_yabai("-m display --focus recent")
+
+
+@app.command()
+def dlist():
+    """List all displays with their IDs and focus status"""
+    displays = get_displays().displays
+    for i, display in enumerate(displays):
+        focus_indicator = "🔸" if display.has_focus else "  "
+        print(
+            f"{focus_indicator} Display {i + 1}: ID={display.id}, {display.frame.w}x{display.frame.h}"
+        )
+
+
+@app.command()
+def slist():
+    """List all spaces on current display"""
+    current_display = get_active_display()
+    spaces_on_display = [s for s in get_spaces() if s["display"] == current_display.id]
+    spaces_on_display.sort(key=lambda s: s["index"])
+
+    current_space = get_current_space()
+    for i, space in enumerate(spaces_on_display):
+        focus_indicator = "🔸" if space["id"] == current_space["id"] else "  "
+        space_type = space.get("type", "unknown")
+        print(f"{focus_indicator} Space {i + 1}: ID={space['id']}, Type={space_type}")
+
+
+@app.command()
+def float():
+    """Toggle float/tile mode for focused window"""
+    call_yabai("-m window --toggle float")
+
+
 def get_windows() -> Windows:
     win_result = call_yabai("-m query --windows")
     if win_result.returncode != 0:
@@ -319,6 +481,21 @@ def set_width(win: Window, width: float):
 
 def get_active_display():
     return [d for d in get_displays().displays if d.has_focus][0]
+
+
+def get_spaces():
+    """Get all spaces information"""
+    spaces_result = call_yabai("-m query --spaces")
+    if spaces_result.returncode != 0:
+        typer.echo("Failed to query yabai spaces")
+        raise typer.Exit(code=1)
+    return json.loads(spaces_result.stdout)
+
+
+def get_current_space():
+    """Get the currently focused space"""
+    spaces = get_spaces()
+    return next(space for space in spaces if space.get("has-focus", False))
 
 
 def get_left_most_window():
@@ -413,8 +590,8 @@ def sss():
 
 @app.command()
 def hm_rotate(
-    turns: int = typer.Argument(1, help="Number of turns to rotate"),
-    corner: bool = False,
+    turns: Annotated[int, typer.Argument(help="Number of turns to rotate")] = 1,
+    corner: Annotated[bool, typer.Option(help="Move to corner position")] = False,
 ):
     """Rotate hand mirror window to the next corner"""
 
@@ -577,7 +754,9 @@ def jiggle():
 
 
 @app.command()
-def ghimgpaste(caption: str = ""):
+def ghimgpaste(
+    caption: Annotated[str, typer.Argument(help="Caption for the image")] = "",
+):
     """Save clipboard image to GitHub and copy markdown link to clipboard"""
     from datetime import datetime
     import os
@@ -702,7 +881,11 @@ def flow_show():
 
 
 @app.command()
-def flow_info(oneline: bool = False):
+def flow_info(
+    oneline: Annotated[
+        bool, typer.Option(help="Display info in one line format")
+    ] = False,
+):
     """Get remaining time, current phase, and session title from Flow."""
     time_result = subprocess.run(
         ["osascript", "-e", 'tell application "Flow" to getTime'],
@@ -756,9 +939,15 @@ def flow_get_title():
 
 
 @app.command()
-def flow_rename(title: str):
+def flow_rename(
+    title: Annotated[str, typer.Argument(help="New title for the Flow session")],
+):
     """Rename the Flow session."""
     subprocess.run(
         ["osascript", "-e", f'tell application "Flow" to setTitle to "{title}"']
     )
     print(f"Flow session renamed to '{title}'")
+
+
+if __name__ == "__main__":
+    app()
