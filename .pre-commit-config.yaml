@@ -26,6 +26,7 @@ repos:
     hooks:
       - id: prettier
         name: Prettier (Markdown & HTML)
+        files: '\.(md|html)$'
 
   # 🌙 StyLua: Lua formatter
   - repo: https://github.com/JohnnyMorganz/StyLua
