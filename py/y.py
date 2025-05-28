@@ -915,14 +915,28 @@ def flow_get_title():
 
 
 @app.command()
+def flow_reset():
+    """Rename the Flow session."""
+
+    subprocess.run(["osascript", "-e", 'tell application "Flow" to reset'])
+
+    print("session reset")
+
+
+@app.command()
 def flow_rename(
     title: Annotated[str, typer.Argument(help="New title for the Flow session")],
 ):
     """Rename the Flow session."""
+
+    flow_reset()
+
     subprocess.run(
         ["osascript", "-e", f'tell application "Flow" to setTitle to "{title}"']
     )
     print(f"Flow session renamed to '{title}'")
+
+    flow_go()
 
 
 if __name__ == "__main__":
