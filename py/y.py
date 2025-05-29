@@ -828,6 +828,32 @@ def alfred():
     print(json_output)
 
 
+# Flow constants
+FLOW_APP_NAME = "Flow"
+
+def call_flow(command: str, capture_output: bool = False) -> CompletedProcess:
+    """Execute Flow AppleScript command with DRY pattern."""
+    applescript = f'tell application "{FLOW_APP_NAME}" to {command}'
+    return subprocess.run(
+        ["osascript", "-e", applescript],
+        capture_output=capture_output,
+        text=True,
+    )
+
+def get_flow_info() -> tuple[str, str, str] | None:
+    """Get Flow time, phase, and title in one call."""
+    time_result = call_flow("getTime", capture_output=True)
+    phase_result = call_flow("getPhase", capture_output=True)
+    title_result = call_flow("getTitle", capture_output=True)
+    
+    if all(r.returncode == 0 for r in [time_result, phase_result, title_result]):
+        return (
+            time_result.stdout.strip(),
+            phase_result.stdout.strip(), 
+            title_result.stdout.strip()
+        )
+    return None
+
 @app.command()
 def zz():
     """Put the system to sleep"""
@@ -835,79 +861,60 @@ def zz():
 
 
 @app.command()
-def flow_go():
-    """Start the Flow application or service."""
-    subprocess.run(["osascript", "-e", 'tell application "Flow" to start'])
+def flow_go(
+    title: Annotated[str, typer.Argument(help="Optional title for the Flow session")] = "",
+):
+    """Start the Flow application or service, optionally with a custom title."""
+    if title:
+        call_flow("reset")
+        call_flow(f'setTitle to "{title}"')
+        print(f"Flow session titled '{title}'")
+
+    call_flow("start")
     print("Flow started")
 
 
 @app.command()
 def flow_stop():
     """Stop the Flow application or service."""
-    subprocess.run(["osascript", "-e", 'tell application "Flow" to stop'])
+    call_flow("stop")
     print("Flow stopped")
-    flow_show()  # Call flow_show to display the status
+    flow_show()
 
 
 @app.command()
 def flow_show():
     """Show the current status of the Flow application or service."""
-    subprocess.run(["osascript", "-e", 'tell application "Flow" to show'])
+    call_flow("show")
     print("Flow status displayed")
 
 
 @app.command()
 def flow_info(
-    oneline: Annotated[
-        bool, typer.Option(help="Display info in one line format")
-    ] = False,
+    oneline: Annotated[bool, typer.Option(help="Display info in one line format")] = False,
 ):
     """Get remaining time, current phase, and session title from Flow."""
-    time_result = subprocess.run(
-        ["osascript", "-e", 'tell application "Flow" to getTime'],
-        capture_output=True,
-        text=True,
-    )
-    phase_result = subprocess.run(
-        ["osascript", "-e", 'tell application "Flow" to getPhase'],
-        capture_output=True,
-        text=True,
-    )
-    title_result = subprocess.run(
-        ["osascript", "-e", 'tell application "Flow" to getTitle'],
-        capture_output=True,
-        text=True,
-    )
-
-    if (
-        time_result.returncode == 0
-        and phase_result.returncode == 0
-        and title_result.returncode == 0
-    ):
-        phase = phase_result.stdout.strip()
-        time_remaining = time_result.stdout.strip()
-        if oneline:
-            if phase == "Break":
-                print(f"Break [{time_remaining}]")
-            else:
-                print(f"{title_result.stdout.strip()} [{time_remaining}]")
-        else:
-            print(f"Remaining Time: {time_result.stdout.strip()}")
-            print(f"Current Phase: {phase_result.stdout.strip()}")
-            print(f"Session Title: {title_result.stdout.strip()}")
-    else:
+    flow_data = get_flow_info()
+    if not flow_data:
         print("Failed to retrieve information from Flow.")
+        return
+
+    time_remaining, phase, title = flow_data
+    if oneline:
+        if phase == "Break":
+            print(f"Break [{time_remaining}]")
+        else:
+            print(f"{title} [{time_remaining}]")
+    else:
+        print(f"Remaining Time: {time_remaining}")
+        print(f"Current Phase: {phase}")
+        print(f"Session Title: {title}")
 
 
 @app.command()
 def flow_get_title():
     """Get the session title from Flow."""
-    title_result = subprocess.run(
-        ["osascript", "-e", 'tell application "Flow" to getTitle'],
-        capture_output=True,
-        text=True,
-    )
-
+    title_result = call_flow("getTitle", capture_output=True)
     if title_result.returncode == 0:
         print(f"Session Title: {title_result.stdout.strip()}")
     else:
@@ -916,10 +923,8 @@ def flow_get_title():
 
 @app.command()
 def flow_reset():
-    """Rename the Flow session."""
-
-    subprocess.run(["osascript", "-e", 'tell application "Flow" to reset'])
-
+    """Reset the Flow session."""
+    call_flow("reset")
     print("session reset")
 
 
@@ -928,14 +933,9 @@ def flow_rename(
     title: Annotated[str, typer.Argument(help="New title for the Flow session")],
 ):
     """Rename the Flow session."""
-
     flow_reset()
-
-    subprocess.run(
-        ["osascript", "-e", f'tell application "Flow" to setTitle to "{title}"']
-    )
+    call_flow(f'setTitle to "{title}"')
     print(f"Flow session renamed to '{title}'")
-
     flow_go()
 
 
