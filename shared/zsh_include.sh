@@ -390,6 +390,7 @@ function export_secrets()
     esecret_jq ANTHROPIC_API_KEY
     esecret_jq OPENAI_API_KEY
     esecret_jq IFTTT_WEBHOOK_KEY
+    esecret_jq DEEPGRAM_API_KEY
     esecret_jq IFTTT_WEBHOOK_SMS_EVENT
     esecret_jq TWILIO_ACCOUNT_SID
     esecret_jq TWILIO_AUTH_TOKEN
