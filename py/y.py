@@ -311,6 +311,24 @@ def zoom():
 
 
 @app.command()
+def fullscreen():
+    """Toggle native macOS fullscreen mode for the focused window"""
+    subprocess.run(
+        [
+            "osascript",
+            "-e",
+            'tell application "System Events" to key code 3 using {control down, command down}',
+        ]
+    )
+
+
+@app.command()
+def fs():
+    """Alias for fullscreen - Toggle native macOS fullscreen mode"""
+    fullscreen()
+
+
+@app.command()
 def close():
     """Close the currently focused window"""
     call_yabai("-m window --close")
