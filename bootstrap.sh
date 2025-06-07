@@ -68,6 +68,7 @@ ln -s -f ~/settings/config/carapace/ ~/.config/carapace
 ln -s -f ~/settings/config/yazi ~/.config/yazi
 ln -s -f ~/settings/config/bat ~/.config/bat
 ln -s -f ~/settings/config/mcphub ~/.config/mcphub
+ln -s -f ~/settings/config/mpv ~/.config/mpv
 
 # Cursor config (official location is ~/.cursor but also link to ~/.config/cursor for consistency)
 ln -s -f ~/settings/config/cursor ~/.config/cursor
