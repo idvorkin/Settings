@@ -10,6 +10,7 @@
 #     "pyobjc-framework-Quartz",
 #     "pyobjc-framework-Cocoa",
 #     "pillow",
+#     "psutil",
 # ]
 # ///
 
@@ -26,7 +27,7 @@ import pickle
 # Lazy loaded imports for full functionality
 def load_full_imports():
     global typer, print, subprocess, CompletedProcess, ic, List, BaseModel, Field
-    global pyperclip, Quartz, CG, AppKit, math, datetime, time, Annotated
+    global pyperclip, Quartz, CG, AppKit, math, datetime, time, Annotated, psutil
 
     from datetime import datetime
     import time
@@ -43,6 +44,7 @@ def load_full_imports():
     import Quartz.CoreGraphics as CG
     import AppKit
     import math
+    import psutil
 
     return typer.Typer(
         help="A Yabai helper - Window management and screenshot utilities",
@@ -831,6 +833,7 @@ def alfred():
 # Flow constants
 FLOW_APP_NAME = "Flow"
 
+
 def call_flow(command: str, capture_output: bool = False) -> CompletedProcess:
     """Execute Flow AppleScript command with DRY pattern."""
     applescript = f'tell application "{FLOW_APP_NAME}" to {command}'
@@ -840,19 +843,21 @@ def call_flow(command: str, capture_output: bool = False) -> CompletedProcess:
         text=True,
     )
 
+
 def get_flow_info() -> tuple[str, str, str] | None:
     """Get Flow time, phase, and title in one call."""
     time_result = call_flow("getTime", capture_output=True)
     phase_result = call_flow("getPhase", capture_output=True)
     title_result = call_flow("getTitle", capture_output=True)
-    
+
     if all(r.returncode == 0 for r in [time_result, phase_result, title_result]):
         return (
             time_result.stdout.strip(),
-            phase_result.stdout.strip(), 
-            title_result.stdout.strip()
+            phase_result.stdout.strip(),
+            title_result.stdout.strip(),
         )
     return None
+
 
 @app.command()
 def zz():
@@ -862,7 +867,9 @@ def zz():
 
 @app.command()
 def flow_go(
-    title: Annotated[str, typer.Argument(help="Optional title for the Flow session")] = "",
+    title: Annotated[
+        str, typer.Argument(help="Optional title for the Flow session")
+    ] = "",
 ):
     """Start the Flow application or service, optionally with a custom title."""
     if title:
@@ -891,7 +898,9 @@ def flow_show():
 
 @app.command()
 def flow_info(
-    oneline: Annotated[bool, typer.Option(help="Display info in one line format")] = False,
+    oneline: Annotated[
+        bool, typer.Option(help="Display info in one line format")
+    ] = False,
 ):
     """Get remaining time, current phase, and session title from Flow."""
     flow_data = get_flow_info()
@@ -937,6 +946,594 @@ def flow_rename(
     call_flow(f'setTitle to "{title}"')
     print(f"Flow session renamed to '{title}'")
     flow_go()
+
+
+@app.command()
+def aa_list_apps(
+    verbose: Annotated[
+        bool, typer.Option("--verbose", "-v", help="Show detailed process information")
+    ] = False,
+    grouped: Annotated[
+        bool,
+        typer.Option("--grouped", "-g", help="Group processes by application name"),
+    ] = True,
+):
+    """List all running applications"""
+    print("\n[bold cyan]Running Applications:[/bold cyan]")
+    print("=" * 60)
+
+    apps_data = []
+    for proc in psutil.process_iter(
+        ["pid", "name", "exe", "memory_info", "cpu_percent", "create_time"]
+    ):
+        try:
+            info = proc.info
+            # Filter for actual applications (has an executable path in /Applications or similar)
+            exe_path = info.get("exe", "")
+            if exe_path and (
+                "/Applications/" in exe_path or "/System/Applications/" in exe_path
+            ):
+                # Get app name from the .app bundle
+                app_name = info["name"]
+                if ".app" in exe_path:
+                    app_name = (
+                        exe_path.split("/")[-1].replace(".app", "")
+                        if "/" in exe_path
+                        else app_name
+                    )
+
+                # Clean up app name to group related processes
+                base_app_name = app_name
+                if grouped:
+                    # Remove common suffixes that indicate helper processes
+                    for suffix in [
+                        " Helper (Renderer)",
+                        " Helper (GPU)",
+                        " Helper (Plugin)",
+                        " Helper",
+                        " (Renderer)",
+                        " (GPU)",
+                        " (Plugin)",
+                    ]:
+                        if app_name.endswith(suffix):
+                            base_app_name = app_name.replace(suffix, "").strip()
+                            break
+
+                memory_mb = (
+                    info["memory_info"].rss / 1024 / 1024
+                    if info.get("memory_info")
+                    else 0
+                )
+                cpu_percent = info.get("cpu_percent", 0) or 0.0
+
+                apps_data.append(
+                    {
+                        "name": app_name,
+                        "base_name": base_app_name,
+                        "pid": info["pid"],
+                        "exe_path": exe_path,
+                        "memory_mb": memory_mb,
+                        "cpu_percent": cpu_percent,
+                        "create_time": info.get("create_time", 0),
+                    }
+                )
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            # Process disappeared or we don't have access
+            continue
+
+    if grouped:
+        # Group by base app name and aggregate stats
+        from collections import defaultdict
+
+        grouped_apps = defaultdict(list)
+        for app in apps_data:
+            grouped_apps[app["base_name"]].append(app)
+
+        # Create aggregated data
+        aggregated_data = []
+        for base_name, processes in grouped_apps.items():
+            total_memory = sum(p["memory_mb"] for p in processes)
+            total_cpu = sum(p["cpu_percent"] for p in processes)
+            process_count = len(processes)
+            pids = [p["pid"] for p in processes]
+
+            aggregated_data.append(
+                {
+                    "base_name": base_name,
+                    "total_memory": total_memory,
+                    "total_cpu": total_cpu,
+                    "process_count": process_count,
+                    "pids": pids,
+                    "processes": processes,
+                }
+            )
+
+        # Sort by total memory usage
+        aggregated_data.sort(key=lambda x: x["total_memory"], reverse=True)
+
+        for app_group in aggregated_data:
+            memory_str = f"{app_group['total_memory']:.1f}MB"
+            cpu_str = f"{app_group['total_cpu']:.1f}%"
+
+            # Color code based on resource usage
+            memory_color = (
+                "red"
+                if app_group["total_memory"] > 500
+                else "yellow"
+                if app_group["total_memory"] > 100
+                else "green"
+            )
+            cpu_color = (
+                "red"
+                if app_group["total_cpu"] > 50
+                else "yellow"
+                if app_group["total_cpu"] > 10
+                else "green"
+            )
+
+            # Show process count if more than 1
+            process_info = (
+                f" ({app_group['process_count']} processes)"
+                if app_group["process_count"] > 1
+                else ""
+            )
+
+            print(f"[bold]{app_group['base_name']}[/bold]{process_info}")
+            print(
+                f"    Memory: [{memory_color}]{memory_str}[/{memory_color}] | CPU: [{cpu_color}]{cpu_str}[/{cpu_color}]"
+            )
+
+            if verbose:
+                for proc in app_group["processes"]:
+                    print(
+                        f"    └─ {proc['name']} (PID: {proc['pid']}) - {proc['memory_mb']:.1f}MB"
+                    )
+
+            print()
+
+        print(
+            f"\n[dim]Total: {len(aggregated_data)} applications ({len(apps_data)} processes)[/dim]"
+        )
+
+    else:
+        # Original behavior - show individual processes
+        apps_data.sort(key=lambda x: x["memory_mb"], reverse=True)
+
+        for app in apps_data:
+            memory_str = f"{app['memory_mb']:.1f}MB"
+            cpu_str = f"{app['cpu_percent']:.1f}%" if app["cpu_percent"] else "0.0%"
+
+            # Color code based on resource usage
+            memory_color = (
+                "red"
+                if app["memory_mb"] > 500
+                else "yellow"
+                if app["memory_mb"] > 100
+                else "green"
+            )
+            cpu_percent = app["cpu_percent"] or 0.0
+            cpu_color = (
+                "red" if cpu_percent > 50 else "yellow" if cpu_percent > 10 else "green"
+            )
+
+            print(f"[bold]{app['name']}[/bold] (PID: {app['pid']})")
+            print(
+                f"    Memory: [{memory_color}]{memory_str}[/{memory_color}] | CPU: [{cpu_color}]{cpu_str}[/{cpu_color}]"
+            )
+
+            if verbose:
+                print(f"    Path: [dim]{app['exe_path']}[/dim]")
+            print()
+
+        print(f"\n[dim]Total: {len(apps_data)} processes[/dim]")
+
+
+@app.command()
+def kill_cruft(
+    memory_threshold: Annotated[
+        int,
+        typer.Option(
+            "--memory", "-m", help="Kill apps using more than this many MB of RAM"
+        ),
+    ] = 1000,
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force", "-f", help="Actually kill processes (default is dry run)"
+        ),
+    ] = False,
+    interactive: Annotated[
+        bool,
+        typer.Option("--interactive", "-i", help="Ask before killing each process"),
+    ] = False,
+    close_finder: Annotated[
+        bool, typer.Option("--close-finder", help="Also close all Finder windows")
+    ] = True,
+):
+    """Kill resource-heavy or unnecessary applications (cruft)"""
+
+    # Common applications that are often safe to kill when not actively used
+    common_cruft = {
+        "Slack",
+        "Discord",
+        "Teams",
+        "Zoom",
+        "Skype",
+        "WhatsApp",
+        "Telegram",
+        "Steam",
+        "Epic Games Launcher",
+        "Battle.net",
+        "Origin",
+        "Spotify",
+        "Apple Music",
+        "VLC",
+        "IINA",
+        "QuickTime Player",
+        "Adobe Creative Cloud",
+        "Adobe Photoshop",
+        "Adobe Illustrator",
+        "Adobe Premiere Pro",
+        "Microsoft Word",
+        "Microsoft Excel",
+        "Microsoft PowerPoint",
+        "Chrome",
+        "Firefox",
+        "Safari",
+        "Edge",  # Be careful with browsers
+        "Postman",
+        "Insomnia",
+        "TablePlus",
+        "Sequel Pro",
+        "Activity Monitor",
+        "System Preferences",
+        "Calculator",
+        # Igor's cruft additions
+        "StocksWidget",
+        "Stocks",
+        "NewsToday2",
+        "News",
+        "Finder",
+        "System Settings",
+        "GeneralSettings",
+    }
+
+    print("\n[bold red]Kill Cruft Analysis[/bold red]")
+    print(f"Memory threshold: {memory_threshold}MB")
+    print(f"Mode: {'EXECUTE' if force else 'DRY RUN'}")
+    print("=" * 60)
+
+    candidates = []
+
+    for proc in psutil.process_iter(
+        ["pid", "name", "exe", "memory_info", "cpu_percent"]
+    ):
+        try:
+            info = proc.info
+            exe_path = info.get("exe", "")
+
+            # Only consider actual applications
+            if exe_path and (
+                "/Applications/" in exe_path or "/System/Applications/" in exe_path
+            ):
+                app_name = info["name"]
+                if ".app" in exe_path:
+                    app_name = (
+                        exe_path.split("/")[-1].replace(".app", "")
+                        if "/" in exe_path
+                        else app_name
+                    )
+
+                memory_mb = (
+                    info["memory_info"].rss / 1024 / 1024
+                    if info.get("memory_info")
+                    else 0
+                )
+                cpu_percent = info.get("cpu_percent", 0) or 0.0
+
+                # Determine if this is a candidate for killing
+                is_memory_hog = memory_mb > memory_threshold
+                is_common_cruft = app_name in common_cruft
+
+                if is_memory_hog or is_common_cruft:
+                    reason = []
+                    if is_memory_hog:
+                        reason.append(f"High memory usage ({memory_mb:.1f}MB)")
+                    if is_common_cruft:
+                        reason.append("Common non-essential app")
+
+                    candidates.append(
+                        {
+                            "proc": proc,
+                            "name": app_name,
+                            "pid": info["pid"],
+                            "memory_mb": memory_mb,
+                            "cpu_percent": cpu_percent,
+                            "reason": " & ".join(reason),
+                        }
+                    )
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            continue
+
+    if not candidates:
+        print("[green]No cruft found! All apps are within acceptable limits.[/green]")
+        return
+
+    # Sort by memory usage
+    candidates.sort(key=lambda x: x["memory_mb"], reverse=True)
+
+    print(f"\n[yellow]Found {len(candidates)} potential cruft applications:[/yellow]\n")
+
+    killed_count = 0
+    for candidate in candidates:
+        memory_str = f"{candidate['memory_mb']:.1f}MB"
+        cpu_percent = candidate["cpu_percent"] or 0.0
+        cpu_str = f"{cpu_percent:.1f}%"
+
+        print(f"[bold]{candidate['name']}[/bold] (PID: {candidate['pid']})")
+        print(f"    Memory: [red]{memory_str}[/red] | CPU: {cpu_str}")
+        print(f"    Reason: [dim]{candidate['reason']}[/dim]")
+
+        should_kill = False
+
+        if not force:
+            print("    [dim]Would be killed (dry run)[/dim]")
+        elif interactive:
+            response = typer.prompt(f"    Kill {candidate['name']}? [y/N]", default="n")
+            should_kill = response.lower() in ["y", "yes"]
+        else:
+            should_kill = True
+
+        if should_kill and force:
+            try:
+                candidate["proc"].terminate()
+                print("    [green]✓ Terminated[/green]")
+                killed_count += 1
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                print(f"    [red]✗ Failed to kill: {e}[/red]")
+
+        print()
+
+    if force:
+        print(f"\n[green]Successfully killed {killed_count} applications[/green]")
+    else:
+        print(
+            f"\n[yellow]Dry run complete. {len(candidates)} applications would be affected.[/yellow]"
+        )
+        print("[dim]Use --force to actually kill processes[/dim]")
+
+    # Close Finder windows if requested
+    if close_finder:
+        print("\n[bold cyan]Closing Finder Windows[/bold cyan]")
+        if force:
+            applescript = """
+            tell application "Finder"
+                close every window
+            end tell
+            """
+
+            try:
+                result = subprocess.run(
+                    ["osascript", "-e", applescript], capture_output=True, text=True
+                )
+
+                if result.returncode == 0:
+                    print("[green]✓ All Finder windows closed[/green]")
+                else:
+                    print(
+                        f"[red]✗ Failed to close Finder windows: {result.stderr}[/red]"
+                    )
+
+            except Exception as e:
+                print(f"[red]✗ Error closing Finder windows: {e}[/red]")
+        else:
+            print("[dim]Would close all Finder windows[/dim]")
+
+
+@app.command()
+def kill_apps(
+    app_names: Annotated[List[str], typer.Argument(help="Application names to kill")],
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force", "-f", help="Actually kill processes (default is dry run)"
+        ),
+    ] = False,
+    force_kill: Annotated[
+        bool, typer.Option("--force-kill", help="Use SIGKILL instead of SIGTERM")
+    ] = False,
+):
+    """Kill specific applications by name"""
+
+    print("\n[bold red]Kill Applications[/bold red]")
+    print(f"Target apps: {', '.join(app_names)}")
+    print(f"Mode: {'EXECUTE' if force else 'DRY RUN'}")
+    print("=" * 60)
+
+    # Normalize app names for matching (lowercase, remove common suffixes)
+    normalized_targets = []
+    for name in app_names:
+        # Handle common abbreviations and variations
+        name_lower = name.lower()
+        if name_lower in ["stocks", "stockswidget"]:
+            normalized_targets.append("stockswidget")
+        elif name_lower in ["news", "newstoday", "newstoday2"]:
+            normalized_targets.append("newstoday2")
+        elif name_lower in ["finder"]:
+            normalized_targets.append("finder")
+        elif name_lower in ["iina"]:
+            normalized_targets.append("iina")
+        else:
+            normalized_targets.append(name_lower)
+
+    candidates = []
+
+    for proc in psutil.process_iter(["pid", "name", "exe", "memory_info"]):
+        try:
+            info = proc.info
+            exe_path = info.get("exe", "")
+
+            # Only consider actual applications
+            if exe_path and (
+                "/Applications/" in exe_path or "/System/Applications/" in exe_path
+            ):
+                app_name = info["name"]
+                if ".app" in exe_path:
+                    app_name = (
+                        exe_path.split("/")[-1].replace(".app", "")
+                        if "/" in exe_path
+                        else app_name
+                    )
+
+                # Check if this app matches any of our targets
+                app_name_lower = app_name.lower()
+                for target in normalized_targets:
+                    if target in app_name_lower or app_name_lower.startswith(target):
+                        memory_mb = (
+                            info["memory_info"].rss / 1024 / 1024
+                            if info.get("memory_info")
+                            else 0
+                        )
+
+                        candidates.append(
+                            {
+                                "proc": proc,
+                                "name": app_name,
+                                "pid": info["pid"],
+                                "memory_mb": memory_mb,
+                                "matched_target": target,
+                            }
+                        )
+                        break
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            continue
+
+    if not candidates:
+        print("[yellow]No matching applications found![/yellow]")
+        return
+
+    # Group by app name
+    from collections import defaultdict
+
+    grouped_candidates = defaultdict(list)
+    for candidate in candidates:
+        base_name = candidate["name"]
+        # Remove helper suffixes for grouping
+        for suffix in [
+            " Helper (Renderer)",
+            " Helper (GPU)",
+            " Helper (Plugin)",
+            " Helper",
+        ]:
+            if base_name.endswith(suffix):
+                base_name = base_name.replace(suffix, "").strip()
+                break
+        grouped_candidates[base_name].append(candidate)
+
+    print(
+        f"\n[yellow]Found {len(candidates)} processes from {len(grouped_candidates)} applications:[/yellow]\n"
+    )
+
+    killed_count = 0
+    for app_name, processes in grouped_candidates.items():
+        total_memory = sum(p["memory_mb"] for p in processes)
+        process_count = len(processes)
+
+        print(
+            f"[bold]{app_name}[/bold] ({process_count} process{'es' if process_count > 1 else ''})"
+        )
+        print(f"    Total Memory: {total_memory:.1f}MB")
+
+        for candidate in processes:
+            print(
+                f"    └─ {candidate['name']} (PID: {candidate['pid']}) - {candidate['memory_mb']:.1f}MB"
+            )
+
+            if force:
+                try:
+                    if force_kill:
+                        candidate["proc"].kill()  # SIGKILL
+                        print("      [red]✓ Force killed[/red]")
+                    else:
+                        candidate["proc"].terminate()  # SIGTERM
+                        print("      [green]✓ Terminated[/green]")
+                    killed_count += 1
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    print(f"      [red]✗ Failed: {e}[/red]")
+            else:
+                print(
+                    f"      [dim]Would be {'force killed' if force_kill else 'terminated'}[/dim]"
+                )
+
+        print()
+
+    if force:
+        print(f"\n[green]Successfully killed {killed_count} processes[/green]")
+    else:
+        print(
+            f"\n[yellow]Dry run complete. {len(candidates)} processes would be affected.[/yellow]"
+        )
+        print("[dim]Use --force to actually kill processes[/dim]")
+
+
+@app.command()
+def aa_close_finder_windows():
+    """Close all open Finder windows"""
+    print("\n[bold cyan]Closing Finder Windows[/bold cyan]")
+    print("=" * 40)
+
+    # AppleScript to close all Finder windows
+    applescript = """
+    tell application "Finder"
+        close every window
+    end tell
+    """
+
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", applescript], capture_output=True, text=True
+        )
+
+        if result.returncode == 0:
+            print("[green]✓ All Finder windows closed successfully[/green]")
+        else:
+            print(f"[red]✗ Failed to close Finder windows: {result.stderr}[/red]")
+
+    except Exception as e:
+        print(f"[red]✗ Error running AppleScript: {e}[/red]")
+
+
+@app.command()
+def close_windows(
+    app_name: Annotated[
+        str, typer.Argument(help="Application name to close windows for")
+    ] = "Finder",
+):
+    """Close all windows for a specific application"""
+    print(f"\n[bold cyan]Closing {app_name} Windows[/bold cyan]")
+    print("=" * 40)
+
+    # AppleScript to close all windows of a specific app
+    applescript = f'''
+    tell application "{app_name}"
+        close every window
+    end tell
+    '''
+
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", applescript], capture_output=True, text=True
+        )
+
+        if result.returncode == 0:
+            print(f"[green]✓ All {app_name} windows closed successfully[/green]")
+        else:
+            print(f"[red]✗ Failed to close {app_name} windows: {result.stderr}[/red]")
+
+    except Exception as e:
+        print(f"[red]✗ Error running AppleScript: {e}[/red]")
 
 
 if __name__ == "__main__":
