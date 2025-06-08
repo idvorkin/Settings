@@ -57,6 +57,17 @@ require("gitsigns").setup({
 	end,
 })
 
+-- Lets re-write this logic
+-- Intent is to commit only the current file, and preview it
+-- But, precommit may update backlinks
+-- If it does, stage that too.
+-- Since there are other things potentially in the working set
+--  1. git stash everything
+--  2. git pop the current file
+--  3. run pre-commit (like what you have now)
+--  4. re-add all changes, as everything else is staged
+--  4. pop the reset of the changes
+
 function GitCommitAndPush()
 	-- Change directory to the directory of the current file
 	vim.cmd("lcd %:p:h")
@@ -83,7 +94,7 @@ function GitCommitAndPush()
 		if is_special_repo() then
 			return "Checkpoint " .. current_file
 		end
-		
+
 		local msg = vim.fn.system("git diff --staged " .. current_file .. " | commit --oneline")
 		local success = vim.v.shell_error == 0
 		if not success or msg == "" then
@@ -96,10 +107,10 @@ function GitCommitAndPush()
 	-- Create a terminal buffer for colored diff output
 	local preview_buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = preview_buf })
-	
+
 	-- Use the current window
 	vim.api.nvim_win_set_buf(current_win, preview_buf)
-	
+
 	-- Open terminal with delta or git diff
 	local term_cmd = "git diff --staged " .. vim.fn.shellescape(current_file)
 	if vim.fn.executable("delta") == 1 then
@@ -107,7 +118,7 @@ function GitCommitAndPush()
 	else
 		term_cmd = term_cmd .. " --color"
 	end
-	
+
 	local term_chan = vim.api.nvim_open_term(preview_buf, {})
 	local first_non_empty_line_sent = false
 	vim.fn.jobstart(term_cmd, {
@@ -120,7 +131,7 @@ function GitCommitAndPush()
 					while start_idx <= #data and data[start_idx]:match("^%s*$") do
 						start_idx = start_idx + 1
 					end
-					
+
 					if start_idx <= #data then
 						first_non_empty_line_sent = true
 						-- Send remaining lines
@@ -203,7 +214,7 @@ function GitCommitAndPush()
 
 	-- Set buffer options
 	vim.bo[preview_buf].buflisted = false
-	vim.bo[preview_buf].buftype = "terminal"  -- Changed to terminal since we're using a terminal buffer
+	vim.bo[preview_buf].buftype = "terminal" -- Changed to terminal since we're using a terminal buffer
 	vim.bo[preview_buf].swapfile = false
 
 	-- Set window options
