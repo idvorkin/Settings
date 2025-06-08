@@ -427,6 +427,7 @@ function safe_init()
     #
     # Set alias that are always better
     alias_if_exists cat bat
+    alias_if_exists dua gdu-go
     alias_if_exists ranger yazi
     alias_if_exists ls eza
     alias_if_exists df duf
