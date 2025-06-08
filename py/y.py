@@ -1557,5 +1557,39 @@ def close_windows(
         print(f"[red]✗ Error running AppleScript: {e}[/red]")
 
 
+@app.command()
+def ai_fix():
+    """Fix spelling and grammar in clipboard using AI (calls installed ai-clip command)"""
+    try:
+        print("[cyan]🤖 Fixing clipboard text with AI...[/cyan]")
+        result = subprocess.run(["ai-clip", "fix"], capture_output=True, text=True)
+
+        if result.returncode == 0:
+            # Print the output from ai-clip
+            print(result.stdout)
+        else:
+            print(f"[red]Error running ai-clip: {result.stderr}[/red]")
+
+    except Exception as e:
+        print(f"[red]Failed to run AI fix: {e}[/red]")
+
+
+@app.command()
+def ai_rhyme():
+    """Transform clipboard text to Dr. Seuss style using AI (calls installed ai-clip command)"""
+    try:
+        print("[cyan]🎭 Transforming clipboard text to Dr. Seuss style...[/cyan]")
+        result = subprocess.run(["ai-clip", "seuss"], capture_output=True, text=True)
+
+        if result.returncode == 0:
+            # Print the output from ai-clip
+            print(result.stdout)
+        else:
+            print(f"[red]Error running ai-clip: {result.stderr}[/red]")
+
+    except Exception as e:
+        print(f"[red]Failed to run AI rhyme: {e}[/red]")
+
+
 if __name__ == "__main__":
     app()
