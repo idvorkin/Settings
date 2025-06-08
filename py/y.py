@@ -1557,38 +1557,73 @@ def close_windows(
         print(f"[red]✗ Error running AppleScript: {e}[/red]")
 
 
-@app.command()
-def ai_fix():
-    """Fix spelling and grammar in clipboard using AI (calls installed ai-clip command)"""
+def _call_ai_clip(command: str, description: str):
+    """Helper function to call ai-clip with given command and description"""
     try:
-        print("[cyan]🤖 Fixing clipboard text with AI...[/cyan]")
-        result = subprocess.run(["ai-clip", "fix"], capture_output=True, text=True)
+        print(f"[cyan]{description}[/cyan]")
+        ai_clip_path = Path.home() / ".local" / "bin" / "ai-clip"
+
+        # Check if ai-clip exists and is executable
+        if not ai_clip_path.exists():
+            print(f"[red]Error: ai-clip not found at {ai_clip_path}[/red]")
+            return
+
+        # Load GROQ_API_KEY from secretBox.json if not in environment
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if not groq_api_key:
+            try:
+                import json
+
+                secret_box_path = Path.home() / "gits" / "igor2" / "secretBox.json"
+                if secret_box_path.exists():
+                    with open(secret_box_path) as f:
+                        secrets = json.load(f)
+                    groq_api_key = secrets.get("GROQ_API_KEY")
+                    if groq_api_key:
+                        os.environ["GROQ_API_KEY"] = groq_api_key
+                        print("[dim]Loaded GROQ_API_KEY from secretBox.json[/dim]")
+                    else:
+                        print(
+                            "[red]Error: GROQ_API_KEY not found in secretBox.json[/red]"
+                        )
+                        return
+                else:
+                    print(
+                        f"[red]Error: secretBox.json not found at {secret_box_path}[/red]"
+                    )
+                    return
+            except Exception as e:
+                print(f"[red]Error loading GROQ_API_KEY from secretBox.json: {e}[/red]")
+                return
+
+        result = subprocess.run(
+            [str(ai_clip_path), command], capture_output=True, text=True
+        )
 
         if result.returncode == 0:
             # Print the output from ai-clip
             print(result.stdout)
         else:
-            print(f"[red]Error running ai-clip: {result.stderr}[/red]")
+            print(f"[red]Error running ai-clip (exit code {result.returncode}):[/red]")
+            if result.stderr:
+                print(f"[red]stderr: {result.stderr}[/red]")
+            if result.stdout:
+                print(f"[red]stdout: {result.stdout}[/red]")
 
     except Exception as e:
-        print(f"[red]Failed to run AI fix: {e}[/red]")
+        print(f"[red]Failed to run AI {command}: {e}[/red]")
+
+
+@app.command()
+def ai_fix():
+    """Fix spelling and grammar in clipboard using AI (calls installed ai-clip command)"""
+    _call_ai_clip("fix", "🤖 Fixing clipboard text with AI...")
 
 
 @app.command()
 def ai_rhyme():
     """Transform clipboard text to Dr. Seuss style using AI (calls installed ai-clip command)"""
-    try:
-        print("[cyan]🎭 Transforming clipboard text to Dr. Seuss style...[/cyan]")
-        result = subprocess.run(["ai-clip", "seuss"], capture_output=True, text=True)
-
-        if result.returncode == 0:
-            # Print the output from ai-clip
-            print(result.stdout)
-        else:
-            print(f"[red]Error running ai-clip: {result.stderr}[/red]")
-
-    except Exception as e:
-        print(f"[red]Failed to run AI rhyme: {e}[/red]")
+    _call_ai_clip("seuss", "🎭 Transforming clipboard text to Dr. Seuss style...")
 
 
 if __name__ == "__main__":
