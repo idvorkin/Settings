@@ -1214,6 +1214,9 @@ def kill_cruft(
         "Finder",
         "System Settings",
         "GeneralSettings",
+        "Photos",
+        "TextEdit",
+        "Keychain Access",
     }
 
     print("\n[bold red]Kill Cruft Analysis[/bold red]")
