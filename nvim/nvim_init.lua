@@ -161,5 +161,11 @@ end
 
 CheckCopilotHost()
 
+-- RemoteFiles
+-- RemoteFiles
+vim.cmd([[
+  command! IgEndyear edit scp://ec2-user@lightsail//home/ec2-user/gits/igor2/insights/buggingme/end_career.md
+]])
+
 -- vim.opt.laststatus = 3
 print("nvim_init.lua loaded")
