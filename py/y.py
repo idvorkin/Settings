@@ -40,11 +40,18 @@ def load_full_imports():
     from typing import List
     from pydantic import BaseModel, Field
     import pyperclip
-    import Quartz
-    import Quartz.CoreGraphics as CG
-    import AppKit
     import math
     import psutil
+    try:
+        import Quartz
+        import Quartz.CoreGraphics as CG
+        import AppKit
+    except ImportError:
+        # These are optional, only needed for screenshot/windowing features not core to all commands
+        # print("Warning: pyobjc modules (Quartz, AppKit) not found. Some features might be unavailable.", file=sys.stderr)
+        Quartz = None
+        CG = None
+        AppKit = None
 
     return typer.Typer(
         help="A Yabai helper - Window management and screenshot utilities",
@@ -1167,58 +1174,34 @@ def kill_cruft(
     close_finder: Annotated[
         bool, typer.Option("--close-finder", help="Also close all Finder windows")
     ] = True,
+    messages: Annotated[bool, typer.Option("--messages", help="Kill messaging apps (Signal, iMessage, WhatsApp)")] = False,
 ):
     """Kill resource-heavy or unnecessary applications (cruft)"""
 
     # Common applications that are often safe to kill when not actively used
     common_cruft = {
-        "Slack",
-        "Discord",
-        "Teams",
-        "Zoom",
-        "Skype",
-        "WhatsApp",
-        "Telegram",
-        "Steam",
-        "Epic Games Launcher",
-        "Battle.net",
-        "Origin",
-        "Spotify",
-        "Apple Music",
-        "VLC",
-        "IINA",
-        "QuickTime Player",
-        "Adobe Creative Cloud",
-        "Adobe Photoshop",
-        "Adobe Illustrator",
-        "Adobe Premiere Pro",
-        "Microsoft Word",
-        "Microsoft Excel",
-        "Microsoft PowerPoint",
-        "Chrome",
-        "Firefox",
-        "Safari",
-        "Edge",  # Be careful with browsers
-        "Postman",
-        "Insomnia",
-        "TablePlus",
-        "Sequel Pro",
-        "Activity Monitor",
-        "System Preferences",
-        "Calculator",
+        "Slack", "Discord", "Teams", "Zoom", "Skype", "WhatsApp", "Telegram",
+        "Steam", "Epic Games Launcher", "Battle.net", "Origin",
+        "Spotify", "VLC", "IINA", "QuickTime Player",
+        "Adobe Creative Cloud", "Adobe Photoshop", "Adobe Illustrator", "Adobe Premiere Pro",
+        "Microsoft Word", "Microsoft Excel", "Microsoft PowerPoint",
+        "Chrome", "Firefox", "Safari", "Edge",  # Be careful with browsers
+        "Postman", "Insomnia", "TablePlus", "Sequel Pro",
+        "Activity Monitor", "System Preferences", "Calculator",
         # Igor's cruft additions
-        "StocksWidget",
-        "Stocks",
-        "NewsToday2",
-        "News",
-        "Finder",
-        "System Settings",
-        "GeneralSettings",
-        "Photos",
-        "TextEdit",
-        "Keychain Access",
-        "Preview",
+        "StocksWidget", "Stocks", "NewsToday2", "News", "Finder",
+        "System Settings", "GeneralSettings", "Photos", "TextEdit",
+        "Keychain Access", "Preview", "Weather", "Numbers",
+        # Apple Productivity & Media Apps
+        "Pages", "Keynote", "Freeform", "Notes", "Reminders", "Calendar",
+        "Contacts", "Mail", "TV", "Music", "Podcasts", "Books", "Maps", "Home",
     }
+
+    effective_cruft_set = set(common_cruft) # Start with a copy
+
+    if messages:
+        messaging_apps_to_kill = {"Signal", "Messages"} # "WhatsApp" is already in common_cruft
+        effective_cruft_set.update(messaging_apps_to_kill)
 
     print("\n[bold red]Kill Cruft Analysis[/bold red]")
     print(f"Memory threshold: {memory_threshold}MB")
@@ -1255,7 +1238,7 @@ def kill_cruft(
 
                 # Determine if this is a candidate for killing
                 is_memory_hog = memory_mb > memory_threshold
-                is_common_cruft = app_name in common_cruft
+                is_common_cruft = app_name in effective_cruft_set
 
                 if is_memory_hog or is_common_cruft:
                     reason = []
