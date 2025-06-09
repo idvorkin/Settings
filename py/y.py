@@ -1217,6 +1217,7 @@ def kill_cruft(
         "Photos",
         "TextEdit",
         "Keychain Access",
+        "Preview",
     }
 
     print("\n[bold red]Kill Cruft Analysis[/bold red]")
