@@ -24,6 +24,10 @@ Host lightsail_clipboard
     RemoteForward 2225 127.0.0.1:2225
     RemoteForward 20000 127.0.0.1:20000 # auto ssh
 
+Host newlight
+    HostName 34.210.83.228
+    User ec2-user
+
 Host lightsail
     # For use w/Bink
     # ssh -N -L 4000:localhost:4000 -L 35729:localhost:35729 s2_12_9_ipad13
