@@ -10,7 +10,7 @@
 
 [push]
 	default = simple
-    autoSetupRemote = true
+	autoSetupRemote = 1
     followTags = true
 
 [core]
@@ -68,6 +68,7 @@
 	logc = log
 	logp = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate
 	fr = pull --rebase
+	logc = log
 
 [credential]
 	helper = store

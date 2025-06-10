@@ -11,9 +11,7 @@ cd ~
 git clone https://github.com/idvorkin/settings
 ```
 
-
 ## Alpine Linux (using iSH)
-
 
 I use ish as my ssh client, with some minor tweaks:
 
@@ -26,15 +24,18 @@ I use ish as my ssh client, with some minor tweaks:
 
 **Use WSL Instead**
 
-1) Install chocolatey (new admin window)
+1. Install chocolatey (new admin window)
 
-    @powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
+   @powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
 
-2) Install git (new admin window)
+2. Install git (new admin window)
 
-    cinst git
+   cinst git
 
-  3) Clone settings (new admin window)
+3. Clone settings (new admin window)
+
 
     cd \
     git clone https://github.com/idvorkin/settings
+
+Touching Ignore
