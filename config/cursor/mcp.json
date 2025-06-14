@@ -1,20 +1,29 @@
 {
-  "mcpServers": {
-    "playwright": {
-      "command": "npx",
-      "args": [
-        "@playwright/mcp@latest"
-      ]
-    },
-    "ask_igor": {
-      "command": "askig_mcp",
-      "args": [
-        "stdio"
-      ]
-    },
-    "github": {
-      "command": "~/gits/settings/mcp_servers/github-mcp-server.sh",
-      "args": []
-    }
-  }
+	"mcpServers": {
+		"playwright": {
+			"command": "npx",
+			"args": ["@playwright/mcp@latest"]
+		},
+		"ask_igor": {
+			"command": "askig_mcp",
+			"args": ["stdio"]
+		},
+		"github": {
+			"command": "~/gits/settings/mcp_servers/github-mcp-server.sh",
+			"args": []
+		}
+	},
+	"chop-tools": {
+		"command": "uv",
+		"args": [
+			"run",
+			"--directory",
+			"/Users/idvorkin/gits/chop-mcp",
+			"python",
+			"src/server.py"
+		],
+		"env": {
+			"UV_PROJECT_ENVIRONMENT": "/Users/idvorkin/gits/chop-mcp/.venv"
+		}
+	}
 }

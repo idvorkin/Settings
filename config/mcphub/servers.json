@@ -1,27 +1,37 @@
 {
-  "nativeMCPServers": [
+	"nativeMCPServers": [],
+	"mcpServers": {
+		"chop-tools": {
+			"command": "uv",
+			"args": [
+				"run",
+				"--directory",
+				"/Users/idvorkin/gits/chop-mcp",
+				"python",
+				"src/server.py"
+			],
+			"env": {
+				"UV_PROJECT_ENVIRONMENT": "/Users/idvorkin/gits/chop-mcp/.venv"
+			}
+		},
 
-  ],
-  "mcpServers": {
-    "github": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "GITHUB_PERSONAL_ACCESS_TOKEN",
-        "ghcr.io/github/github-mcp-server"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
-      }
-    },
-    "ask_igor": {
-      "command": "askig_mcp",
-      "args": [
-        "stdio"
-      ]
-    }
-  }
+		"github": {
+			"command": "docker",
+			"args": [
+				"run",
+				"-i",
+				"--rm",
+				"-e",
+				"GITHUB_PERSONAL_ACCESS_TOKEN",
+				"ghcr.io/github/github-mcp-server"
+			],
+			"env": {
+				"GITHUB_PERSONAL_ACCESS_TOKEN": ""
+			}
+		},
+		"ask_igor": {
+			"command": "askig_mcp",
+			"args": ["stdio"]
+		}
+	}
 }
