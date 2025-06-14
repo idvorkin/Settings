@@ -110,6 +110,9 @@ else:
 
 FLOW_HELP_URL = "https://www.flow.app/help#documentation"
 
+# Python tools path
+PY_TOOLS_PATH = Path.home() / ".local" / "bin"
+
 _ = """
 
 ~/settings/config/yabai/yabairc
@@ -1599,7 +1602,7 @@ def _call_ai_clip(command: str, description: str):
     """Helper function to call ai-clip with given command and description"""
     try:
         print(f"[cyan]{description}[/cyan]")
-        ai_clip_path = Path.home() / ".local" / "bin" / "ai-clip"
+        ai_clip_path = PY_TOOLS_PATH / "ai-clip"
 
         # Check if ai-clip exists and is executable
         if not ai_clip_path.exists():
@@ -1656,6 +1659,17 @@ def _call_ai_clip(command: str, description: str):
 def ai_fix():
     """Fix spelling and grammar in clipboard using AI (calls installed ai-clip command)"""
     _call_ai_clip("fix", "🤖 Fixing clipboard text with AI...")
+
+    # Show completion notification
+    try:
+        ux_path = PY_TOOLS_PATH / "ux"
+        subprocess.run(
+            [str(ux_path), "center", "AI Fix Complete! ✨", "--seconds", "1"],
+            capture_output=True,
+            check=False,
+        )
+    except Exception as e:
+        print(f"[dim]Note: Could not show completion popup: {e}[/dim]")
 
 
 @app.command()
