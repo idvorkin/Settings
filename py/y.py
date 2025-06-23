@@ -1252,6 +1252,7 @@ def kill_cruft(
         "Books",
         "Maps",
         "Home",
+        "TestFlight",
     }
 
     effective_cruft_set = set(common_cruft)  # Start with a copy
