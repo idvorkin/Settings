@@ -10,7 +10,7 @@ source "$HOME/.cargo/env"
 
 # Install packages via cargo for better cross-platform compatibility
 echo "Installing Rust packages via cargo..."
-cargo install zoxide bat eza mcfly dua procs htop starship yazi television bottom rg
+brew install zoxide bat eza mcfly dua procs htop starship yazi television bottom rg
 
 # Define the remaining brew packages
 export brew_packages="\
