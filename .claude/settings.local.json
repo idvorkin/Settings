@@ -1,0 +1,9 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(open https://github.com/idvorkin/Settings/pull/3)",
+			"Bash(gh pr:*)"
+		],
+		"deny": []
+	}
+}

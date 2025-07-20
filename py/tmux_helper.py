@@ -68,6 +68,8 @@ def generate_title(process_info: dict, short_path: str) -> str:
     """Generate a title based on process information"""
     if is_aider_running(process_info):
         return f"ai {short_path}"
+    elif is_claude_code_running(process_info):
+        return f"claude {short_path}"
     elif is_vim_running(process_info):
         return f"vi {short_path}"
     elif just_cmd := get_just_command(process_info):
@@ -135,6 +137,23 @@ def is_vim_running(process_info: dict) -> bool:
         ):
             return True
         if is_vim_running(child):  # Recursive check
+            return True
+    return False
+
+
+def is_claude_code_running(process_info: dict) -> bool:
+    """Check if Claude Code is running in the process tree"""
+    # Check current process
+    cmdline = process_info.get("cmdline", "").lower()
+    if "@anthropic-ai/claude-code" in cmdline or "claude" in cmdline:
+        return True
+
+    # Check children recursively
+    for child in process_info.get("children", []):
+        child_cmdline = child.get("cmdline", "").lower()
+        if "@anthropic-ai/claude-code" in child_cmdline or "claude" in child_cmdline:
+            return True
+        if is_claude_code_running(child):  # Recursive check
             return True
     return False
 
