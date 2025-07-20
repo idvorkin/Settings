@@ -144,17 +144,14 @@ def is_vim_running(process_info: dict) -> bool:
 def is_claude_code_running(process_info: dict) -> bool:
     """Check if Claude Code is running in the process tree"""
     # Check current process
-    cmdline = process_info.get("cmdline", "")
-    if "@anthropic-ai/claude-code" in cmdline or cmdline.strip() == "claude":
+    cmdline = process_info.get("cmdline", "").lower()
+    if "@anthropic-ai/claude-code" in cmdline or "claude" in cmdline:
         return True
 
     # Check children recursively
     for child in process_info.get("children", []):
-        child_cmdline = child.get("cmdline", "")
-        if (
-            "@anthropic-ai/claude-code" in child_cmdline
-            or child_cmdline.strip() == "claude"
-        ):
+        child_cmdline = child.get("cmdline", "").lower()
+        if "@anthropic-ai/claude-code" in child_cmdline or "claude" in child_cmdline:
             return True
         if is_claude_code_running(child):  # Recursive check
             return True
