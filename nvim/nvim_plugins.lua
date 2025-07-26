@@ -479,7 +479,8 @@ local git_plugins = {
 				ft = { "markdown", "Avante" },
 			},
 		},
-	},
+      provider = "claude-sonnet-4", -- The provider used in Aider mode or in the planning phase of Cursor Planning Mode
+    },
     {
         "ravitemer/mcphub.nvim",
         dependencies = {
