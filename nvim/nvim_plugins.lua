@@ -433,6 +433,20 @@ local git_plugins = {
 		},
 	},
 	{
+		"ldelossa/gh.nvim",
+		dependencies = {
+			{
+				"ldelossa/litee.nvim",
+				config = function()
+					require("litee.lib").setup()
+				end,
+			},
+		},
+		config = function()
+			require("litee.gh").setup()
+		end,
+	},
+	{
 		-- Configure formatter
 		"stevearc/conform.nvim",
 		opts = {
@@ -452,19 +466,17 @@ local git_plugins = {
 		"yetone/avante.nvim",
 		event = "VeryLazy",
 		build = "make",
-        system_prompt = function()
-            local hub = require("mcphub").get_hub_instance()
-            return hub:get_active_servers_prompt()
-        end,
-        -- The custom_tools type supports both a list and a function that returns a list. Using a function here prevents requiring mcphub before it's loaded
-        custom_tools = function()
-            return {
-                require("mcphub.extensions.avante").mcp_tool(),
-            }
-        end,
-		opts = {
-
-        },
+		system_prompt = function()
+			local hub = require("mcphub").get_hub_instance()
+			return hub:get_active_servers_prompt()
+		end,
+		-- The custom_tools type supports both a list and a function that returns a list. Using a function here prevents requiring mcphub before it's loaded
+		custom_tools = function()
+			return {
+				require("mcphub.extensions.avante").mcp_tool(),
+			}
+		end,
+		opts = {},
 		dependencies = {
 			"nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
 			"stevearc/dressing.nvim",
@@ -479,36 +491,36 @@ local git_plugins = {
 				ft = { "markdown", "Avante" },
 			},
 		},
-      provider = "claude-sonnet-4", -- The provider used in Aider mode or in the planning phase of Cursor Planning Mode
-    },
-    {
-        "ravitemer/mcphub.nvim",
-        dependencies = {
-            "nvim-lua/plenary.nvim",  -- Required for Job and HTTP requests
-        },
-        -- uncomment the following line to load hub lazily
-        --cmd = "MCPHub",  -- lazy load
-        build = "npm install -g mcp-hub@latest",  -- Installs required mcp-hub npm module
-        -- uncomment this if you don't want mcp-hub to be available globally or can't use -g
-        -- build = "bundled_build.lua",  -- Use this and set use_bundled_binary = true in opts  (see Advanced configuration)
-        config = function()
-            require("mcphub").setup({
-                extensions = {
-                    avante = {
-                        make_slash_commands = true, -- make /slash commands from MCP server prompts
-                    }
-                }
-            })
-        end,
-    },
-    {
-        "olimorris/codecompanion.nvim",
-        config = true,
-        dependencies = {
-            "nvim-lua/plenary.nvim",
-            "nvim-treesitter/nvim-treesitter",
-        },
-    },
+		provider = "claude-sonnet-4", -- The provider used in Aider mode or in the planning phase of Cursor Planning Mode
+	},
+	{
+		"ravitemer/mcphub.nvim",
+		dependencies = {
+			"nvim-lua/plenary.nvim", -- Required for Job and HTTP requests
+		},
+		-- uncomment the following line to load hub lazily
+		--cmd = "MCPHub",  -- lazy load
+		build = "npm install -g mcp-hub@latest", -- Installs required mcp-hub npm module
+		-- uncomment this if you don't want mcp-hub to be available globally or can't use -g
+		-- build = "bundled_build.lua",  -- Use this and set use_bundled_binary = true in opts  (see Advanced configuration)
+		config = function()
+			require("mcphub").setup({
+				extensions = {
+					avante = {
+						make_slash_commands = true, -- make /slash commands from MCP server prompts
+					},
+				},
+			})
+		end,
+	},
+	{
+		"olimorris/codecompanion.nvim",
+		config = true,
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"nvim-treesitter/nvim-treesitter",
+		},
+	},
 }
 plugins = appendTables(plugins, git_plugins)
 -- cmp and friends
@@ -675,7 +687,7 @@ function ReloadSnippets()
 	dofile(settings_dir .. "snippets.lua")
 end
 
-vim.lsp.enable({"pyrefly"})
-vim.lsp.enable({"tsserver"})
+vim.lsp.enable({ "pyrefly" })
+vim.lsp.enable({ "tsserver" })
 ReloadSnippets()
 vim.api.nvim_set_keymap("n", "<leader><leader>s", ":lua ReloadSnippets()<cr>", {})
