@@ -4,7 +4,8 @@
 			"Bash(open https://github.com/idvorkin/Settings/pull/3)",
 			"Bash(gh pr:*)",
 			"WebFetch(domain:docs.anthropic.com)",
-			"mcp__playwright__browser_navigate"
+			"mcp__playwright__browser_navigate",
+			"Bash(echo $SHELL)"
 		],
 		"deny": []
 	}

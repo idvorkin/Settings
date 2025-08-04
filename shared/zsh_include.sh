@@ -443,6 +443,7 @@ function safe_init()
     # Igor setups use Soed and Sodot as useful aliases
     alias Soed='nvim ~/settings/shared/zsh_include.sh'
     alias Sodot='.  ~/settings/shared/zsh_include.sh'
+    alias claude='unalias -a; command claude'
     export COLORTERM=truecolor
 
     set -o vi
