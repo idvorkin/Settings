@@ -444,6 +444,7 @@ function safe_init()
     alias Soed='nvim ~/settings/shared/zsh_include.sh'
     alias Sodot='.  ~/settings/shared/zsh_include.sh'
     alias claude='unalias -a; command claude'
+    alias claude-code='unalias -a; npx @anthropic-ai/claude-code@latest'
     export COLORTERM=truecolor
 
     set -o vi
