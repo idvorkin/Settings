@@ -28,6 +28,36 @@
 						]
 					},
 					{
+						"description": "Control+Quote to Escape in Terminal",
+						"manipulators": [
+							{
+								"conditions": [
+									{
+										"bundle_identifiers": [
+											"^com\\.apple\\.Terminal$",
+											"^com\\.googlecode\\.iterm2$",
+											"^co\\.zeit\\.hyperterm$",
+											"^io\\.alacritty$",
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.github\\.wez\\.wezterm$"
+										],
+										"type": "frontmost_application_if"
+									}
+								],
+								"from": {
+									"key_code": "quote",
+									"modifiers": { "mandatory": ["control"] }
+								},
+								"to": [
+									{
+										"key_code": "escape"
+									}
+								],
+								"type": "basic"
+							}
+						]
+					},
+					{
 						"description": "XCode C-P opens Quick Open",
 						"manipulators": [
 							{
