@@ -54,3 +54,9 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+        repos:
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.35.1
+    hooks:
+      - id: typos

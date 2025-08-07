@@ -27,6 +27,7 @@ docker \
 png-quant \
 docker-compose \
 lua-language-server \
+typos-lsp \
 diff-so-fancy \
 fx \
 git-extras \

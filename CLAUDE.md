@@ -5,6 +5,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Overview
 This is Igor Dvorkin's personal settings/dotfiles repository - a comprehensive configuration management system for multiple platforms (macOS, Linux/Alpine, Windows/WSL) and development tools. It includes Python CLI utilities, editor configurations, and workflow automation patterns.
 
+## Setup Instructions
+
+### macOS Setup
+Run the bootstrap script to install all dependencies:
+```bash
+./bootstrap.sh
+```
+
+Key installation files:
+- **Brew packages**: `shared/brew_packages.sh` - Contains all Homebrew packages including development tools, LSPs, and utilities
+- **Mac-specific setup**: `mac/install.sh` - macOS-specific configurations
+- **Shared setup**: `shared/shared_install.sh` - Cross-platform configurations
+
+### Required Packages
+Essential packages are installed via Homebrew from `shared/brew_packages.sh`:
+- Development tools: `git`, `tmux`, `zsh`, `neovim`
+- Language servers: `lua-language-server`, `typos-lsp`
+- Python tools: `uv`, `pipx`, `ruff`
+- CLI utilities: `bat`, `eza`, `fzf`, `ripgrep`, `fd`
+- Git enhancements: `gh`, `lazygit`, `git-delta`
+
+### Python Environment Setup
+Python tools are managed via UV for speed and consistency:
+```bash
+# Install UV and pipx
+brew install uv pipx
+
+# Install Python development tools
+uv tool install --force ruff
+uv tool install --force black
+uv tool install --force mypy
+```
+
 ## Python Development Conventions
 
 ### UV Shebang Usage
