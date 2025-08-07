@@ -281,7 +281,7 @@ function gstatdaterange() {
     git_output=`git log --since "$1" --until "$2" --pretty="%H"`
 
     # diff between first commit to last commit, and sort the output by size
-    #sort params -k=second column; -t=with delimter as |; -n=sort as numeric -r sort as reversed
+    #sort params -k=second column; -t=with delimiter as |; -n=sort as numeric -r sort as reversed
     git diff --stat `echo $git_output | tail -n 1` `echo $git_output | head -n 1` |  sort -k2 -t'|' -n -r
 }
 
@@ -445,6 +445,44 @@ function safe_init()
     alias Sodot='.  ~/settings/shared/zsh_include.sh'
     alias claude='unalias -a; command claude'
     alias claude-code='unalias -a; npx @anthropic-ai/claude-code@latest'
+    
+    # Launch Claude in a new shell with GitHub environment
+    function claude-gh() {
+        # Get GitHub token from 1Password or manual input
+        local gh_token=""
+        
+        # Try 1Password first
+        if command -v op &>/dev/null; then
+            gh_token=$(op read "op://Personal/GitHub AI Personal Access Token/token" 2>/dev/null)
+        fi
+        
+        # If no token from 1Password, ask for manual input
+        if [[ -z "$gh_token" ]]; then
+            echo "Enter GitHub token (or press Enter to continue without):"
+            read -s gh_token
+        fi
+        
+        # Start a new shell with clean environment and GitHub token
+        env -i \
+            HOME="$HOME" \
+            PATH="$PATH" \
+            TERM="xterm-256color" \
+            COLORTERM="truecolor" \
+            SHELL="$SHELL" \
+            USER="$USER" \
+            LANG="$LANG" \
+            LC_ALL="$LC_ALL" \
+            EDITOR="${EDITOR:-vim}" \
+            TMPDIR="$TMPDIR" \
+            SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
+            GITHUB_TOKEN="$gh_token" \
+            GH_TOKEN="$gh_token" \
+            GIT_AUTHOR_NAME="[AI] Igor Dvorkin" \
+            GIT_AUTHOR_EMAIL="idvorkin.ai.tools@gmail.com" \
+            GIT_COMMITTER_NAME="[AI] Igor Dvorkin" \
+            GIT_COMMITTER_EMAIL="idvorkin.ai.tools@gmail.com" \
+            bash -c 'exec claude'
+    }
     export COLORTERM=truecolor
 
     set -o vi
