@@ -28,7 +28,7 @@
 						]
 					},
 					{
-						"description": "Control+Quote to Escape in Terminal",
+						"description": "Control+Quote to Escape in Terminal, Claude, and ChatGPT",
 						"manipulators": [
 							{
 								"conditions": [
@@ -39,7 +39,9 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^io\\.alacritty$",
 											"^net\\.kovidgoyal\\.kitty$",
-											"^com\\.github\\.wez\\.wezterm$"
+											"^com\\.github\\.wez\\.wezterm$",
+											"^com\\.anthropic\\.claudefordesktop$",
+											"^com\\.openai\\.chat$"
 										],
 										"type": "frontmost_application_if"
 									}
@@ -47,6 +49,32 @@
 								"from": {
 									"key_code": "quote",
 									"modifiers": { "mandatory": ["control"] }
+								},
+								"to": [
+									{
+										"key_code": "escape"
+									}
+								],
+								"type": "basic"
+							}
+						]
+					},
+					{
+						"description": "Command+Quote to Escape in Claude and ChatGPT",
+						"manipulators": [
+							{
+								"conditions": [
+									{
+										"bundle_identifiers": [
+											"^com\\.anthropic\\.claudefordesktop$",
+											"^com\\.openai\\.chat$"
+										],
+										"type": "frontmost_application_if"
+									}
+								],
+								"from": {
+									"key_code": "quote",
+									"modifiers": { "mandatory": ["command"] }
 								},
 								"to": [
 									{
