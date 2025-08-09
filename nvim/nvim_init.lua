@@ -1,4 +1,4 @@
--- Setup Packe
+-- Setup
 local settings_dir = os.getenv("HOME") .. "/settings/nvim/"
 dofile(settings_dir .. "nvim_shared.lua")
 
@@ -43,7 +43,7 @@ require("aerial").setup({
 
 require("telescope").load_extension("aerial")
 
--- Lets keep exra lua stuff here
+-- Lets keep extra lua stuff here
 require("nvim-web-devicons").get_icons()
 
 --[[ Setup Tree Sitter
@@ -57,7 +57,7 @@ Install Plugins
 ]]
 
 -- Bleh lets debug highlighting
--- For VIM hightlights
+-- For VIM highlights
 vim.cmd([[
     function! HighlightGroup()
         echo synIDattr(synID(line("."), col("."), 1), "name")
@@ -167,5 +167,39 @@ vim.cmd([[
   command! IgEndyear edit scp://ec2-user@lightsail//home/ec2-user/gits/igor2/insights/buggingme/end_career.md
 ]])
 
+local function set_term_colors()
+	vim.api.nvim_create_autocmd("TermOpen", {
+		callback = function()
+			vim.wo.winhl = "Normal:TermBG"
+		end,
+	})
+
+	vim.cmd("highlight TermBG guibg=#101010")
+
+	local colors = {
+		"#2e3436", -- 0:  Black
+		"#cc0000", -- 1:  Red
+		"#4e9a06", -- 2:  Green
+		"#c4a000", -- 3:  Yellow
+		"#3465a4", -- 4:  Blue
+		"#75507b", -- 5:  Magenta
+		"#06989a", -- 6:  Cyan
+		"#d3d7cf", -- 7:  White
+		"#555753", -- 8:  Bright Black
+		"#ef2929", -- 9:  Bright Red
+		"#8ae234", -- 10: Bright Green
+		"#fce94f", -- 11: Bright Yellow
+		"#729fcf", -- 12: Bright Blue
+		"#ad7fa8", -- 13: Bright Magenta
+		"#34e2e2", -- 14: Bright Cyan
+		"#eeeeec", -- 15: Bright White
+	}
+
+	for i = 0, 15 do
+		vim.g["terminal_color_" .. i] = colors[i + 1]
+	end
+end
+
+set_term_colors()
 -- vim.opt.laststatus = 3
 print("nvim_init.lua loaded")
