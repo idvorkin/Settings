@@ -443,32 +443,38 @@ function safe_init()
     # Igor setups use Soed and Sodot as useful aliases
     alias Soed='nvim ~/settings/shared/zsh_include.sh'
     alias Sodot='.  ~/settings/shared/zsh_include.sh'
-    alias claude='unalias -a; command claude'
-    alias claude-code='unalias -a; npx @anthropic-ai/claude-code@latest'
-    
+
     # Launch Claude in a new shell with GitHub environment
     function claude-gh() {
         # Get GitHub token from 1Password or manual input
         local gh_token=""
-        
+        echo "++sec"
+
         # Try 1Password first
         if command -v op &>/dev/null; then
-            gh_token=$(op read "op://Personal/GitHub AI Personal Access Token/token" 2>/dev/null)
+             gh_token=$(op read "op://Personal/GitHub AI Personal Access Token/token" 2>/dev/null)
         fi
-        
+
         # If no token from 1Password, ask for manual input
         if [[ -z "$gh_token" ]]; then
             echo "Enter GitHub token (or press Enter to continue without):"
             read -s gh_token
         fi
-        
+
+        # Remove all aliases
+        unalias -m *
+
+
+        echo "run env"
+
+
         # Start a new shell with clean environment and GitHub token
         env -i \
             HOME="$HOME" \
             PATH="$PATH" \
             TERM="xterm-256color" \
             COLORTERM="truecolor" \
-            SHELL="$SHELL" \
+            SHELL="bash" \
             USER="$USER" \
             LANG="$LANG" \
             LC_ALL="$LC_ALL" \
@@ -481,7 +487,7 @@ function safe_init()
             GIT_AUTHOR_EMAIL="idvorkin.ai.tools@gmail.com" \
             GIT_COMMITTER_NAME="[AI] Igor Dvorkin" \
             GIT_COMMITTER_EMAIL="idvorkin.ai.tools@gmail.com" \
-            bash -c 'exec claude'
+            bash --login -c 'exec claude'
     }
     export COLORTERM=truecolor
 
