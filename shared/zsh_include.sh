@@ -469,25 +469,30 @@ function safe_init()
 
 
         # Start a new shell with clean environment and GitHub token
-        env -i \
-            HOME="$HOME" \
-            PATH="$PATH" \
-            TERM="xterm-256color" \
-            COLORTERM="truecolor" \
-            SHELL="bash" \
-            USER="$USER" \
-            LANG="$LANG" \
-            LC_ALL="$LC_ALL" \
-            EDITOR="${EDITOR:-vim}" \
-            TMPDIR="$TMPDIR" \
-            SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
-            GITHUB_TOKEN="$gh_token" \
-            GH_TOKEN="$gh_token" \
-            GIT_AUTHOR_NAME="[AI] Igor Dvorkin" \
-            GIT_AUTHOR_EMAIL="idvorkin.ai.tools@gmail.com" \
-            GIT_COMMITTER_NAME="[AI] Igor Dvorkin" \
-            GIT_COMMITTER_EMAIL="idvorkin.ai.tools@gmail.com" \
-            bash --login -c 'exec claude'
+    env -i \
+          HOME="$HOME" \
+          PATH="$PATH" \
+          TERM="xterm-256color" \
+          COLORTERM="truecolor" \
+          SHELL="bash" \
+          USER="$USER" \
+          LANG="$LANG" \
+          LC_ALL="$LC_ALL" \
+          EDITOR="${EDITOR:-vim}" \
+          TMPDIR="$TMPDIR" \
+          SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
+          GITHUB_TOKEN="$gh_token" \
+          GH_TOKEN="$gh_token" \
+          GIT_AUTHOR_NAME="[AI] Igor Dvorkin" \
+          GIT_AUTHOR_EMAIL="idvorkin.ai.tools@gmail.com" \
+          GIT_COMMITTER_NAME="[AI] Igor Dvorkin" \
+          GIT_COMMITTER_EMAIL="idvorkin.ai.tools@gmail.com" \
+          GIT_ASKPASS="" \
+          GIT_TERMINAL_PROMPT=0 \
+          GIT_CONFIG_COUNT=1 \
+          GIT_CONFIG_KEY_0="credential.helper" \
+          GIT_CONFIG_VALUE_0="!gh auth git-credential" \
+          bash --login -c 'exec claude'
     }
     export COLORTERM=truecolor
 
