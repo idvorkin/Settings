@@ -256,6 +256,8 @@ lazy-lock.json
 
 # Private individual user cursor rules
 .cursor/rules/_*.mdc
+# Claude local settings (should not be committed)
+.claude/settings.local.json
 # SpecStory explanation file
 .specstory/.what-is-this.md
 # Cursor extensions directory
