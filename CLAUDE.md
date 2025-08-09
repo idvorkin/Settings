@@ -120,11 +120,27 @@ The repository uses these linters (configured in .pre-commit-config.yaml):
 - **No Merge Commits**: Use rebase for clean history
 
 ### Pull Request Workflow
+
+#### For Collaborators
 1. Create issue first using `gh issue create`
 2. Create branch from issue
 3. Make changes following conventions
 4. Create PR using `gh pr create`
 5. Link PR to issue
+
+#### For Non-Collaborators
+If you're not a collaborator on the repository, follow these steps:
+1. Fork the repository first using `gh repo fork --clone=false`
+2. Add the fork as a remote: `git remote add fork https://github.com/<your-fork>/Settings.git`
+3. Create and checkout a new branch for your changes
+4. Make changes following conventions
+5. Push to your fork: `git push fork <branch-name>`
+6. Create PR from fork: `gh pr create --repo idvorkin/Settings --head <fork-owner>:<branch-name> --base master`
+7. After PR is merged and user confirms, switch back to origin/master:
+   - `git checkout master`
+   - `git pull origin master`
+   - Delete the local branch: `git branch -d <branch-name>`
+   - Remove fork remote if no longer needed: `git remote remove fork`
 
 ## Terminal Command Conventions
 
