@@ -9,6 +9,7 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"
 
 # Clone settings repo FIRST
 RUN git clone https://github.com/idvorkin/settings.git ~/settings
+RUN mkdir  ~/gits
 RUN ln -s ~/settings ~/gits/settings
 
 # Install minimal essentials for bootstrap
