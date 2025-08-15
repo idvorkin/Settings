@@ -393,11 +393,11 @@ plugins = appendTables(plugins, { "tpope/vim-surround" })
     Setup surround for b (old)  and i(talics) for markdown.
     echo char2nr('b') -> 105
     "
-    Cheat Sheat
+    Cheat Sheet
     " - yssX - soround the current line with italics(i) or bold(b) or something
     " else.
     "
-    - Once in visual mode, S will do the surround folowed by the b so like
+    - Once in visual mode, S will do the surround followed by the b so like
     select text in visual mode, then Sb will make it bold.
 ]]
 
@@ -422,8 +422,8 @@ local git_plugins = {
 
 	"lewis6991/gitsigns.nvim",
 	--  DiffViewOpen
-	"sindrets/diffview.nvim",
-	"NeogitOrg/neogit",
+	-- Super slow, let's remove this "sindrets/diffview.nvim",
+	-- "NeogitOrg/neogit",
 	{
 		"pwntester/octo.nvim",
 		opts = {
@@ -567,7 +567,7 @@ local function setupMarkdown()
 			opts = {
 
 				heading = {
-					-- Turn on / off heading icon & ba󰲧ckground rendering
+					-- Turn on / off heading icon & background rendering
 					enabled = true,
 					width = "block",
 					icons = { "# ", "## ", "### ", "#### ", "󰲩 ", "󰲫 " },
