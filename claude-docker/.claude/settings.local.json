@@ -1,0 +1,14 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(bash:*)",
+			"Bash(chmod:*)",
+			"Bash(./run-docker.py --help)",
+			"Bash(./run-docker.py:*)",
+			"Bash(git add:*)"
+		],
+		"deny": [],
+		"ask": [],
+		"defaultMode": "acceptEdits"
+	}
+}
