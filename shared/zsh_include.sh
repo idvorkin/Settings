@@ -386,6 +386,11 @@ function curl_md() {
 
 function export_secrets()
 {
+    # Check if secretBox.json exists
+    if [[ ! -f ~/gits/igor2/secretBox.json ]]; then
+        echo "No secretBox found at ~/gits/igor2/secretBox.json"
+        return 0
+    fi
     esecret_jq LANGCHAIN_API_KEY
     esecret_jq ANTHROPIC_API_KEY
     esecret_jq OPENAI_API_KEY
