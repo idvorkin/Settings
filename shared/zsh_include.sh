@@ -494,6 +494,7 @@ function safe_init()
           GIT_CONFIG_VALUE_0="!gh auth git-credential" \
           bash --login -c 'exec claude'
     }
+
     export COLORTERM=truecolor
 
     set -o vi

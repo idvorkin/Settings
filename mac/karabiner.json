@@ -9,7 +9,10 @@
 							{
 								"conditions": [
 									{
-										"bundle_identifiers": ["^com\\.googlecode\\.iterm2$"],
+										"bundle_identifiers": [
+											"^com\\.googlecode\\.iterm2$",
+											"^com\\.mitchellh\\.ghostty$"
+										],
 										"type": "frontmost_application_if"
 									}
 								],
@@ -40,6 +43,7 @@
 											"^io\\.alacritty$",
 											"^net\\.kovidgoyal\\.kitty$",
 											"^com\\.github\\.wez\\.wezterm$",
+											"^com\\.mitchellh\\.ghostty$",
 											"^com\\.anthropic\\.claudefordesktop$",
 											"^com\\.openai\\.chat$"
 										],
@@ -276,7 +280,10 @@
 											"^com\\.googlecode\\.iterm2$",
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
-											"^io\\.alacritty$"
+											"^io\\.alacritty$",
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.github\\.wez\\.wezterm$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_if"
 									}
@@ -340,7 +347,10 @@
 											"^com\\.googlecode\\.iterm2$",
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
-											"^io\\.alacritty$"
+											"^io\\.alacritty$",
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.github\\.wez\\.wezterm$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -386,7 +396,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -438,7 +449,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -490,7 +502,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -547,7 +560,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -599,7 +613,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -651,7 +666,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -703,7 +719,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -760,7 +777,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1081,7 +1099,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1193,6 +1212,7 @@
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
 											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$",
 											"^org\\.mozilla\\.firefox$",
 											"^com\\.microsoft\\.Edge",
 											"^com\\.google\\.Chrome$",
@@ -1272,6 +1292,7 @@
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
 											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$",
 											"^cz\\.or\\.repo\\.git-gui$",
 											"^com\\.jetbrains\\."
 										],
@@ -1326,6 +1347,7 @@
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
 											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$",
 											"^org\\.mozilla\\.firefox$",
 											"^com\\.microsoft\\.Edge",
 											"^com\\.google\\.Chrome$",
@@ -1405,6 +1427,7 @@
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
 											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$",
 											"^cz\\.or\\.repo\\.git-gui$",
 											"^com\\.jetbrains\\."
 										],
@@ -1484,7 +1507,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1536,7 +1560,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1588,7 +1613,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1640,7 +1666,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1697,7 +1724,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1749,7 +1777,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1801,7 +1830,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1858,7 +1888,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1915,7 +1946,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -1972,7 +2004,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2029,7 +2062,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2086,7 +2120,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2143,7 +2178,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2195,7 +2231,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2249,7 +2286,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2306,7 +2344,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2358,7 +2397,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2415,7 +2455,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2467,7 +2508,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2519,7 +2561,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2576,7 +2619,8 @@
 											"^co\\.zeit\\.hyperterm$",
 											"^co\\.zeit\\.hyper$",
 											"^io\\.alacritty$",
-											"^net\\.kovidgoyal\\.kitty$"
+											"^net\\.kovidgoyal\\.kitty$",
+											"^com\\.mitchellh\\.ghostty$"
 										],
 										"type": "frontmost_application_unless"
 									}
@@ -2735,6 +2779,7 @@
 									{
 										"bundle_identifiers": [
 											"^com\\.googlecode\\.iterm2$",
+											"^com\\.mitchellh\\.ghostty$",
 											"^org\\.mozilla\\.firefox$",
 											"^com\\.microsoft\\.Edge",
 											"^com\\.google\\.Chrome$",
