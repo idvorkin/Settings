@@ -4,11 +4,12 @@ FROM claude-docker:base
 USER developer
 WORKDIR /home/developer
 
-# Add brew to PATH 
+# Add brew to PATH
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"
 
 # Clone settings repo FIRST
 RUN git clone https://github.com/idvorkin/settings.git ~/settings
+RUN ln -s ~/settings ~/gits/settings
 
 # Install minimal essentials for bootstrap
 RUN brew install zsh tmux neovim git
@@ -43,6 +44,7 @@ RUN brew install \
     gdu \
     dua-cli \
     fastfetch \
+    tig \
     procs || true
 
 # Install Claude CLI inside the container
@@ -119,6 +121,11 @@ SHELL ["/bin/zsh", "-c"]
 
 # Expose Jekyll ports
 EXPOSE 4000 35729
+
+# Run lazy sync headless to install all plugins during build
+RUN nvim --headless "+Lazy! sync" +qa || true && \
+    echo "lazy.nvim plugins installed"
+
 
 WORKDIR /home/developer/gits
 LABEL description="Settings configured with essential tools (minimal)"

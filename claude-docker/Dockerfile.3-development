@@ -19,7 +19,6 @@ SHELL ["/bin/bash", "-c"]
 # Update the repos
 # Clone the main repos
 
-RUN ln -s ~/settings ~/gits/settings
 
 RUN cd ~/gits && \
     for repo in */; do \
@@ -54,9 +53,6 @@ RUN mkdir -p ~/.config/claude && \
 }' > ~/.config/claude/settings.json && \
     echo "Claude configured in YOLO mode for container development"
 
-# Create directories where Claude expects config
-RUN mkdir -p ~/.claude ~/.config/claude /tmp/claude-config
-
 # Add claude to PATH properly
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"
 
@@ -69,11 +65,5 @@ RUN echo '# Docker container prompt setup' >> ~/.zshrc && \
     echo '# Docker container prompt setup' >> ~/.bashrc && \
     echo '[ -f /etc/profile.d/container-prompt.sh ] && source /etc/profile.d/container-prompt.sh' >> ~/.bashrc
 
-RUN brew install yazi tig
-
-# Run lazy sync headless to install all plugins during build
-RUN nvim --headless "+Lazy! sync" +qa || true && \
-    echo "lazy.nvim plugins installed"
 
 WORKDIR /home/developer/gits
-LABEL description="Development layer with Claude YOLO mode, container prompt, and neovim+lazy.nvim"
