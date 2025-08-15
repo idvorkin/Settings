@@ -10,8 +10,8 @@ if [ "$DOCKER_BUILD_NO_CACHE" = "1" ]; then
 fi
 
 # Build layer 1: Base with Homebrew
-echo "Building layer 1: Base with Homebrew..."
-docker build -f Dockerfile.1-base -t claude-docker:base $DOCKER_BUILD_ARGS .
+echo "Skipping Building layer 1: Base with Homebrew..."
+-- docker build -f Dockerfile.1-base -t claude-docker:base $DOCKER_BUILD_ARGS .
 
 # Build layer 2: Minimal stable with settings
 echo "Building layer 2: Minimal stable with settings..."
