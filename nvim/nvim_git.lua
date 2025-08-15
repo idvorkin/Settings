@@ -223,7 +223,7 @@ function GitCommitAndPush()
 	vim.wo[current_win].cursorline = true
 end
 
-local neogit = require("neogit")
-neogit.setup({})
+--  local neogit = require("neogit")
+-- neogit.setup({})
 
 require("octo").setup()
