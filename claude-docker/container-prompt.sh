@@ -73,3 +73,10 @@ EOF
     # Export for child processes
     export DOCKER_CONTAINER_DISPLAY="🐳 $DOCKER_CONTAINER_NAME"
 fi
+
+# Configure git to use GH_TOKEN for GitHub authentication
+if [ -n "$GH_TOKEN" ]; then
+    # Just configure git to embed the token in GitHub URLs
+    git config --global url."https://idvorkin-ai-tools:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+    echo "Git configured to use GH_TOKEN for GitHub authentication"
+fi
