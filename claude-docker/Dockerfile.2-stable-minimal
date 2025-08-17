@@ -25,7 +25,6 @@ RUN mkdir -p ~/.config ~/.vim/bundle ~/.tmux/plugins ~/.ipython/profile_default
 RUN cd ~/settings && bash bootstrap.sh
 
 # Install core development packages only
-# Note: brew may exit with non-zero due to caveats, but packages are installed
 RUN brew install \
     fzf \
     fd \
@@ -47,7 +46,7 @@ RUN brew install \
     fastfetch \
     tig \
     procs \
-    git-delta || true
+    git-delta
 
 # Install Claude CLI inside the container
 RUN npm install -g @anthropic-ai/claude-code
