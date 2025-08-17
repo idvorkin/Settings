@@ -66,4 +66,4 @@ RUN echo '# Docker container prompt setup' >> ~/.zshrc && \
     echo '[ -f /etc/profile.d/container-prompt.sh ] && source /etc/profile.d/container-prompt.sh' >> ~/.bashrc
 
 
-WORKDIR /home/developer/gits
+WORKDIR /home/developer/

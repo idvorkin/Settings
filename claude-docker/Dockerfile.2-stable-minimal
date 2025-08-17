@@ -51,15 +51,14 @@ RUN brew install \
 # Install Claude CLI inside the container
 RUN npm install -g @anthropic-ai/claude-code
 
-# Install GitHub CLI (gh) - brew doesn't have ARM64 bottles, so use official method
-# Also install cmake and other build tools
+# Install GitHub CLI (gh) using the current official method
 USER root
+RUN apt-get update && apt-get install -y curl
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
     chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
-    apt-get update && \
-    apt-get install -y gh cmake && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt update && \
+    apt install -y gh
 USER developer
 
 # Install yarn via npm
@@ -117,14 +116,11 @@ fi' > ~/setup-gh-auth.sh && chmod +x ~/setup-gh-auth.sh
 RUN echo '[ -f ~/setup-gh-auth.sh ] && ~/setup-gh-auth.sh' >> ~/.bashrc && \
     echo '[ -f ~/setup-gh-auth.sh ] && ~/setup-gh-auth.sh' >> ~/.zshrc
 
-# Set zsh as default shell
-SHELL ["/bin/zsh", "-c"]
-
 # Expose Jekyll ports
 EXPOSE 4000 35729
 
-# Run lazy sync headless to install all plugins during build
-RUN nvim --headless "+Lazy! sync" +qa || true && \
+# Run lazy sync headless to install all plugins during build (using bash since zsh path might not be standard)
+RUN /bin/bash -c "nvim --headless '+Lazy! sync' +qa || true" && \
     echo "lazy.nvim plugins installed"
 
 
