@@ -16,17 +16,6 @@ WORKDIR /home/developer
 # Use bash for commands (zsh is at different location)
 SHELL ["/bin/bash", "-c"]
 
-# Update the repos
-# Clone the main repos
-
-
-RUN cd ~/gits && \
-    for repo in */; do \
-        if [ -d "$repo/.git" ]; then \
-            echo "Updating $repo"; \
-            cd "$repo" && git fetch && git rebase && cd ..; \
-        fi; \
-    done
 
 
 
@@ -86,3 +75,15 @@ RUN echo '# Docker container prompt setup' >> ~/.zshrc && \
 
 
 WORKDIR /home/developer/
+#
+# Update the repos
+# Clone the main repos
+
+
+RUN cd ~/gits && \
+    for repo in */; do \
+        if [ -d "$repo/.git" ]; then \
+            echo "Updating $repo"; \
+            cd "$repo" && git fetch && git rebase && cd ..; \
+        fi; \
+    done

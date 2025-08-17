@@ -647,13 +647,6 @@ plugins = appendTables(plugins, setupMarkdown())
 plugins = appendTables(plugins, {
 	"folke/lazydev.nvim",
 	"ii14/neorepl.nvim",
-	-- Add a messages plugin
-	-- :BMessages
-	{
-		"ariel-frischer/bmessages.nvim",
-		event = "CmdlineEnter",
-		opts = {},
-	},
 })
 
 plugins = appendTables(plugins, {
