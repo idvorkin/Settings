@@ -31,7 +31,7 @@ docker build \
     --platform linux/arm64 \
     -f Dockerfile.3-development \
     -t claude-docker:dev \
-    $DOCKER_BUILD_ARGS \
+    --no-cache \
     .
 
 echo "✅ Development layer built successfully!"
