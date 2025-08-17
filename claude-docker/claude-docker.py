@@ -42,9 +42,9 @@ DEFAULT_IMAGE = "claude-docker:dev"
 STATE_FILE = Path.home() / ".claude-docker-state.json"
 DOCKER_DIR = Path(__file__).parent.absolute()
 PORT_SEARCH_RANGE = 100
-DEFAULT_JEKYLL_PORT = 4000
+DEFAULT_JEKYLL_PORT = 5000
 DEFAULT_LIVERELOAD_PORT = 35729
-CONTAINER_NAME_PATTERN = re.compile(r"^claude-dev-\d+$")
+CONTAINER_NAME_PATTERN = re.compile(r"^C-\d+$")
 
 # Terminal configuration constants
 TRUE_COLOR_TERMINALS = [
@@ -428,14 +428,14 @@ class DockerManager:
             console.print(
                 Panel(
                     f"[yellow]Using alternate ports:[/yellow]\n"
-                    f"Jekyll: [green]{jekyll_port}[/green] (instead of 4000)\n"
+                    f"Jekyll: [green]{jekyll_port}[/green] (instead of 5000)\n"
                     f"LiveReload: [green]{livereload_port}[/green] (instead of 35729)",
                     border_style="yellow",
                 )
             )
 
-        # Generate container name
-        container_name = f"claude-dev-{int(datetime.now().timestamp())}"
+        # Generate container name based on Jekyll port
+        container_name = f"C-{jekyll_port}"
 
         # Build configuration
         volumes = self.build_volume_mounts()
