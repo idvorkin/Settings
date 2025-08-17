@@ -440,7 +440,8 @@ function safe_init()
     alias_if_exists ndcu gdu
     alias_if_exists du dua
     alias_if_exists neofetch fastfetch
-    alias_if_other_exists cd z zoxide
+    # Removed cd alias as it interferes with Claude
+    # alias_if_other_exists cd z zoxide
     alias_if_exists ps procs
     # On mac, gpt is in sbin, use the installed from idvorkin_nlp version instead
     alias_if_exists gpt ~/.local/bin/gpt
