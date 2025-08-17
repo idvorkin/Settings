@@ -80,3 +80,11 @@ if [ -n "$GH_TOKEN" ]; then
     git config --global url."https://idvorkin-ai-tools:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
     echo "Git configured to use GH_TOKEN for GitHub authentication"
 fi
+
+# Copy Claude credentials if mounted
+if [ -f "/ro_host/.claude/.credentials.json" ]; then
+    mkdir -p ~/.claude
+    cp /ro_host/.claude/.credentials.json ~/.claude/.credentials.json
+    chmod 600 ~/.claude/.credentials.json
+    echo "Claude credentials copied from host"
+fi

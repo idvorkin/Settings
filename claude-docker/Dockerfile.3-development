@@ -61,6 +61,10 @@ RUN mkdir -p ~/.config/claude && \
 }' > ~/.config/claude/settings.json && \
     echo "Claude configured in YOLO mode for container development"
 
+# Claude credentials will be copied at runtime from mounted volume
+# See container-prompt.sh for the copy logic
+RUN mkdir -p ~/.claude
+
 # Add claude to PATH properly
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"
 

@@ -1,0 +1,16 @@
+# Ignore credentials file after copying
+.claude.credentials.json
+
+# Ignore git files
+.git
+.gitignore
+
+# Ignore documentation
+*.md
+
+# Don't ignore container-prompt.sh - it's needed!
+# But ignore other scripts
+build*.sh
+run*.sh
+test*.sh
+*.py

@@ -25,8 +25,8 @@ RUN mkdir -p ~/.config ~/.vim/bundle ~/.tmux/plugins ~/.ipython/profile_default
 RUN cd ~/settings && bash bootstrap.sh
 
 # Install core development packages only
+# Note: fzf excluded due to ARM build issues
 RUN brew install \
-    fzf \
     fd \
     ripgrep \
     just \
@@ -41,7 +41,6 @@ RUN brew install \
     yazi \
     duf \
     bottom \
-    gdu \
     dua-cli \
     fastfetch \
     tig \
