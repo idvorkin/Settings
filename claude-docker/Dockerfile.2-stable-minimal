@@ -46,7 +46,8 @@ RUN brew install \
     dua-cli \
     fastfetch \
     tig \
-    procs || true
+    procs \
+    git-delta || true
 
 # Install Claude CLI inside the container
 RUN npm install -g @anthropic-ai/claude-code
