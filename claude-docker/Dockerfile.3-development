@@ -37,6 +37,25 @@ RUN cd ~/gits && \
 # - Development databases
 # - Additional programming language runtimes
 
+# Install modern terminal support
+USER root
+RUN apt-get update && apt-get install -y \
+    ncurses-term \
+    kitty-terminfo
+
+# Install Ghostty terminfo (if available) and other modern terminal definitions
+RUN mkdir -p /usr/share/terminfo/x && \
+    # Try to fetch Ghostty terminfo if available
+    (curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/terminfo/ghostty.terminfo 2>/dev/null | tic -x - || true) && \
+    # Also ensure we have good fallbacks
+    echo "# Terminal compatibility" >> /etc/bash.bashrc && \
+    echo "if [[ \"\$TERM\" == \"xterm-ghostty\" ]] && ! infocmp xterm-ghostty >/dev/null 2>&1; then" >> /etc/bash.bashrc && \
+    echo "    export TERM=xterm-256color" >> /etc/bash.bashrc && \
+    echo "fi" >> /etc/bash.bashrc
+
+USER developer
+
+
 # Set up Claude YOLO config for container environment (experimental)
 # This allows Claude to run without permission checks in the container
 RUN mkdir -p ~/.config/claude && \

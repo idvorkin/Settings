@@ -46,6 +46,33 @@ DEFAULT_JEKYLL_PORT = 4000
 DEFAULT_LIVERELOAD_PORT = 35729
 CONTAINER_NAME_PATTERN = re.compile(r"^claude-dev-\d+$")
 
+# Terminal configuration constants
+TRUE_COLOR_TERMINALS = [
+    "truecolor",
+    "direct",
+    "ghostty",
+    "kitty",
+    "alacritty",
+    "wezterm",
+]
+TERM_TRUE_COLOR = "xterm-direct"
+TERM_256_COLOR = "xterm-256color"
+
+
+def determine_container_term() -> str:
+    """Determine the best TERM value for container based on host terminal.
+
+    Returns:
+        Terminal type string optimized for container use
+    """
+    host_term = os.environ.get("TERM", TERM_256_COLOR)
+
+    # Check if host supports true color
+    if any(term_type in host_term.lower() for term_type in TRUE_COLOR_TERMINALS):
+        return TERM_TRUE_COLOR
+
+    return TERM_256_COLOR
+
 
 class ContainerState:
     """Manages container state persistence"""
@@ -247,8 +274,8 @@ class DockerManager:
         # Container name for prompt
         env["DOCKER_CONTAINER_NAME"] = container_name
 
-        # Terminal
-        env["TERM"] = os.environ.get("TERM", "xterm-256color")
+        # Terminal - use safe defaults but preserve true color if possible
+        env["TERM"] = determine_container_term()
 
         return env
 
@@ -356,6 +383,9 @@ class DockerManager:
                 f"\n[green]🐳 Attaching to container: {container_name}[/green]\n"
             )
 
+            # Determine best TERM value for true color support
+            term_value = determine_container_term()
+
             # Use subprocess for interactive shell
             subprocess.run(
                 [
@@ -365,7 +395,7 @@ class DockerManager:
                     "-e",
                     f"DOCKER_CONTAINER_NAME={container_name}",
                     "-e",
-                    f"TERM={os.environ.get('TERM', 'xterm-256color')}",
+                    f"TERM={term_value}",
                     container_name,
                     "/home/linuxbrew/.linuxbrew/bin/zsh",
                 ]
