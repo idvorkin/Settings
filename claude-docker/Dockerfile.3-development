@@ -82,7 +82,12 @@ WORKDIR /home/developer/
 #
 # Update the repos
 # Clone the main repos
+#
 
+RUN echo v1
+
+
+RUN cd ~/gits/settings && git pull
 
 RUN cd ~/gits && \
     for repo in */; do \
