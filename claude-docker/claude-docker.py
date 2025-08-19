@@ -169,8 +169,8 @@ class DockerManager:
         except NotFound:
             return "not found"
 
-    def build_volume_mounts(self) -> Dict[str, Dict]:
-        """Build volume mount configuration"""
+    def build_volume_mounts(self, container_name: str) -> Dict[str, Dict]:
+        """Build volume mount configuration including persistent volumes"""
         mounts = {}
 
         # Define allowlist of directories to mount under /ro_host/
@@ -199,6 +199,46 @@ class DockerManager:
         mounts[str(DOCKER_DIR)] = {"bind": "/ro_host_docker", "mode": "ro"}
 
         return mounts
+
+    def get_volume_name(self, container_name: str, volume_type: str = "home") -> str:
+        """Get the name for a persistent volume"""
+        return f"{container_name}-{volume_type}"
+
+    def create_persistent_volumes(self, container_name: str) -> List[str]:
+        """Create persistent named volumes for container"""
+        volumes = []
+
+        # Create home directory volume
+        home_volume = self.get_volume_name(container_name, "home")
+        try:
+            self.client.volumes.create(name=home_volume)
+            console.print(f"[green]✓[/green] Created persistent volume: {home_volume}")
+        except APIError as e:
+            if "already exists" in str(e):
+                console.print(
+                    f"[yellow]⚠[/yellow] Volume {home_volume} already exists (will reuse)"
+                )
+            else:
+                raise
+        volumes.append(home_volume)
+
+        # Create workspace volume for /workspace
+        workspace_volume = self.get_volume_name(container_name, "workspace")
+        try:
+            self.client.volumes.create(name=workspace_volume)
+            console.print(
+                f"[green]✓[/green] Created persistent volume: {workspace_volume}"
+            )
+        except APIError as e:
+            if "already exists" in str(e):
+                console.print(
+                    f"[yellow]⚠[/yellow] Volume {workspace_volume} already exists (will reuse)"
+                )
+            else:
+                raise
+        volumes.append(workspace_volume)
+
+        return volumes
 
     def build_environment(self, container_name: str) -> Dict[str, str]:
         """Build environment variables"""
@@ -486,8 +526,11 @@ class DockerManager:
                 return
 
         # Build configuration
-        volumes = self.build_volume_mounts()
+        volumes = self.build_volume_mounts(container_name)
         environment = self.build_environment(container_name)
+
+        # Create persistent volumes
+        self.create_persistent_volumes(container_name)
 
         # Display mount status
         mount_info = []
@@ -516,7 +559,13 @@ class DockerManager:
         # Run container using subprocess - start in detached mode first
         cmd = ["docker", "run", "-d", "--name", container_name]
 
-        # Add volumes
+        # Add persistent volumes
+        home_volume = self.get_volume_name(container_name, "home")
+        workspace_volume = self.get_volume_name(container_name, "workspace")
+        cmd.extend(["-v", f"{home_volume}:/home/developer"])
+        cmd.extend(["-v", f"{workspace_volume}:/workspace"])
+
+        # Add bind mounts
         for host_path, mount_config in volumes.items():
             cmd.extend(
                 ["-v", f"{host_path}:{mount_config['bind']}:{mount_config['mode']}"]
@@ -583,13 +632,28 @@ class DockerManager:
                 ]
             )
 
-    def delete_container(self, container_name: str):
-        """Delete a container"""
+    def delete_container(self, container_name: str, delete_volumes: bool = False):
+        """Delete a container and optionally its volumes"""
         try:
             container = self.client.containers.get(container_name)
             container.remove(force=True)
             self.state.remove_container(container_name)
             console.print(f"[green]✓ Container {container_name} deleted[/green]")
+
+            # Delete volumes if requested
+            if delete_volumes:
+                for volume_type in ["home", "workspace"]:
+                    volume_name = self.get_volume_name(container_name, volume_type)
+                    try:
+                        volume = self.client.volumes.get(volume_name)
+                        volume.remove()
+                        console.print(f"[green]✓ Deleted volume: {volume_name}[/green]")
+                    except NotFound:
+                        pass
+                    except APIError as e:
+                        console.print(
+                            f"[yellow]⚠ Could not delete volume {volume_name}: {e}[/yellow]"
+                        )
         except NotFound:
             self.state.remove_container(container_name)
             console.print(
@@ -653,8 +717,13 @@ def interactive():
                     choices=[str(i) for i in range(1, len(containers) + 1)],
                 )
                 if 1 <= num <= len(containers):
-                    if Confirm.ask(f"Delete container {containers[num - 1]['name']}?"):
-                        manager.delete_container(containers[num - 1]["name"])
+                    container_name = containers[num - 1]["name"]
+                    if Confirm.ask(f"Delete container {container_name}?"):
+                        delete_volumes = Confirm.ask(
+                            "Also delete persistent volumes (all data will be lost)?",
+                            default=False,
+                        )
+                        manager.delete_container(container_name, delete_volumes)
                 else:
                     console.print("[red]Invalid container number[/red]")
             else:
@@ -690,11 +759,21 @@ def attach(name: str = typer.Argument(..., help="Container name to attach to")):
 
 
 @app.command()
-def delete(name: str = typer.Argument(..., help="Container name to delete")):
+def delete(
+    name: str = typer.Argument(..., help="Container name to delete"),
+    volumes: bool = typer.Option(
+        False, "--volumes", "-v", help="Also delete persistent volumes"
+    ),
+):
     """Delete a container"""
     manager = DockerManager()
     if Confirm.ask(f"Delete container {name}?"):
-        manager.delete_container(name)
+        if volumes or Confirm.ask(
+            "Also delete persistent volumes (all data will be lost)?", default=False
+        ):
+            manager.delete_container(name, delete_volumes=True)
+        else:
+            manager.delete_container(name, delete_volumes=False)
 
 
 @app.command()
@@ -706,11 +785,53 @@ def clean():
     manager = DockerManager()
     containers = manager.state.list_containers()
 
+    delete_volumes = Confirm.ask(
+        "Also delete all persistent volumes (all data will be lost)?", default=False
+    )
+
     for container in containers:
         console.print(f"Deleting {container['name']}...")
-        manager.delete_container(container["name"])
+        manager.delete_container(container["name"], delete_volumes)
 
     console.print("[green]✓ Cleanup complete[/green]")
+
+
+@app.command()
+def volumes():
+    """List all Docker volumes used by Claude containers"""
+    manager = DockerManager()
+    containers = manager.state.list_containers()
+
+    if not containers:
+        console.print("[yellow]No containers found[/yellow]")
+        return
+
+    table = Table(
+        title="Claude Docker Volumes", show_header=True, header_style="bold cyan"
+    )
+    table.add_column("Container", style="cyan")
+    table.add_column("Volume Name", style="green")
+    table.add_column("Type", style="yellow")
+    table.add_column("Status", justify="center")
+
+    for container in containers:
+        container_name = container["name"]
+        for volume_type in ["home", "workspace"]:
+            volume_name = manager.get_volume_name(container_name, volume_type)
+            try:
+                manager.client.volumes.get(volume_name)
+                status = "[green]exists[/green]"
+            except docker.errors.NotFound:
+                status = "[red]missing[/red]"
+
+            table.add_row(
+                container_name,
+                volume_name,
+                volume_type,
+                status,
+            )
+
+    console.print(table)
 
 
 @app.command()

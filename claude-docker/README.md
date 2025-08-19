@@ -10,6 +10,8 @@ A streamlined 2-layer Docker setup for the blog with Jekyll, Playwright, and dev
 - 📦 **Pre-cloned repos** - idvorkin.github.io and nlp ready to use
 - 🤖 **Claude CLI support** - Automatically mounts local Claude if available
 - 🔍 **Smart port finding** - Automatically finds free ports starting from 4000
+- 💾 **Persistent volumes** - Container filesystem persists across restarts
+- 🔄 **Stateful containers** - Stop and restart without losing your work
 
 ## Quick Start
 
@@ -17,11 +19,15 @@ A streamlined 2-layer Docker setup for the blog with Jekyll, Playwright, and dev
 # Build the Docker images (one-time, ~5 min)
 ./build-minimal.sh
 
-# Run interactive container
-./run-docker.sh
+# Run interactive container manager
+./claude-docker.py
 
-# Run E2E tests
-./run-e2e-tests.sh
+# Commands:
+# - Create new container with persistent volumes
+# - Attach to existing containers
+# - List volumes: ./claude-docker.py volumes
+# - Delete container (keep volumes): ./claude-docker.py delete C-5000
+# - Delete container AND volumes: ./claude-docker.py delete C-5000 --volumes
 ```
 
 ## Inside the Container

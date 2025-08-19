@@ -118,6 +118,7 @@ The repository uses these linters (configured in .pre-commit-config.yaml):
 - **Logical Separation**: Separate functional changes from formatting
 - **Descriptive Messages**: Use conventional commit format when applicable
 - **No Merge Commits**: Use rebase for clean history
+- **Explicit Staging**: NEVER use `git add -A` or `git add .` - always add files explicitly by name
 
 ### Pull Request Workflow
 1. Create issue first using `gh issue create`
