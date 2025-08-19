@@ -45,10 +45,25 @@ RUN mkdir -p /usr/share/terminfo/x && \
 USER developer
 
 
-# Claude configuration and credentials are now handled via Docker volumes:
-# - ~/.claude is mounted read-only from host
-# - ~/.config/claude is mounted read-only from host
-# These directories will be created automatically by Docker when mounting
+# Set up Claude YOLO config for container environment
+# This allows Claude to run without permission checks in the container
+# NO credentials from host - container manages its own auth
+RUN mkdir -p ~/.config/claude && \
+    echo '{\
+  "permissions": {\
+    "yolo": true,\
+    "allow": ["*"],\
+    "deny": []\
+  },\
+  "env": {\
+    "CLAUDE_MODE": "container",\
+    "CLAUDE_CONTAINER": "true"\
+  }\
+}' > ~/.config/claude/settings.json && \
+    echo "Claude configured in YOLO mode for container development"
+
+# Create Claude directory for container's own auth (if needed)
+RUN mkdir -p ~/.claude
 
 # Add claude to PATH properly
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"

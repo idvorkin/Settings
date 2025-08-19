@@ -173,21 +173,8 @@ class DockerManager:
         """Build volume mount configuration including persistent volumes"""
         mounts = {}
 
-        # Mount Claude auth directly to container home (read-only)
-        claude_dirs = [
-            ("~/.claude", "/home/developer/.claude"),
-            ("~/.config/claude", "/home/developer/.config/claude"),
-        ]
-
-        for host_path_str, container_path in claude_dirs:
-            host_path = Path(host_path_str).expanduser().resolve()
-            if host_path.exists():
-                mounts[str(host_path)] = {
-                    "bind": container_path,
-                    "mode": "ro",
-                }
-
-        # Additional read-only mounts for reference
+        # Mount allowlisted directories under /ro_host/{name}
+        # NO Claude auth - container handles its own auth
         host_mount_allowlist = [
             ("~/settings", "settings"),
         ]
@@ -990,13 +977,7 @@ def check():
     else:
         checks.append("[yellow]⚠[/yellow] No .ssh directory found")
 
-    # Claude credentials
-    claude_dirs = [Path.home() / ".claude", Path.home() / ".config" / "claude"]
-    if any(d.exists() for d in claude_dirs):
-        checks.append("[green]✓[/green] Claude credentials found")
-    else:
-        checks.append("[yellow]⚠[/yellow] Claude credentials not found")
-        checks.append("  Run 'claude auth login' first")
+    # Claude runs in YOLO mode in container - no host credentials needed
 
     # Docker
     try:
