@@ -1157,14 +1157,38 @@ def aa_list_apps(
         print(f"\n[dim]Total: {len(apps_data)} processes[/dim]")
 
 
+def extract_app_name(exe_path: str, process_name: str) -> str:
+    """Extract clean application name from executable path."""
+    if not exe_path:
+        return process_name
+
+    if exe_path.endswith(".app"):
+        return exe_path.split("/")[-1].replace(".app", "")
+    elif ".app/" in exe_path:  # Helper processes inside app bundles
+        return exe_path.split(".app/")[0].split("/")[-1]
+
+    return process_name
+
+
+def terminate_process_safely(proc, timeout: float = 3.0) -> str:
+    """Safely terminate a process with timeout and fallback to kill.
+
+    Returns: 'terminated', 'killed', or raises exception
+    """
+    try:
+        proc.terminate()
+        proc.wait(timeout=timeout)
+        return "terminated"
+    except psutil.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=1)  # Wait a bit more for force kill
+        return "killed"
+    except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+        raise e
+
+
 @app.command()
 def kill_cruft(
-    memory_threshold: Annotated[
-        int,
-        typer.Option(
-            "--memory", "-m", help="Kill apps using more than this many MB of RAM"
-        ),
-    ] = 1000,
     force: Annotated[
         bool,
         typer.Option(
@@ -1185,7 +1209,18 @@ def kill_cruft(
         ),
     ] = False,
 ):
-    """Kill resource-heavy or unnecessary applications (cruft)"""
+    """Kill unnecessary applications (cruft) based on whitelist.
+
+    This function terminates applications that are considered "cruft" - non-essential
+    apps that can be safely closed. OrbStack is specifically protected and will be
+    minimized instead of killed.
+
+    Args:
+        force: Actually kill processes (default is dry run)
+        interactive: Ask before killing each process
+        close_finder: Also close all Finder windows
+        messages: Include messaging apps (Signal, Messages, WhatsApp) in kill list
+    """
 
     # Common applications that are often safe to kill when not actively used
     common_cruft = {
@@ -1262,7 +1297,6 @@ def kill_cruft(
         effective_cruft_set.update(messaging_apps_to_kill)
 
     print("\n[bold red]Kill Cruft Analysis[/bold red]")
-    print(f"Memory threshold: {memory_threshold}MB")
     print(f"Mode: {'EXECUTE' if force else 'DRY RUN'}")
     print("=" * 60)
 
@@ -1279,13 +1313,7 @@ def kill_cruft(
             if exe_path and (
                 "/Applications/" in exe_path or "/System/Applications/" in exe_path
             ):
-                app_name = info["name"]
-                if ".app" in exe_path:
-                    app_name = (
-                        exe_path.split("/")[-1].replace(".app", "")
-                        if "/" in exe_path
-                        else app_name
-                    )
+                app_name = extract_app_name(exe_path, info["name"])
 
                 memory_mb = (
                     info["memory_info"].rss / 1024 / 1024
@@ -1294,17 +1322,8 @@ def kill_cruft(
                 )
                 cpu_percent = info.get("cpu_percent", 0) or 0.0
 
-                # Determine if this is a candidate for killing
-                is_memory_hog = memory_mb > memory_threshold
-                is_common_cruft = app_name in effective_cruft_set
-
-                if is_memory_hog or is_common_cruft:
-                    reason = []
-                    if is_memory_hog:
-                        reason.append(f"High memory usage ({memory_mb:.1f}MB)")
-                    if is_common_cruft:
-                        reason.append("Common non-essential app")
-
+                # Only kill apps that are in the cruft whitelist
+                if app_name in effective_cruft_set:
                     candidates.append(
                         {
                             "proc": proc,
@@ -1312,7 +1331,6 @@ def kill_cruft(
                             "pid": info["pid"],
                             "memory_mb": memory_mb,
                             "cpu_percent": cpu_percent,
-                            "reason": " & ".join(reason),
                         }
                     )
 
@@ -1320,7 +1338,7 @@ def kill_cruft(
             continue
 
     if not candidates:
-        print("[green]No cruft found! All apps are within acceptable limits.[/green]")
+        print("[green]No cruft applications found running.[/green]")
         return
 
     # Sort by memory usage
@@ -1335,8 +1353,7 @@ def kill_cruft(
         cpu_str = f"{cpu_percent:.1f}%"
 
         print(f"[bold]{candidate['name']}[/bold] (PID: {candidate['pid']})")
-        print(f"    Memory: [red]{memory_str}[/red] | CPU: {cpu_str}")
-        print(f"    Reason: [dim]{candidate['reason']}[/dim]")
+        print(f"    Memory: {memory_str} | CPU: {cpu_str}")
 
         should_kill = False
 
@@ -1350,8 +1367,13 @@ def kill_cruft(
 
         if should_kill and force:
             try:
-                candidate["proc"].terminate()
-                print("    [green]✓ Terminated[/green]")
+                result = terminate_process_safely(candidate["proc"])
+                if result == "terminated":
+                    print("    [green]✓ Terminated[/green]")
+                else:  # killed
+                    print(
+                        "    [orange]✓ Force killed (process didn't respond to terminate)[/orange]"
+                    )
                 killed_count += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 print(f"    [red]✗ Failed to kill: {e}[/red]")
@@ -1392,6 +1414,40 @@ def kill_cruft(
                 print(f"[red]✗ Error closing Finder windows: {e}[/red]")
         else:
             print("[dim]Would close all Finder windows[/dim]")
+
+    # Minimize OrbStack if it's running
+    print("\n[bold cyan]Minimizing OrbStack[/bold cyan]")
+    if force:
+        minimize_script = """
+        tell application "System Events"
+            if exists (process "OrbStack") then
+                tell process "OrbStack"
+                    set visible to false
+                end tell
+                return "minimized"
+            else
+                return "not running"
+            end if
+        end tell
+        """
+
+        try:
+            result = subprocess.run(
+                ["osascript", "-e", minimize_script], capture_output=True, text=True
+            )
+
+            if result.returncode == 0:
+                if "minimized" in result.stdout:
+                    print("[green]✓ OrbStack minimized[/green]")
+                elif "not running" in result.stdout:
+                    print("[dim]OrbStack is not running[/dim]")
+            else:
+                print(f"[red]✗ Failed to minimize OrbStack: {result.stderr}[/red]")
+
+        except Exception as e:
+            print(f"[red]✗ Error minimizing OrbStack: {e}[/red]")
+    else:
+        print("[dim]Would minimize OrbStack[/dim]")
 
 
 @app.command()
@@ -1441,13 +1497,7 @@ def kill_apps(
             if exe_path and (
                 "/Applications/" in exe_path or "/System/Applications/" in exe_path
             ):
-                app_name = info["name"]
-                if ".app" in exe_path:
-                    app_name = (
-                        exe_path.split("/")[-1].replace(".app", "")
-                        if "/" in exe_path
-                        else app_name
-                    )
+                app_name = extract_app_name(exe_path, info["name"])
 
                 # Check if this app matches any of our targets
                 app_name_lower = app_name.lower()
@@ -1520,8 +1570,13 @@ def kill_apps(
                         candidate["proc"].kill()  # SIGKILL
                         print("      [red]✓ Force killed[/red]")
                     else:
-                        candidate["proc"].terminate()  # SIGTERM
-                        print("      [green]✓ Terminated[/green]")
+                        result = terminate_process_safely(candidate["proc"])
+                        if result == "terminated":
+                            print("      [green]✓ Terminated[/green]")
+                        else:  # killed
+                            print(
+                                "      [orange]✓ Force killed (process didn't respond)[/orange]"
+                            )
                     killed_count += 1
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                     print(f"      [red]✗ Failed: {e}[/red]")
