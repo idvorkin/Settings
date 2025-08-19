@@ -396,52 +396,70 @@ class DockerManager:
         try:
             container = self.client.containers.get(container_name)
 
-            # Start if stopped
+            # If stopped, we need to restart it interactively
             if container.status != "running":
-                console.print("[yellow]⚠ Container is stopped, starting it...[/yellow]")
-                container.start()
+                console.print("[yellow]⚠ Container is stopped, restarting...[/yellow]")
 
-            # Update last used
-            self.state.update_last_used(container_name)
+                # Update last used
+                self.state.update_last_used(container_name)
 
-            # Display port info
-            jekyll_port = container_info["ports"]["jekyll"]
-            livereload_port = container_info["ports"]["livereload"]
+                # Display port info
+                jekyll_port = container_info["ports"]["jekyll"]
+                livereload_port = container_info["ports"]["livereload"]
 
-            console.print(
-                Panel(
-                    f"[green]Jekyll:[/green] http://localhost:{jekyll_port}\n"
-                    f"[green]LiveReload:[/green] {livereload_port}",
-                    title="Container Ports",
-                    border_style="green",
+                console.print(
+                    Panel(
+                        f"[green]Jekyll:[/green] http://localhost:{jekyll_port}\n"
+                        f"[green]LiveReload:[/green] {livereload_port}",
+                        title="Container Ports",
+                        border_style="green",
+                    )
                 )
-            )
 
-            # Attach to container
-            console.print(
-                f"\n[green]🐳 Attaching to container: {container_name}[/green]\n"
-            )
+                console.print(
+                    f"\n[green]🐳 Restarting container: {container_name}[/green]"
+                )
+                console.print("[dim]Container will exit when you exit tmux[/dim]\n")
 
-            # Determine best TERM value for true color support
-            term_value = determine_container_term()
+                # Start the container interactively with tmux
+                subprocess.run(["docker", "start", "-ai", container_name])
+            else:
+                # Container is running, attach to existing tmux session
+                self.state.update_last_used(container_name)
 
-            # Use subprocess to attach to tmux session
-            subprocess.run(
-                [
-                    "docker",
-                    "exec",
-                    "-it",
-                    "-e",
-                    f"DOCKER_CONTAINER_NAME={container_name}",
-                    "-e",
-                    f"TERM={term_value}",
-                    container_name,
-                    "/home/linuxbrew/.linuxbrew/bin/tmux",
-                    "attach-session",
-                    "-t",
-                    "main",
-                ]
-            )
+                jekyll_port = container_info["ports"]["jekyll"]
+                livereload_port = container_info["ports"]["livereload"]
+
+                console.print(
+                    Panel(
+                        f"[green]Jekyll:[/green] http://localhost:{jekyll_port}\n"
+                        f"[green]LiveReload:[/green] {livereload_port}",
+                        title="Container Ports",
+                        border_style="green",
+                    )
+                )
+
+                console.print(
+                    f"\n[green]🐳 Attaching to running container: {container_name}[/green]\n"
+                )
+
+                # Attach to tmux session in running container
+                subprocess.run(
+                    [
+                        "docker",
+                        "exec",
+                        "-it",
+                        "-e",
+                        f"DOCKER_CONTAINER_NAME={container_name}",
+                        "-e",
+                        f"TERM={determine_container_term()}",
+                        container_name,
+                        "/home/linuxbrew/.linuxbrew/bin/tmux",
+                        "attach-session",
+                        "-t",
+                        "main",
+                    ]
+                )
 
         except NotFound:
             console.print(f"[red]❌ Container {container_name} not found[/red]")
@@ -555,8 +573,8 @@ class DockerManager:
 
         console.print(f"\n[green]✓ Container name: {container_name}[/green]\n")
 
-        # Run container using subprocess - start in detached mode first
-        cmd = ["docker", "run", "-d", "--name", container_name]
+        # Run container using subprocess - start interactively with tmux
+        cmd = ["docker", "run", "-it", "--name", container_name]
 
         # Add persistent volumes
         home_volume = self.get_volume_name(container_name, "home")
@@ -578,58 +596,35 @@ class DockerManager:
         cmd.extend(["-p", f"{jekyll_port}:4000", "-p", f"{livereload_port}:35729"])
 
         # Add image and command
-        # Use sleep infinity to keep container alive, then create tmux session inside
+        # Run tmux directly - container will exit when tmux session ends
         cmd.extend(
             [
                 image,
-                "sh",
-                "-c",
-                "/home/linuxbrew/.linuxbrew/bin/tmux new-session -d -s main /home/linuxbrew/.linuxbrew/bin/zsh && tail -f /dev/null",
+                "/home/linuxbrew/.linuxbrew/bin/tmux",
+                "new-session",
+                "-s",
+                "main",
+                "/home/linuxbrew/.linuxbrew/bin/zsh",
             ]
         )
 
-        # Run the container in detached mode
-        result = subprocess.run(cmd)
-
-        if result.returncode == 0:
-            console.print(
-                f"\n[green]✓ Container {container_name} started with tmux session[/green]"
+        # Display port info before starting
+        console.print(
+            Panel(
+                f"[green]Jekyll:[/green] http://localhost:{jekyll_port}\n"
+                f"[green]LiveReload:[/green] {livereload_port}",
+                title="Container Ports",
+                border_style="green",
             )
-            console.print("[dim]Container will stay alive even if you disconnect[/dim]")
+        )
 
-            # Now attach to the container
-            console.print(
-                f"\n[green]🐳 Attaching to container: {container_name}[/green]\n"
-            )
-            self.state.update_last_used(container_name)
+        console.print(f"\n[green]🐳 Starting container: {container_name}[/green]")
+        console.print("[dim]Container will exit when you exit tmux[/dim]\n")
 
-            # Display port info
-            console.print(
-                Panel(
-                    f"[green]Jekyll:[/green] http://localhost:{jekyll_port}\n"
-                    f"[green]LiveReload:[/green] {livereload_port}",
-                    title="Container Ports",
-                    border_style="green",
-                )
-            )
+        self.state.update_last_used(container_name)
 
-            # Attach to the tmux session
-            subprocess.run(
-                [
-                    "docker",
-                    "exec",
-                    "-it",
-                    "-e",
-                    f"DOCKER_CONTAINER_NAME={container_name}",
-                    "-e",
-                    f"TERM={determine_container_term()}",
-                    container_name,
-                    "/home/linuxbrew/.linuxbrew/bin/tmux",
-                    "attach-session",
-                    "-t",
-                    "main",
-                ]
-            )
+        # Run the container interactively - it will exit when tmux exits
+        subprocess.run(cmd)
 
     def delete_container(self, container_name: str, delete_volumes: bool = False):
         """Delete a container and optionally its volumes"""
