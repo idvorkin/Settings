@@ -173,10 +173,22 @@ class DockerManager:
         """Build volume mount configuration including persistent volumes"""
         mounts = {}
 
-        # Define allowlist of directories to mount under /ro_host/
+        # Mount Claude auth directly to container home (read-only)
+        claude_dirs = [
+            ("~/.claude", "/home/developer/.claude"),
+            ("~/.config/claude", "/home/developer/.config/claude"),
+        ]
+
+        for host_path_str, container_path in claude_dirs:
+            host_path = Path(host_path_str).expanduser().resolve()
+            if host_path.exists():
+                mounts[str(host_path)] = {
+                    "bind": container_path,
+                    "mode": "ro",
+                }
+
+        # Additional read-only mounts for reference
         host_mount_allowlist = [
-            ("~/.claude", ".claude"),
-            ("~/.config/claude", ".config_claude"),
             ("~/settings", "settings"),
         ]
 

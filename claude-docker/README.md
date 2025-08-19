@@ -8,7 +8,7 @@ A streamlined 2-layer Docker setup for the blog with Jekyll, Playwright, and dev
 - 🎭 **Playwright installed** - E2E tests ready with `just e2e-test`
 - 🛠️ **Development tools** - All tools from settings repo via Homebrew
 - 📦 **Pre-cloned repos** - idvorkin.github.io and nlp ready to use
-- 🤖 **Claude CLI support** - Automatically mounts local Claude if available
+- 🤖 **Claude CLI support** - Mounts Claude auth directly from host (always current)
 - 🔍 **Smart port finding** - Automatically finds free ports starting from 4000
 - 💾 **Persistent volumes** - Container filesystem persists across restarts
 - 🔄 **Stateful containers** - Stop and restart without losing your work
