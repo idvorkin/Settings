@@ -501,6 +501,38 @@ function safe_init()
           bash --login -c 'exec claude'
     }
 
+    # Run Claude with all permissions (only in containers)
+    function yolo-claude() {
+        # Check if we're in a container using multiple methods
+        local in_container=false
+        
+        # Method 1: Check for .dockerenv file
+        if [[ -f /.dockerenv ]]; then
+            in_container=true
+        # Method 2: Check for docker in cgroup
+        elif grep -q 'docker' /proc/1/cgroup 2>/dev/null; then
+            in_container=true
+        # Method 3: Check for docker in self cgroup
+        elif grep -q 'docker' /proc/self/cgroup 2>/dev/null; then
+            in_container=true
+        # Method 4: Check for our custom DOCKER_CONTAINER_NAME env var
+        elif [[ -n "$DOCKER_CONTAINER_NAME" ]]; then
+            in_container=true
+        fi
+        
+        if [[ "$in_container" != "true" ]]; then
+            echo "Error: yolo-claude can only be run inside a container"
+            echo "This command runs Claude with unrestricted permissions - use containers for safety"
+            return 1
+        fi
+        
+        echo "Running Claude with full permissions (YOLO mode)..."
+        echo "WARNING: All safety restrictions disabled - use with caution!"
+        
+        # Run Claude with all tools enabled
+        claude --dangerously-skip-permissions "$@"
+    }
+
     export COLORTERM=truecolor
 
     set -o vi
