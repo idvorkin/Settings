@@ -73,9 +73,11 @@ RUN cd ~/gits && \
     for repo in */; do \
         if [ -d "$repo/.git" ]; then \
             echo "Updating $repo"; \
+            cd $repo; \
             zoxide add .; \
-            git clean -fd
-            cd "$repo" && git fetch && git rebase --strategy-option=theirs && cd ..; \
+            zoxide add .; \
+            git clean -fd; \
+            git fetch && git rebase --strategy-option=theirs && cd ..; \
         fi; \
     done
 
