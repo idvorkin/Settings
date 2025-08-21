@@ -21,6 +21,7 @@ import socket
 import stat
 import subprocess
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, List
@@ -419,10 +420,67 @@ class DockerManager:
                 console.print(
                     f"\n[green]🐳 Restarting container: {container_name}[/green]"
                 )
-                console.print("[dim]Container will exit when you exit tmux[/dim]\n")
+                console.print("[dim]Use Ctrl+b d to detach from tmux[/dim]\n")
 
-                # Start the container interactively with tmux
-                subprocess.run(["docker", "start", "-ai", container_name])
+                # Set terminal window title
+                print(f"\033]0;{container_name}\007", end="", flush=True)
+
+                # Start the container in background
+                subprocess.run(["docker", "start", container_name])
+
+                # Small delay to ensure container is fully started
+                time.sleep(0.5)
+
+                # Check if tmux session exists, create if not
+                check_session = subprocess.run(
+                    [
+                        "docker",
+                        "exec",
+                        container_name,
+                        "/home/linuxbrew/.linuxbrew/bin/tmux",
+                        "has-session",
+                        "-t",
+                        "main",
+                    ],
+                    capture_output=True,
+                )
+
+                if check_session.returncode != 0:
+                    # No session exists, create one
+                    subprocess.run(
+                        [
+                            "docker",
+                            "exec",
+                            "-d",
+                            container_name,
+                            "/home/linuxbrew/.linuxbrew/bin/tmux",
+                            "new-session",
+                            "-d",
+                            "-s",
+                            "main",
+                            "/home/linuxbrew/.linuxbrew/bin/zsh",
+                        ]
+                    )
+                    # Small delay to ensure tmux session is fully initialized
+                    time.sleep(0.5)
+
+                # Attach to tmux session
+                subprocess.run(
+                    [
+                        "docker",
+                        "exec",
+                        "-it",
+                        "-e",
+                        f"DOCKER_CONTAINER_NAME={container_name}",
+                        "-e",
+                        f"TERM={determine_container_term()}",
+                        container_name,
+                        "/home/linuxbrew/.linuxbrew/bin/tmux",
+                        "attach-session",
+                        "-t",
+                        "main",
+                    ]
+                )
             else:
                 # Container is running, attach to existing tmux session
                 self.state.update_last_used(container_name)
@@ -443,7 +501,43 @@ class DockerManager:
                     f"\n[green]🐳 Attaching to running container: {container_name}[/green]\n"
                 )
 
-                # Attach to tmux session in running container
+                # Set terminal window title
+                print(f"\033]0;{container_name}\007", end="", flush=True)
+
+                # Check if tmux session exists, create if not
+                check_session = subprocess.run(
+                    [
+                        "docker",
+                        "exec",
+                        container_name,
+                        "/home/linuxbrew/.linuxbrew/bin/tmux",
+                        "has-session",
+                        "-t",
+                        "main",
+                    ],
+                    capture_output=True,
+                )
+
+                if check_session.returncode != 0:
+                    # No session exists, create one
+                    subprocess.run(
+                        [
+                            "docker",
+                            "exec",
+                            "-d",
+                            container_name,
+                            "/home/linuxbrew/.linuxbrew/bin/tmux",
+                            "new-session",
+                            "-d",
+                            "-s",
+                            "main",
+                            "/home/linuxbrew/.linuxbrew/bin/zsh",
+                        ]
+                    )
+                    # Small delay to ensure tmux session is fully initialized
+                    time.sleep(0.5)
+
+                # Now attach to tmux session
                 subprocess.run(
                     [
                         "docker",
@@ -573,8 +667,8 @@ class DockerManager:
 
         console.print(f"\n[green]✓ Container name: {container_name}[/green]\n")
 
-        # Run container using subprocess - start interactively with tmux
-        cmd = ["docker", "run", "-it", "--name", container_name]
+        # Run container in detached mode first, then attach
+        cmd = ["docker", "run", "-d", "-t", "--name", container_name]
 
         # Add persistent volumes
         home_volume = self.get_volume_name(container_name, "home")
@@ -596,15 +690,13 @@ class DockerManager:
         cmd.extend(["-p", f"{jekyll_port}:4000", "-p", f"{livereload_port}:35729"])
 
         # Add image and command
-        # Run tmux directly - container will exit when tmux session ends
+        # Start with a shell command that creates tmux session and keeps container running
         cmd.extend(
             [
                 image,
-                "/home/linuxbrew/.linuxbrew/bin/tmux",
-                "new-session",
-                "-s",
-                "main",
-                "/home/linuxbrew/.linuxbrew/bin/zsh",
+                "sh",
+                "-c",
+                "/home/linuxbrew/.linuxbrew/bin/tmux new-session -d -s main /home/linuxbrew/.linuxbrew/bin/zsh && tail -f /dev/null",
             ]
         )
 
@@ -618,13 +710,48 @@ class DockerManager:
             )
         )
 
-        console.print(f"\n[green]🐳 Starting container: {container_name}[/green]")
-        console.print("[dim]Container will exit when you exit tmux[/dim]\n")
+        console.print(f"\n[green]🐳 Creating container: {container_name}[/green]")
 
         self.state.update_last_used(container_name)
 
-        # Run the container interactively - it will exit when tmux exits
-        subprocess.run(cmd)
+        # Create the container in detached mode
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            console.print(f"[red]❌ Failed to create container: {result.stderr}[/red]")
+            self.state.remove_container(container_name)
+            return
+
+        console.print("[green]✓ Container created successfully[/green]")
+
+        # Small delay to ensure container and tmux are fully initialized
+        time.sleep(0.5)
+
+        # Now attach to the tmux session in the container
+        console.print(
+            f"\n[green]🐳 Attaching to tmux session in container: {container_name}[/green]\n"
+        )
+
+        # Set terminal window title
+        print(f"\033]0;{container_name}\007", end="", flush=True)
+
+        # Attach to the tmux session that's already running
+        subprocess.run(
+            [
+                "docker",
+                "exec",
+                "-it",
+                "-e",
+                f"DOCKER_CONTAINER_NAME={container_name}",
+                "-e",
+                f"TERM={determine_container_term()}",
+                container_name,
+                "/home/linuxbrew/.linuxbrew/bin/tmux",
+                "attach-session",
+                "-t",
+                "main",
+            ]
+        )
 
     def delete_container(self, container_name: str, delete_volumes: bool = False):
         """Delete a container and optionally its volumes"""
@@ -743,6 +870,12 @@ def create(image: str = typer.Argument(DEFAULT_IMAGE, help="Docker image to use"
     """Create a new container"""
     manager = DockerManager()
     manager.create_container(image)
+
+
+@app.command()
+def new(image: str = typer.Argument(DEFAULT_IMAGE, help="Docker image to use")):
+    """Create a new container (alias for create)"""
+    create(image)
 
 
 @app.command()
