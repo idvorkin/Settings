@@ -27,12 +27,9 @@ SHELL ["/bin/bash", "-c"]
 # - Additional programming language runtimes
 
 # Install modern terminal support
-USER root
-RUN apt-get update && apt-get install -y \
-    ncurses-term \
-    kitty-terminfo
 
 # Install Ghostty terminfo (if available) and other modern terminal definitions
+USER root
 RUN mkdir -p /usr/share/terminfo/x && \
     # Try to fetch Ghostty terminfo if available
     (curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/terminfo/ghostty.terminfo 2>/dev/null | tic -x - || true) && \
@@ -44,26 +41,6 @@ RUN mkdir -p /usr/share/terminfo/x && \
 
 USER developer
 
-
-# Set up Claude YOLO config for container environment
-# This allows Claude to run without permission checks in the container
-# NO credentials from host - container manages its own auth
-RUN mkdir -p ~/.config/claude && \
-    echo '{\
-  "permissions": {\
-    "yolo": true,\
-    "allow": ["*"],\
-    "deny": []\
-  },\
-  "env": {\
-    "CLAUDE_MODE": "container",\
-    "CLAUDE_CONTAINER": "true"\
-  }\
-}' > ~/.config/claude/settings.json && \
-    echo "Claude configured in YOLO mode for container development"
-
-# Create Claude directory for container's own auth (if needed)
-RUN mkdir -p ~/.claude
 
 # Add claude to PATH properly
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:${PATH}"
@@ -86,13 +63,19 @@ WORKDIR /home/developer/
 
 RUN echo v1
 
+SHELL ["/home/linuxbrew/.linuxbrew/bin/zsh","-c"]
 
 RUN cd ~/gits/settings && git pull
+RUN ln -s ~/gits/idvorkin.github.io/ ~/blog
+RUN zoxide add ~/settings ~/blog
 
 RUN cd ~/gits && \
     for repo in */; do \
         if [ -d "$repo/.git" ]; then \
             echo "Updating $repo"; \
-            cd "$repo" && git fetch && git rebase && cd ..; \
+            zoxide add .; \
+            git clean -fd
+            cd "$repo" && git fetch && git rebase --strategy-option=theirs && cd ..; \
         fi; \
     done
+

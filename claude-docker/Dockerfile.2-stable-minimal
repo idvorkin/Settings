@@ -45,6 +45,7 @@ RUN brew install \
     fastfetch \
     tig \
     procs \
+    pre-commit \
     git-delta
 
 # Install Claude CLI inside the container
@@ -122,6 +123,15 @@ EXPOSE 4000 35729
 RUN /bin/bash -c "nvim --headless '+Lazy! sync' +qa || true" && \
     echo "lazy.nvim plugins installed"
 
+USER root
+RUN apt-get install -y \
+    ncurses-term \
+    kitty-terminfo
+USER developer
+
+RUN brew install ruff prettier ag marksman typos-lsp
+RUN brew install --build-from-source fzf
+
 # Clone additional public repositories
 RUN cd ~/gits && \
     git clone https://github.com/idvorkin/manager-book-redirect.git && \
@@ -135,5 +145,13 @@ RUN cd ~/gits && \
     git clone https://github.com/idvorkin/cursor-party.git && \
     git clone https://github.com/idvorkin/humane-tracker-1.git
 
-WORKDIR /home/developer/gits
+RUN cd ~/gits && \
+    for repo in */; do \
+        if [ -d "$repo/.git" ]; then \
+            echo "Updating $repo"; \
+            cd "$repo" && pre-commit; \
+        fi; \
+    done
+
+WORKDIR /home/developer/
 LABEL description="Settings configured with essential tools (minimal)"
