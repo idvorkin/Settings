@@ -67,7 +67,8 @@ SHELL ["/home/linuxbrew/.linuxbrew/bin/zsh","-c"]
 
 RUN cd ~/gits/settings && git pull
 RUN ln -s ~/gits/idvorkin.github.io/ ~/blog
-RUN zoxide add ~/settings ~/blog
+RUN mkdir ~/tmp
+RUN zoxide add ~/settings ~/blog ~/tmp
 
 RUN cd ~/gits && \
     for repo in */; do \
