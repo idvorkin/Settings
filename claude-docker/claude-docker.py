@@ -170,6 +170,47 @@ class DockerManager:
         except NotFound:
             return "not found"
 
+    def has_active_exec_sessions(self, container_name: str) -> bool:
+        """Check if container has active exec sessions (someone attached)"""
+        try:
+            # Use docker inspect to check for exec sessions
+            result = subprocess.run(
+                ["docker", "inspect", container_name, "--format", "{{json .ExecIDs}}"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+
+            if result.returncode == 0:
+                exec_ids = result.stdout.strip()
+                # Check if there are any exec IDs (not null and not empty array)
+                if exec_ids and exec_ids != "null" and exec_ids != "[]":
+                    return True
+
+            # Alternative method: check for tmux sessions with clients attached
+            check_tmux = subprocess.run(
+                [
+                    "docker",
+                    "exec",
+                    container_name,
+                    "/home/linuxbrew/.linuxbrew/bin/tmux",
+                    "list-clients",
+                    "-t",
+                    "main",
+                ],
+                capture_output=True,
+                timeout=2,
+            )
+
+            # If tmux has clients attached, someone is connected
+            if check_tmux.returncode == 0 and check_tmux.stdout:
+                return True
+
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+            pass
+
+        return False
+
     def build_volume_mounts(self, container_name: str) -> Dict[str, Dict]:
         """Build volume mount configuration including persistent volumes"""
         mounts = {}
@@ -319,6 +360,140 @@ class DockerManager:
 
         return env
 
+    def select_container_with_fzf(self) -> Optional[str]:
+        """Use fzf to select a container from available containers"""
+        containers = self.state.list_containers()
+
+        if not containers:
+            console.print("[yellow]No containers found[/yellow]")
+            return None
+
+        # Clean up state for non-existent containers
+        for container in containers[:]:
+            status = self.get_container_status(container["name"])
+            if status == "not found":
+                self.state.remove_container(container["name"])
+                containers.remove(container)
+
+        if not containers:
+            console.print(
+                "[yellow]No containers found (cleaned up stale entries)[/yellow]"
+            )
+            return None
+
+        # Try to use fzf if available
+        try:
+            # Prepare container list for fzf
+            fzf_input = []
+            for container in containers:
+                status = self.get_container_status(container["name"])
+                status_icon = (
+                    "🟢"
+                    if status == "running"
+                    else "🔴"
+                    if status == "exited"
+                    else "🟡"
+                )
+
+                # Check if attached
+                attached_icon = ""
+                if status == "running" and self.has_active_exec_sessions(
+                    container["name"]
+                ):
+                    attached_icon = " 👤"  # Person icon for attached
+
+                try:
+                    last_used = datetime.fromisoformat(container["last_used"]).strftime(
+                        "%Y-%m-%d %H:%M"
+                    )
+                except (ValueError, KeyError):
+                    last_used = "Unknown"
+
+                line = f"{status_icon}{attached_icon} {container['name']:<8} | Port: {container['ports']['jekyll']:<5} | Last used: {last_used}"
+                fzf_input.append(line)
+
+            # Run fzf
+            process = subprocess.Popen(
+                [
+                    "fzf",
+                    "--header=Select container to attach:",
+                    "--height=40%",
+                    "--layout=reverse",
+                    "--info=inline",
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+
+            stdout, stderr = process.communicate(input="\n".join(fzf_input))
+
+            if process.returncode == 0 and stdout.strip():
+                # Extract container name from selected line
+                selected = stdout.strip()
+                container_name = selected.split("|")[0].strip().split()[1]
+                return container_name
+            else:
+                return None
+
+        except FileNotFoundError:
+            # fzf not available, fall back to numbered menu
+            console.print(
+                "[yellow]fzf not found, using numbered menu instead[/yellow]\n"
+            )
+            return self.select_container_with_menu()
+
+    def select_container_with_menu(self) -> Optional[str]:
+        """Fallback numbered menu for container selection"""
+        containers = self.state.list_containers()
+
+        if not containers:
+            return None
+
+        # Display containers
+        console.print("\n[bold cyan]Available Containers:[/bold cyan]\n")
+        for i, container in enumerate(containers, 1):
+            status = self.get_container_status(container["name"])
+            status_icon = (
+                "🟢" if status == "running" else "🔴" if status == "exited" else "🟡"
+            )
+
+            # Check if attached
+            attached_text = ""
+            if status == "running" and self.has_active_exec_sessions(container["name"]):
+                attached_text = " [magenta](attached)[/magenta]"
+
+            try:
+                last_used = datetime.fromisoformat(container["last_used"]).strftime(
+                    "%Y-%m-%d %H:%M"
+                )
+            except (ValueError, KeyError):
+                last_used = "Unknown"
+
+            console.print(
+                f"  [{i}] {status_icon} {container['name']}{attached_text} - Port: {container['ports']['jekyll']} - Last used: {last_used}"
+            )
+
+        console.print("\n  [0] Cancel\n")
+
+        try:
+            choice = IntPrompt.ask(
+                "Select container",
+                default=1,
+                choices=[str(i) for i in range(0, len(containers) + 1)],
+            )
+
+            if choice == 0:
+                return None
+            elif 1 <= choice <= len(containers):
+                return containers[choice - 1]["name"]
+            else:
+                console.print("[red]Invalid selection[/red]")
+                return None
+        except KeyboardInterrupt:
+            return None
+
     def list_containers(self):
         """List all containers with their status"""
         containers = self.state.list_containers()
@@ -346,6 +521,7 @@ class DockerManager:
         table.add_column("#", style="green", width=3)
         table.add_column("Name", style="cyan")
         table.add_column("Status", justify="center")
+        table.add_column("Attached", justify="center")
         table.add_column("Jekyll Port", style="green")
         table.add_column("LiveReload Port", style="green")
         table.add_column("Last Used")
@@ -360,6 +536,14 @@ class DockerManager:
                 else "yellow"
             )
 
+            # Check if someone is attached
+            attached = ""
+            if status == "running":
+                if self.has_active_exec_sessions(container["name"]):
+                    attached = "[magenta]●[/magenta]"  # Purple dot for attached
+                else:
+                    attached = "[dim]○[/dim]"  # Empty circle for not attached
+
             try:
                 last_used = datetime.fromisoformat(container["last_used"]).strftime(
                     "%Y-%m-%d %H:%M"
@@ -371,6 +555,7 @@ class DockerManager:
                 str(i),
                 container["name"],
                 f"[{status_style}]{status}[/{status_style}]",
+                attached,
                 str(container["ports"]["jekyll"]),
                 str(container["ports"]["livereload"]),
                 last_used,
@@ -378,8 +563,14 @@ class DockerManager:
 
         console.print(table)
 
-    def attach_container(self, container_name: str):
-        """Attach to an existing container"""
+    def attach_container(self, container_name: str = None):
+        """Attach to an existing container with optional selection menu"""
+        # If no container name provided, show selection menu
+        if not container_name:
+            container_name = self.select_container_with_fzf()
+            if not container_name:
+                return  # User cancelled selection
+
         # Validate container name format
         if not CONTAINER_NAME_PATTERN.match(container_name):
             console.print(
@@ -815,20 +1006,9 @@ def interactive():
             manager.create_container()
             break
         elif choice == "a":
-            containers = manager.state.list_containers()
-            if containers:
-                num = IntPrompt.ask(
-                    "Enter container number",
-                    default=1,
-                    choices=[str(i) for i in range(1, len(containers) + 1)],
-                )
-                if 1 <= num <= len(containers):
-                    manager.attach_container(containers[num - 1]["name"])
-                    break
-                else:
-                    console.print("[red]Invalid container number[/red]")
-            else:
-                console.print("[yellow]No containers available[/yellow]")
+            # Use the new attach method with picker
+            manager.attach_container()
+            break
         elif choice == "d":
             containers = manager.state.list_containers()
             if containers:
@@ -879,8 +1059,13 @@ def new(image: str = typer.Argument(DEFAULT_IMAGE, help="Docker image to use")):
 
 
 @app.command()
-def attach(name: str = typer.Argument(..., help="Container name to attach to")):
-    """Attach to an existing container"""
+def attach(
+    name: str = typer.Argument(
+        None,
+        help="Container name to attach to (optional - will show menu if not provided)",
+    ),
+):
+    """Attach to an existing container (shows picker menu if no name provided)"""
     manager = DockerManager()
     manager.attach_container(name)
 
