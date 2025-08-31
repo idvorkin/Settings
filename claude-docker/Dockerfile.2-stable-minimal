@@ -153,5 +153,7 @@ RUN cd ~/gits && \
         fi; \
     done
 
+brew install typescript-language-server lychee
+
 WORKDIR /home/developer/
 LABEL description="Settings configured with essential tools (minimal)"
