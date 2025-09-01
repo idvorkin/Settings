@@ -153,7 +153,7 @@ def RandomBlogPost():
 def MakeWeeklyReport(
     weekoffset: int = typer.Argument(
         0,
-        help="Week offset: number of weeks from current week (negative for past weeks)",
+        help="Week offset: number of weeks from current week (positive for past weeks)",
     ),
     remote: bool = typer.Option(False, help="Create the weekly report remotely"),
 ):
@@ -162,7 +162,7 @@ def MakeWeeklyReport(
     If no week offset is provided, creates a report for the current week.
     """
     now = NowPST()
-    startOfWeek = now - timedelta(days=now.weekday()) + timedelta(days=weekoffset * 7)
+    startOfWeek = now - timedelta(days=now.weekday()) - timedelta(days=weekoffset * 7)
 
     if remote:
         make_remote_call(f"makeweeklyreport {weekoffset}")
