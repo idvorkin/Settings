@@ -15,8 +15,13 @@ Run the bootstrap script to install all dependencies:
 
 Key installation files:
 - **Brew packages**: `shared/brew_packages.sh` - Contains all Homebrew packages including development tools, LSPs, and utilities
-- **Mac-specific setup**: `mac/install.sh` - macOS-specific configurations
+- **Mac-specific setup**: `mac/install.sh` - macOS-specific configurations and cask applications
 - **Shared setup**: `shared/shared_install.sh` - Cross-platform configurations
+
+### Homebrew Package Management
+- **Non-cask packages**: Add to `shared/brew_packages.sh` using format `brew_packages="$brew_packages package_name"`
+- **Cask applications**: Add to `mac/install.sh` using format `brew install --cask app-name`
+- See `.cursor/rules/104-brew-packages.mdc` for detailed package management guidelines
 
 ### Required Packages
 Essential packages are installed via Homebrew from `shared/brew_packages.sh`:

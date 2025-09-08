@@ -34,12 +34,13 @@ brew install --cask meetingbar
 brew install --cask cursor
 brew install --cask capcut
 brew install --cask signal
+brew install --cask kindavim
 
 # Switch between audio input and output - these mess stuff up, get rid of 'em.
 # brew install switchaudio-osx
 # brew install blackhole-2ch
 
-# Display resolutoin shifting
+# Display resolutions shifting
 # Messes stuff up, ignore for now.
 # brew install jakehilborn/jakehilborn/displayplacer
 
