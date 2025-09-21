@@ -453,6 +453,12 @@ def float():
     call_yabai("-m window --toggle float")
 
 
+@app.command()
+def hide():
+    """Minimize the currently focused window"""
+    call_yabai("-m window --minimize")
+
+
 def get_windows() -> Windows:
     win_result = call_yabai("-m query --windows")
     if win_result.returncode != 0:
