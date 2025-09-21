@@ -2,7 +2,6 @@
 
 # Looks like we need CASK to do things that are findable.
 brew install --cask google-chrome  iterm2	the-unarchiver
-brew install --cask db-browser-for-sqlite
 
 brew install --cask finicky # URL handler
 
@@ -27,7 +26,7 @@ brew install koekeishiya/formulae/yabai
 brew install --cask karabiner-elements
 brew install --cask iterm2
 brew install --cask alfred
-brew install --cask docker
+# brew install --cask docker # Replaced by Orbstack
 brew install --cask microsoft-edge
 brew install --cask 1password
 brew install --cask meetingbar
