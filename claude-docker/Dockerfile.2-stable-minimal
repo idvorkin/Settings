@@ -154,6 +154,7 @@ RUN cd ~/gits && \
     done
 
 brew install typescript-language-server lychee pyright
+sudo apt-get install -y lsof
 
 WORKDIR /home/developer/
 LABEL description="Settings configured with essential tools (minimal)"
