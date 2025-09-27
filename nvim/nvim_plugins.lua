@@ -59,7 +59,6 @@ local vscode_compatible_plugins = {
 	"panozzaj/vim-autocorrect",
 	{
 		"linux-cultist/venv-selector.nvim",
-		branch = "regexp",
 		opts = {},
 	},
 }
@@ -491,7 +490,28 @@ local git_plugins = {
 				ft = { "markdown", "Avante" },
 			},
 		},
-		provider = "claude-sonnet-4", -- The provider used in Aider mode or in the planning phase of Cursor Planning Mode
+		-- provider = "claude-sonnet-4", -- The provider used in Aider mode or in the planning phase of Cursor Planning Mode
+		provider = "claude-code",
+
+		acp_providers = {
+			["gemini-cli"] = {
+				command = "gemini",
+				args = { "--experimental-acp" },
+				env = {
+					NODE_NO_WARNINGS = "1",
+					GEMINI_API_KEY = os.getenv("GEMINI_API_KEY"),
+				},
+			},
+			["claude-code"] = {
+				command = "npx",
+				args = { "@zed-industries/claude-code-acp" },
+				env = {
+					NODE_NO_WARNINGS = "1",
+					ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY"),
+				},
+			},
+			-- other configuration options...
+		},
 	},
 	{
 		"ravitemer/mcphub.nvim",

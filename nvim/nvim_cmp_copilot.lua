@@ -19,13 +19,14 @@ require("mason-lspconfig").setup({
 	},
 })
 
--- Setup LSP Config
-local lspconfig = require("lspconfig")
-lspconfig.racket_langserver.setup({})
-lspconfig.pyright.setup({})
-lspconfig.ts_ls.setup({})
-lspconfig.zls.setup({})
-require("lspconfig").typos_lsp.setup({
+-- Setup LSP Config using new Neovim 0.11+ API
+-- Configure LSPs
+vim.lsp.config.racket_langserver = {}
+vim.lsp.config.pyright = {}
+vim.lsp.config.ts_ls = {}
+vim.lsp.config.zls = {}
+
+vim.lsp.config.typos_lsp = {
 	-- Logging level of the language server. Logs appear in :LspLog. Defaults to error.
 	cmd_env = { RUST_LOG = "error" },
 	init_options = {
@@ -37,16 +38,17 @@ require("lspconfig").typos_lsp.setup({
 		-- Defaults to error.
 		diagnosticSeverity = "Error",
 	},
-})
+}
 
 -- Enable debug logs for the LSP client. Recommended for debugging only.
 vim.lsp.set_log_level("debug")
+
 local ruff_on_attach = function(client, _)
 	-- Disable hover in favor of Pyright
 	client.server_capabilities.hoverProvider = false
 end
 
-lspconfig.ruff.setup({
+vim.lsp.config.ruff = {
 	on_attach = ruff_on_attach,
 	init_options = {
 		settings = {
@@ -54,9 +56,9 @@ lspconfig.ruff.setup({
 			args = {},
 		},
 	},
-})
+}
 
-lspconfig.lua_ls.setup({
+vim.lsp.config.lua_ls = {
 	settings = {
 		Lua = {
 			runtime = {
@@ -82,7 +84,19 @@ lspconfig.lua_ls.setup({
 			},
 		},
 	},
-})
+}
+
+vim.lsp.config.marksman = {}
+
+-- Enable all configured LSPs
+vim.lsp.enable("racket_langserver")
+vim.lsp.enable("pyright")
+vim.lsp.enable("ts_ls")
+vim.lsp.enable("zls")
+vim.lsp.enable("typos_lsp")
+vim.lsp.enable("ruff")
+vim.lsp.enable("lua_ls")
+vim.lsp.enable("marksman")
 
 -- Global mappings.
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
@@ -135,8 +149,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
 -- Map :Errors to the following <cmd>Trouble diagnostics toggle filter.buf=0<cr>"
 vim.cmd("command! Errors Trouble diagnostics toggle filter.buf=0")
-
-require("lspconfig").marksman.setup({})
 
 local has_words_before = function()
 	if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then
