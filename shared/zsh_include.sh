@@ -392,6 +392,7 @@ function export_secrets()
         return 0
     fi
     esecret_jq LANGCHAIN_API_KEY
+    esecret_jq XAI_API_KEY
     esecret_jq ANTHROPIC_API_KEY
     esecret_jq OPENAI_API_KEY
     esecret_jq IFTTT_WEBHOOK_KEY
@@ -505,7 +506,7 @@ function safe_init()
     function yolo-claude() {
         # Check if we're in a container using multiple methods
         local in_container=false
-        
+
         # Method 1: Check for .dockerenv file
         if [[ -f /.dockerenv ]]; then
             in_container=true
@@ -519,16 +520,16 @@ function safe_init()
         elif [[ -n "$DOCKER_CONTAINER_NAME" ]]; then
             in_container=true
         fi
-        
+
         if [[ "$in_container" != "true" ]]; then
             echo "Error: yolo-claude can only be run inside a container"
             echo "This command runs Claude with unrestricted permissions - use containers for safety"
             return 1
         fi
-        
+
         echo "Running Claude with full permissions (YOLO mode)..."
         echo "WARNING: All safety restrictions disabled - use with caution!"
-        
+
         # Run Claude with all tools enabled
         claude --dangerously-skip-permissions "$@"
     }
