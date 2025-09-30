@@ -25,12 +25,12 @@ set tags=tags;/
 " https://rsapkf.netlify.com/blog/enabling-italics-vim-tmux
 
 function! FixMojiBake()
-    " See charector under cursor -
+    " See character under cursor -
     "   ga
-    " Search for non unicode charecters
+    " Search for non unicode characters
     " /[^\x00-\x7F]
 
-    " Replace hypens
+    " Replace hyphens
 	:%s/\%x97/-/g
 	:%s/\%x96/-/g
 
@@ -230,7 +230,7 @@ function! SetupPlugins()
     Bundle "scrooloose/nerdtree"
     Bundle "rking/ag.vim"
     Bundle "OrangeT/vim-csharp.git"
-    " OmniSharp doesn't seem to wrok on WSL, let it go.
+    " OmniSharp doesn't seem to work on WSL, let it go.
     " Bundle "OmniSharp/omnisharp-vim"
     Bundle "lukaszkorecki/workflowish"
     Bundle "keith/swift.vim"
@@ -346,29 +346,29 @@ call FzFConfig()
 
 func SetupAutoFixEnglish()
     " Can fix with Sed
-    " sed -i -e 's/ teh / the /g' *
+    " sed -i -e 's/ the / the /g' *
     " grab these from .aspell.en.prepl
-     :iab teh the
+     :iab the the
      :iab __today <C-R>=strftime('%Y-%m-%d')<CR>
-     :iab hte the
-     :iab taht that
+     :iab the the
+     :iab that that
      :iab ot to
-     :iab hte the
+     :iab the the
      :iab zach Zach
      :iab alot a lot
      :iab amelia Amelia
      :iab tori Tori
      :iab ammon Ammon
-     :iab adn and
+     :iab and and
      :iab nad and
-     :iab cna can
+     :iab can can
      :iab dont don't
      :iab   fi if
      :iab   fo of
-     :iab iwll will
-     :iab wiht with
+     :iab will will
+     :iab with with
     :iab htgorugh through
-    :iab htis this
+    :iab this this
     :iab htourhg through
 endfunc
 
@@ -405,7 +405,7 @@ func! WriteOn()
     :Goyo
     :PencilSoft
     :Limelight
-    " :ALEDisable " Remove spelling and grammer
+    " :ALEDisable " Remove spelling and grammar
 endfunc
 command! IGWriteOn :call WriteOn()
 command! IGWriteOff :call WriteOff()
@@ -414,7 +414,7 @@ func! WriteOff()
     :Goyo!
     :PencilOff
     :Limelight!
-    " :ALEEnable "Remove spelling and grammer
+    " :ALEEnable "Remove spelling and grammar
 endfunc
 
 
@@ -536,7 +536,7 @@ autocmd BufEnter *md :exe ":call AutoCorrect()"
 " autocmd BufLeave *md :exe ":Limelight!"
 " let g:vim_markdown_folding_disabled = 1
 
-" Break lines on word boudnaries only
+" Break lines on word boundaries only
 set linebreak
 
 
@@ -832,7 +832,7 @@ endfun
 " - yssX - soround the current line with italics(i) or bold(b) or something
 " else.
 "
-"  - Once in visual mode, S will do the surround folowed by the b so like
+"  - Once in visual mode, S will do the surround followed by the b so like
 "  select text in visual mode, then Sb will make it bold.
 autocmd FileType markdown let b:surround_105 = "*\r*" " i = 105
 autocmd FileType markdown let b:surround_98 = "**\r**" " b = 98
@@ -935,7 +935,7 @@ cab grl :s/\"*\s*\(.*\)\s*;\s*\(.*\);\s*\(.*\)\s*;\s*\(.*\)\s*;\s*\(.*\)/1. \1 *
 
 function! SetupGPT()
     " Get commit mssage, then erase blank line from the start
-    : cab ecommit call MakeCommitMesage()<CR>
+    : cab ecommit call MakeCommitMessage()<CR>
     : cab ecc call GptComplete()<CR>
     : cab ecs call GptComplete("study")<CR>
     : cab ec5 call GptComplete("eli5")<CR>
@@ -967,7 +967,7 @@ call SetupGPT()
 
 
 func! GptCompleteToBottom()
-    " hack fj is the escape key - a nice hack sicne <esc> doesn't work with
+    " hack fj is the escape key - a nice hack since <esc> doesn't work with
     " normal command
     :normal Go fj
     :% call GptCompleteSimple()
@@ -978,7 +978,7 @@ func! SetupForConvo()
     set syntax=markdown
     " Turn off hitting enter indents - which BTW, is annoying
     :setlocal nocin
-    " In insert mode, add cariage return to hint AI that it's its turn ..
+    " In insert mode, add carriage return to hint AI that it's its turn ..
     :imap <buffer> ffj  <cr><cr><esc>:% call GptCompleteSimple()<cr>
     :map <buffer> ffj  :call GptCompleteToBottom()<cr>
     " Erase the current GPT answer
@@ -990,8 +990,9 @@ endfunc
 
 autocmd BufEnter *convo.md call SetupForConvo()
 " Use newer implementation for better no-wrap support
-autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>
-autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>
+autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage("")<cr>
+autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage('--fast')<CR>
+autocmd BufEnter *COMMIT_EDITMSG :map ffm :call MakeCommitMessage('--medium')<CR>
 
 " Refactor to share with convo maps
 autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffd :?---?,/---/d<cr>
@@ -1000,7 +1001,7 @@ autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/
 " Function to generate a commit message using 'commit' tool
 " Uses the git diff of staged changes
 " Prevents terminal line wrapping by setting COLUMNS=500
-function! MakeCommitMesage(params)
+function! MakeCommitMessage(params)
     let tempfile = tempname()
     " Set terminal width to prevent wrapping - this is the only change needed
     let gpt_from_git_diff = '!export COLUMNS=500 && stty cols 500 2>/dev/null; git diff --staged | commit ' . a:params
@@ -1045,7 +1046,7 @@ function! SetupOpenBrowser()
 endfunc
 call SetupOpenBrowser()
 
-" Reload when saving vimrc, which is the whole point of changin dotfile
+" Reload when saving vimrc, which is the whole point of changing dotfile
 augroup reload_vimrc | au!
         au BufWritePost *default_vimrc source ~/.vimrc
 augroup END
