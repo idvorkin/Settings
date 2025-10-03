@@ -1,57 +1,72 @@
 // ~/.finicky.js
 
-module.exports = {
+export default {
   defaultBrowser: "Microsoft Edge",
-  //defaultBrowser: "Google Chrome",
+
+  // Optional: Disable logging requests to disk
+  logRequests: false,
+
+  // Rewrite all http URLs to https
   rewrite: [
     {
-      // Redirect all urls to use https
-      match: ({ url }) => url.protocol === "http",
-      url: { protocol: "http" },
+      match: ({ url }) => url.protocol === "http:",
+      url: ({ url }) => url.href.replace(/^http:/, "https:"),
     },
   ],
+
   handlers: [
     {
-      // Open apple.com and example.org urls in Safari
-      match: ["apple.com/*", "example.org/*"],
+      // Open apple.com and example.org URLs in Safari
+      match: [
+        /^https?:\/\/(www\.)?apple\.com\/.*/i,
+        /^https?:\/\/(www\.)?example\.org\/.*/i,
+      ],
       browser: "Safari",
     },
     {
-      match: ["*gmail.com/*", "*mail.google.com*"],
+      // Gmail and Google Mail in Edge
+      match: [
+        /gmail\.com/i,
+        /mail\.google\.com/i,
+      ],
       browser: "Microsoft Edge",
     },
     {
-      // Open any url that includes the string "workplace" in Firefox
-      match: ["*.workplace.com/*", "*figma*"],
-      browser: "Google Chrome",
-    },
-    {
-      // Open any url that includes the string "workplace" in Firefox
-      match: ["*thefacebook.com/*"],
-      browser: "Google Chrome",
-    },
-    {
-      // Open any url that includes the string "workplace" in Firefox
-      match: ["*facebook.csod.com/*", "*facebook.zoom.us/*", "meta.zoom.us/*"],
-      browser: "Google Chrome",
-    },
-    {
-      // Open any url that includes the string "workplace" in Firefox
+      // Figma and workplace.com in Chrome
       match: [
-        "fburl.com/*",
-        "*internalfb.com/*",
-        "*fb.facebook.com/*",
-        "*fb.workplace.com/*",
-        "*docs.google.com*",
-        "*figma*",
-        "*fburl.com/*",
-        "*internalfb.com/*",
-        "*fb.facebook.com/*",
-        "fb.okta.com/*",
-        "*fb.workplace.com/*",
-        "https://drive.google.com/drive/folders/*",
-        "https://docs.google.com/*",
-        "*fb.quip.com*",
+        /figma/i,
+        /workplace\.com/i,
+      ],
+      browser: "Google Chrome",
+    },
+    {
+      // thefacebook.com in Chrome
+      match: [
+        /thefacebook\.com/i,
+      ],
+      browser: "Google Chrome",
+    },
+    {
+      // Facebook SSO and Zoom in Chrome
+      match: [
+        /facebook\.csod\.com/i,
+        /facebook\.zoom\.us/i,
+        /meta\.zoom\.us/i,
+      ],
+      browser: "Google Chrome",
+    },
+    {
+      // Meta/FB internal tools in Chrome
+      match: [
+        /fburl\.com/i,
+        /internalfb\.com/i,
+        /fb\.facebook\.com/i,
+        /fb\.workplace\.com/i,
+        /docs\.google\.com/i,
+        /figma/i,
+        /fb\.okta\.com/i,
+        /drive\.google\.com\/drive\/folders/i,
+        /fb\.quip\.com/i,
       ],
       browser: "Google Chrome",
     },
