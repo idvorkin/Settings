@@ -165,32 +165,52 @@ To add new tmux commands via `py/tmux_helper.py`:
    @app.command()
    def command_name():
        """Description of what the command does"""
-       try:
-           # Implement tmux logic using subprocess
-           subprocess.run(["tmux", "some-command"], check=True)
-       except subprocess.CalledProcessError:
-           pass  # Silently fail if tmux command fails
+       # Use helper functions for tmux commands
+       result = run_tmux_command(["tmux", "some-command"], capture_output=True)
+       if result:
+           # Process result
+           run_tmux_command(["tmux", "other-command"])
    ```
+
+   **Available helper functions**:
+   - `run_tmux_command(cmd, capture_output=False)` - Run tmux command with error handling
+   - `get_tmux_option(option)` - Get global tmux option value
+   - `set_tmux_option(option, value)` - Set global tmux option
+   - `ensure_two_panes()` - Ensure at least 2 panes exist, returns `(pane_list, created_new_pane)`
+   - `get_layout_orientation()` - Get current layout orientation (horizontal/vertical)
+   - `process_tree_has_pattern(process_info, patterns)` - Check if pattern exists in process tree
 
 2. **Test the command**: Run `./py/tmux_helper.py command_name` directly and verify behavior with tmux commands like `tmux list-panes`
 
-3. **Add keybinding to `shared/.tmux.conf`**:
-   ```tmux
-   # Direct keybinding
-   bind-key / run-shell "tmux_helper command_name"
+3. **Add to `shared/.tmux.conf`**:
 
-   # Command alias (for use with Prefix + :)
-   set -s command-alias[100] command_name='run-shell "tmux_helper command_name"'
+   a. **Add to help section** (top of file, around lines 7-22):
+   ```tmux
+   # Keybindings:
+   #   C-a <key>            - Description of what it does
+   #
+   # Command Aliases (use via C-a : then type command):
+   #   :command_name        - Description of what it does
    ```
 
-4. **Update custom commands list** at the top of `shared/.tmux.conf` (around line 7-14) with the new keybinding
+   b. **Add keybinding** (optional, for quick access):
+   ```tmux
+   bind-key <key> run-shell "tmux_helper command_name"
+   ```
 
-5. **Reload tmux config**: Press `Prefix + r` or run `tmux source-file ~/.tmux.conf`
+   c. **Add command alias** (in the command aliases section, around line 214-217):
+   ```tmux
+   set -s command-alias[10X] command_name='run-shell "tmux_helper command_name"'
+   ```
+   (Increment the number to avoid conflicts)
+
+4. **Reload tmux config**: Press `Prefix + r` or run `tmux source-file ~/.tmux.conf`
 
 **Example**: The `third` command toggles between even and 1/3-2/3 layouts:
-- Function at `py/tmux_helper.py:392`
-- Keybinding at `shared/.tmux.conf:196`
-- Command alias at `shared/.tmux.conf:197`
+- Function at `py/tmux_helper.py:413`
+- Keybinding at `shared/.tmux.conf:207` (`C-a /`)
+- Command alias at `shared/.tmux.conf:217` (`:third`)
+- Help documentation at `shared/.tmux.conf:10-21`
 
 ## File Organization
 
