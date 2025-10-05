@@ -157,6 +157,41 @@ pre-commit run --all-files
 ./bootstrap.sh
 ```
 
+### Adding Tmux Commands
+To add new tmux commands via `py/tmux_helper.py`:
+
+1. **Add command function to `py/tmux_helper.py`**:
+   ```python
+   @app.command()
+   def command_name():
+       """Description of what the command does"""
+       try:
+           # Implement tmux logic using subprocess
+           subprocess.run(["tmux", "some-command"], check=True)
+       except subprocess.CalledProcessError:
+           pass  # Silently fail if tmux command fails
+   ```
+
+2. **Test the command**: Run `./py/tmux_helper.py command_name` directly and verify behavior with tmux commands like `tmux list-panes`
+
+3. **Add keybinding to `shared/.tmux.conf`**:
+   ```tmux
+   # Direct keybinding
+   bind-key / run-shell "tmux_helper command_name"
+
+   # Command alias (for use with Prefix + :)
+   set -s command-alias[100] command_name='run-shell "tmux_helper command_name"'
+   ```
+
+4. **Update custom commands list** at the top of `shared/.tmux.conf` (around line 7-14) with the new keybinding
+
+5. **Reload tmux config**: Press `Prefix + r` or run `tmux source-file ~/.tmux.conf`
+
+**Example**: The `third` command toggles between even and 1/3-2/3 layouts:
+- Function at `py/tmux_helper.py:392`
+- Keybinding at `shared/.tmux.conf:196`
+- Command alias at `shared/.tmux.conf:197`
+
 ## File Organization
 
 ### Python Utilities
