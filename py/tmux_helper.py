@@ -389,5 +389,99 @@ def rotate():
         pass  # Silently fail if tmux command fails
 
 
+@app.command()
+def third():
+    """Toggle between even layout and 1/3-2/3 layout (works with 2 panes)"""
+    try:
+        # Get list of panes in current window
+        panes_output = (
+            subprocess.check_output(
+                ["tmux", "list-panes", "-F", "#{pane_id}"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
+        panes = panes_output.split("\n")
+        if len(panes) != 2:
+            return  # Only works with exactly 2 panes
+
+        # Get current third state
+        current_state = (
+            subprocess.check_output(
+                ["tmux", "show-option", "-gqv", "@third_state"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
+        if current_state in ["third_horizontal", "third_vertical"]:
+            # Restore to even layout
+            if current_state == "third_horizontal":
+                subprocess.run(["tmux", "select-layout", "even-horizontal"], check=True)
+            else:
+                subprocess.run(["tmux", "select-layout", "even-vertical"], check=True)
+            subprocess.run(
+                ["tmux", "set-option", "-g", "@third_state", "normal"], check=True
+            )
+        else:
+            # Get window dimensions
+            window_info = (
+                subprocess.check_output(
+                    ["tmux", "display-message", "-p", "#{window_width},#{window_height}"],
+                    stderr=subprocess.DEVNULL,
+                )
+                .decode("utf-8")
+                .strip()
+            )
+            window_width, window_height = map(int, window_info.split(","))
+
+            # Detect current orientation by checking pane positions
+            pane_info = (
+                subprocess.check_output(
+                    ["tmux", "list-panes", "-F", "#{pane_left},#{pane_top}"],
+                    stderr=subprocess.DEVNULL,
+                )
+                .decode("utf-8")
+                .strip()
+                .split("\n")
+            )
+
+            pane1_left, pane1_top = map(int, pane_info[0].split(","))
+            pane2_left, pane2_top = map(int, pane_info[1].split(","))
+
+            # Horizontal layout = panes side by side (different left positions)
+            # Vertical layout = panes stacked (different top positions)
+            is_horizontal = pane1_left != pane2_left
+
+            if is_horizontal:
+                # Resize first pane to 33% width (in absolute columns)
+                target_width = int(window_width * 0.33)
+                subprocess.run(
+                    ["tmux", "resize-pane", "-t", panes[0], "-x", str(target_width)],
+                    check=True,
+                )
+                subprocess.run(
+                    ["tmux", "set-option", "-g", "@third_state", "third_horizontal"],
+                    check=True,
+                )
+            else:
+                # Resize first pane to 33% height (in absolute lines)
+                target_height = int(window_height * 0.33)
+                subprocess.run(
+                    ["tmux", "resize-pane", "-t", panes[0], "-y", str(target_height)],
+                    check=True,
+                )
+                subprocess.run(
+                    ["tmux", "set-option", "-g", "@third_state", "third_vertical"],
+                    check=True,
+                )
+
+    except subprocess.CalledProcessError:
+        pass  # Silently fail if tmux command fails
+
+
 if __name__ == "__main__":
     app()
