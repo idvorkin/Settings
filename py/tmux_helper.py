@@ -358,5 +358,36 @@ def rename_all():
         set_tmux_title(title, pane_id)
 
 
+@app.command()
+def rotate():
+    """Toggle between even-horizontal and even-vertical layouts"""
+    try:
+        # Get the current layout state from tmux user option
+        # If not set, default to vertical (so first toggle goes to horizontal)
+        current_state = (
+            subprocess.check_output(
+                ["tmux", "show-option", "-gqv", "@layout_state"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
+        # Toggle layout based on state
+        if current_state == "horizontal":
+            subprocess.run(["tmux", "select-layout", "even-vertical"], check=True)
+            subprocess.run(
+                ["tmux", "set-option", "-g", "@layout_state", "vertical"], check=True
+            )
+        else:
+            # Default to horizontal for any other state or if not set
+            subprocess.run(["tmux", "select-layout", "even-horizontal"], check=True)
+            subprocess.run(
+                ["tmux", "set-option", "-g", "@layout_state", "horizontal"], check=True
+            )
+    except subprocess.CalledProcessError:
+        pass  # Silently fail if tmux command fails
+
+
 if __name__ == "__main__":
     app()
