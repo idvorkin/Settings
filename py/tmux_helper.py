@@ -362,6 +362,27 @@ def rename_all():
 def rotate():
     """Toggle between even-horizontal and even-vertical layouts"""
     try:
+        # Get list of panes in current window
+        panes_output = (
+            subprocess.check_output(
+                ["tmux", "list-panes", "-F", "#{pane_id}"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
+        panes = panes_output.split("\n")
+
+        # If only one pane, create a second one
+        if len(panes) == 1:
+            subprocess.run(["tmux", "split-window", "-h", "-c", "#{pane_current_path}"], check=True)
+            subprocess.run(["tmux", "select-layout", "even-horizontal"], check=True)
+            subprocess.run(
+                ["tmux", "set-option", "-g", "@layout_state", "horizontal"], check=True
+            )
+            return
+
         # Get the current layout state from tmux user option
         # If not set, default to vertical (so first toggle goes to horizontal)
         current_state = (
@@ -404,8 +425,41 @@ def third():
         )
 
         panes = panes_output.split("\n")
+
+        # If only one pane, create a second one
+        if len(panes) == 1:
+            subprocess.run(["tmux", "split-window", "-h", "-c", "#{pane_current_path}"], check=True)
+            # Refresh panes list
+            panes_output = (
+                subprocess.check_output(
+                    ["tmux", "list-panes", "-F", "#{pane_id}"],
+                    stderr=subprocess.DEVNULL,
+                )
+                .decode("utf-8")
+                .strip()
+            )
+            panes = panes_output.split("\n")
+
         if len(panes) != 2:
             return  # Only works with exactly 2 panes
+
+        # Detect current orientation by checking pane positions
+        pane_info = (
+            subprocess.check_output(
+                ["tmux", "list-panes", "-F", "#{pane_left},#{pane_top}"],
+                stderr=subprocess.DEVNULL,
+            )
+            .decode("utf-8")
+            .strip()
+            .split("\n")
+        )
+
+        pane1_left, pane1_top = map(int, pane_info[0].split(","))
+        pane2_left, pane2_top = map(int, pane_info[1].split(","))
+
+        # Horizontal layout = panes side by side (different left positions)
+        # Vertical layout = panes stacked (different top positions)
+        is_horizontal = pane1_left != pane2_left
 
         # Get current third state
         current_state = (
@@ -418,8 +472,8 @@ def third():
         )
 
         if current_state in ["third_horizontal", "third_vertical"]:
-            # Restore to even layout
-            if current_state == "third_horizontal":
+            # Restore to even layout based on current orientation
+            if is_horizontal:
                 subprocess.run(["tmux", "select-layout", "even-horizontal"], check=True)
             else:
                 subprocess.run(["tmux", "select-layout", "even-vertical"], check=True)
@@ -437,24 +491,6 @@ def third():
                 .strip()
             )
             window_width, window_height = map(int, window_info.split(","))
-
-            # Detect current orientation by checking pane positions
-            pane_info = (
-                subprocess.check_output(
-                    ["tmux", "list-panes", "-F", "#{pane_left},#{pane_top}"],
-                    stderr=subprocess.DEVNULL,
-                )
-                .decode("utf-8")
-                .strip()
-                .split("\n")
-            )
-
-            pane1_left, pane1_top = map(int, pane_info[0].split(","))
-            pane2_left, pane2_top = map(int, pane_info[1].split(","))
-
-            # Horizontal layout = panes side by side (different left positions)
-            # Vertical layout = panes stacked (different top positions)
-            is_horizontal = pane1_left != pane2_left
 
             if is_horizontal:
                 # Resize first pane to 33% width (in absolute columns)
