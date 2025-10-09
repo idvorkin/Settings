@@ -1740,5 +1740,162 @@ def ai_rhyme():
     _call_ai_clip("seuss", "🎭 Transforming clipboard text to Dr. Seuss style...")
 
 
+def _find_highest_numbered_file(directory: Path, prefix: str) -> int:
+    """Find the highest number in files matching prefix<N>.png pattern.
+
+    Args:
+        directory: Directory to search in
+        prefix: File prefix (e.g., "base")
+
+    Returns:
+        Highest number found, or 0 if no matching files exist
+    """
+    import re
+
+    pattern = re.compile(rf"^{re.escape(prefix)}(\d+)\.png$")
+    highest = 0
+
+    if directory.exists():
+        for file in directory.iterdir():
+            if file.is_file():
+                match = pattern.match(file.name)
+                if match:
+                    num = int(match.group(1))
+                    highest = max(highest, num)
+
+    return highest
+
+
+def _find_most_recent_date_file(directory: Path) -> datetime | None:
+    """Find the most recent date in files matching YYYY-M-D.png or YYYY-MM-DD.png pattern.
+
+    Args:
+        directory: Directory to search in
+
+    Returns:
+        Most recent datetime.date found, or None if no matching files exist
+    """
+    import re
+
+    # Pattern to match YYYY-M-D.png or YYYY-MM-DD.png
+    pattern = re.compile(r"^(\d{4})-(\d{1,2})-(\d{1,2})\.png$")
+    most_recent = None
+
+    if directory.exists():
+        for file in directory.iterdir():
+            if file.is_file():
+                match = pattern.match(file.name)
+                if match:
+                    try:
+                        year = int(match.group(1))
+                        month = int(match.group(2))
+                        day = int(match.group(3))
+                        file_date = datetime(year, month, day)
+
+                        if most_recent is None or file_date > most_recent:
+                            most_recent = file_date
+                    except ValueError:
+                        # Invalid date, skip
+                        continue
+
+    return most_recent
+
+
+@app.command()
+def clipbase(
+    directory: Annotated[
+        str, typer.Argument(help="Directory to save images (default: ~/tmp)")
+    ] = "",
+):
+    """Save clipboard image with sequential naming (base1.png, base2.png, ...)"""
+    # Use provided directory or default to ~/tmp
+    target_dir = Path(directory).expanduser() if directory else Path.home() / "tmp"
+    ensure_directory_exists(target_dir)
+
+    # Find the highest numbered file
+    prefix = "base"
+    highest_num = _find_highest_numbered_file(target_dir, prefix)
+    next_num = highest_num + 1
+
+    # Create the new filename
+    filename = f"{prefix}{next_num}.png"
+    file_path = target_dir / filename
+
+    # Try to paste the image from clipboard
+    if os.system(f"pngpaste {file_path}") != 0:
+        print("[red]Error: No image found in clipboard[/red]")
+        return
+
+    # Copy full path to clipboard
+    full_path = str(file_path.absolute())
+    pyperclip.copy(full_path)
+    print(f"[green]Image saved to: {full_path}[/green]")
+    print("[green]Full path copied to clipboard![/green]")
+
+
+@app.command()
+def clipdays(
+    directory: Annotated[
+        str, typer.Argument(help="Directory to save images (default: ~/tmp)")
+    ] = "",
+):
+    """Save clipboard image with date-based naming (YYYY-M-D.png), auto-incrementing by day"""
+    from datetime import timedelta
+
+    # Use provided directory or default to ~/tmp
+    target_dir = Path(directory).expanduser() if directory else Path.home() / "tmp"
+    ensure_directory_exists(target_dir)
+
+    # Find the most recent date file
+    most_recent_date = _find_most_recent_date_file(target_dir)
+
+    if most_recent_date is None:
+        # No existing date files, start with today
+        next_date = datetime.now()
+    else:
+        # Increment by one day
+        next_date = most_recent_date + timedelta(days=1)
+
+    # Create the new filename (using single-digit format for month/day)
+    filename = f"{next_date.year}-{next_date.month}-{next_date.day}.png"
+    file_path = target_dir / filename
+
+    # Try to paste the image from clipboard
+    if os.system(f"pngpaste {file_path}") != 0:
+        print("[red]Error: No image found in clipboard[/red]")
+        return
+
+    # Copy full path to clipboard
+    full_path = str(file_path.absolute())
+    pyperclip.copy(full_path)
+    print(f"[green]Image saved to: {full_path}[/green]")
+    print("[green]Full path copied to clipboard![/green]")
+
+
+@app.command()
+def cliptofile():
+    """Save clipboard image to a random file in tmp and copy the full path to clipboard"""
+    import uuid
+
+    # Create tmp directory if it doesn't exist
+    tmp_dir = Path.home() / "tmp"
+    ensure_directory_exists(tmp_dir)
+
+    # Generate random filename
+    random_filename = f"clip_{uuid.uuid4().hex[:8]}.png"
+    file_path = tmp_dir / random_filename
+
+    # Try to paste the image from clipboard
+    if os.system(f"pngpaste {file_path}") != 0:
+        print("[red]Error: No image found in clipboard[/red]")
+        return
+
+    # Copy full path to clipboard
+    full_path = str(file_path.absolute())
+    pyperclip.copy(full_path)
+    print(f"[green]Image saved to: {full_path}[/green]")
+    print("[green]Full path copied to clipboard![/green]")
+
+
 if __name__ == "__main__":
     app()
