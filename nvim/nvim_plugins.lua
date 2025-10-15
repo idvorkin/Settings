@@ -351,8 +351,8 @@ function ConfigureTelescopePlugins()
 	vim.cmd([[
     cab ls :Telescope buffers<CR>
     command! Gitfiles Telescope git_files
-    command! Tags Telescope tags
-    command! BTags Telescope current_buffer_tags
+    command! Tags Telescope lsp_workspace_symbols
+    command! BTags Telescope lsp_document_symbols
     command! IMessageChat :lua require('nvim-messages').imessage()
     command! GitStatus Telescope git_status
     command! Registers Telescope registers
