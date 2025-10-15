@@ -351,8 +351,6 @@ function ConfigureTelescopePlugins()
 	vim.cmd([[
     cab ls :Telescope buffers<CR>
     command! Gitfiles Telescope git_files
-    command! Tags Telescope lsp_workspace_symbols
-    command! BTags Telescope lsp_document_symbols
     command! IMessageChat :lua require('nvim-messages').imessage()
     command! GitStatus Telescope git_status
     command! Registers Telescope registers
@@ -370,6 +368,23 @@ function ConfigureTelescopePlugins()
     command! Gist Telescope gh gist limit=20
     command! Issues Telescope gh issues
     ]])
+
+	-- Configure Tags and BTags to show full symbol names without clipping
+	vim.api.nvim_create_user_command("Tags", function()
+		require("telescope.builtin").lsp_workspace_symbols({
+			fname_width = 0, -- Don't show filename column
+			symbol_width = 80, -- Increase symbol name width to show full names
+			symbol_type_width = 1, -- Minimize symbol type column to 1 character
+		})
+	end, {})
+
+	vim.api.nvim_create_user_command("BTags", function()
+		require("telescope.builtin").lsp_document_symbols({
+			fname_width = 0, -- Don't show filename column
+			symbol_width = 80, -- Increase symbol name width to show full names
+			symbol_type_width = 1, -- Minimize symbol type column to 1 character
+		})
+	end, {})
 end
 
 -- gh keybings
