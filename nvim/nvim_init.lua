@@ -206,6 +206,9 @@ set_term_colors()
 --   :Tig          - Opens tig status view
 --   :Tig %        - Opens tig for current file
 --   :Tig <file>   - Opens tig for specified file
+--
+-- IMPORTANT: Keep this in sync with tmux command aliases in shared/.tmux.conf
+-- The :tig/:Tig tmux commands use the same pattern for consistency
 vim.api.nvim_create_user_command("Tig", function(opts)
 	-- Get current directory
 	local cwd = vim.fn.getcwd()
@@ -232,7 +235,10 @@ end, { nargs = "?" })
 -- Features:
 --   - Uses delta for syntax highlighting and better formatting
 --   - Opens in dedicated tmux window named 'git-diff'
---   - Press 'q' to close the diff window
+--   - Press any key to close the diff window ("; read" waits for input)
+--
+-- IMPORTANT: Keep this in sync with tmux command aliases in shared/.tmux.conf
+-- The :gdiff/:Gdiff tmux commands use the same pattern for consistency
 vim.api.nvim_create_user_command("GitDiff", function(opts)
 	-- Get current directory
 	local cwd = vim.fn.getcwd()
