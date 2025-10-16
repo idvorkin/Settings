@@ -42,7 +42,10 @@ local vscode_compatible_plugins = {
 			if not status_ok then
 				return
 			end
-			url_open.setup({})
+			url_open.setup({
+				deep_pattern = true, -- Enable accurate URL format identification
+				open_only_when_cursor_on_url = false, -- Open URL even if cursor is nearby (more forgiving)
+			})
 		end,
 
 		opts = {},
@@ -596,7 +599,15 @@ local function setupMarkdown()
 		-- NVIM markdown stuff,  lets see if it works with tree sitter
 		-- "ixru/nvim-markdown",
 		"preservim/vim-markdown",
-
+		{
+			"tadmccorkle/markdown.nvim",
+			ft = "markdown", -- Only load for markdown files
+			opts = {
+				mappings = {
+					link_follow = "gx", -- Use gx to follow markdown links
+				},
+			},
+		},
 		{
 			"MeanderingProgrammer/render-markdown.nvim",
 			opts = {
