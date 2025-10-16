@@ -31,7 +31,11 @@ def run_tmux_command(cmd: list[str], capture_output: bool = False) -> str | None
     """Run tmux command with consistent error handling"""
     try:
         if capture_output:
-            return subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode("utf-8").strip()
+            return (
+                subprocess.check_output(cmd, stderr=subprocess.DEVNULL)
+                .decode("utf-8")
+                .strip()
+            )
         subprocess.run(cmd, check=True)
         return None
     except subprocess.CalledProcessError:
@@ -40,7 +44,10 @@ def run_tmux_command(cmd: list[str], capture_output: bool = False) -> str | None
 
 def get_tmux_option(option: str) -> str:
     """Get tmux global option value"""
-    return run_tmux_command(["tmux", "show-option", "-gqv", option], capture_output=True) or ""
+    return (
+        run_tmux_command(["tmux", "show-option", "-gqv", option], capture_output=True)
+        or ""
+    )
 
 
 def set_tmux_option(option: str, value: str) -> None:
@@ -48,17 +55,33 @@ def set_tmux_option(option: str, value: str) -> None:
     run_tmux_command(["tmux", "set-option", "-g", option, value])
 
 
-def ensure_two_panes() -> tuple[list[str], bool]:
-    """Ensure window has at least 2 panes, return (pane IDs, created_new_pane)"""
-    panes = run_tmux_command(["tmux", "list-panes", "-F", "#{pane_id}"], capture_output=True)
+def ensure_two_panes(command: str | None = None) -> tuple[list[str], bool]:
+    """Ensure window has at least 2 panes, return (pane IDs, created_new_pane)
+
+    Args:
+        command: Optional command to run in the new pane when created
+    """
+    panes = run_tmux_command(
+        ["tmux", "list-panes", "-F", "#{pane_id}"], capture_output=True
+    )
     if not panes:
         return ([], False)
 
     pane_list = panes.split("\n")
     if len(pane_list) == 1:
-        run_tmux_command(["tmux", "split-window", "-h", "-c", "#{pane_current_path}"])
+        # Create split with optional command
+        if command:
+            run_tmux_command(
+                ["tmux", "split-window", "-h", "-c", "#{pane_current_path}", command]
+            )
+        else:
+            run_tmux_command(
+                ["tmux", "split-window", "-h", "-c", "#{pane_current_path}"]
+            )
         run_tmux_command(["tmux", "select-layout", "even-horizontal"])
-        panes = run_tmux_command(["tmux", "list-panes", "-F", "#{pane_id}"], capture_output=True)
+        panes = run_tmux_command(
+            ["tmux", "list-panes", "-F", "#{pane_id}"], capture_output=True
+        )
         pane_list = panes.split("\n") if panes else []
         return (pane_list, True)
 
@@ -68,8 +91,7 @@ def ensure_two_panes() -> tuple[list[str], bool]:
 def get_layout_orientation() -> str | None:
     """Detect if current layout is horizontal or vertical"""
     pane_info = run_tmux_command(
-        ["tmux", "list-panes", "-F", "#{pane_left},#{pane_top}"],
-        capture_output=True
+        ["tmux", "list-panes", "-F", "#{pane_left},#{pane_top}"], capture_output=True
     )
     if not pane_info:
         return None
@@ -98,7 +120,9 @@ def process_tree_has_pattern(process_info: dict, patterns: list[str]) -> bool:
 
 def get_all_tmux_panes() -> list[str]:
     """Get all pane IDs from tmux"""
-    panes = run_tmux_command(["tmux", "list-panes", "-a", "-F", "#{pane_id}"], capture_output=True)
+    panes = run_tmux_command(
+        ["tmux", "list-panes", "-a", "-F", "#{pane_id}"], capture_output=True
+    )
     return panes.split("\n") if panes else []
 
 
@@ -117,7 +141,7 @@ def set_tmux_title(title: str, pane_id: str | None = None):
     if pane_id:
         window_id = run_tmux_command(
             ["tmux", "display-message", "-t", pane_id, "-p", "#{window_id}"],
-            capture_output=True
+            capture_output=True,
         )
         if window_id:
             run_tmux_command(["tmux", "rename-window", "-t", window_id, title])
@@ -180,7 +204,9 @@ def is_vim_running(process_info: dict) -> bool:
 
 def is_claude_code_running(process_info: dict) -> bool:
     """Check if Claude Code is running in the process tree"""
-    return process_tree_has_pattern(process_info, ["@anthropic-ai/claude-code", "claude"])
+    return process_tree_has_pattern(
+        process_info, ["@anthropic-ai/claude-code", "claude"]
+    )
 
 
 def get_tmux_pane_pid(pane_id: str | None = None) -> int:
@@ -410,9 +436,20 @@ def rotate():
 
 
 @app.command()
-def third():
-    """Toggle between even layout and 1/3-2/3 layout (works with 2 panes)"""
-    panes, _ = ensure_two_panes()
+def third(
+    command: str = typer.Argument("", help="Optional command to run in the first pane"),
+):
+    """Toggle between even layout and 1/3-2/3 layout (works with 2 panes)
+
+    If command is provided, ensures 2 panes exist and runs the command in the smaller (1/3) pane.
+    The command can contain spaces and will be executed as-is.
+
+    Examples:
+        tmux_helper third                      # Toggle layout
+        tmux_helper third "tig status"         # Split and run tig
+        tmux_helper third "git diff | delta"   # Split and run git diff
+    """
+    panes, created_new = ensure_two_panes(command if command else None)
     if not panes or len(panes) != 2:
         return  # Only works with exactly 2 panes
 
@@ -426,6 +463,12 @@ def third():
     # Get current third state
     current_state = get_tmux_option(THIRD_STATE_OPTION)
 
+    # If command is provided, always apply the layout (don't toggle)
+    if command:
+        # Reset state and apply layout
+        set_tmux_option(THIRD_STATE_OPTION, STATE_NORMAL)
+        current_state = STATE_NORMAL
+
     if current_state in [STATE_THIRD_HORIZONTAL, STATE_THIRD_VERTICAL]:
         # Restore to even layout based on current orientation
         if is_horizontal:
@@ -437,7 +480,7 @@ def third():
         # Get window dimensions
         window_info = run_tmux_command(
             ["tmux", "display-message", "-p", "#{window_width},#{window_height}"],
-            capture_output=True
+            capture_output=True,
         )
         if not window_info:
             return
@@ -447,13 +490,25 @@ def third():
         if is_horizontal:
             # Resize first pane to 33% width (in absolute columns)
             target_width = int(window_width * 0.33)
-            run_tmux_command(["tmux", "resize-pane", "-t", panes[0], "-x", str(target_width)])
+            run_tmux_command(
+                ["tmux", "resize-pane", "-t", panes[0], "-x", str(target_width)]
+            )
             set_tmux_option(THIRD_STATE_OPTION, STATE_THIRD_HORIZONTAL)
         else:
             # Resize first pane to 33% height (in absolute lines)
             target_height = int(window_height * 0.33)
-            run_tmux_command(["tmux", "resize-pane", "-t", panes[0], "-y", str(target_height)])
+            run_tmux_command(
+                ["tmux", "resize-pane", "-t", panes[0], "-y", str(target_height)]
+            )
             set_tmux_option(THIRD_STATE_OPTION, STATE_THIRD_VERTICAL)
+
+    # If command provided and pane already existed, send command to it
+    if command and not created_new:
+        run_tmux_command(["tmux", "send-keys", "-t", panes[0], command, "Enter"])
+
+    # If command provided, focus the working pane
+    if command:
+        run_tmux_command(["tmux", "select-pane", "-t", panes[1]])
 
 
 if __name__ == "__main__":
