@@ -129,25 +129,11 @@ gh extension install github/gh-copilot
 # Add some npm packages
 npm install --global fkill-cli
 
-# Install Python tools
-echo "Setting up Python tools..."
-pipx install pipxu # pipx upgrade tool
-uv tool install --force --python python3.12 aider-chat # Code Writing helper
-uv tool install --force ruff # Fast Python linter
-uv tool install --force httpx # HTTP client with CLI
-uv tool install --force pre-commit # Git pre-commit hooks framework
-uv tool install --force jupyterlab # Jupyter notebook interface
-uv tool install --force rich-cli # Terminal formatting tool
+# Python tools are now installed via py/install_packages.py
+# (called from bootstrap.sh)
 
 # Cloud tools
 echo "Installing cloud tools..."
 brew install --cask google-cloud-sdk
 
 echo "Setup completed successfully!"
-
-# Additional Python tools installed with uv:
-uv tool install --force black # Code formatter
-uv tool install --force mypy # Static type checker
-uv tool install --force poetry # Python package manager
-uv tool install --force uvicorn # ASGI server
-uv tool install --force pudb # Console-based visual debugger

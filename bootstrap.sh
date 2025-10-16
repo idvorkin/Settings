@@ -89,3 +89,11 @@ ln -s -f ~/settings/mac/multi_keyboard_sync.json ~/.config/karabiner/assets/comp
 (echo 'plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)') >> ~/.zshrc
 (echo '. ~/settings/shared/zsh_include.sh') >> ~/.zshrc
 
+# Install UV and pipx first (required for Python package management)
+echo "Installing UV and pipx..."
+brew install uv pipx
+
+# Install Python packages via our Python script
+echo "Installing Python tools..."
+~/settings/py/install_packages.py install
+
