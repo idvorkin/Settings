@@ -29,6 +29,7 @@ brew install --cask alfred
 # brew install --cask docker # Replaced by Orbstack
 brew install --cask microsoft-edge
 brew install --cask 1password
+brew install --cask tailscale
 brew install --cask meetingbar
 brew install --cask cursor
 brew install --cask capcut
