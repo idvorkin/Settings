@@ -96,12 +96,9 @@ RUN cd ~/gits/idvorkin.github.io && \
 
 # Install Playwright system dependencies (requires sudo)
 USER root
-RUN npx -y playwright install-deps chromium
+RUN npm install -D @playwright/test@latest
+RUN npx playwright install --with-deps
 USER developer
-
-# Install Playwright browsers
-RUN cd ~/gits/idvorkin.github.io && \
-    npx playwright install chromium
 
 # Setup GitHub auth helper
 RUN echo '#!/bin/bash\n\
@@ -126,11 +123,13 @@ RUN /bin/bash -c "nvim --headless '+Lazy! sync' +qa || true" && \
 USER root
 RUN apt-get install -y \
     ncurses-term \
-    kitty-terminfo
+    kitty-terminfo \
+    lsof
 USER developer
 
 RUN brew install ruff prettier ag marksman typos-lsp
 RUN brew install --build-from-source fzf
+RUN brew install typescript-language-server lychee pyright
 
 # Clone additional public repositories
 RUN cd ~/gits && \
@@ -153,8 +152,6 @@ RUN cd ~/gits && \
         fi; \
     done
 
-brew install typescript-language-server lychee pyright
-sudo apt-get install -y lsof
 
 WORKDIR /home/developer/
 LABEL description="Settings configured with essential tools (minimal)"
