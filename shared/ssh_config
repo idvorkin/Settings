@@ -73,3 +73,27 @@ Host dsvm
     LocalForward 8888 localhost:8888
     LocalForward 8889 localhost:8889
     LocalForward 8000 localhost:8000
+
+Host c5000
+    HostName c-5000
+    User developer
+
+Host c5001
+    HostName c-5001
+    User developer
+
+Host c5002
+    HostName c-5002
+    User developer
+
+Host c5003
+    HostName c-5003
+    User developer
+
+Host c5004
+    HostName c-5004
+    User developer
+
+Host c5005
+    HostName c-5005
+    User developer
