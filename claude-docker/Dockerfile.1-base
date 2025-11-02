@@ -1,5 +1,5 @@
 # Layer 1: Base with Homebrew
-FROM ubuntu:22.04
+FROM ubuntu:25.10
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
     locales
 
 # Set locale
-RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
-ENV LANG en_US.utf8
+RUN localedef -i en_US -c -f UTF-8 en_US.UTF-8
+ENV LANG=en_US.utf8
 
 # Create non-root user with sudo access
 RUN useradd -m -s /bin/bash developer && \

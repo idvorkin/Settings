@@ -1060,12 +1060,9 @@ def new(image: str = typer.Argument(DEFAULT_IMAGE, help="Docker image to use")):
 
 @app.command()
 def attach(
-    name: str = typer.Argument(
-        None,
-        help="Container name to attach to (optional - will show menu if not provided)",
-    ),
+    name: str = typer.Argument(..., help="Container name to attach to"),
 ):
-    """Attach to an existing container (shows picker menu if no name provided)"""
+    """Attach to an existing container"""
     manager = DockerManager()
     manager.attach_container(name)
 

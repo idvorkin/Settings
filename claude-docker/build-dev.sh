@@ -12,7 +12,7 @@ echo "🔨 Building development layer..."
 # Ensure base and minimal layers are built
 if ! docker images | grep -q "claude-docker.*base"; then
     echo "⚠️  Base image not found. Building base first..."
-    ./build-simple.sh
+    ./build-minimal.sh
 fi
 
 if ! docker images | grep -q "claude-docker.*minimal"; then

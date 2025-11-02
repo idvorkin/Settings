@@ -12,6 +12,9 @@ RUN git clone https://github.com/idvorkin/settings.git ~/settings
 RUN mkdir  ~/gits
 RUN ln -s ~/settings ~/gits/settings
 
+# Fix UV shebangs for Ubuntu 25.10 compatibility (requires -S flag)
+RUN find ~/settings/py -name '*.py' -type f -exec sed -i 's|#!/usr/bin/env uv run --script|#!/usr/bin/env -S uv run --script|g' {} \;
+
 # Install minimal essentials for bootstrap
 RUN brew install zsh tmux neovim git
 
@@ -99,6 +102,7 @@ USER root
 RUN npm install -D @playwright/test@latest
 RUN npx playwright install --with-deps
 USER developer
+RUN npx playwright install
 
 # Setup GitHub auth helper
 RUN echo '#!/bin/bash\n\
@@ -147,8 +151,8 @@ RUN cd ~/gits && \
 RUN cd ~/gits && \
     for repo in */; do \
         if [ -d "$repo/.git" ]; then \
-            echo "Updating $repo"; \
-            cd "$repo" && pre-commit; \
+            echo "Installing pre-commit hooks for $repo"; \
+            (cd "$repo" && pre-commit install) || true; \
         fi; \
     done
 
