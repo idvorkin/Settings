@@ -859,7 +859,7 @@ class DockerManager:
         console.print(f"\n[green]✓ Container name: {container_name}[/green]\n")
 
         # Run container in detached mode first, then attach
-        cmd = ["docker", "run", "-d", "-t", "--name", container_name]
+        cmd = ["docker", "run", "-d", "-t", "--name", container_name, "--hostname", container_name]
 
         # Add persistent volumes
         home_volume = self.get_volume_name(container_name, "home")
