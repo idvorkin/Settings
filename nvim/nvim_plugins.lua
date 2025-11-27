@@ -1,5 +1,5 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
 	vim.fn.system({
 		"git",
 		"clone",
@@ -70,11 +70,110 @@ local plugins = {
 	-- Highlight current line
 	-- ConoLineEnable (Highlight current line)
 	"miyakogi/conoline.vim",
-	-- Like LimeLight
+	-- snacks.nvim - replaces dashboard, zen-mode, twilight, notify
 	{
-		"folke/twilight.nvim",
+		"folke/snacks.nvim",
+		priority = 1000,
+		lazy = false,
 		opts = {
-			context = 5, -- amount of lines we will try to show around the current line
+			-- Replaces dashboard-nvim
+			dashboard = {
+				enabled = true,
+				sections = {
+					{ section = "header" },
+					{ section = "keys", gap = 1, padding = 1 },
+					{ section = "projects", limit = 5, padding = 1 },
+					{ section = "recent_files", limit = 8, padding = 1 },
+					{ section = "startup" },
+					{
+						section = "terminal",
+						cmd = "shuf -n 1 ~/gits/igor2/eulogy_prompts.md 2>/dev/null || echo 'Be the person you want to be'",
+						height = 3,
+						padding = 1,
+						ttl = 0,
+					},
+				},
+			},
+			-- Replaces zen-mode.nvim
+			zen = { enabled = true },
+			-- Replaces twilight.nvim (dim inactive code)
+			dim = { enabled = true },
+			-- Replaces nvim-notify
+			notifier = { enabled = true },
+			-- Additional useful features
+			bigfile = { enabled = true }, -- Handle large files gracefully
+			quickfile = { enabled = true }, -- Fast file opener
+			statuscolumn = { enabled = true }, -- Better status column
+			words = { enabled = true }, -- Highlight word under cursor
+			indent = { enabled = true }, -- Indent guides
+			scroll = { enabled = true }, -- Smooth scrolling
+			input = { enabled = true }, -- Better vim.ui.input
+		},
+		keys = {
+			{
+				"<leader>z",
+				function()
+					Snacks.zen()
+				end,
+				desc = "Toggle Zen Mode",
+			},
+			{
+				"<leader>Z",
+				function()
+					Snacks.zen.zoom()
+				end,
+				desc = "Toggle Zoom",
+			},
+			{
+				"<leader>.",
+				function()
+					Snacks.scratch()
+				end,
+				desc = "Toggle Scratch Buffer",
+			},
+			{
+				"<leader>n",
+				function()
+					Snacks.notifier.show_history()
+				end,
+				desc = "Notification History",
+			},
+			{
+				"<leader>gB",
+				function()
+					Snacks.gitbrowse()
+				end,
+				desc = "Git Browse",
+			},
+		},
+	},
+	-- Session management
+	{
+		"folke/persistence.nvim",
+		event = "BufReadPre",
+		opts = {},
+		keys = {
+			{
+				"<leader>qs",
+				function()
+					require("persistence").load()
+				end,
+				desc = "Restore Session",
+			},
+			{
+				"<leader>ql",
+				function()
+					require("persistence").load({ last = true })
+				end,
+				desc = "Restore Last Session",
+			},
+			{
+				"<leader>qd",
+				function()
+					require("persistence").stop()
+				end,
+				desc = "Don't Save Current Session",
+			},
 		},
 	},
 	"ekalinin/Dockerfile.vim",
@@ -85,8 +184,6 @@ local plugins = {
 	"junegunn/limelight.vim",
 	"junegunn/goyo.vim",
 	"catppuccin/nvim",
-
-	"folke/zen-mode.nvim",
 
 	"nvim-lua/plenary.nvim",
 	-- :Lua <lua code>
@@ -131,10 +228,6 @@ local plugins = {
 		dependencies = {
 			-- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
 			"MunifTanjim/nui.nvim",
-			-- OPTIONAL:
-			--   `nvim-notify` is only needed, if you want to use the notification view.
-			--   If not available, we use `mini` as the fallback
-			"rcarriga/nvim-notify",
 		},
 	},
 	{
@@ -231,7 +324,7 @@ local plugins = {
 -- DB Goop
 --
 local sqlite_path = "/Users/idvorkin/homebrew/opt/sqlite/lib/libsqlite3.dylib"
-if vim.loop.fs_stat(sqlite_path) then
+if vim.uv.fs_stat(sqlite_path) then
 	vim.g.sqlite_clib_path = sqlite_path
 end
 plugins = appendTables(plugins, {
@@ -266,45 +359,6 @@ vim.api.nvim_create_autocmd("FileType", {
 		})
 	end,
 })
-
-local function readEulogyPrompts()
-	local eulogy_prompts = vim.fn.systemlist("cat ~/gits/igor2/eulogy_prompts.md")
-	if #eulogy_prompts == 0 then
-		print("No prompts found.")
-		return nil
-	end
-	math.randomseed(os.time()) -- Seed the random number generator
-	local random_index = math.random(1, #eulogy_prompts)
-	return eulogy_prompts[random_index]
-end
--- Add dashboard
-plugins = appendTables(plugins, {
-	{
-		"nvimdev/dashboard-nvim",
-		event = "VimEnter",
-		opts = function()
-			require("dashboard").setup({
-				theme = "hyper",
-				config = {
-					week_header = {
-						enable = true,
-					},
-					--footer = {"Igor Is here"}, -- footer
-					footer = { readEulogyPrompts() },
-				},
-				-- config
-				--project = { enable = true}
-			})
-		end,
-		dependencies = { { "nvim-tree/nvim-web-devicons" } },
-	},
-})
-
--- Read the eulogy prompts, and insert 3 random ones
--- command! PromptEulogy  :r !shuf -n 3 ~/gits/igor2/eulogy_prompts.md
---
-
-vim.g.dashboard_command_footer = readEulogyPrompts()
 
 -- TSPlaygroundToggle
 -- :TSHighlightCapturesUnderCursor

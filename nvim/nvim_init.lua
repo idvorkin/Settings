@@ -122,8 +122,8 @@ function ZenModeToggleFunction(width)
 		width = "66"
 	end
 	local width_percentage = tonumber(width) / 100
-	require("zen-mode").toggle({
-		window = {
+	Snacks.zen({
+		win = {
 			width = width_percentage,
 		},
 	})

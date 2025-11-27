@@ -41,7 +41,7 @@ vim.lsp.config.typos_lsp = {
 }
 
 -- Enable debug logs for the LSP client. Recommended for debugging only.
-vim.lsp.set_log_level("debug")
+vim.lsp.set_log_level("warn")
 
 local ruff_on_attach = function(client, _)
 	-- Disable hover in favor of Pyright
