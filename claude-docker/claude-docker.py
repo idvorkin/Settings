@@ -1086,6 +1086,58 @@ def delete(
 
 
 @app.command()
+def start_all():
+    """Start all stopped containers without attaching"""
+    manager = DockerManager()
+    containers = manager.state.list_containers()
+
+    if not containers:
+        console.print("[yellow]No containers found[/yellow]")
+        return
+
+    restarted = 0
+    already_running = 0
+    failed = 0
+
+    for container_info in containers:
+        container_name = container_info["name"]
+        status = manager.get_container_status(container_name)
+
+        if status == "running":
+            console.print(f"[dim]● {container_name} already running[/dim]")
+            already_running += 1
+            continue
+        elif status == "not found":
+            console.print(f"[yellow]⚠ {container_name} not found, skipping[/yellow]")
+            manager.state.remove_container(container_name)
+            failed += 1
+            continue
+
+        # Container is stopped, restart it
+        try:
+            result = subprocess.run(
+                ["docker", "start", container_name],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                console.print(f"[green]✓ Started {container_name}[/green]")
+                manager.state.update_last_used(container_name)
+                restarted += 1
+            else:
+                console.print(f"[red]❌ Failed to start {container_name}: {result.stderr}[/red]")
+                failed += 1
+        except Exception as e:
+            console.print(f"[red]❌ Error starting {container_name}: {e}[/red]")
+            failed += 1
+
+    # Summary
+    console.print(
+        f"\n[bold]Summary:[/bold] {restarted} started, {already_running} already running, {failed} failed"
+    )
+
+
+@app.command()
 def clean():
     """Remove all Claude Docker containers"""
     if not Confirm.ask("Remove ALL Claude Docker containers?", default=False):
