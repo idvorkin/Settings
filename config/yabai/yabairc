@@ -37,4 +37,9 @@ yabai -m rule --add app="^Karabiner-Elements$" manage=off
 yabai -m rule --add app="Alfred" manage=off
 yabai -m rule --add app="QuickRecorder" manage=off
 
+# --- Ghostty tab workaround ---
+# When a Ghostty window (tab) is created, re-apply bsp layout.
+yabai -m signal --add app='^Ghostty$' event=window_created   action='yabai -m space --layout bsp'
 
+# When a Ghostty window (tab) is destroyed, re-apply bsp layout.
+yabai -m signal --add app='^Ghostty$' event=window_destroyed action='yabai -m space --layout bsp'
