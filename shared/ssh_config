@@ -59,6 +59,11 @@ Host devbox
     Hostname devvm5807.prn0.facebook.com
     LocalForward 8087 devvm5807.prn0.facebook.com:8087
     LocalForward 8011 localhost:8011
+    RemoteForward 2224 127.0.0.1:2224
+    RemoteForward 2225 127.0.0.1:2225
+    ControlMaster auto
+    ControlPath ~/.ssh/shell_%r@%h:%p
+    ControlPersist 60m
 
 Host freddy_prod
     Hostname devvm17926.prn0.facebook.com
