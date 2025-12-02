@@ -805,6 +805,11 @@ function blog_think() {
     think $url
 }
 
+function SshMasterDevBox()
+{
+    ssh -M -S ~/.ssh/shell_%r@%h:%p -fN devbox
+}
+
 
 function FinickyGet(){
     defaults read com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers | grep -C 7 "http"
