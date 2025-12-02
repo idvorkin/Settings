@@ -258,5 +258,9 @@ vim.api.nvim_create_user_command("GitDiff", function(opts)
 	vim.fn.system(cmd)
 end, { nargs = "?" })
 
+-- Add Worknotes to read this directory, very common usecase
+-- Establish sshMaster First
+vim.cmd("command! WorkNotes :Explore scp://idvorkin@devbox//home/idvorkin/work_notes/")
+
 -- vim.opt.laststatus = 3
 print("nvim_init.lua loaded")
