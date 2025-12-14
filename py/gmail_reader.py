@@ -1013,6 +1013,106 @@ def notebook(
 
 
 @app.command()
+def dexie():
+    """Extract the latest Dexie OTP code, copy to clipboard, and show repo info and age"""
+    try:
+        service = authenticate()
+
+        # Search for Dexie OTP emails (subject: "Your One-Time Password for X")
+        query = 'from:dexie.cloud subject:"One-Time Password"'
+
+        with console.status("[cyan]Searching for Dexie OTP emails...[/cyan]"):
+            results = (
+                service.users()
+                .messages()
+                .list(userId="me", q=query, maxResults=10)
+                .execute()
+            )
+
+        messages = results.get("messages", [])
+
+        if not messages:
+            console.print("[yellow]No Dexie OTP emails found.[/yellow]")
+            console.print(f"[dim]Searched for: {query}[/dim]")
+            return
+
+        # Get the most recent email (first in list)
+        msg = (
+            service.users().messages().get(userId="me", id=messages[0]["id"]).execute()
+        )
+        email_msg = parse_email_message(msg)
+
+        # Calculate age
+        now = (
+            datetime.now(email_msg.date.tzinfo)
+            if email_msg.date.tzinfo
+            else datetime.now()
+        )
+        age = now - email_msg.date
+
+        # Format age string
+        if age.total_seconds() < 60:
+            age_str = f"{int(age.total_seconds())} seconds ago"
+        elif age.total_seconds() < 3600:
+            age_str = f"{int(age.total_seconds() / 60)} minutes ago"
+        elif age.total_seconds() < 86400:
+            age_str = f"{int(age.total_seconds() / 3600)} hours ago"
+        else:
+            age_str = f"{int(age.total_seconds() / 86400)} days ago"
+
+        # Get content to search for OTP
+        content = email_msg.body_text or email_msg.body_html or email_msg.snippet
+
+        if not content:
+            console.print("[red]Could not read email content[/red]")
+            return
+
+        # Extract OTP and repo from "Your OTP for [repo]: [code]" format
+        # Pattern matches: "Your OTP for humane-tracker.surge.sh: LSR3L9L3"
+        combined_pattern = r"Your OTP for\s+([^\s:]+):\s*([A-Za-z0-9]+)"
+
+        search_text = email_msg.subject + " " + content
+        match = re.search(combined_pattern, search_text, re.IGNORECASE)
+
+        if match:
+            repo_name = match.group(1)
+            otp_code = match.group(2)
+        else:
+            # Fallback patterns
+            repo_name = "Unknown"
+            otp_code = None
+
+            # Try to find alphanumeric OTP code (6-10 chars)
+            otp_match = re.search(r":\s*([A-Za-z0-9]{6,10})\b", search_text)
+            if otp_match:
+                otp_code = otp_match.group(1)
+
+        if not otp_code:
+            console.print("[red]Could not extract OTP code from email[/red]")
+            console.print(f"[dim]Subject: {email_msg.subject}[/dim]")
+            console.print(f"[dim]Snippet: {email_msg.snippet}[/dim]")
+            return
+
+        # Copy to clipboard
+        clipboard_success = copy_to_clipboard(otp_code)
+
+        # Display results
+        console.print()
+        console.print(f"[bold green]OTP Code:[/bold green] {otp_code}")
+        console.print(f"[bold cyan]Repo:[/bold cyan] {repo_name}")
+        console.print(f"[bold yellow]Age:[/bold yellow] {age_str}")
+        console.print()
+
+        if clipboard_success:
+            console.print("[green]✓ OTP copied to clipboard[/green]")
+        else:
+            console.print("[yellow]⚠ Could not copy to clipboard[/yellow]")
+
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}")
+
+
+@app.command()
 def config():
     """Show configuration directories and files used by Gmail Reader"""
     config_dir = Path.home() / ".config" / "gmail_reader"
