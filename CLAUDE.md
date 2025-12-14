@@ -99,6 +99,30 @@ console.print("[green]Success![/green] Operation completed")
 - Mock external dependencies
 - Test both success and error cases
 
+## Before Implementing
+
+Follow [chop-conventions/dev-inner-loop/before-implementing.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/before-implementing.md):
+1. **Spec first** - understand what success looks like
+2. **Confirm understanding** - ask if unclear
+3. **Read existing code** - understand context
+4. **Check patterns** - match existing conventions
+5. **Plan for context loss** - create tracking issue for non-trivial work
+
+## Bug Investigation
+
+Follow [chop-conventions/dev-inner-loop/bug-investigation.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/bug-investigation.md):
+1. **Spec**: Is this actually a bug? Ask if unclear
+2. **Test**: Add missing test BEFORE fixing
+3. **Arch**: Deeper problem? Create issue, don't patch around bad architecture
+
+## Guardrails
+
+See [chop-conventions/dev-inner-loop/guardrails.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/guardrails.md)
+- Never remove failing tests without explicit "YES" approval
+- Never push to main directly - use feature branches and PRs
+- Never force push - can destroy history
+- Never merge PRs without human review
+
 ## Code Quality Standards
 
 ### Clean Code Principles
