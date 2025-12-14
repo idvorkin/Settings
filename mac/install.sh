@@ -51,6 +51,10 @@ brew install iina
 # Video editing tool
 brew install --cask losslesscut
 
+# QuickLook plugin for video thumbnails and previews (MKV, WebM, etc.)
+# https://github.com/Marginal/QLVideo
+brew install --cask qlvideo
+
 # Install fonts
 brew tap homebrew/cask-fonts
 # Add a specific font
