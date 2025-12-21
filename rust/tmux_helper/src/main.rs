@@ -43,6 +43,8 @@ struct PaneInfo {
     window_id: String,
     window_name: String,
     pane_pid: u32,
+    pane_current_command: String,
+    pane_current_path: String,
 }
 
 #[derive(Debug)]
@@ -66,18 +68,20 @@ fn get_all_pane_info() -> Result<Vec<PaneInfo>> {
         "list-panes",
         "-a",
         "-F",
-        "#{pane_id}\t#{window_id}\t#{window_name}\t#{pane_pid}",
+        "#{pane_id}\t#{window_id}\t#{window_name}\t#{pane_pid}\t#{pane_current_command}\t#{pane_current_path}",
     ])?;
 
     let mut panes = Vec::new();
     for line in output.lines() {
         let parts: Vec<&str> = line.split('\t').collect();
-        if parts.len() == 4 {
+        if parts.len() >= 4 {
             panes.push(PaneInfo {
                 pane_id: parts[0].to_string(),
                 window_id: parts[1].to_string(),
                 window_name: parts[2].to_string(),
                 pane_pid: parts[3].parse().unwrap_or(0),
+                pane_current_command: parts.get(4).unwrap_or(&"").to_string(),
+                pane_current_path: parts.get(5).unwrap_or(&"").to_string(),
             });
         }
     }
@@ -183,19 +187,122 @@ fn get_short_path(cwd: &str, git_repo: Option<&str>) -> String {
     cwd.to_string()
 }
 
-fn generate_title(info: &ProcessInfo, short_path: &str) -> String {
+/// Generate a window title from process info.
+///
+/// Title format rules (in priority order):
+/// 1. Known dev tools with path: "ai <path>", "cl <path>", "vi <path>", "docker <path>"
+/// 2. Plain shell (no children): "z <path>"
+/// 3. Shell with known child commands: handled by get_child_command_title()
+///    - just: "j <subcommand> <path>" (e.g., "j dev blog")
+///    - jekyll: "jekyll <path>"
+/// 4. Shell with unknown children: returns None (caller uses tmux fallback)
+/// 5. Other processes: just the process name
+///
+/// Returns None when we can't determine a good title (caller should use tmux fallback)
+fn generate_title(info: &ProcessInfo, short_path: &str) -> Option<String> {
+    // Priority 1: Known dev tools - check entire process tree for patterns
     if process_tree_has_pattern(info, &["aider"]) {
+        return Some(format!("ai {}", short_path));
+    }
+    if process_tree_has_pattern(info, &["@anthropic-ai/claude-code", "claude"]) {
+        return Some(format!("cl {}", short_path));
+    }
+    if process_tree_has_pattern(info, &["vim", "nvim"]) {
+        return Some(format!("vi {}", short_path));
+    }
+    if process_tree_has_pattern(info, &["docker"]) {
+        return Some(format!("docker {}", short_path));
+    }
+
+    // Priority 2-4: Shell handling
+    if is_shell(&info.name) {
+        if info.children.is_empty() {
+            // Plain shell with no children: "z <path>"
+            return Some(format!("z {}", short_path));
+        }
+        // Shell with children - try to extract command info
+        if let Some(title) = get_child_command_title(info, short_path) {
+            return Some(title);
+        }
+        // Unknown children - let caller use tmux fallback
+        return None;
+    }
+
+    // Priority 5: Other processes - just use the name
+    Some(info.name.clone())
+}
+
+/// Extract a nice title from shell's child processes.
+///
+/// This handles commands that need special formatting beyond just the command name.
+/// The short_path is the shortened current working directory (e.g., "blog" for idvorkin.github.io).
+///
+/// Supported commands:
+/// - just: "j <subcommand> <path>" - shows the just recipe being run
+///   Examples: "j dev blog", "j build settings", "j serve ~"
+/// - jekyll: "jekyll <path>" - for jekyll serve/build commands
+///   Examples: "jekyll blog", "jekyll ~"
+///
+/// Returns None if no known command is found (caller will use tmux fallback).
+fn get_child_command_title(info: &ProcessInfo, short_path: &str) -> Option<String> {
+    for child in &info.children {
+        let name_lower = child.name.to_lowercase();
+        let cmdline_lower = child.cmdline.to_lowercase();
+
+        // just command: extract the recipe name and append path
+        // "just dev" in blog dir -> "j dev blog"
+        // "just jekyll-serve" -> "j jekyll blog" (shorten jekyll-* recipes)
+        // "just" alone in blog dir -> "j blog"
+        if name_lower == "just" {
+            let args: Vec<&str> = child.cmdline.split_whitespace().collect();
+            if args.len() > 1 {
+                let subcommand = args[1..].join(" ");
+                // Shorten jekyll-related recipes to just "jekyll"
+                if subcommand.to_lowercase().contains("jekyll") {
+                    return Some(format!("j jekyll {}", short_path));
+                }
+                // Has subcommand: "j <subcommand> <path>"
+                return Some(format!("j {} {}", subcommand, short_path));
+            }
+            // No subcommand: "j <path>"
+            return Some(format!("j {}", short_path));
+        }
+
+        // jekyll command: just show "jekyll <path>"
+        // Matches both "jekyll" binary and ruby scripts running jekyll
+        if name_lower == "jekyll" || cmdline_lower.contains("jekyll") {
+            return Some(format!("jekyll {}", short_path));
+        }
+
+        // Recursively check grandchildren (handles nested process trees)
+        if let Some(title) = get_child_command_title(child, short_path) {
+            return Some(title);
+        }
+    }
+    None
+}
+
+fn is_shell(name: &str) -> bool {
+    matches!(name, "zsh" | "bash" | "fish" | "sh")
+}
+
+/// Generate title from tmux pane info (fallback when process info unavailable)
+fn generate_title_from_tmux(command: &str, short_path: &str) -> String {
+    let cmd_lower = command.to_lowercase();
+    if cmd_lower.contains("aider") {
         format!("ai {}", short_path)
-    } else if process_tree_has_pattern(info, &["@anthropic-ai/claude-code", "claude"]) {
+    } else if cmd_lower.contains("claude") {
         format!("cl {}", short_path)
-    } else if process_tree_has_pattern(info, &["vim", "nvim"]) {
+    } else if cmd_lower == "vim" || cmd_lower == "nvim" {
         format!("vi {}", short_path)
-    } else if process_tree_has_pattern(info, &["docker"]) {
+    } else if cmd_lower.contains("docker") {
         format!("docker {}", short_path)
-    } else if info.name == "zsh" && info.children.is_empty() {
+    } else if cmd_lower == "just" {
+        format!("j {}", short_path)
+    } else if cmd_lower == "zsh" || cmd_lower == "bash" || cmd_lower == "fish" {
         format!("z {}", short_path)
     } else {
-        info.name.clone()
+        command.to_string()
     }
 }
 
@@ -236,18 +343,20 @@ fn rename_all() -> Result<()> {
         }
         renamed_windows.insert(pane.window_id.clone());
 
-        if pane.pane_pid == 0 {
-            continue;
-        }
-
-        let Some(process_info) = get_process_info(&system, pane.pane_pid) else {
-            continue;
+        // Try to get process info from system, with tmux fallback
+        let title = if let Some(process_info) = get_process_info(&system, pane.pane_pid) {
+            let cwd = &process_info.cwd;
+            let git_repo = get_git_repo_name(cwd, &mut git_cache);
+            let short_path = get_short_path(cwd, git_repo.as_deref());
+            generate_title(&process_info, &short_path)
+                .unwrap_or_else(|| generate_title_from_tmux(&pane.pane_current_command, &short_path))
+        } else {
+            // Fallback: use tmux's pane info (works for remote/container processes)
+            let cwd = &pane.pane_current_path;
+            let git_repo = get_git_repo_name(cwd, &mut git_cache);
+            let short_path = get_short_path(cwd, git_repo.as_deref());
+            generate_title_from_tmux(&pane.pane_current_command, &short_path)
         };
-
-        let cwd = &process_info.cwd;
-        let git_repo = get_git_repo_name(cwd, &mut git_cache);
-        let short_path = get_short_path(cwd, git_repo.as_deref());
-        let title = generate_title(&process_info, &short_path);
 
         set_tmux_title(&title, &pane.pane_id, &pane.window_id, &pane.window_name);
     }
@@ -256,10 +365,16 @@ fn rename_all() -> Result<()> {
 }
 
 fn info() -> Result<()> {
-    // Get current pane PID
-    let pane_pid: u32 = run_tmux_command(&["display-message", "-p", "#{pane_pid}"])?
-        .parse()
-        .unwrap_or(0);
+    // Get current pane info from tmux
+    let pane_info = run_tmux_command(&[
+        "display-message",
+        "-p",
+        "#{pane_pid}\t#{pane_current_command}\t#{pane_current_path}",
+    ])?;
+    let parts: Vec<&str> = pane_info.split('\t').collect();
+    let pane_pid: u32 = parts.first().and_then(|s| s.parse().ok()).unwrap_or(0);
+    let pane_cmd = parts.get(1).unwrap_or(&"");
+    let pane_path = parts.get(2).unwrap_or(&"");
 
     let mut system = System::new();
     system.refresh_processes_specifics(
@@ -268,22 +383,31 @@ fn info() -> Result<()> {
         ProcessRefreshKind::everything(),
     );
 
-    let Some(process_info) = get_process_info(&system, pane_pid) else {
-        println!("{{}}");
-        return Ok(());
+    let mut git_cache = HashMap::new();
+
+    let (cwd, title) = if let Some(process_info) = get_process_info(&system, pane_pid) {
+        let cwd = process_info.cwd.clone();
+        let git_repo = get_git_repo_name(&cwd, &mut git_cache);
+        let short_path = get_short_path(&cwd, git_repo.as_deref());
+        let title = generate_title(&process_info, &short_path)
+            .unwrap_or_else(|| generate_title_from_tmux(pane_cmd, &short_path));
+        (cwd, title)
+    } else {
+        let cwd = pane_path.to_string();
+        let git_repo = get_git_repo_name(&cwd, &mut git_cache);
+        let short_path = get_short_path(&cwd, git_repo.as_deref());
+        let title = generate_title_from_tmux(pane_cmd, &short_path);
+        (cwd, title)
     };
 
-    let cwd = &process_info.cwd;
-    let mut git_cache = HashMap::new();
-    let git_repo = get_git_repo_name(cwd, &mut git_cache);
-    let short_path = get_short_path(cwd, git_repo.as_deref());
-    let title = generate_title(&process_info, &short_path);
+    let git_repo = get_git_repo_name(&cwd, &mut git_cache);
+    let short_path = get_short_path(&cwd, git_repo.as_deref());
 
     println!(
         r#"{{"cwd":"{}","short_path":"{}","app":"{}","title":"{}","git_repo":{}}}"#,
         cwd,
         short_path,
-        process_info.name,
+        pane_cmd,
         title,
         git_repo
             .as_ref()
@@ -303,12 +427,14 @@ fn info() -> Result<()> {
 }
 
 fn get_tmux_option(option: &str) -> String {
-    run_tmux_command(&["show-option", "-gqv", option]).unwrap_or_default()
+    // Use -wqv for window-local options (not global) so each window/session has its own state
+    run_tmux_command(&["show-option", "-wqv", option]).unwrap_or_default()
 }
 
 fn set_tmux_option(option: &str, value: &str) {
+    // Use -w for window-local options (not global) so each window/session has its own state
     let _ = Command::new("tmux")
-        .args(["set-option", "-g", option, value])
+        .args(["set-option", "-w", option, value])
         .output();
 }
 
@@ -518,26 +644,66 @@ mod tests {
     fn test_generate_title_claude() {
         let child = make_process_info("claude", "@anthropic-ai/claude-code", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "myproject"), "cl myproject");
+        assert_eq!(generate_title(&info, "myproject"), Some("cl myproject".to_string()));
     }
 
     #[test]
     fn test_generate_title_vim() {
         let child = make_process_info("nvim", "nvim file.rs", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "myproject"), "vi myproject");
+        assert_eq!(generate_title(&info, "myproject"), Some("vi myproject".to_string()));
     }
 
     #[test]
     fn test_generate_title_plain_shell() {
         let info = make_process_info("zsh", "/bin/zsh", vec![]);
-        assert_eq!(generate_title(&info, "myproject"), "z myproject");
+        assert_eq!(generate_title(&info, "myproject"), Some("z myproject".to_string()));
     }
 
     #[test]
     fn test_generate_title_docker() {
         let child = make_process_info("docker", "docker run nginx", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "myproject"), "docker myproject");
+        assert_eq!(generate_title(&info, "myproject"), Some("docker myproject".to_string()));
+    }
+
+    #[test]
+    fn test_generate_title_unknown_child_returns_none() {
+        // Shell with unknown child should return None (use tmux fallback)
+        let child = make_process_info("btm", "btm", vec![]);
+        let info = make_process_info("zsh", "/bin/zsh", vec![child]);
+        assert_eq!(generate_title(&info, "myproject"), None);
+    }
+
+    #[test]
+    fn test_generate_title_just_with_subcommand() {
+        // just with subcommand should show "j <subcommand> <path>"
+        let child = make_process_info("just", "just dev", vec![]);
+        let info = make_process_info("zsh", "/bin/zsh", vec![child]);
+        assert_eq!(generate_title(&info, "blog"), Some("j dev blog".to_string()));
+    }
+
+    #[test]
+    fn test_generate_title_just_bare() {
+        // just without subcommand should show "j <path>"
+        let child = make_process_info("just", "just", vec![]);
+        let info = make_process_info("zsh", "/bin/zsh", vec![child]);
+        assert_eq!(generate_title(&info, "blog"), Some("j blog".to_string()));
+    }
+
+    #[test]
+    fn test_generate_title_jekyll() {
+        // jekyll should show "jekyll <path>"
+        let child = make_process_info("jekyll", "jekyll serve", vec![]);
+        let info = make_process_info("zsh", "/bin/zsh", vec![child]);
+        assert_eq!(generate_title(&info, "blog"), Some("jekyll blog".to_string()));
+    }
+
+    #[test]
+    fn test_generate_title_just_jekyll_serve() {
+        // "just jekyll-serve" should shorten to "j jekyll <path>"
+        let child = make_process_info("just", "just jekyll-serve", vec![]);
+        let info = make_process_info("zsh", "/bin/zsh", vec![child]);
+        assert_eq!(generate_title(&info, "blog"), Some("j jekyll blog".to_string()));
     }
 }
