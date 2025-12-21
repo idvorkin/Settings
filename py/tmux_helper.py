@@ -541,6 +541,129 @@ def rotate():
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_HORIZONTAL)
 
 
+def session_exists(session: str) -> bool:
+    """Check if tmux session exists"""
+    return (
+        subprocess.run(
+            ["tmux", "has-session", "-t", session],
+            capture_output=True,
+        ).returncode
+        == 0
+    )
+
+
+def get_session_pane_pids(session: str) -> list[int]:
+    """Get all pane PIDs in a session"""
+    result = run_tmux_command(
+        ["tmux", "list-panes", "-t", session, "-a", "-F", "#{pane_pid}"],
+        capture_output=True,
+    )
+    if not result:
+        return []
+    return [int(pid) for pid in result.split("\n") if pid.isdigit()]
+
+
+def is_process_running_in_session(session: str, process_name: str) -> bool:
+    """Check if a process is running in any pane of the session"""
+    for pane_pid in get_session_pane_pids(session):
+        try:
+            proc = psutil.Process(pane_pid)
+            # Check the process and all children
+            for p in [proc, *proc.children(recursive=True)]:
+                if process_name.lower() in p.name().lower():
+                    return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+
+@app.command()
+def launch_servers():
+    """Start a 'servers' session with dev services (btm, jekyll, agent-dashboard)
+
+    Creates windows for:
+    - btm (system monitor)
+    - caffeinate (Mac only - keeps machine awake)
+    - jekyll serve in ~/blog (Mac only)
+    - just dev in ~/gits/agent-dashboard
+
+    Checks by running process (not window name). Disables auto-rename for these windows.
+    """
+    import platform
+
+    session = "servers"
+    is_mac = platform.system() == "Darwin"
+
+    # Check if session exists
+    created_new = not session_exists(session)
+    if not created_new:
+        print(f"Session '{session}' exists, checking processes...")
+    else:
+        print(f"Creating session '{session}'...")
+        subprocess.run(
+            ["tmux", "new-session", "-d", "-s", session, "-n", "monitor", "btm"],
+            check=True,
+        )
+        # Disable auto-rename for this window
+        run_tmux_command(
+            [
+                "tmux",
+                "set-option",
+                "-t",
+                f"{session}:monitor",
+                "automatic-rename",
+                "off",
+            ]
+        )
+        print("  monitor: started")
+
+    # Helper to create window if process not running
+    def ensure_process(
+        name: str, process: str, cmd: list[str], cwd: Path | None = None
+    ):
+        if is_process_running_in_session(session, process):
+            print(f"  {name}: already running")
+            return False
+        args = ["tmux", "new-window", "-t", session, "-n", name]
+        if cwd:
+            args.extend(["-c", str(cwd)])
+        args.extend(cmd)
+        subprocess.run(args, check=True)
+        # Disable auto-rename for this window
+        run_tmux_command(
+            ["tmux", "set-option", "-t", f"{session}:{name}", "automatic-rename", "off"]
+        )
+        print(f"  {name}: started")
+        return True
+
+    # btm (only check if session already existed)
+    if not created_new:
+        ensure_process("monitor", "btm", ["btm"])
+
+    # Mac-only windows
+    if is_mac:
+        ensure_process("awake", "caffeinate", ["caffeinate", "-d", "-i", "-s"])
+
+        blog_dir = Path.home() / "blog"
+        if blog_dir.exists():
+            ensure_process("blog", "jekyll", ["jekyll", "serve"], blog_dir)
+        else:
+            print(f"  blog: {blog_dir} not found, skipping")
+
+    # Agent dashboard
+    agent_dir = Path.home() / "gits" / "agent-dashboard"
+    if agent_dir.exists():
+        ensure_process("agent", "just", ["just", "dev"], agent_dir)
+    else:
+        print(f"  agent: {agent_dir} not found, skipping")
+
+    # Attach or switch to session
+    if os.environ.get("TMUX"):
+        os.execvp("tmux", ["tmux", "switch-client", "-t", session])
+    else:
+        os.execvp("tmux", ["tmux", "attach", "-t", session])
+
+
 @app.command()
 def third(
     command: str = typer.Argument("", help="Optional command to run in the first pane"),
