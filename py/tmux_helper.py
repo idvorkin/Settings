@@ -595,7 +595,8 @@ def launch_servers():
     is_mac = platform.system() == "Darwin"
 
     # Check if session exists
-    if session_exists(session):
+    created_new = not session_exists(session)
+    if not created_new:
         print(f"Session '{session}' exists, checking processes...")
     else:
         print(f"Creating session '{session}'...")
@@ -605,7 +606,14 @@ def launch_servers():
         )
         # Disable auto-rename for this window
         run_tmux_command(
-            ["tmux", "set-option", "-t", f"{session}:1", "automatic-rename", "off"]
+            [
+                "tmux",
+                "set-option",
+                "-t",
+                f"{session}:monitor",
+                "automatic-rename",
+                "off",
+            ]
         )
         print("  monitor: started")
 
@@ -628,8 +636,9 @@ def launch_servers():
         print(f"  {name}: started")
         return True
 
-    # btm (if session already existed)
-    ensure_process("monitor", "btm", ["btm"])
+    # btm (only check if session already existed)
+    if not created_new:
+        ensure_process("monitor", "btm", ["btm"])
 
     # Mac-only windows
     if is_mac:
