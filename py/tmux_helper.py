@@ -541,6 +541,95 @@ def rotate():
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_HORIZONTAL)
 
 
+def get_session_windows(session: str) -> set[str]:
+    """Get set of window names in a session"""
+    result = run_tmux_command(
+        ["tmux", "list-windows", "-t", session, "-F", "#{window_name}"],
+        capture_output=True,
+    )
+    return set(result.split("\n")) if result else set()
+
+
+def session_exists(session: str) -> bool:
+    """Check if tmux session exists"""
+    return (
+        subprocess.run(
+            ["tmux", "has-session", "-t", session],
+            capture_output=True,
+        ).returncode
+        == 0
+    )
+
+
+@app.command()
+def launch_servers():
+    """Start a 'servers' session with dev services (btm, jekyll, agent-dashboard)
+
+    Creates windows for:
+    - btm (system monitor)
+    - caffeinate (Mac only - keeps machine awake)
+    - jekyll serve in ~/blog (Mac only)
+    - just dev in ~/gits/agent-dashboard
+
+    Skips windows that already exist. Attaches to session when done.
+    """
+    import platform
+
+    session = "servers"
+    is_mac = platform.system() == "Darwin"
+
+    # Check if session exists, get existing windows
+    if session_exists(session):
+        existing = get_session_windows(session)
+        print(f"Session '{session}' exists, checking windows...")
+    else:
+        existing = set()
+        print(f"Creating session '{session}'...")
+        # Create session with first window
+        subprocess.run(
+            ["tmux", "new-session", "-d", "-s", session, "-n", "monitor", "btm"],
+            check=True,
+        )
+        existing.add("monitor")
+
+    # Helper to create window if not exists
+    def ensure_window(name: str, cmd: list[str], cwd: Path | None = None):
+        if name in existing:
+            print(f"  {name}: already running")
+            return
+        args = ["tmux", "new-window", "-t", session, "-n", name]
+        if cwd:
+            args.extend(["-c", str(cwd)])
+        args.extend(cmd)
+        subprocess.run(args, check=True)
+        print(f"  {name}: started")
+
+    # btm (if session already existed)
+    if "monitor" not in existing:
+        ensure_window("monitor", ["btm"])
+
+    # Mac-only windows
+    if is_mac:
+        ensure_window("awake", ["caffeinate", "-d", "-i", "-s"])
+
+        blog_dir = Path.home() / "blog"
+        if blog_dir.exists():
+            ensure_window("blog", ["jekyll", "serve"], blog_dir)
+        elif "blog" not in existing:
+            print(f"  blog: {blog_dir} not found, skipping")
+
+    # Agent dashboard
+    agent_dir = Path.home() / "gits" / "agent-dashboard"
+    if agent_dir.exists():
+        ensure_window("agent", ["just", "dev"], agent_dir)
+    elif "agent" not in existing:
+        print(f"  agent: {agent_dir} not found, skipping")
+
+    # Select first window and attach
+    subprocess.run(["tmux", "select-window", "-t", f"{session}:1"], check=True)
+    os.execvp("tmux", ["tmux", "attach", "-t", session])
+
+
 @app.command()
 def third(
     command: str = typer.Argument("", help="Optional command to run in the first pane"),
