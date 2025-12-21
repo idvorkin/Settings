@@ -187,7 +187,7 @@ fn generate_title(info: &ProcessInfo, short_path: &str) -> String {
     if process_tree_has_pattern(info, &["aider"]) {
         format!("ai {}", short_path)
     } else if process_tree_has_pattern(info, &["@anthropic-ai/claude-code", "claude"]) {
-        format!("claude {}", short_path)
+        format!("cl {}", short_path)
     } else if process_tree_has_pattern(info, &["vim", "nvim"]) {
         format!("vi {}", short_path)
     } else if process_tree_has_pattern(info, &["docker"]) {
@@ -518,7 +518,7 @@ mod tests {
     fn test_generate_title_claude() {
         let child = make_process_info("claude", "@anthropic-ai/claude-code", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "myproject"), "claude myproject");
+        assert_eq!(generate_title(&info, "myproject"), "cl myproject");
     }
 
     #[test]
