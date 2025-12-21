@@ -42,8 +42,6 @@ chop = "chop:app"
 ai-clip = "ai_clip:app"
 ux = "ux:app"
 
-[tool.uv]
-dev-dependencies = [
-    "ruff",
-]
+[dependency-groups]
+dev = ["ruff"]
 
