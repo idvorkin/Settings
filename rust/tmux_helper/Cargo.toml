@@ -1,0 +1,19 @@
+[package]
+name = "rmux_helper"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "rmux_helper"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+sysinfo = "0.32"
+anyhow = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
