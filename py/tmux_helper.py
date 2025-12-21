@@ -126,9 +126,62 @@ def get_all_tmux_panes() -> list[str]:
     return panes.split("\n") if panes else []
 
 
-def set_tmux_title(title: str, pane_id: str | None = None):
-    """Set tmux window title"""
+def get_all_pane_info() -> list[dict]:
+    """Get pane_id, window_id, window_name, and pane_pid for all panes in one call"""
+    # Batch fetch all info we need in a single tmux command
+    result = run_tmux_command(
+        [
+            "tmux",
+            "list-panes",
+            "-a",
+            "-F",
+            "#{pane_id}\t#{window_id}\t#{window_name}\t#{pane_pid}",
+        ],
+        capture_output=True,
+    )
+    if not result:
+        return []
+
+    panes = []
+    for line in result.split("\n"):
+        if not line:
+            continue
+        parts = line.split("\t")
+        if len(parts) == 4:
+            panes.append(
+                {
+                    "pane_id": parts[0],
+                    "window_id": parts[1],
+                    "window_name": parts[2],
+                    "pane_pid": int(parts[3]) if parts[3].isdigit() else 0,
+                }
+            )
+    return panes
+
+
+# Cache for git repo lookups (cleared each rename_all call)
+_git_repo_cache: dict[str, str | None] = {}
+
+
+def set_tmux_title(
+    title: str,
+    pane_id: str | None = None,
+    window_id: str | None = None,
+    current_name: str | None = None,
+):
+    """Set tmux window title, skipping if unchanged
+
+    Args:
+        title: New window title
+        pane_id: Optional pane ID (used to find window if window_id not provided)
+        window_id: Optional window ID (avoids extra tmux call if provided)
+        current_name: Current window name (skips rename if matches title)
+    """
     if not title:
+        return
+
+    # Skip if title hasn't changed
+    if current_name is not None and current_name == title:
         return
 
     # First disable automatic renaming
@@ -138,7 +191,9 @@ def set_tmux_title(title: str, pane_id: str | None = None):
         run_tmux_command(["tmux", "set", "automatic-rename", "off"])
 
     # Then set the window title
-    if pane_id:
+    if window_id:
+        run_tmux_command(["tmux", "rename-window", "-t", window_id, title])
+    elif pane_id:
         window_id = run_tmux_command(
             ["tmux", "display-message", "-t", pane_id, "-p", "#{window_id}"],
             capture_output=True,
@@ -174,10 +229,19 @@ def generate_title(process_info: dict, short_path: str) -> str:
 app = typer.Typer(help="A Tmux helper utility", no_args_is_help=True)
 
 
-def get_git_repo_name(cwd: str) -> str | None:
-    """Get the name of the git repository from the given directory"""
+def get_git_repo_name(cwd: str, use_cache: bool = False) -> str | None:
+    """Get the name of the git repository from the given directory
+
+    Args:
+        cwd: Current working directory
+        use_cache: If True, use cached result for this directory
+    """
     if not cwd:
         return None
+
+    # Check cache first
+    if use_cache and cwd in _git_repo_cache:
+        return _git_repo_cache[cwd]
 
     try:
         git_root = (
@@ -189,9 +253,13 @@ def get_git_repo_name(cwd: str) -> str | None:
             .decode("utf-8")
             .strip()
         )
-        return os.path.basename(git_root)
+        result = os.path.basename(git_root)
     except subprocess.CalledProcessError:
-        return None
+        result = None
+
+    if use_cache:
+        _git_repo_cache[cwd] = result
+    return result
 
 
 def is_aider_running(process_info: dict) -> bool:
@@ -395,25 +463,56 @@ def info():
 
 @app.command()
 def rename_all():
-    """Rename all tmux panes based on their current state"""
-    panes = get_all_tmux_panes()
-    for pane_id in panes:
+    """Rename all tmux panes based on their current state
+
+    Optimizations:
+    - Fetches all pane info in a single tmux command
+    - Skips renaming if window name hasn't changed
+    - Caches git repo lookups per directory
+    - Only renames first pane per window (all panes in a window share the name)
+    """
+    global _git_repo_cache
+    _git_repo_cache.clear()  # Clear cache at start of batch operation
+
+    panes = get_all_pane_info()
+
+    # Track which windows we've already renamed (all panes in a window share the name)
+    renamed_windows: set[str] = set()
+
+    for pane in panes:
+        window_id = pane["window_id"]
+
+        # Skip if we've already renamed this window
+        if window_id in renamed_windows:
+            continue
+        renamed_windows.add(window_id)
+
         # Get process info for this pane
-        pane_pid = get_tmux_pane_pid(pane_id)
+        pane_pid = pane["pane_pid"]
+        if pane_pid <= 0:
+            continue
+
         process_info = get_process_info(pane_pid)
+        if not process_info:
+            continue
 
         # Get current working directory from the process info
         cwd = process_info.get("cwd", "")
 
-        # Get the short path
-        git_repo = get_git_repo_name(cwd)
+        # Get the short path (with caching)
+        git_repo = get_git_repo_name(cwd, use_cache=True)
         short_path = get_short_path(cwd, git_repo)
 
         # Generate title
         title = generate_title(process_info, short_path)
 
-        # Set the title for this pane
-        set_tmux_title(title, pane_id)
+        # Set the title, skipping if unchanged
+        set_tmux_title(
+            title,
+            pane_id=pane["pane_id"],
+            window_id=window_id,
+            current_name=pane["window_name"],
+        )
 
 
 @app.command()
