@@ -648,10 +648,7 @@ def launch_servers():
     else:
         print(f"  agent: {agent_dir} not found, skipping")
 
-    # Select first window and attach/switch
-    subprocess.run(["tmux", "select-window", "-t", f"{session}:1"], check=True)
-
-    # If inside tmux, switch-client; otherwise attach
+    # Attach or switch to session
     if os.environ.get("TMUX"):
         os.execvp("tmux", ["tmux", "switch-client", "-t", session])
     else:
