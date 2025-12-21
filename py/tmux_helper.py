@@ -541,15 +541,6 @@ def rotate():
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_HORIZONTAL)
 
 
-def get_session_windows(session: str) -> set[str]:
-    """Get set of window names in a session"""
-    result = run_tmux_command(
-        ["tmux", "list-windows", "-t", session, "-F", "#{window_name}"],
-        capture_output=True,
-    )
-    return set(result.split("\n")) if result else set()
-
-
 def session_exists(session: str) -> bool:
     """Check if tmux session exists"""
     return (
@@ -559,6 +550,31 @@ def session_exists(session: str) -> bool:
         ).returncode
         == 0
     )
+
+
+def get_session_pane_pids(session: str) -> list[int]:
+    """Get all pane PIDs in a session"""
+    result = run_tmux_command(
+        ["tmux", "list-panes", "-t", session, "-a", "-F", "#{pane_pid}"],
+        capture_output=True,
+    )
+    if not result:
+        return []
+    return [int(pid) for pid in result.split("\n") if pid.isdigit()]
+
+
+def is_process_running_in_session(session: str, process_name: str) -> bool:
+    """Check if a process is running in any pane of the session"""
+    for pane_pid in get_session_pane_pids(session):
+        try:
+            proc = psutil.Process(pane_pid)
+            # Check the process and all children
+            for p in [proc, *proc.children(recursive=True)]:
+                if process_name.lower() in p.name().lower():
+                    return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
 
 
 @app.command()
@@ -571,58 +587,65 @@ def launch_servers():
     - jekyll serve in ~/blog (Mac only)
     - just dev in ~/gits/agent-dashboard
 
-    Skips windows that already exist. Attaches to session when done.
+    Checks by running process (not window name). Disables auto-rename for these windows.
     """
     import platform
 
     session = "servers"
     is_mac = platform.system() == "Darwin"
 
-    # Check if session exists, get existing windows
+    # Check if session exists
     if session_exists(session):
-        existing = get_session_windows(session)
-        print(f"Session '{session}' exists, checking windows...")
+        print(f"Session '{session}' exists, checking processes...")
     else:
-        existing = set()
         print(f"Creating session '{session}'...")
-        # Create session with first window
         subprocess.run(
             ["tmux", "new-session", "-d", "-s", session, "-n", "monitor", "btm"],
             check=True,
         )
-        existing.add("monitor")
+        # Disable auto-rename for this window
+        run_tmux_command(
+            ["tmux", "set-option", "-t", f"{session}:1", "automatic-rename", "off"]
+        )
+        print("  monitor: started")
 
-    # Helper to create window if not exists
-    def ensure_window(name: str, cmd: list[str], cwd: Path | None = None):
-        if name in existing:
+    # Helper to create window if process not running
+    def ensure_process(
+        name: str, process: str, cmd: list[str], cwd: Path | None = None
+    ):
+        if is_process_running_in_session(session, process):
             print(f"  {name}: already running")
-            return
+            return False
         args = ["tmux", "new-window", "-t", session, "-n", name]
         if cwd:
             args.extend(["-c", str(cwd)])
         args.extend(cmd)
         subprocess.run(args, check=True)
+        # Disable auto-rename for this window
+        run_tmux_command(
+            ["tmux", "set-option", "-t", f"{session}:{name}", "automatic-rename", "off"]
+        )
         print(f"  {name}: started")
+        return True
 
     # btm (if session already existed)
-    if "monitor" not in existing:
-        ensure_window("monitor", ["btm"])
+    ensure_process("monitor", "btm", ["btm"])
 
     # Mac-only windows
     if is_mac:
-        ensure_window("awake", ["caffeinate", "-d", "-i", "-s"])
+        ensure_process("awake", "caffeinate", ["caffeinate", "-d", "-i", "-s"])
 
         blog_dir = Path.home() / "blog"
         if blog_dir.exists():
-            ensure_window("blog", ["jekyll", "serve"], blog_dir)
-        elif "blog" not in existing:
+            ensure_process("blog", "jekyll", ["jekyll", "serve"], blog_dir)
+        else:
             print(f"  blog: {blog_dir} not found, skipping")
 
     # Agent dashboard
     agent_dir = Path.home() / "gits" / "agent-dashboard"
     if agent_dir.exists():
-        ensure_window("agent", ["just", "dev"], agent_dir)
-    elif "agent" not in existing:
+        ensure_process("agent", "just", ["just", "dev"], agent_dir)
+    else:
         print(f"  agent: {agent_dir} not found, skipping")
 
     # Select first window and attach
