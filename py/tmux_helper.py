@@ -157,6 +157,8 @@ def generate_title(process_info: dict, short_path: str) -> str:
         return f"claude {short_path}"
     elif is_vim_running(process_info):
         return f"vi {short_path}"
+    elif is_docker_running(process_info):
+        return f"docker {short_path}"
     elif just_cmd := get_just_command(process_info):
         return just_cmd
     elif python_cmd := get_python_command(process_info):
@@ -207,6 +209,11 @@ def is_claude_code_running(process_info: dict) -> bool:
     return process_tree_has_pattern(
         process_info, ["@anthropic-ai/claude-code", "claude"]
     )
+
+
+def is_docker_running(process_info: dict) -> bool:
+    """Check if docker is running in the process tree"""
+    return process_tree_has_pattern(process_info, ["docker"])
 
 
 def get_tmux_pane_pid(pane_id: str | None = None) -> int:
