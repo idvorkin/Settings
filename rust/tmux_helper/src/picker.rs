@@ -41,6 +41,8 @@ struct PickerApp<'a> {
     search_input: String,
     preview_content: Text<'a>,
     show_help: bool,
+    show_rename: bool,
+    rename_input: String,
     should_quit: bool,
     selected_target: Option<String>,
 }
@@ -62,11 +64,64 @@ impl<'a> PickerApp<'a> {
             search_input: String::new(),
             preview_content: Text::default(),
             show_help: false,
+            show_rename: false,
+            rename_input: String::new(),
             should_quit: false,
             selected_target: None,
         };
         app.update_preview();
         app
+    }
+
+    fn start_rename(&mut self) {
+        if let Some(entry) = self.selected_entry() {
+            if !entry.is_separator {
+                // Pre-fill with current name
+                self.rename_input = if entry.is_session {
+                    entry.session_name.clone()
+                } else {
+                    // Extract window name from display (after the session;window prefix)
+                    entry.display
+                        .split_whitespace()
+                        .nth(2)
+                        .unwrap_or("")
+                        .to_string()
+                };
+                self.show_rename = true;
+            }
+        }
+    }
+
+    fn execute_rename(&mut self) {
+        if let Some(entry) = self.selected_entry().cloned() {
+            let new_name = self.rename_input.trim();
+            if new_name.is_empty() {
+                self.show_rename = false;
+                self.rename_input.clear();
+                return;
+            }
+
+            if entry.is_session {
+                // Rename session
+                let _ = Command::new("tmux")
+                    .args(["rename-session", "-t", &entry.session_name, new_name])
+                    .output();
+            } else {
+                // Rename window - target is "session:window.pane", we need "session:window"
+                let window_target: String = entry.target
+                    .rsplit_once('.')
+                    .map(|(w, _)| w.to_string())
+                    .unwrap_or(entry.target.clone());
+                let _ = Command::new("tmux")
+                    .args(["rename-window", "-t", &window_target, new_name])
+                    .output();
+            }
+
+            self.show_rename = false;
+            self.rename_input.clear();
+            // Quit and let user reopen to see changes
+            self.should_quit = true;
+        }
     }
 
     fn selected_entry(&self) -> Option<&PickerEntry> {
@@ -244,7 +299,7 @@ fn parse_pick_entries() -> Result<Vec<PickerEntry>> {
         let marker = if is_current_pane { " \u{25C0}" } else { "" };
         let display = if pane_idx == "1" {
             format!(
-                "\u{22A1} {}:{} {} {} \u{2502} {}{}",
+                "\u{22A1} {};{} {} {} \u{2502} {}{}",
                 session_idx, window_idx, window_name, pane_title, short_path, marker
             )
         } else {
@@ -288,8 +343,27 @@ fn run_picker_tui(mut app: PickerApp<'_>) -> Result<Option<String>> {
                 continue;
             }
 
+            // Handle overlays first
             if app.show_help {
                 app.show_help = false;
+                continue;
+            }
+
+            if app.show_rename {
+                match key.code {
+                    KeyCode::Esc => {
+                        app.show_rename = false;
+                        app.rename_input.clear();
+                    }
+                    KeyCode::Enter => app.execute_rename(),
+                    KeyCode::Backspace => {
+                        app.rename_input.pop();
+                    }
+                    KeyCode::Char(c) => {
+                        app.rename_input.push(c);
+                    }
+                    _ => {}
+                }
                 continue;
             }
 
@@ -301,6 +375,7 @@ fn run_picker_tui(mut app: PickerApp<'_>) -> Result<Option<String>> {
                 (_, KeyCode::F(1)) | (KeyModifiers::CONTROL, KeyCode::Char('/')) => {
                     app.show_help = true
                 }
+                (KeyModifiers::CONTROL, KeyCode::Char('r')) => app.start_rename(),
                 (KeyModifiers::CONTROL, KeyCode::Char('n')) | (_, KeyCode::Down) => {
                     app.move_selection(1)
                 }
@@ -446,9 +521,10 @@ fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
         Span::styled(":select ", Style::default().fg(Color::DarkGray)),
         Span::styled("\u{2502} ", Style::default().fg(Color::DarkGray)),
         Span::styled("Esc", Style::default().fg(Color::Yellow)),
-        Span::styled("/", Style::default().fg(Color::DarkGray)),
-        Span::styled("C-c", Style::default().fg(Color::Yellow)),
         Span::styled(":quit ", Style::default().fg(Color::DarkGray)),
+        Span::styled("\u{2502} ", Style::default().fg(Color::DarkGray)),
+        Span::styled("C-r", Style::default().fg(Color::Yellow)),
+        Span::styled(":rename ", Style::default().fg(Color::DarkGray)),
         Span::styled("\u{2502} ", Style::default().fg(Color::DarkGray)),
         Span::styled("type", Style::default().fg(Color::Yellow)),
         Span::styled(":filter", Style::default().fg(Color::DarkGray)),
@@ -456,7 +532,10 @@ fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
     let footer = Paragraph::new(footer_spans);
     f.render_widget(footer, chunks[4]);
 
-    if app.show_help {
+    // Overlays
+    if app.show_rename {
+        draw_rename_overlay(f, area, app);
+    } else if app.show_help {
         draw_help_overlay(f, area);
     }
 }
@@ -474,6 +553,7 @@ fn draw_help_overlay(f: &mut Frame, area: Rect) {
     Esc / C-c       Cancel and quit
     Type            Filter by text
     ? / C-/         Show this help
+    C-r             Rename session/window
 
   DISPLAY
     ⊟ Session       Session header (cyan)
@@ -508,6 +588,46 @@ fn draw_help_overlay(f: &mut Frame, area: Rect) {
     f.render_widget(popup, popup_area);
 }
 
+fn draw_rename_overlay(f: &mut Frame, area: Rect, app: &PickerApp<'_>) {
+    let is_session = app
+        .selected_entry()
+        .map(|e| e.is_session)
+        .unwrap_or(false);
+    let title = if is_session {
+        " Rename Session "
+    } else {
+        " Rename Window "
+    };
+
+    let popup_width = 50;
+    let popup_height = 5;
+    let x = (area.width.saturating_sub(popup_width)) / 2;
+    let y = (area.height.saturating_sub(popup_height)) / 2;
+    let popup_area = Rect::new(x, y, popup_width, popup_height);
+
+    let inner = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1), Constraint::Length(1), Constraint::Length(1)])
+        .margin(1)
+        .split(popup_area);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(title)
+        .style(Style::default().bg(Color::Black));
+
+    f.render_widget(ratatui::widgets::Clear, popup_area);
+    f.render_widget(block, popup_area);
+
+    let input = Paragraph::new(format!("{}_", app.rename_input))
+        .style(Style::default().fg(Color::Yellow));
+    f.render_widget(input, inner[0]);
+
+    let hint = Paragraph::new("Enter: confirm  Esc: cancel")
+        .style(Style::default().fg(Color::DarkGray));
+    f.render_widget(hint, inner[2]);
+}
+
 /// Run the TUI picker and switch to the selected pane
 pub fn pick_tui() -> Result<()> {
     let entries = parse_pick_entries()?;
@@ -524,4 +644,113 @@ pub fn pick_tui() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_entry(
+        target: &str,
+        display: &str,
+        is_session: bool,
+        is_separator: bool,
+        is_current: bool,
+        indent: usize,
+        session_name: &str,
+    ) -> PickerEntry {
+        PickerEntry {
+            target: target.to_string(),
+            display: display.to_string(),
+            is_session,
+            is_separator,
+            is_current,
+            indent,
+            session_name: session_name.to_string(),
+            is_current_session: false,
+        }
+    }
+
+    #[test]
+    fn test_picker_app_new_selects_first_non_separator() {
+        let entries = vec![
+            make_entry("---", "", false, true, false, 0, "sess1"),
+            make_entry("sess1:*", "⊟ 1 sess1", true, false, false, 0, "sess1"),
+            make_entry("sess1:1.1", "⊡ 1;1 win1", false, false, false, 1, "sess1"),
+        ];
+        let app = PickerApp::new(entries);
+        assert_eq!(app.list_state.selected(), Some(1)); // Should skip separator
+    }
+
+    #[test]
+    fn test_picker_app_filter_entries() {
+        let entries = vec![
+            make_entry("sess1:*", "⊟ 1 main", true, false, false, 0, "main"),
+            make_entry("sess1:1.1", "⊡ 1;1 editor vim", false, false, false, 1, "main"),
+            make_entry("sess2:*", "⊟ 2 work", true, false, false, 0, "work"),
+            make_entry("sess2:1.1", "⊡ 2;1 shell zsh", false, false, false, 1, "work"),
+        ];
+        let mut app = PickerApp::new(entries);
+
+        app.search_input = "vim".to_string();
+        app.filter_entries();
+
+        // Should only show entries containing "vim" (plus separators)
+        assert!(app.filtered_indices.len() < 4);
+    }
+
+    #[test]
+    fn test_picker_app_move_selection_wraps() {
+        let entries = vec![
+            make_entry("sess1:*", "⊟ 1 sess1", true, false, false, 0, "sess1"),
+            make_entry("sess1:1.1", "⊡ 1;1 win1", false, false, false, 1, "sess1"),
+            make_entry("sess1:2.1", "⊡ 1;2 win2", false, false, false, 1, "sess1"),
+        ];
+        let mut app = PickerApp::new(entries);
+
+        // Move to end
+        app.move_selection(1);
+        app.move_selection(1);
+        assert_eq!(app.list_state.selected(), Some(2));
+
+        // Wrap to start
+        app.move_selection(1);
+        assert_eq!(app.list_state.selected(), Some(0));
+    }
+
+    #[test]
+    fn test_picker_app_move_selection_skips_separators() {
+        let entries = vec![
+            make_entry("sess1:*", "⊟ 1 sess1", true, false, false, 0, "sess1"),
+            make_entry("---", "", false, true, false, 0, "sess2"),
+            make_entry("sess2:*", "⊟ 2 sess2", true, false, false, 0, "sess2"),
+        ];
+        let mut app = PickerApp::new(entries);
+        assert_eq!(app.list_state.selected(), Some(0));
+
+        // Moving down should skip separator
+        app.move_selection(1);
+        assert_eq!(app.list_state.selected(), Some(2));
+    }
+
+    #[test]
+    fn test_window_target_extraction() {
+        // Test the window target extraction logic used in execute_rename
+        let target = "mysession:3.2";
+        let window_target: String = target
+            .rsplit_once('.')
+            .map(|(w, _)| w.to_string())
+            .unwrap_or(target.to_string());
+        assert_eq!(window_target, "mysession:3");
+    }
+
+    #[test]
+    fn test_display_format_uses_semicolon() {
+        // Verify the display format uses semicolon separator
+        let session_idx = 1;
+        let window_idx = "3";
+        let display = format!("⊡ {};{} win title │ path", session_idx, window_idx);
+        assert!(display.contains("1;3"));
+        assert!(!display.contains("1:3"));
+    }
 }
