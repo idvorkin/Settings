@@ -236,6 +236,52 @@ To add new tmux commands via `py/tmux_helper.py`:
 - Command alias at `shared/.tmux.conf:217` (`:third`)
 - Help documentation at `shared/.tmux.conf:10-21`
 
+### rmux_helper pick Command
+
+**Location**: `rust/tmux_helper/src/main.rs`
+
+**Purpose**: Fuzzy session/window/pane picker with tree view, replacing tmux-sessionx plugin.
+
+**Commands**:
+- `rmux_helper pick-tui` - Native skim-based TUI picker (recommended)
+- `rmux_helper pick` - Uses external fzf-tmux (fallback)
+- `rmux_helper pick-list` - Outputs formatted list (for fzf reload actions)
+
+**Tmux Keybindings** (in `shared/.tmux.conf`):
+- `C-a w` - Launch picker popup (`display-popup -E -w 95% -h 95% "rmux_helper pick-tui"`)
+- `C-a C-w` - Built-in tmux tree picker (fallback)
+
+**Picker Keybindings**:
+- `C-n/C-p` - Navigate down/up
+- `C-r` - Rename (session if on session line, window otherwise)
+- `C-m` - Move window to different session (shows session picker)
+- `Enter` - Switch to selected pane
+- `Esc` - Cancel
+
+**Display Format** (tree view):
+```
+⊟ session_name                              (cyan)
+  ⊡ session:window window_name pane_title │ short_path
+     ^yellow       ^green                   ^dim
+    ⊙ pane_title │ short_path              (magenta, if multiple panes)
+```
+
+**Features**:
+- Fuzzy search on all fields (session, window name, pane title, path)
+- Preview pane shows `tmux capture-pane` output (right 50%)
+- ANSI colors via skim 0.20+ with `.ansi(true)`
+- 95% popup overlay via `tmux display-popup`
+
+**Dependencies**:
+- `skim = "0.20"` crate (embedded, no external fzf needed for pick-tui)
+- `fzf-tmux` only needed for legacy `pick` command and C-m move action
+
+**Building**:
+```bash
+cd rust/tmux_helper
+cargo install --path . --force
+```
+
 ## File Organization
 
 ### Python Utilities
