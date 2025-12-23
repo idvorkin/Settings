@@ -11,6 +11,9 @@ path = "src/main.rs"
 clap = { version = "4", features = ["derive"] }
 sysinfo = "0.32"
 anyhow = "1"
+ratatui = "0.29"
+crossterm = "0.28"
+nucleo = "0.5"
 
 [profile.release]
 opt-level = 3
