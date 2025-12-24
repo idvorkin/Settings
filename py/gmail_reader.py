@@ -1069,7 +1069,8 @@ def dexie():
 
         # Extract OTP and repo from "Your OTP for [repo]: [code]" format
         # Pattern matches: "Your OTP for humane-tracker.surge.sh: LSR3L9L3"
-        combined_pattern = r"Your OTP for\s+([^\s:]+):\s*([A-Za-z0-9]+)"
+        # Also handles ports: "Your OTP for 192.168.215.3:3000: C9ZF49VA"
+        combined_pattern = r"Your OTP for\s+(.+?):\s+([A-Z0-9]{6,10})\b"
 
         search_text = email_msg.subject + " " + content
         match = re.search(combined_pattern, search_text, re.IGNORECASE)
@@ -1082,10 +1083,11 @@ def dexie():
             repo_name = "Unknown"
             otp_code = None
 
-            # Try to find alphanumeric OTP code (6-10 chars)
-            otp_match = re.search(r":\s*([A-Za-z0-9]{6,10})\b", search_text)
+            # Try to find alphanumeric OTP code (6-10 chars, uppercase)
+            # Require space after colon to avoid matching port numbers like :3000
+            otp_match = re.search(r":\s+([A-Z0-9]{6,10})\b", search_text, re.IGNORECASE)
             if otp_match:
-                otp_code = otp_match.group(1)
+                otp_code = otp_match.group(1).upper()
 
         if not otp_code:
             console.print("[red]Could not extract OTP code from email[/red]")
