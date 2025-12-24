@@ -139,23 +139,21 @@ class ContainerState:
         """Get all containers"""
         return self.state["containers"]
 
-    def find_container_by_query(self, query: str) -> Optional[str]:
-        """Find container name by case-insensitive substring match.
+    def find_container_by_query(self, query: str) -> tuple[Optional[str], list[str]]:
+        """Find container by case-insensitive substring match.
 
         Matches queries like 'C-5001', 'c-5001', or just '5001' to container 'C-5001'.
-        Returns exact container name if found, None if no match or multiple matches.
+        Returns (resolved_name, all_matches) - name is None if 0 or multiple matches.
         """
         query_lower = query.lower()
-        matches = []
-        for container in self.state["containers"]:
-            name = container["name"]
-            # Case-insensitive substring match
-            if query_lower in name.lower():
-                matches.append(name)
-        # Return only if exactly one match
+        matches = [
+            c["name"]
+            for c in self.state["containers"]
+            if query_lower in c["name"].lower()
+        ]
         if len(matches) == 1:
-            return matches[0]
-        return None
+            return matches[0], matches
+        return None, matches
 
 
 class DockerManager:
@@ -168,6 +166,27 @@ class DockerManager:
             console.print(f"[red]❌ Docker not available: {e}[/red]")
             sys.exit(1)
         self.state = ContainerState()
+
+    def _attach_to_tmux(self, container_name: str):
+        """Attach to tmux session in container (creates if doesn't exist)."""
+        subprocess.run(
+            [
+                "docker",
+                "exec",
+                "-it",
+                "-e",
+                f"DOCKER_CONTAINER_NAME={container_name}",
+                "-e",
+                f"TERM={determine_container_term()}",
+                container_name,
+                "/home/linuxbrew/.linuxbrew/bin/tmux",
+                "new-session",
+                "-A",
+                "-s",
+                "main",
+                "/home/linuxbrew/.linuxbrew/bin/zsh",
+            ]
+        )
 
     def find_free_port(self, start_port: int) -> Optional[int]:
         """Find a free port starting from start_port"""
@@ -591,9 +610,17 @@ class DockerManager:
 
         # Try fuzzy match first (case-insensitive substring)
         # This allows 'c-5001', 'C-5001', or '5001' to match 'C-5001'
-        resolved_name = self.state.find_container_by_query(container_name)
+        resolved_name, matches = self.state.find_container_by_query(container_name)
         if resolved_name:
             container_name = resolved_name
+        elif matches:
+            # Multiple matches - show them to user
+            console.print(
+                f"[yellow]Multiple containers match '{container_name}':[/yellow]"
+            )
+            for m in matches:
+                console.print(f"  • {m}")
+            return
         elif not CONTAINER_NAME_PATTERN.match(container_name):
             # No fuzzy match and invalid format
             console.print(
@@ -645,25 +672,7 @@ class DockerManager:
                 # Small delay to ensure container is fully started
                 time.sleep(0.5)
 
-                # Attach to tmux session (creates if doesn't exist with -A flag)
-                subprocess.run(
-                    [
-                        "docker",
-                        "exec",
-                        "-it",
-                        "-e",
-                        f"DOCKER_CONTAINER_NAME={container_name}",
-                        "-e",
-                        f"TERM={determine_container_term()}",
-                        container_name,
-                        "/home/linuxbrew/.linuxbrew/bin/tmux",
-                        "new-session",
-                        "-A",  # Attach if exists, create if not
-                        "-s",
-                        "main",
-                        "/home/linuxbrew/.linuxbrew/bin/zsh",
-                    ]
-                )
+                self._attach_to_tmux(container_name)
             else:
                 # Container is running, attach to existing tmux session
                 self.state.update_last_used(container_name)
@@ -687,25 +696,7 @@ class DockerManager:
                 # Set terminal window title
                 print(f"\033]0;{container_name}\007", end="", flush=True)
 
-                # Attach to tmux session (creates if doesn't exist with -A flag)
-                subprocess.run(
-                    [
-                        "docker",
-                        "exec",
-                        "-it",
-                        "-e",
-                        f"DOCKER_CONTAINER_NAME={container_name}",
-                        "-e",
-                        f"TERM={determine_container_term()}",
-                        container_name,
-                        "/home/linuxbrew/.linuxbrew/bin/tmux",
-                        "new-session",
-                        "-A",  # Attach if exists, create if not
-                        "-s",
-                        "main",
-                        "/home/linuxbrew/.linuxbrew/bin/zsh",
-                    ]
-                )
+                self._attach_to_tmux(container_name)
 
         except NotFound:
             console.print(f"[red]❌ Container {container_name} not found[/red]")
@@ -896,25 +887,7 @@ class DockerManager:
         # Set terminal window title
         print(f"\033]0;{container_name}\007", end="", flush=True)
 
-        # Attach to tmux session (creates if doesn't exist with -A flag)
-        subprocess.run(
-            [
-                "docker",
-                "exec",
-                "-it",
-                "-e",
-                f"DOCKER_CONTAINER_NAME={container_name}",
-                "-e",
-                f"TERM={determine_container_term()}",
-                container_name,
-                "/home/linuxbrew/.linuxbrew/bin/tmux",
-                "new-session",
-                "-A",  # Attach if exists, create if not
-                "-s",
-                "main",
-                "/home/linuxbrew/.linuxbrew/bin/zsh",
-            ]
-        )
+        self._attach_to_tmux(container_name)
 
     def delete_container(self, container_name: str, delete_volumes: bool = False):
         """Delete a container and optionally its volumes"""
