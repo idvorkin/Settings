@@ -2,3 +2,4 @@
 iterm = "iterm"
 Noice = "Noice"
 thm = "thm"
+ratatui = "ratatui"

@@ -1,15 +1,37 @@
+mod picker;
+
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::collections::{HashMap, HashSet};
 use std::process::Command;
 use sysinfo::{Pid, ProcessRefreshKind, System};
 
+pub const VERSION: &str = concat!(
+    env!("CARGO_PKG_VERSION"),
+    " (",
+    env!("GIT_HASH"),
+    ")"
+);
+
 #[derive(Parser)]
 #[command(name = "rmux_helper")]
-#[command(about = "A fast Tmux helper utility (Rust)")]
+#[command(version = VERSION)]
+#[command(about = "A fast Tmux helper utility for session/window/pane management")]
+#[command(long_about = "rmux_helper - A fast Tmux helper written in Rust
+
+Features:
+  - Fuzzy session/window/pane picker with tree view (pick-tui)
+  - Auto-rename windows based on running processes (rename-all)
+  - Layout rotation and 1/3-2/3 split management (rotate, third)
+
+Keybindings (configured in .tmux.conf):
+  C-a w     Launch picker popup
+  C-a C-w   Built-in tmux tree (fallback)
+
+Source: https://github.com/idvorkin/settings")]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
@@ -26,6 +48,10 @@ enum Commands {
         #[arg(default_value = "")]
         command: String,
     },
+    /// Native TUI picker for session/window/pane (ratatui)
+    PickTui,
+    /// Debug: show raw key events (press q to quit)
+    DebugKeys,
 }
 
 // Layout state constants
@@ -55,7 +81,7 @@ struct ProcessInfo {
     children: Vec<ProcessInfo>,
 }
 
-fn run_tmux_command(args: &[&str]) -> Result<String> {
+pub fn run_tmux_command(args: &[&str]) -> Result<String> {
     let output = Command::new("tmux")
         .args(args)
         .output()
@@ -125,7 +151,7 @@ fn process_tree_has_pattern(info: &ProcessInfo, patterns: &[&str]) -> bool {
         .any(|child| process_tree_has_pattern(child, patterns))
 }
 
-fn get_git_repo_name(cwd: &str, cache: &mut HashMap<String, Option<String>>) -> Option<String> {
+pub fn get_git_repo_name(cwd: &str, cache: &mut HashMap<String, Option<String>>) -> Option<String> {
     if cwd.is_empty() {
         return None;
     }
@@ -154,7 +180,7 @@ fn get_git_repo_name(cwd: &str, cache: &mut HashMap<String, Option<String>>) -> 
     result
 }
 
-fn get_short_path(cwd: &str, git_repo: Option<&str>) -> String {
+pub fn get_short_path(cwd: &str, git_repo: Option<&str>) -> String {
     let path_mappings: HashMap<&str, &str> =
         [("idvorkin.github.io", "blog"), ("idvorkin", "me")]
             .into_iter()
@@ -447,25 +473,12 @@ fn get_current_panes() -> Vec<String> {
 fn ensure_two_panes(command: Option<&str>) -> (Vec<String>, bool) {
     let panes = get_current_panes();
     if panes.len() == 1 {
-        // Create split with optional command
-        if let Some(cmd) = command {
-            if !cmd.is_empty() {
-                let _ = Command::new("tmux")
-                    .args(["split-window", "-h", "-c", "#{pane_current_path}", cmd])
-                    .output();
-            } else {
-                let _ = Command::new("tmux")
-                    .args(["split-window", "-h", "-c", "#{pane_current_path}"])
-                    .output();
-            }
-        } else {
-            let _ = Command::new("tmux")
-                .args(["split-window", "-h", "-c", "#{pane_current_path}"])
-                .output();
+        let mut args = vec!["split-window", "-h", "-c", "#{pane_current_path}"];
+        if let Some(cmd) = command.filter(|c| !c.is_empty()) {
+            args.push(cmd);
         }
-        let _ = Command::new("tmux")
-            .args(["select-layout", "even-horizontal"])
-            .output();
+        let _ = Command::new("tmux").args(&args).output();
+        let _ = Command::new("tmux").args(["select-layout", "even-horizontal"]).output();
         return (get_current_panes(), true);
     }
     (panes, false)
@@ -602,14 +615,57 @@ fn third(command: &str) -> Result<()> {
     Ok(())
 }
 
+/// Debug command to show raw key events
+fn debug_keys() -> Result<()> {
+    use crossterm::{
+        event::{self, Event, KeyCode, KeyEventKind},
+        execute,
+        terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    };
+    use std::io::{self, Write};
+
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+
+    println!("Press keys to see events (q to quit)\r");
+    println!("=================================\r");
+
+    loop {
+        if let Event::Key(key) = event::read()? {
+            println!(
+                "kind={:?} code={:?} modifiers={:?}\r",
+                key.kind, key.code, key.modifiers
+            );
+            stdout.flush()?;
+
+            if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                break;
+            }
+        }
+    }
+
+    disable_raw_mode()?;
+    execute!(io::stdout(), LeaveAlternateScreen)?;
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::RenameAll => rename_all(),
-        Commands::Info => info(),
-        Commands::Rotate => rotate(),
-        Commands::Third { command } => third(&command),
+        Some(Commands::RenameAll) => rename_all(),
+        Some(Commands::Info) => info(),
+        Some(Commands::Rotate) => rotate(),
+        Some(Commands::Third { command }) => third(&command),
+        Some(Commands::PickTui) => picker::pick_tui(),
+        Some(Commands::DebugKeys) => debug_keys(),
+        None => {
+            // Show help when no command given
+            use clap::CommandFactory;
+            Cli::command().print_long_help()?;
+            Ok(())
+        }
     }
 }
 
