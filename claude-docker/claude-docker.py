@@ -139,6 +139,24 @@ class ContainerState:
         """Get all containers"""
         return self.state["containers"]
 
+    def find_container_by_query(self, query: str) -> Optional[str]:
+        """Find container name by case-insensitive substring match.
+
+        Matches queries like 'C-5001', 'c-5001', or just '5001' to container 'C-5001'.
+        Returns exact container name if found, None if no match or multiple matches.
+        """
+        query_lower = query.lower()
+        matches = []
+        for container in self.state["containers"]:
+            name = container["name"]
+            # Case-insensitive substring match
+            if query_lower in name.lower():
+                matches.append(name)
+        # Return only if exactly one match
+        if len(matches) == 1:
+            return matches[0]
+        return None
+
 
 class DockerManager:
     """Manages Docker operations"""
@@ -571,10 +589,15 @@ class DockerManager:
             if not container_name:
                 return  # User cancelled selection
 
-        # Validate container name format
-        if not CONTAINER_NAME_PATTERN.match(container_name):
+        # Try fuzzy match first (case-insensitive substring)
+        # This allows 'c-5001', 'C-5001', or '5001' to match 'C-5001'
+        resolved_name = self.state.find_container_by_query(container_name)
+        if resolved_name:
+            container_name = resolved_name
+        elif not CONTAINER_NAME_PATTERN.match(container_name):
+            # No fuzzy match and invalid format
             console.print(
-                f"[red]❌ Invalid container name format: {container_name}[/red]"
+                f"[red]❌ No container matching '{container_name}' found[/red]"
             )
             return
 
@@ -873,7 +896,7 @@ class DockerManager:
         # Set terminal window title
         print(f"\033]0;{container_name}\007", end="", flush=True)
 
-        # Attach to the tmux session that's already running
+        # Attach to tmux session (creates if doesn't exist with -A flag)
         subprocess.run(
             [
                 "docker",
@@ -885,9 +908,11 @@ class DockerManager:
                 f"TERM={determine_container_term()}",
                 container_name,
                 "/home/linuxbrew/.linuxbrew/bin/tmux",
-                "attach-session",
-                "-t",
+                "new-session",
+                "-A",  # Attach if exists, create if not
+                "-s",
                 "main",
+                "/home/linuxbrew/.linuxbrew/bin/zsh",
             ]
         )
 
