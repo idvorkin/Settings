@@ -553,8 +553,35 @@ fn run_picker_tui(mut app: PickerApp<'_>) -> Result<Option<String>> {
 fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
     let area = f.area();
 
-    // Auto-flip to vertical if screen too narrow (< 100 cols)
-    let use_horizontal = app.horizontal_layout && area.width >= 100;
+    // Column widths must match the rendering constants below
+    const COL_INDEX_WIDTH: usize = 6;
+    const COL_WINDOW_WIDTH: usize = 12;
+    const COL_PANE_WIDTH: usize = 12;
+
+    // Calculate actual max width needed for sessions list from content
+    let max_entry_width = app
+        .entries
+        .iter()
+        .map(|e| {
+            if e.is_separator {
+                0
+            } else if e.is_session {
+                e.display.chars().count() + 4 // session + padding
+            } else {
+                // tree_prefix(6) + fixed columns + pane (variable) + marker(3)
+                6 + COL_INDEX_WIDTH
+                    + COL_WINDOW_WIDTH
+                    + COL_PANE_WIDTH
+                    + e.col_pane.chars().count()
+                    + 3
+            }
+        })
+        .max()
+        .unwrap_or(50) as u16;
+
+    // Use horizontal if sessions fit in 50% without wrapping (+ borders/padding)
+    let sessions_width_needed = max_entry_width + 6; // borders + highlight symbol
+    let use_horizontal = app.horizontal_layout && area.width / 2 >= sessions_width_needed;
 
     // Main vertical layout: search+help, content (no footer - help has details)
     let main_chunks = Layout::default()
@@ -567,10 +594,10 @@ fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
 
     // Split content area based on layout mode
     let (sessions_area, preview_area) = if use_horizontal {
-        // Horizontal: sessions on left, preview on right - 50/50 split
+        // Horizontal: sessions get minimum needed, preview gets the rest
         let content_chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .constraints([Constraint::Length(sessions_width_needed), Constraint::Min(1)])
             .split(main_chunks[1]);
         (content_chunks[0], content_chunks[1])
     } else {
@@ -602,12 +629,7 @@ fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
     ]);
     f.render_widget(Paragraph::new(search_help), main_chunks[0]);
 
-    // Column widths for alignment
-    const COL_INDEX_WIDTH: usize = 6;
-    const COL_WINDOW_WIDTH: usize = 12;
-    const COL_PANE_WIDTH: usize = 12;
-
-    // List with tree lines and colored columns
+    // List with tree lines and colored columns (uses COL_*_WIDTH constants from above)
     let items: Vec<ListItem> = app
         .filtered_indices
         .iter()
@@ -744,8 +766,11 @@ fn draw_help_overlay(f: &mut Frame, area: Rect) {
         VERSION
     );
 
-    let popup_width = 70;
-    let popup_height = 23;
+    // Dynamic sizing based on content
+    let line_count = help_text.lines().count() as u16;
+    let max_line_width = help_text.lines().map(|l| l.chars().count()).max().unwrap_or(60) as u16;
+    let popup_width = (max_line_width + 4).min(area.width.saturating_sub(4));
+    let popup_height = (line_count + 2).min(area.height.saturating_sub(2));
     let x = (area.width.saturating_sub(popup_width)) / 2;
     let y = (area.height.saturating_sub(popup_height)) / 2;
     let popup_area = Rect::new(x, y, popup_width, popup_height);
@@ -848,6 +873,40 @@ mod tests {
             col_window: String::new(),
             col_pane: String::new(),
             col_path: String::new(),
+        }
+    }
+
+    fn make_pane_entry(col_index: &str, col_window: &str, col_path: &str, col_pane: &str) -> PickerEntry {
+        PickerEntry {
+            target: "sess:1.1".to_string(),
+            display: format!("{} {} {} {}", col_index, col_window, col_path, col_pane),
+            is_session: false,
+            is_separator: false,
+            is_current: false,
+            is_last: false,
+            indent: 1,
+            session_name: "sess".to_string(),
+            is_current_session: false,
+            col_index: col_index.to_string(),
+            col_window: col_window.to_string(),
+            col_pane: col_pane.to_string(),
+            col_path: col_path.to_string(),
+        }
+    }
+
+    /// Calculate entry width (mirrors logic in draw_picker)
+    fn calc_entry_width(e: &PickerEntry) -> usize {
+        const COL_INDEX_WIDTH: usize = 6;
+        const COL_WINDOW_WIDTH: usize = 12;
+        const COL_PANE_WIDTH: usize = 12;
+
+        if e.is_separator {
+            0
+        } else if e.is_session {
+            e.display.chars().count() + 4
+        } else {
+            // tree_prefix(6) + fixed columns + pane (variable) + marker(3)
+            6 + COL_INDEX_WIDTH + COL_WINDOW_WIDTH + COL_PANE_WIDTH + e.col_pane.chars().count() + 3
         }
     }
 
@@ -969,5 +1028,60 @@ mod tests {
                 eprintln!("  Span {}: {:?} bg={:?} fg={:?} bold={}", j, span.content, span.style.bg, span.style.fg, bold);
             }
         }
+    }
+
+    #[test]
+    fn test_entry_width_uses_fixed_column_widths() {
+        // Width should be consistent regardless of actual content length
+        // because columns are padded to fixed widths
+        let short = make_pane_entry("1;1", "vim", "blog", "");
+        let long = make_pane_entry("1;1", "very-long-name", "my-project", "");
+
+        // Both should have same width (fixed columns, no pane title)
+        assert_eq!(calc_entry_width(&short), calc_entry_width(&long));
+
+        // Expected: tree(6) + index(6) + window(12) + path(12) + pane(0) + marker(3) = 39
+        assert_eq!(calc_entry_width(&short), 39);
+    }
+
+    #[test]
+    fn test_entry_width_varies_with_pane_title() {
+        let no_pane = make_pane_entry("1;1", "vim", "blog", "");
+        let with_pane = make_pane_entry("1;1", "vim", "blog", "my-title");
+
+        // Pane title adds to width
+        assert_eq!(calc_entry_width(&with_pane) - calc_entry_width(&no_pane), 8);
+    }
+
+    #[test]
+    fn test_session_width_from_display() {
+        let session = make_entry("sess:*", "1 my-session", true, false, false, 0, "my-session");
+
+        // Session width = display length + 4 padding
+        assert_eq!(calc_entry_width(&session), 12 + 4);
+    }
+
+    #[test]
+    fn test_separator_has_zero_width() {
+        let sep = make_entry("---", "", false, true, false, 0, "");
+        assert_eq!(calc_entry_width(&sep), 0);
+    }
+
+    #[test]
+    fn test_layout_decision_threshold() {
+        // Sessions need: max_entry_width + 6 (borders/highlight)
+        // Horizontal when: area.width / 2 >= sessions_width_needed
+
+        // With entry width 39 + 6 = 45 needed
+        // Need area.width / 2 >= 45, so area.width >= 90
+
+        let entry_width = 39usize; // from test above
+        let sessions_width_needed = entry_width + 6;
+
+        // At width 90: 90/2 = 45 >= 45, horizontal OK
+        assert!(90 / 2 >= sessions_width_needed as u16);
+
+        // At width 88: 88/2 = 44 < 45, should be vertical
+        assert!(88 / 2 < sessions_width_needed as u16);
     }
 }

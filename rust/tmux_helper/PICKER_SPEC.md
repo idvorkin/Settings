@@ -2,9 +2,10 @@
 
 ## Layout
 
-- **Horizontal (side-by-side)**: Sessions list on left, preview on right (50/50 split)
+- **Horizontal (side-by-side)**: Sessions list on left (minimum needed width), preview on right (remaining space)
 - **Vertical (stacked)**: Sessions on top (dynamic height to fit content), preview on bottom (remaining space)
-- Auto-switch to vertical when terminal width < 100 columns
+- **Dynamic width calculation**: Sessions width calculated from actual content (fixed columns + variable pane title)
+- Auto-switch to vertical when `terminal_width / 2 < sessions_width_needed`
 - Manual toggle via `C-l`
 - **Full screen**: Uses 100% of popup window
 
