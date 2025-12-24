@@ -622,40 +622,7 @@ class DockerManager:
                 # Small delay to ensure container is fully started
                 time.sleep(0.5)
 
-                # Check if tmux session exists, create if not
-                check_session = subprocess.run(
-                    [
-                        "docker",
-                        "exec",
-                        container_name,
-                        "/home/linuxbrew/.linuxbrew/bin/tmux",
-                        "has-session",
-                        "-t",
-                        "main",
-                    ],
-                    capture_output=True,
-                )
-
-                if check_session.returncode != 0:
-                    # No session exists, create one
-                    subprocess.run(
-                        [
-                            "docker",
-                            "exec",
-                            "-d",
-                            container_name,
-                            "/home/linuxbrew/.linuxbrew/bin/tmux",
-                            "new-session",
-                            "-d",
-                            "-s",
-                            "main",
-                            "/home/linuxbrew/.linuxbrew/bin/zsh",
-                        ]
-                    )
-                    # Small delay to ensure tmux session is fully initialized
-                    time.sleep(0.5)
-
-                # Attach to tmux session
+                # Attach to tmux session (creates if doesn't exist with -A flag)
                 subprocess.run(
                     [
                         "docker",
@@ -667,9 +634,11 @@ class DockerManager:
                         f"TERM={determine_container_term()}",
                         container_name,
                         "/home/linuxbrew/.linuxbrew/bin/tmux",
-                        "attach-session",
-                        "-t",
+                        "new-session",
+                        "-A",  # Attach if exists, create if not
+                        "-s",
                         "main",
+                        "/home/linuxbrew/.linuxbrew/bin/zsh",
                     ]
                 )
             else:
@@ -695,40 +664,7 @@ class DockerManager:
                 # Set terminal window title
                 print(f"\033]0;{container_name}\007", end="", flush=True)
 
-                # Check if tmux session exists, create if not
-                check_session = subprocess.run(
-                    [
-                        "docker",
-                        "exec",
-                        container_name,
-                        "/home/linuxbrew/.linuxbrew/bin/tmux",
-                        "has-session",
-                        "-t",
-                        "main",
-                    ],
-                    capture_output=True,
-                )
-
-                if check_session.returncode != 0:
-                    # No session exists, create one
-                    subprocess.run(
-                        [
-                            "docker",
-                            "exec",
-                            "-d",
-                            container_name,
-                            "/home/linuxbrew/.linuxbrew/bin/tmux",
-                            "new-session",
-                            "-d",
-                            "-s",
-                            "main",
-                            "/home/linuxbrew/.linuxbrew/bin/zsh",
-                        ]
-                    )
-                    # Small delay to ensure tmux session is fully initialized
-                    time.sleep(0.5)
-
-                # Now attach to tmux session
+                # Attach to tmux session (creates if doesn't exist with -A flag)
                 subprocess.run(
                     [
                         "docker",
@@ -740,9 +676,11 @@ class DockerManager:
                         f"TERM={determine_container_term()}",
                         container_name,
                         "/home/linuxbrew/.linuxbrew/bin/tmux",
-                        "attach-session",
-                        "-t",
+                        "new-session",
+                        "-A",  # Attach if exists, create if not
+                        "-s",
                         "main",
+                        "/home/linuxbrew/.linuxbrew/bin/zsh",
                     ]
                 )
 
@@ -859,7 +797,16 @@ class DockerManager:
         console.print(f"\n[green]✓ Container name: {container_name}[/green]\n")
 
         # Run container in detached mode first, then attach
-        cmd = ["docker", "run", "-d", "-t", "--name", container_name, "--hostname", container_name]
+        cmd = [
+            "docker",
+            "run",
+            "-d",
+            "-t",
+            "--name",
+            container_name,
+            "--hostname",
+            container_name,
+        ]
 
         # Add persistent volumes
         home_volume = self.get_volume_name(container_name, "home")
@@ -1125,7 +1072,9 @@ def start_all():
                 manager.state.update_last_used(container_name)
                 restarted += 1
             else:
-                console.print(f"[red]❌ Failed to start {container_name}: {result.stderr}[/red]")
+                console.print(
+                    f"[red]❌ Failed to start {container_name}: {result.stderr}[/red]"
+                )
                 failed += 1
         except Exception as e:
             console.print(f"[red]❌ Error starting {container_name}: {e}[/red]")
