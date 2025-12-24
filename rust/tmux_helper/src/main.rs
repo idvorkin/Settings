@@ -50,6 +50,8 @@ enum Commands {
     },
     /// Native TUI picker for session/window/pane (ratatui)
     PickTui,
+    /// Debug: show raw key events (press q to quit)
+    DebugKeys,
 }
 
 // Layout state constants
@@ -612,6 +614,42 @@ fn third(command: &str) -> Result<()> {
 
     Ok(())
 }
+
+/// Debug command to show raw key events
+fn debug_keys() -> Result<()> {
+    use crossterm::{
+        event::{self, Event, KeyCode, KeyEventKind},
+        execute,
+        terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    };
+    use std::io::{self, Write};
+
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+
+    println!("Press keys to see events (q to quit)\r");
+    println!("=================================\r");
+
+    loop {
+        if let Event::Key(key) = event::read()? {
+            println!(
+                "kind={:?} code={:?} modifiers={:?}\r",
+                key.kind, key.code, key.modifiers
+            );
+            stdout.flush()?;
+
+            if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                break;
+            }
+        }
+    }
+
+    disable_raw_mode()?;
+    execute!(io::stdout(), LeaveAlternateScreen)?;
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
@@ -621,6 +659,7 @@ fn main() -> Result<()> {
         Some(Commands::Rotate) => rotate(),
         Some(Commands::Third { command }) => third(&command),
         Some(Commands::PickTui) => picker::pick_tui(),
+        Some(Commands::DebugKeys) => debug_keys(),
         None => {
             // Show help when no command given
             use clap::CommandFactory;
