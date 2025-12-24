@@ -54,6 +54,10 @@ struct PickerApp<'a> {
     horizontal_layout: bool, // true = side-by-side, false = stacked
     preview_width: u16,
     preview_height: u16,
+    // Dynamic column widths (calculated from content)
+    col_width_index: usize,
+    col_width_window: usize,
+    col_width_path: usize,
 }
 
 impl<'a> PickerApp<'a> {
@@ -67,6 +71,20 @@ impl<'a> PickerApp<'a> {
             .or_else(|| filtered_indices.iter().position(|&i| !entries[i].is_separator && !entries[i].is_session))
             .unwrap_or(0);
         list_state.select(Some(initial_pos));
+
+        // Calculate dynamic column widths from content (with minimums)
+        let calc_col_width = |extract: fn(&PickerEntry) -> &str, min: usize| {
+            entries
+                .iter()
+                .filter(|e| !e.is_session && !e.is_separator)
+                .map(|e| extract(e).chars().count())
+                .max()
+                .unwrap_or(min)
+                .max(min)
+        };
+        let col_width_index = calc_col_width(|e| &e.col_index, 4);
+        let col_width_window = calc_col_width(|e| &e.col_window, 3);
+        let col_width_path = calc_col_width(|e| &e.col_path, 6);
 
         let mut app = Self {
             entries,
@@ -82,6 +100,9 @@ impl<'a> PickerApp<'a> {
             horizontal_layout: true, // default to side-by-side
             preview_width: 80,
             preview_height: 40,
+            col_width_index,
+            col_width_window,
+            col_width_path,
         };
         app.refresh_preview();
         app
@@ -306,6 +327,23 @@ impl<'a> PickerApp<'a> {
     }
 }
 
+/// Extract app prefix from window name, avoiding path duplication.
+/// If window name is "<prefix> <path>" and path matches short_path, return just prefix.
+/// Otherwise return the full window name.
+fn extract_window_prefix(window_name: &str, short_path: &str) -> String {
+    // Known prefixes from rename-all: cl, vi, ai, z, docker, j, jekyll
+    if let Some((prefix, rest)) = window_name.split_once(' ') {
+        // Check if the rest of the window name matches or contains the short_path
+        let rest_trimmed = rest.trim_end_matches('/');
+        let path_trimmed = short_path.trim_end_matches('/');
+        if rest_trimmed == path_trimmed || rest_trimmed.ends_with(path_trimmed) {
+            return prefix.to_string();
+        }
+    }
+    // No match or no space - return full window name
+    window_name.to_string()
+}
+
 fn parse_pick_entries() -> Result<Vec<PickerEntry>> {
     let current_pane = run_tmux_command(&[
         "display-message",
@@ -414,8 +452,10 @@ fn parse_pick_entries() -> Result<Vec<PickerEntry>> {
         } else {
             String::new()
         };
+        // Extract app prefix from window name if it follows "<prefix> <path>" pattern
+        // This avoids duplicating the path (already shown in col_path)
         let col_window = if pane_idx == "1" {
-            window_name.to_string()
+            extract_window_prefix(window_name, &short_path)
         } else {
             String::new()
         };
@@ -553,10 +593,10 @@ fn run_picker_tui(mut app: PickerApp<'_>) -> Result<Option<String>> {
 fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
     let area = f.area();
 
-    // Column widths must match the rendering constants below
-    const COL_INDEX_WIDTH: usize = 6;
-    const COL_WINDOW_WIDTH: usize = 12;
-    const COL_PANE_WIDTH: usize = 12;
+    // Use dynamic column widths from app (calculated from content)
+    let col_index_width = app.col_width_index;
+    let col_window_width = app.col_width_window;
+    let col_path_width = app.col_width_path;
 
     // Calculate actual max width needed for sessions list from content
     let max_entry_width = app
@@ -568,11 +608,12 @@ fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
             } else if e.is_session {
                 e.display.chars().count() + 4 // session + padding
             } else {
-                // tree_prefix(6) + fixed columns + pane (variable) + marker(3)
-                6 + COL_INDEX_WIDTH
-                    + COL_WINDOW_WIDTH
-                    + COL_PANE_WIDTH
-                    + e.col_pane.chars().count()
+                // tree_prefix(6) + index + space + window + space + path + pane_space + pane + marker(3)
+                let pane_width = if e.col_pane.is_empty() { 0 } else { e.col_pane.chars().count() + 1 };
+                6 + col_index_width + 1
+                    + col_window_width + 1
+                    + col_path_width
+                    + pane_width
                     + 3
             }
         })
@@ -629,7 +670,7 @@ fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
     ]);
     f.render_widget(Paragraph::new(search_help), main_chunks[0]);
 
-    // List with tree lines and colored columns (uses COL_*_WIDTH constants from above)
+    // List with tree lines and colored columns
     let items: Vec<ListItem> = app
         .filtered_indices
         .iter()
@@ -669,10 +710,10 @@ fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
                     }
                 };
 
-                // Pad columns to fixed width
-                let idx_padded = format!("{:<width$}", entry.col_index, width = COL_INDEX_WIDTH);
-                let win_padded = format!("{:<width$}", entry.col_window, width = COL_WINDOW_WIDTH);
-                let path_padded = format!("{:<width$}", entry.col_path, width = COL_PANE_WIDTH);
+                // Pad columns to dynamic width + 1 for spacing
+                let idx_padded = format!("{:<width$} ", entry.col_index, width = col_index_width);
+                let win_padded = format!("{:<width$} ", entry.col_window, width = col_window_width);
+                let path_padded = format!("{:<width$}", entry.col_path, width = col_path_width);
 
                 // Order: Index, Window, Path, Pane (pane last, often empty/hostname)
                 let mut spans = vec![
@@ -681,9 +722,9 @@ fn draw_picker(f: &mut Frame, app: &mut PickerApp<'_>) {
                     Span::styled(win_padded, Style::default().fg(Color::LightGreen)),
                     Span::styled(path_padded, Style::default().fg(Color::LightMagenta)),
                 ];
-                // Only show pane if not empty
+                // Only show pane if not empty (with leading space)
                 if !entry.col_pane.is_empty() {
-                    spans.push(Span::styled(entry.col_pane.clone(), Style::default().fg(Color::LightCyan)));
+                    spans.push(Span::styled(format!(" {}", entry.col_pane), Style::default().fg(Color::LightCyan)));
                 }
                 // Add marker for current/last
                 let marker = if entry.is_current {
@@ -894,19 +935,16 @@ mod tests {
         }
     }
 
-    /// Calculate entry width (mirrors logic in draw_picker)
-    fn calc_entry_width(e: &PickerEntry) -> usize {
-        const COL_INDEX_WIDTH: usize = 6;
-        const COL_WINDOW_WIDTH: usize = 12;
-        const COL_PANE_WIDTH: usize = 12;
-
+    /// Calculate entry width with given column widths (mirrors logic in draw_picker)
+    fn calc_entry_width_with_cols(e: &PickerEntry, col_index: usize, col_window: usize, col_path: usize) -> usize {
         if e.is_separator {
             0
         } else if e.is_session {
             e.display.chars().count() + 4
         } else {
-            // tree_prefix(6) + fixed columns + pane (variable) + marker(3)
-            6 + COL_INDEX_WIDTH + COL_WINDOW_WIDTH + COL_PANE_WIDTH + e.col_pane.chars().count() + 3
+            // tree_prefix(6) + index + space + window + space + path + pane_space + pane + marker(3)
+            let pane_width = if e.col_pane.is_empty() { 0 } else { e.col_pane.chars().count() + 1 };
+            6 + col_index + 1 + col_window + 1 + col_path + pane_width + 3
         }
     }
 
@@ -1031,17 +1069,17 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_width_uses_fixed_column_widths() {
-        // Width should be consistent regardless of actual content length
-        // because columns are padded to fixed widths
-        let short = make_pane_entry("1;1", "vim", "blog", "");
-        let long = make_pane_entry("1;1", "very-long-name", "my-project", "");
+    fn test_entry_width_with_dynamic_columns() {
+        // With dynamic columns, width depends on the column widths provided
+        let entry = make_pane_entry("1;1", "vim", "blog", "");
 
-        // Both should have same width (fixed columns, no pane title)
-        assert_eq!(calc_entry_width(&short), calc_entry_width(&long));
+        // Example with small columns: index=3, window=3, path=4
+        // tree(6) + index(3) + space(1) + window(3) + space(1) + path(4) + pane(0) + marker(3) = 21
+        assert_eq!(calc_entry_width_with_cols(&entry, 3, 3, 4), 21);
 
-        // Expected: tree(6) + index(6) + window(12) + path(12) + pane(0) + marker(3) = 39
-        assert_eq!(calc_entry_width(&short), 39);
+        // Example with larger columns: index=4, window=6, path=10
+        // tree(6) + 4 + 1 + 6 + 1 + 10 + 0 + 3 = 31
+        assert_eq!(calc_entry_width_with_cols(&entry, 4, 6, 10), 31);
     }
 
     #[test]
@@ -1049,39 +1087,37 @@ mod tests {
         let no_pane = make_pane_entry("1;1", "vim", "blog", "");
         let with_pane = make_pane_entry("1;1", "vim", "blog", "my-title");
 
-        // Pane title adds to width
-        assert_eq!(calc_entry_width(&with_pane) - calc_entry_width(&no_pane), 8);
+        // Pane title adds to width (8 chars + 1 space = 9 difference)
+        let w1 = calc_entry_width_with_cols(&no_pane, 4, 4, 4);
+        let w2 = calc_entry_width_with_cols(&with_pane, 4, 4, 4);
+        assert_eq!(w2 - w1, 9);
     }
 
     #[test]
     fn test_session_width_from_display() {
         let session = make_entry("sess:*", "1 my-session", true, false, false, 0, "my-session");
 
-        // Session width = display length + 4 padding
-        assert_eq!(calc_entry_width(&session), 12 + 4);
+        // Session width = display length + 4 padding (independent of column widths)
+        assert_eq!(calc_entry_width_with_cols(&session, 4, 4, 4), 12 + 4);
     }
 
     #[test]
     fn test_separator_has_zero_width() {
         let sep = make_entry("---", "", false, true, false, 0, "");
-        assert_eq!(calc_entry_width(&sep), 0);
+        assert_eq!(calc_entry_width_with_cols(&sep, 4, 4, 4), 0);
     }
 
     #[test]
-    fn test_layout_decision_threshold() {
-        // Sessions need: max_entry_width + 6 (borders/highlight)
-        // Horizontal when: area.width / 2 >= sessions_width_needed
+    fn test_extract_window_prefix() {
+        // Window name with path that matches short_path -> extract prefix
+        assert_eq!(extract_window_prefix("cl settings/rust", "settings/rust"), "cl");
+        assert_eq!(extract_window_prefix("vi blog/", "blog"), "vi");
+        assert_eq!(extract_window_prefix("z ~/projects", "~/projects"), "z");
 
-        // With entry width 39 + 6 = 45 needed
-        // Need area.width / 2 >= 45, so area.width >= 90
+        // Window name with non-matching path -> keep full name
+        assert_eq!(extract_window_prefix("cl other-path", "settings/rust"), "cl other-path");
 
-        let entry_width = 39usize; // from test above
-        let sessions_width_needed = entry_width + 6;
-
-        // At width 90: 90/2 = 45 >= 45, horizontal OK
-        assert!(90 / 2 >= sessions_width_needed as u16);
-
-        // At width 88: 88/2 = 44 < 45, should be vertical
-        assert!(88 / 2 < sessions_width_needed as u16);
+        // Window name without space -> keep full name
+        assert_eq!(extract_window_prefix("btm", "settings"), "btm");
     }
 }
