@@ -78,11 +78,21 @@
 ## Actions
 
 - `Enter`: Switch to selected pane
-- `Esc` or `C-c`: Cancel and quit
+- `Esc`: Cancel and quit immediately
+- `C-c`: Clear search first (if text present), quit on second press
 - `C-r`: Rename window (of currently selected pane)
 - `C-l`: Toggle layout (horizontal/vertical)
 - `?` or `C-/`: Show help overlay
 - Type characters: Filter entries by text (printable ASCII only)
+
+## Filtering
+
+- **Token-based fuzzy match**: Query is split into tokens, ALL must be present
+- **Auto-split at letter/digit boundaries**: "se4" → ["se", "4"] (matches "settings" + "1;4")
+- **Pure digit tokens split per-digit**: "14" matches "1;4" (each digit found)
+- **Semicolon preserved**: "1;4" matches exactly "1;4"
+- **Whitespace splits tokens**: "cl set" → ["cl", "set"]
+- Case-insensitive matching
 
 ## Preview Pane
 
