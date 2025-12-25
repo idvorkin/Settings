@@ -212,11 +212,19 @@ impl<'a> PickerApp<'a> {
             self.filtered_indices = (0..self.entries.len()).collect();
         } else {
             let query = self.search_input.to_lowercase();
+            let tokens = tokenize_query(&query);
             self.filtered_indices = self
                 .entries
                 .iter()
                 .enumerate()
-                .filter(|(_, e)| e.is_separator || e.display.to_lowercase().contains(&query))
+                .filter(|(_, e)| {
+                    if e.is_separator {
+                        return true;
+                    }
+                    // Pass col_index for digit-specific matching
+                    let col_index = if e.col_index.is_empty() { None } else { Some(e.col_index.as_str()) };
+                    fuzzy_match_with_index(&e.display.to_lowercase(), &tokens, col_index)
+                })
                 .map(|(i, _)| i)
                 .collect();
         }
@@ -325,6 +333,86 @@ impl<'a> PickerApp<'a> {
             self.refresh_preview();
         }
     }
+}
+
+/// Tokenize a search query for fuzzy matching.
+/// Splits on whitespace AND at letter/digit boundaries.
+/// Examples:
+///   "se4" -> ["se", "4"]
+///   "1;4" -> ["1", "4"]
+///   "cl set" -> ["cl", "set"]
+///   "vim blog" -> ["vim", "blog"]
+fn tokenize_query(query: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut current = String::new();
+    let mut last_was_digit = None;
+
+    for c in query.chars() {
+        if c.is_whitespace() {
+            if !current.is_empty() {
+                tokens.push(current.clone());
+                current.clear();
+            }
+            last_was_digit = None;
+        } else if c.is_ascii_digit() {
+            // Split if transitioning from letter to digit
+            if last_was_digit == Some(false) && !current.is_empty() {
+                tokens.push(current.clone());
+                current.clear();
+            }
+            current.push(c);
+            last_was_digit = Some(true);
+        } else if c.is_alphabetic() {
+            // Split if transitioning from digit to letter
+            if last_was_digit == Some(true) && !current.is_empty() {
+                tokens.push(current.clone());
+                current.clear();
+            }
+            current.push(c);
+            last_was_digit = Some(false);
+        } else {
+            // Non-alphanumeric (like ';') - include in current token
+            current.push(c);
+        }
+    }
+
+    if !current.is_empty() {
+        tokens.push(current);
+    }
+
+    tokens
+}
+
+/// Fuzzy match with optional index field for digit-specific matching.
+/// When col_index is provided, pure digit tokens match against the index only.
+fn fuzzy_match_with_index(text: &str, tokens: &[String], col_index: Option<&str>) -> bool {
+    tokens.iter().all(|token| {
+        let is_pure_digits = token.chars().all(|c| c.is_ascii_digit());
+
+        // For pure digit tokens, prefer matching against col_index if available
+        if is_pure_digits && col_index.is_some() {
+            let index = col_index.unwrap();
+            // Single digit or exact match in index
+            if index.contains(token.as_str()) {
+                return true;
+            }
+            // Multi-digit: each digit must be in index (e.g., "23" matches "2;3")
+            if token.len() > 1 {
+                return token.chars().all(|c| index.contains(c));
+            }
+            return false;
+        }
+
+        // Direct substring match
+        if text.contains(token) {
+            return true;
+        }
+        // For pure digit tokens without col_index, try matching each digit
+        if is_pure_digits && token.len() > 1 {
+            return token.chars().all(|c| text.contains(c));
+        }
+        false
+    })
 }
 
 /// Extract app prefix from window name, avoiding path duplication.
@@ -544,8 +632,17 @@ fn run_picker_tui(mut app: PickerApp<'_>) -> Result<Option<String>> {
             }
 
             match (key.modifiers, key.code) {
-                (_, KeyCode::Esc) | (KeyModifiers::CONTROL, KeyCode::Char('c')) => {
-                    app.should_quit = true
+                (_, KeyCode::Esc) => {
+                    app.should_quit = true;
+                }
+                (KeyModifiers::CONTROL, KeyCode::Char('c')) => {
+                    // C-c: clear search first, quit on second press (if search already empty)
+                    if app.search_input.is_empty() {
+                        app.should_quit = true;
+                    } else {
+                        app.search_input.clear();
+                        app.filter_entries();
+                    }
                 }
                 (_, KeyCode::Enter) => app.select_current(),
                 (_, KeyCode::F(1)) | (KeyModifiers::CONTROL, KeyCode::Char('/')) => {
@@ -787,8 +884,9 @@ fn draw_help_overlay(f: &mut Frame, area: Rect) {
     C-p / ↑         Move up
     Tab / C-o       Jump between ◀current and ◁last
     Enter           Switch to selected pane
-    Esc / C-c       Cancel and quit
-    Type            Filter by text
+    Esc             Cancel and quit
+    C-c             Clear search (quit if empty)
+    Type            Filter by text (numbers match indices)
     ? / C-/         Show this help
     C-r             Rename session/window
     C-l             Toggle layout (horizontal/vertical)
@@ -1105,6 +1203,158 @@ mod tests {
     fn test_separator_has_zero_width() {
         let sep = make_entry("---", "", false, true, false, 0, "");
         assert_eq!(calc_entry_width_with_cols(&sep, 4, 4, 4), 0);
+    }
+
+    #[test]
+    fn test_tokenize_query() {
+        // Split at letter/digit boundaries
+        assert_eq!(tokenize_query("se4"), vec!["se", "4"]);
+        assert_eq!(tokenize_query("4se"), vec!["4", "se"]);
+        assert_eq!(tokenize_query("cl2set"), vec!["cl", "2", "set"]);
+
+        // Semicolon stays with adjacent chars
+        assert_eq!(tokenize_query("1;4"), vec!["1;4"]);
+
+        // Whitespace splits
+        assert_eq!(tokenize_query("cl set"), vec!["cl", "set"]);
+        assert_eq!(tokenize_query("vim blog"), vec!["vim", "blog"]);
+
+        // Combined
+        assert_eq!(tokenize_query("se4 blog"), vec!["se", "4", "blog"]);
+    }
+
+    #[test]
+    fn test_fuzzy_match_no_index() {
+        // When no col_index provided, digits match against full text
+        let text = "1;4 cl settings rmux";
+
+        // Single tokens
+        assert!(fuzzy_match_with_index(text, &["4".to_string()], None));
+        assert!(fuzzy_match_with_index(text, &["cl".to_string()], None));
+        assert!(fuzzy_match_with_index(text, &["set".to_string()], None));
+
+        // Multiple tokens - all must match
+        assert!(fuzzy_match_with_index(text, &["se".to_string(), "4".to_string()], None));
+        assert!(fuzzy_match_with_index(text, &["cl".to_string(), "set".to_string()], None));
+
+        // Token not found
+        assert!(!fuzzy_match_with_index(text, &["vim".to_string()], None));
+        assert!(!fuzzy_match_with_index(text, &["cl".to_string(), "vim".to_string()], None));
+
+        // Exact index match
+        assert!(fuzzy_match_with_index(text, &["1;4".to_string()], None));
+
+        // Pure digit token "14" should match "1;4" (each digit found in text)
+        assert!(fuzzy_match_with_index(text, &["14".to_string()], None));
+        // But "15" should NOT match (no 5 in text)
+        assert!(!fuzzy_match_with_index(text, &["15".to_string()], None));
+    }
+
+    #[test]
+    fn test_fuzzy_match_with_col_index() {
+        // When col_index is provided, digit tokens match against index only
+        let text = "1;3 z stack-picker-2";
+        let col_index = Some("1;3");
+
+        // "2" should NOT match - it's in text but not in col_index
+        assert!(!fuzzy_match_with_index(text, &["2".to_string()], col_index));
+
+        // "3" should match - it's in col_index
+        assert!(fuzzy_match_with_index(text, &["3".to_string()], col_index));
+
+        // "13" should match - both 1 and 3 are in col_index
+        assert!(fuzzy_match_with_index(text, &["13".to_string()], col_index));
+
+        // "23" should NOT match - 2 is not in col_index
+        assert!(!fuzzy_match_with_index(text, &["23".to_string()], col_index));
+
+        // Non-digit tokens still match against full text
+        assert!(fuzzy_match_with_index(text, &["stack".to_string()], col_index));
+
+        // Mixed: "3stack" -> ["3", "stack"] - both must match their respective targets
+        let tokens = tokenize_query("3stack");
+        assert!(fuzzy_match_with_index(text, &tokens, col_index));
+
+        // "2stack" -> ["2", "stack"] - "2" fails (not in index)
+        let tokens = tokenize_query("2stack");
+        assert!(!fuzzy_match_with_index(text, &tokens, col_index));
+    }
+
+    #[test]
+    fn test_filter_matches_window_numbers() {
+        // Verify that typing a number filters to matching window indices
+        let entries = vec![
+            make_entry("sess1:*", "1 main", true, false, false, 0, "main"),
+            make_pane_entry("1;1", "vim", "blog", ""),          // session 1, window 1
+            make_pane_entry("1;4", "cl", "settings", ""),       // session 1, window 4
+            make_entry("sess2:*", "2 work", true, false, false, 0, "work"),
+            make_pane_entry("2;1", "z", "home", ""),            // session 2, window 1
+            make_pane_entry("2;3", "docker", "app", ""),        // session 2, window 3
+        ];
+        let mut app = PickerApp::new(entries);
+
+        // Typing "4" should match entry with "1;4" in col_index
+        app.search_input = "4".to_string();
+        app.filter_entries();
+        // Should find: the entry with "1;4" (and separators are included)
+        let matched_displays: Vec<_> = app.filtered_indices.iter()
+            .map(|&i| app.entries[i].display.clone())
+            .filter(|d| !d.is_empty() && d.contains("4"))
+            .collect();
+        assert!(matched_displays.iter().any(|d| d.contains("1;4")),
+            "Typing '4' should match entry with col_index '1;4', got {:?}", matched_displays);
+
+        // Typing "1" should match entries with "1" in session or window index
+        app.search_input = "1".to_string();
+        app.filter_entries();
+        let matched_count = app.filtered_indices.iter()
+            .filter(|&&i| !app.entries[i].is_separator && !app.entries[i].is_session)
+            .filter(|&&i| app.entries[i].display.contains("1"))
+            .count();
+        assert!(matched_count >= 3, "Typing '1' should match multiple entries, got {}", matched_count);
+
+        // Typing "se4" should match entry with "settings" AND "4"
+        app.search_input = "se4".to_string();
+        app.filter_entries();
+        let matched: Vec<_> = app.filtered_indices.iter()
+            .filter(|&&i| !app.entries[i].is_separator && !app.entries[i].is_session)
+            .map(|&i| app.entries[i].display.clone())
+            .collect();
+        assert!(matched.iter().any(|d| d.contains("settings") && d.contains("1;4")),
+            "Typing 'se4' should match entry with settings and 1;4, got {:?}", matched);
+
+        // Typing "1;4" should match exactly that index
+        app.search_input = "1;4".to_string();
+        app.filter_entries();
+        let matched: Vec<_> = app.filtered_indices.iter()
+            .filter(|&&i| !app.entries[i].is_separator && !app.entries[i].is_session)
+            .map(|&i| app.entries[i].display.clone())
+            .collect();
+        assert!(matched.iter().any(|d| d.contains("1;4")),
+            "Typing '1;4' should match entry with that index, got {:?}", matched);
+    }
+
+    #[test]
+    fn test_clear_search_resets_filter() {
+        // Verify that clearing search shows all entries again
+        let entries = vec![
+            make_entry("sess1:*", "1 main", true, false, false, 0, "main"),
+            make_pane_entry("1;1", "vim", "blog", ""),
+            make_pane_entry("1;2", "cl", "settings", ""),
+        ];
+        let mut app = PickerApp::new(entries.clone());
+        let original_count = app.filtered_indices.len();
+
+        // Filter down
+        app.search_input = "vim".to_string();
+        app.filter_entries();
+        assert!(app.filtered_indices.len() < original_count);
+
+        // Clear search (simulates C-c behavior)
+        app.search_input.clear();
+        app.filter_entries();
+        assert_eq!(app.filtered_indices.len(), original_count,
+            "Clearing search should restore all entries");
     }
 
     #[test]
