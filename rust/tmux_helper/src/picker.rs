@@ -217,7 +217,14 @@ impl<'a> PickerApp<'a> {
                 .entries
                 .iter()
                 .enumerate()
-                .filter(|(_, e)| e.is_separator || fuzzy_match(&e.display.to_lowercase(), &tokens))
+                .filter(|(_, e)| {
+                    if e.is_separator {
+                        return true;
+                    }
+                    // Pass col_index for digit-specific matching
+                    let col_index = if e.col_index.is_empty() { None } else { Some(e.col_index.as_str()) };
+                    fuzzy_match_with_index(&e.display.to_lowercase(), &tokens, col_index)
+                })
                 .map(|(i, _)| i)
                 .collect();
         }
@@ -376,16 +383,32 @@ fn tokenize_query(query: &str) -> Vec<String> {
     tokens
 }
 
-/// Fuzzy match: all tokens must be found as substrings in the text.
-/// For pure digit tokens (like "14"), also tries matching each digit separately.
-fn fuzzy_match(text: &str, tokens: &[String]) -> bool {
+/// Fuzzy match with optional index field for digit-specific matching.
+/// When col_index is provided, pure digit tokens match against the index only.
+fn fuzzy_match_with_index(text: &str, tokens: &[String], col_index: Option<&str>) -> bool {
     tokens.iter().all(|token| {
+        let is_pure_digits = token.chars().all(|c| c.is_ascii_digit());
+
+        // For pure digit tokens, prefer matching against col_index if available
+        if is_pure_digits && col_index.is_some() {
+            let index = col_index.unwrap();
+            // Single digit or exact match in index
+            if index.contains(token.as_str()) {
+                return true;
+            }
+            // Multi-digit: each digit must be in index (e.g., "23" matches "2;3")
+            if token.len() > 1 {
+                return token.chars().all(|c| index.contains(c));
+            }
+            return false;
+        }
+
         // Direct substring match
         if text.contains(token) {
             return true;
         }
-        // For pure digit tokens, try matching each digit (e.g., "14" matches "1;4")
-        if token.chars().all(|c| c.is_ascii_digit()) && token.len() > 1 {
+        // For pure digit tokens without col_index, try matching each digit
+        if is_pure_digits && token.len() > 1 {
             return token.chars().all(|c| text.contains(c));
         }
         false
@@ -1201,29 +1224,60 @@ mod tests {
     }
 
     #[test]
-    fn test_fuzzy_match() {
+    fn test_fuzzy_match_no_index() {
+        // When no col_index provided, digits match against full text
         let text = "1;4 cl settings rmux";
 
         // Single tokens
-        assert!(fuzzy_match(text, &["4".to_string()]));
-        assert!(fuzzy_match(text, &["cl".to_string()]));
-        assert!(fuzzy_match(text, &["set".to_string()]));
+        assert!(fuzzy_match_with_index(text, &["4".to_string()], None));
+        assert!(fuzzy_match_with_index(text, &["cl".to_string()], None));
+        assert!(fuzzy_match_with_index(text, &["set".to_string()], None));
 
         // Multiple tokens - all must match
-        assert!(fuzzy_match(text, &["se".to_string(), "4".to_string()]));
-        assert!(fuzzy_match(text, &["cl".to_string(), "set".to_string()]));
+        assert!(fuzzy_match_with_index(text, &["se".to_string(), "4".to_string()], None));
+        assert!(fuzzy_match_with_index(text, &["cl".to_string(), "set".to_string()], None));
 
         // Token not found
-        assert!(!fuzzy_match(text, &["vim".to_string()]));
-        assert!(!fuzzy_match(text, &["cl".to_string(), "vim".to_string()]));
+        assert!(!fuzzy_match_with_index(text, &["vim".to_string()], None));
+        assert!(!fuzzy_match_with_index(text, &["cl".to_string(), "vim".to_string()], None));
 
         // Exact index match
-        assert!(fuzzy_match(text, &["1;4".to_string()]));
+        assert!(fuzzy_match_with_index(text, &["1;4".to_string()], None));
 
-        // Pure digit token "14" should match "1;4" (each digit found)
-        assert!(fuzzy_match(text, &["14".to_string()]));
+        // Pure digit token "14" should match "1;4" (each digit found in text)
+        assert!(fuzzy_match_with_index(text, &["14".to_string()], None));
         // But "15" should NOT match (no 5 in text)
-        assert!(!fuzzy_match(text, &["15".to_string()]));
+        assert!(!fuzzy_match_with_index(text, &["15".to_string()], None));
+    }
+
+    #[test]
+    fn test_fuzzy_match_with_col_index() {
+        // When col_index is provided, digit tokens match against index only
+        let text = "1;3 z stack-picker-2";
+        let col_index = Some("1;3");
+
+        // "2" should NOT match - it's in text but not in col_index
+        assert!(!fuzzy_match_with_index(text, &["2".to_string()], col_index));
+
+        // "3" should match - it's in col_index
+        assert!(fuzzy_match_with_index(text, &["3".to_string()], col_index));
+
+        // "13" should match - both 1 and 3 are in col_index
+        assert!(fuzzy_match_with_index(text, &["13".to_string()], col_index));
+
+        // "23" should NOT match - 2 is not in col_index
+        assert!(!fuzzy_match_with_index(text, &["23".to_string()], col_index));
+
+        // Non-digit tokens still match against full text
+        assert!(fuzzy_match_with_index(text, &["stack".to_string()], col_index));
+
+        // Mixed: "3stack" -> ["3", "stack"] - both must match their respective targets
+        let tokens = tokenize_query("3stack");
+        assert!(fuzzy_match_with_index(text, &tokens, col_index));
+
+        // "2stack" -> ["2", "stack"] - "2" fails (not in index)
+        let tokens = tokenize_query("2stack");
+        assert!(!fuzzy_match_with_index(text, &tokens, col_index));
     }
 
     #[test]

@@ -89,9 +89,11 @@
 
 - **Token-based fuzzy match**: Query is split into tokens, ALL must be present
 - **Auto-split at letter/digit boundaries**: "se4" → ["se", "4"] (matches "settings" + "1;4")
-- **Pure digit tokens split per-digit**: "14" matches "1;4" (each digit found)
+- **Digit tokens match index column only**: "23" matches "2;3" but NOT "1;3 stack-picker-2"
+- **Multi-digit tokens split per-digit**: "14" matches "1;4" (each digit in index)
 - **Semicolon preserved**: "1;4" matches exactly "1;4"
 - **Whitespace splits tokens**: "cl set" → ["cl", "set"]
+- **Non-digit tokens match full text**: "stack" matches anywhere in display
 - Case-insensitive matching
 
 ## Preview Pane
