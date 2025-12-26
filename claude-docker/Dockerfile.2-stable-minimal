@@ -76,8 +76,16 @@ USER developer
 RUN npm install -g yarn
 
 
-# Add cargo to PATH (if rust gets installed)
+# Install Rust and cargo
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+# Add cargo to PATH
 ENV PATH="/home/developer/.cargo/bin:${PATH}"
+
+# Build and install rmux_helper (tmux picker/helper)
+RUN cd ~/settings/rust/tmux_helper && \
+    ~/.cargo/bin/cargo build --release && \
+    ~/.cargo/bin/cargo install --path . --force
 
 # Clone the main repos
 RUN mkdir -p ~/gits && cd ~/gits && \
