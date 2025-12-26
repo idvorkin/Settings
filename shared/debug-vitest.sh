@@ -27,10 +27,11 @@ for pid in $PIDS; do
     # Skip if process disappeared
     [[ -d "/proc/$pid" ]] || continue
 
-    # Get process info
+    # Get process info - use ps for PPID to avoid parsing issues with /proc/stat
+    # (process names like "vitest 1" contain spaces which break awk field parsing)
     cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null || echo "N/A")
     cmdline=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || echo "N/A")
-    ppid=$(awk '{print $4}' "/proc/$pid/stat" 2>/dev/null || echo "N/A")
+    ppid=$(/usr/bin/ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ' || echo "N/A")
     cpu=$(/usr/bin/ps -o %cpu= -p "$pid" 2>/dev/null || echo "N/A")
     mem=$(/usr/bin/ps -o %mem= -p "$pid" 2>/dev/null || echo "N/A")
     runtime=$(/usr/bin/ps -o etime= -p "$pid" 2>/dev/null || echo "N/A")
@@ -53,16 +54,67 @@ for pid in $PIDS; do
 
     # Show open files (test files being processed)
     echo "  Open test files:"
-    ls -l "/proc/$pid/fd" 2>/dev/null | grep -E '\.(test|spec)\.(ts|js|tsx|jsx)' | head -5 | while read -r line; do
-        echo "    $line"
-    done || echo "    (none found)"
+    test_files_found=false
+    while IFS= read -r link; do
+        if [[ "$link" =~ \.(test|spec)\.(ts|js|tsx|jsx)$ ]]; then
+            echo "    $link"
+            test_files_found=true
+        fi
+    done < <(find "/proc/$pid/fd" -type l -exec readlink {} \; 2>/dev/null | head -20)
+    if ! $test_files_found; then
+        echo "    (none in open file descriptors)"
+    fi
+
+    # Look for test files in memory maps (loaded JS/TS files)
+    echo "  Test files in memory maps:"
+    maps_found=false
+    if [[ -r "/proc/$pid/maps" ]]; then
+        while IFS= read -r line; do
+            echo "    $line"
+            maps_found=true
+        done < <(grep -oE '/[^ ]+\.(test|spec)\.(ts|js|tsx|jsx)' "/proc/$pid/maps" 2>/dev/null | sort -u | head -10)
+    fi
+    if ! $maps_found; then
+        echo "    (none found)"
+    fi
+
+    # Check node environment for test context
+    echo "  Environment hints:"
+    env_found=false
+    if [[ -r "/proc/$pid/environ" ]]; then
+        while IFS= read -r -d '' env_var; do
+            case "$env_var" in
+                VITEST_*|TEST_*|NODE_OPTIONS*|VITE_*)
+                    echo "    $env_var"
+                    env_found=true
+                    ;;
+            esac
+        done < "/proc/$pid/environ" 2>/dev/null
+    fi
+    if ! $env_found; then
+        echo "    (no VITEST_/TEST_ env vars)"
+    fi
 
     # Show what syscall it's stuck on
-    if command -v timeout &>/dev/null; then
+    if [[ -r "/proc/$pid/syscall" ]]; then
         echo "  Current syscall:"
         syscall=$(timeout 1 cat "/proc/$pid/syscall" 2>/dev/null | awk '{print $1}' || echo "N/A")
         echo "    $syscall"
     fi
+
+    # Check if node inspector is available
+    echo "  Node inspector:"
+    if [[ -r "/proc/$pid/cmdline" ]] && grep -q "\-\-inspect" "/proc/$pid/cmdline" 2>/dev/null; then
+        echo "    Inspector enabled in cmdline"
+    else
+        echo "    Not enabled (send SIGUSR1 to enable: kill -SIGUSR1 $pid)"
+    fi
+
+    # Show stack trace hint
+    echo "  Debug tips:"
+    echo "    strace -p $pid                    # See syscalls"
+    echo "    kill -SIGUSR1 $pid                # Enable node inspector"
+    echo "    node --inspect -p $pid 2>/dev/null  # Attach debugger"
 
     echo
 done
