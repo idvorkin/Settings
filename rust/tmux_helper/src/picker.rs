@@ -337,9 +337,10 @@ impl<'a> PickerApp<'a> {
 
 /// Tokenize a search query for fuzzy matching.
 /// Splits on whitespace AND at letter/digit boundaries.
+/// Non-alphanumeric characters (like ';') are preserved in the current token.
 /// Examples:
 ///   "se4" -> ["se", "4"]
-///   "1;4" -> ["1", "4"]
+///   "1;4" -> ["1;4"]  // semicolon preserved
 ///   "cl set" -> ["cl", "set"]
 ///   "vim blog" -> ["vim", "blog"]
 fn tokenize_query(query: &str) -> Vec<String> {
@@ -390,17 +391,18 @@ fn fuzzy_match_with_index(text: &str, tokens: &[String], col_index: Option<&str>
         let is_pure_digits = token.chars().all(|c| c.is_ascii_digit());
 
         // For pure digit tokens, prefer matching against col_index if available
-        if is_pure_digits && col_index.is_some() {
-            let index = col_index.unwrap();
-            // Single digit or exact match in index
-            if index.contains(token.as_str()) {
-                return true;
+        if is_pure_digits {
+            if let Some(index) = col_index {
+                // Single digit or exact match in index
+                if index.contains(token.as_str()) {
+                    return true;
+                }
+                // Multi-digit: each digit must be in index (e.g., "23" matches "2;3")
+                if token.len() > 1 {
+                    return token.chars().all(|c| index.contains(c));
+                }
+                return false;
             }
-            // Multi-digit: each digit must be in index (e.g., "23" matches "2;3")
-            if token.len() > 1 {
-                return token.chars().all(|c| index.contains(c));
-            }
-            return false;
         }
 
         // Direct substring match
