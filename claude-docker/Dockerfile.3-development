@@ -83,12 +83,15 @@ RUN cd ~/gits && \
     done
 
 # Start Tailscale daemon on shell login (userspace networking mode)
-# NOTE: This can be removed on next full rebuild - it's here for quick iteration
+# Use setsid to detach from shell session so it survives terminal exit
 RUN echo '# Start Tailscale daemon if not already running' >> ~/.zshrc && \
+    echo '# Use setsid to detach from shell session so it survives terminal exit' >> ~/.zshrc && \
     echo 'if ! pgrep -x tailscaled > /dev/null; then' >> ~/.zshrc && \
-    echo '    sudo tailscaled --tun=userspace-networking --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock &>/dev/null &' >> ~/.zshrc && \
-    echo '    sleep 1  # Wait for tailscaled to be ready' >> ~/.zshrc && \
-    echo '    # Use container hostname (e.g., C-5000) for Tailscale machine name' >> ~/.zshrc && \
-    echo '    sudo tailscale up --hostname="$(hostname)" &>/dev/null &' >> ~/.zshrc && \
+    echo '    sudo setsid tailscaled --tun=userspace-networking \\' >> ~/.zshrc && \
+    echo '        --state=/var/lib/tailscale/tailscaled.state \\' >> ~/.zshrc && \
+    echo '        --socket=/var/run/tailscale/tailscaled.sock &>/dev/null &' >> ~/.zshrc && \
+    echo '    sleep 3  # Wait for tailscaled to be ready' >> ~/.zshrc && \
+    echo '    # Use container hostname (e.g., C-5000) for Tailscale machine name with SSH enabled' >> ~/.zshrc && \
+    echo '    sudo tailscale up --hostname="$(hostname)" --ssh --accept-routes --accept-dns=false &>/dev/null &' >> ~/.zshrc && \
     echo 'fi' >> ~/.zshrc
 
