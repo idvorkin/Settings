@@ -421,7 +421,7 @@ fn fuzzy_match_with_index(text: &str, tokens: &[String], col_index: Option<&str>
 /// If window name is "<prefix> <path>" and path matches short_path, return just prefix.
 /// Otherwise return the full window name.
 fn extract_window_prefix(window_name: &str, short_path: &str) -> String {
-    // Known prefixes from rename-all: cl, vi, ai, z, docker, j, jekyll
+    // Known prefixes from rename-all: claude, vi, ai, z, docker, j, jekyll
     if let Some((prefix, rest)) = window_name.split_once(' ') {
         // Check if the rest of the window name matches or contains the short_path
         let rest_trimmed = rest.trim_end_matches('/');
