@@ -66,7 +66,7 @@ const STATE_THIRD_HORIZONTAL: &str = "third_horizontal";
 const STATE_THIRD_VERTICAL: &str = "third_vertical";
 const STATE_NORMAL: &str = "normal";
 
-// Pane title cache file - stores original pane titles before shortening
+// Pane title cache file - stores original pane titles for future computation
 fn get_pane_title_cache_path() -> PathBuf {
     PathBuf::from("/tmp/tmux_pane_titles.cache")
 }
@@ -104,34 +104,38 @@ fn save_pane_title_cache(cache: &HashMap<String, String>) {
     }
 }
 
-/// Get the original pane title, caching it if this is the first time we see it
+/// Get the pane title, updating cache if source changed
 fn get_original_pane_title(
     pane_id: &str,
     current_title: &str,
     cache: &mut HashMap<String, String>,
 ) -> String {
-    // If we have a cached original, use it
-    if let Some(original) = cache.get(pane_id) {
-        return original.clone();
-    }
-
-    // First time seeing this pane - cache the current title as original
-    // But skip if it looks like a hostname (default tmux pane title)
     let hostname = hostname::get()
         .map(|h| h.to_string_lossy().to_string())
         .unwrap_or_default();
 
-    let title_to_cache = if current_title.eq_ignore_ascii_case(&hostname)
+    // Normalize: treat hostname and empty as "no title"
+    let normalized_current = if current_title.eq_ignore_ascii_case(&hostname)
         || current_title.is_empty()
     {
-        // Don't cache hostname as original - it's the default
         String::new()
     } else {
         current_title.to_string()
     };
 
-    cache.insert(pane_id.to_string(), title_to_cache.clone());
-    title_to_cache
+    // Check if we have a cached value
+    if let Some(cached) = cache.get(pane_id) {
+        // If current title changed from cached, update cache
+        if cached != &normalized_current {
+            cache.insert(pane_id.to_string(), normalized_current.clone());
+        }
+        // Return current (possibly updated) value
+        return cache.get(pane_id).cloned().unwrap_or_default();
+    }
+
+    // First time seeing this pane - cache it
+    cache.insert(pane_id.to_string(), normalized_current.clone());
+    normalized_current
 }
 
 /// Shorten a pane title to fit within available width
