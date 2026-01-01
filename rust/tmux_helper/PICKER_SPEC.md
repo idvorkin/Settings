@@ -44,7 +44,7 @@
 
 - **Dynamic-width columns** calculated from actual content (with minimums)
 - Index: min 4 chars, sized to longest index (e.g., "1;10")
-- Window: min 3 chars, sized to longest prefix (e.g., "cl", "docker")
+- Window: min 3 chars, sized to longest prefix (e.g., "claude", "docker")
 - Path: min 6 chars, sized to longest path
 - Pane: variable (trailing)
 

@@ -3,6 +3,9 @@ mod picker;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::io::{BufRead, BufReader, Write};
+use std::path::PathBuf;
 use std::process::Command;
 use sysinfo::{Pid, ProcessRefreshKind, System};
 
@@ -63,6 +66,94 @@ const STATE_THIRD_HORIZONTAL: &str = "third_horizontal";
 const STATE_THIRD_VERTICAL: &str = "third_vertical";
 const STATE_NORMAL: &str = "normal";
 
+// Pane title cache file - stores original pane titles before shortening
+fn get_pane_title_cache_path() -> PathBuf {
+    PathBuf::from("/tmp/tmux_pane_titles.cache")
+}
+
+/// Context for title generation with width and pane information
+struct TitleContext<'a> {
+    short_path: &'a str,
+    pane_title: Option<&'a str>,
+    window_width: u32,
+}
+
+/// Load the pane title cache from disk
+fn load_pane_title_cache() -> HashMap<String, String> {
+    let cache_path = get_pane_title_cache_path();
+    let mut cache = HashMap::new();
+
+    if let Ok(file) = fs::File::open(&cache_path) {
+        let reader = BufReader::new(file);
+        for line in reader.lines().map_while(Result::ok) {
+            if let Some((pane_id, title)) = line.split_once('\t') {
+                cache.insert(pane_id.to_string(), title.to_string());
+            }
+        }
+    }
+    cache
+}
+
+/// Save the pane title cache to disk
+fn save_pane_title_cache(cache: &HashMap<String, String>) {
+    let cache_path = get_pane_title_cache_path();
+    if let Ok(mut file) = fs::File::create(&cache_path) {
+        for (pane_id, title) in cache {
+            let _ = writeln!(file, "{}\t{}", pane_id, title);
+        }
+    }
+}
+
+/// Get the original pane title, caching it if this is the first time we see it
+fn get_original_pane_title(
+    pane_id: &str,
+    current_title: &str,
+    cache: &mut HashMap<String, String>,
+) -> String {
+    // If we have a cached original, use it
+    if let Some(original) = cache.get(pane_id) {
+        return original.clone();
+    }
+
+    // First time seeing this pane - cache the current title as original
+    // But skip if it looks like a hostname (default tmux pane title)
+    let hostname = hostname::get()
+        .map(|h| h.to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    let title_to_cache = if current_title.eq_ignore_ascii_case(&hostname)
+        || current_title.is_empty()
+    {
+        // Don't cache hostname as original - it's the default
+        String::new()
+    } else {
+        current_title.to_string()
+    };
+
+    cache.insert(pane_id.to_string(), title_to_cache.clone());
+    title_to_cache
+}
+
+/// Shorten a pane title to fit within available width
+fn shorten_pane_title(title: &str, max_width: usize) -> String {
+    if title.is_empty() || max_width == 0 {
+        return String::new();
+    }
+
+    let chars: Vec<char> = title.chars().collect();
+    if chars.len() <= max_width {
+        return title.to_string();
+    }
+
+    // Truncate and add ellipsis
+    if max_width <= 1 {
+        return "…".to_string();
+    }
+
+    let truncated: String = chars[..max_width - 1].iter().collect();
+    format!("{}…", truncated)
+}
+
 #[derive(Debug)]
 struct PaneInfo {
     pane_id: String,
@@ -71,6 +162,8 @@ struct PaneInfo {
     pane_pid: u32,
     pane_current_command: String,
     pane_current_path: String,
+    pane_title: String,
+    window_width: u32,
 }
 
 #[derive(Debug)]
@@ -94,7 +187,7 @@ fn get_all_pane_info() -> Result<Vec<PaneInfo>> {
         "list-panes",
         "-a",
         "-F",
-        "#{pane_id}\t#{window_id}\t#{window_name}\t#{pane_pid}\t#{pane_current_command}\t#{pane_current_path}",
+        "#{pane_id}\t#{window_id}\t#{window_name}\t#{pane_pid}\t#{pane_current_command}\t#{pane_current_path}\t#{pane_title}\t#{window_width}",
     ])?;
 
     let mut panes = Vec::new();
@@ -108,6 +201,8 @@ fn get_all_pane_info() -> Result<Vec<PaneInfo>> {
                 pane_pid: parts[3].parse().unwrap_or(0),
                 pane_current_command: parts.get(4).unwrap_or(&"").to_string(),
                 pane_current_path: parts.get(5).unwrap_or(&"").to_string(),
+                pane_title: parts.get(6).unwrap_or(&"").to_string(),
+                window_width: parts.get(7).and_then(|s| s.parse().ok()).unwrap_or(80),
             });
         }
     }
@@ -213,10 +308,14 @@ pub fn get_short_path(cwd: &str, git_repo: Option<&str>) -> String {
     cwd.to_string()
 }
 
-/// Generate a window title from process info.
+/// Generate a window title from process info with optional pane context.
+///
+/// When running Claude and there's room, includes shortened pane title:
+/// - "claude <pane_title> <path>" if width allows
+/// - Falls back to "claude <path>" if not enough room
 ///
 /// Title format rules (in priority order):
-/// 1. Known dev tools with path: "ai <path>", "cl <path>", "vi <path>", "docker <path>"
+/// 1. Known dev tools with path: "ai <path>", "claude [pane] <path>", "vi <path>", "docker <path>"
 /// 2. Plain shell (no children): "z <path>"
 /// 3. Shell with known child commands: handled by get_child_command_title()
 ///    - just: "j <subcommand> <path>" (e.g., "j dev blog")
@@ -225,13 +324,15 @@ pub fn get_short_path(cwd: &str, git_repo: Option<&str>) -> String {
 /// 5. Other processes: just the process name
 ///
 /// Returns None when we can't determine a good title (caller should use tmux fallback)
-fn generate_title(info: &ProcessInfo, short_path: &str) -> Option<String> {
+fn generate_title_with_context(info: &ProcessInfo, ctx: &TitleContext) -> Option<String> {
+    let short_path = ctx.short_path;
+
     // Priority 1: Known dev tools - check entire process tree for patterns
     if process_tree_has_pattern(info, &["aider"]) {
         return Some(format!("ai {}", short_path));
     }
     if process_tree_has_pattern(info, &["@anthropic-ai/claude-code", "claude"]) {
-        return Some(format!("cl {}", short_path));
+        return Some(generate_claude_title(ctx));
     }
     if process_tree_has_pattern(info, &["vim", "nvim"]) {
         return Some(format!("vi {}", short_path));
@@ -256,6 +357,78 @@ fn generate_title(info: &ProcessInfo, short_path: &str) -> Option<String> {
 
     // Priority 5: Other processes - just use the name
     Some(info.name.clone())
+}
+
+/// Compact a path using 2..2 format (first 2 chars + ".." + last 2 chars)
+/// Only applies if result is shorter than original
+fn compact_path(path: &str) -> String {
+    let chars: Vec<char> = path.chars().collect();
+    // 2 + 2 + 2 = 6 chars minimum for "xx..yy" format
+    // Only compact if path is longer than 6 chars
+    if chars.len() <= 6 {
+        return path.to_string();
+    }
+
+    let first: String = chars[..2].iter().collect();
+    let last: String = chars[chars.len()-2..].iter().collect();
+    format!("{}..{}", first, last)
+}
+
+/// Strip common prefixes from pane titles (like ✳ from Claude)
+fn clean_pane_title(title: &str) -> &str {
+    title
+        .trim_start_matches("✳ ")
+        .trim_start_matches("✳")
+        .trim()
+}
+
+/// Generate a Claude title with dynamic width and optional pane name
+///
+/// Format: "path:pane_name" - compact and informative
+/// - Path is compacted to 2..2 format if longer than 6 chars
+/// - Pane title has ✳ prefix stripped
+fn generate_claude_title(ctx: &TitleContext) -> String {
+    let compact = compact_path(ctx.short_path);
+
+    // If no pane title, just return path
+    let pane_title = match ctx.pane_title {
+        Some(t) if !t.is_empty() => clean_pane_title(t),
+        _ => return compact,
+    };
+
+    if pane_title.is_empty() {
+        return compact;
+    }
+
+    // Format: path:pane_name
+    let base = format!("{}:", compact);
+    let base_len = base.chars().count();
+    let available_width = ctx.window_width as usize;
+
+    // Calculate space for pane title
+    let space_for_pane = available_width.saturating_sub(base_len);
+
+    if space_for_pane == 0 {
+        return compact;
+    }
+
+    // Shorten pane title if needed
+    let shortened_pane = shorten_pane_title(pane_title, space_for_pane);
+    if shortened_pane.is_empty() {
+        return compact;
+    }
+
+    format!("{}{}", base, shortened_pane)
+}
+
+/// Legacy generate_title without context (for compatibility)
+fn generate_title(info: &ProcessInfo, short_path: &str) -> Option<String> {
+    let ctx = TitleContext {
+        short_path,
+        pane_title: None,
+        window_width: 80,
+    };
+    generate_title_with_context(info, &ctx)
 }
 
 /// Extract a nice title from shell's child processes.
@@ -313,12 +486,14 @@ fn is_shell(name: &str) -> bool {
 }
 
 /// Generate title from tmux pane info (fallback when process info unavailable)
+/// Note: This fallback doesn't have access to pane title context, so uses minimal format
 fn generate_title_from_tmux(command: &str, short_path: &str) -> String {
     let cmd_lower = command.to_lowercase();
     if cmd_lower.contains("aider") {
         format!("ai {}", short_path)
     } else if cmd_lower.contains("claude") {
-        format!("cl {}", short_path)
+        // Just use compacted path (no pane title in fallback)
+        compact_path(short_path)
     } else if cmd_lower == "vim" || cmd_lower == "nvim" {
         format!("vi {}", short_path)
     } else if cmd_lower.contains("docker") {
@@ -361,20 +536,36 @@ fn rename_all() -> Result<()> {
 
     let mut git_cache: HashMap<String, Option<String>> = HashMap::new();
     let mut renamed_windows: HashSet<String> = HashSet::new();
+    let mut pane_title_cache = load_pane_title_cache();
 
-    for pane in panes {
+    for pane in &panes {
         // Skip if already renamed this window
         if renamed_windows.contains(&pane.window_id) {
             continue;
         }
         renamed_windows.insert(pane.window_id.clone());
 
+        // Get the original pane title (cached to preserve across renames)
+        let original_pane_title =
+            get_original_pane_title(&pane.pane_id, &pane.pane_title, &mut pane_title_cache);
+
         // Try to get process info from system, with tmux fallback
         let title = if let Some(process_info) = get_process_info(&system, pane.pane_pid) {
             let cwd = &process_info.cwd;
             let git_repo = get_git_repo_name(cwd, &mut git_cache);
             let short_path = get_short_path(cwd, git_repo.as_deref());
-            generate_title(&process_info, &short_path)
+
+            let ctx = TitleContext {
+                short_path: &short_path,
+                pane_title: if original_pane_title.is_empty() {
+                    None
+                } else {
+                    Some(&original_pane_title)
+                },
+                window_width: pane.window_width,
+            };
+
+            generate_title_with_context(&process_info, &ctx)
                 .unwrap_or_else(|| generate_title_from_tmux(&pane.pane_current_command, &short_path))
         } else {
             // Fallback: use tmux's pane info (works for remote/container processes)
@@ -386,6 +577,9 @@ fn rename_all() -> Result<()> {
 
         set_tmux_title(&title, &pane.pane_id, &pane.window_id, &pane.window_name);
     }
+
+    // Save the pane title cache
+    save_pane_title_cache(&pane_title_cache);
 
     Ok(())
 }
@@ -700,7 +894,11 @@ mod tests {
     fn test_generate_title_claude() {
         let child = make_process_info("claude", "@anthropic-ai/claude-code", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "myproject"), Some("cl myproject".to_string()));
+        // No prefix, just compacted path
+        // "myproject" (9 chars) -> "my..ct" (6 chars)
+        assert_eq!(generate_title(&info, "myproject"), Some("my..ct".to_string()));
+        // Short paths stay as-is
+        assert_eq!(generate_title(&info, "blog"), Some("blog".to_string()));
     }
 
     #[test]
@@ -761,5 +959,84 @@ mod tests {
         let child = make_process_info("just", "just jekyll-serve", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
         assert_eq!(generate_title(&info, "blog"), Some("j jekyll blog".to_string()));
+    }
+
+    #[test]
+    fn test_generate_claude_title_with_pane_title() {
+        // With pane title, format is path:pane
+        let ctx = TitleContext {
+            short_path: "blog",
+            pane_title: Some("fix-auth"),
+            window_width: 40,
+        };
+        assert_eq!(generate_claude_title(&ctx), "blog:fix-auth");
+    }
+
+    #[test]
+    fn test_generate_claude_title_strips_star_prefix() {
+        // Should strip ✳ prefix from pane titles
+        let ctx = TitleContext {
+            short_path: "blog",
+            pane_title: Some("✳ PR Review Workflow"),
+            window_width: 40,
+        };
+        assert_eq!(generate_claude_title(&ctx), "blog:PR Review Workflow");
+    }
+
+    #[test]
+    fn test_generate_claude_title_compacts_long_path() {
+        // Long paths get compacted to 2..2 format
+        let ctx = TitleContext {
+            short_path: "magic-monitor",
+            pane_title: Some("Screen Effects"),
+            window_width: 40,
+        };
+        // magic-monitor (13 chars) -> ma..or (6 chars)
+        assert_eq!(generate_claude_title(&ctx), "ma..or:Screen Effects");
+    }
+
+    #[test]
+    fn test_generate_claude_title_no_pane_title() {
+        // Without pane title, just path
+        let ctx = TitleContext {
+            short_path: "blog",
+            pane_title: None,
+            window_width: 40,
+        };
+        assert_eq!(generate_claude_title(&ctx), "blog");
+    }
+
+    #[test]
+    fn test_generate_claude_title_narrow_window() {
+        // With narrow window, should truncate pane title
+        let ctx = TitleContext {
+            short_path: "blog",
+            pane_title: Some("fix-auth"),
+            window_width: 15,
+        };
+        // blog: = 5 chars, leaves 10 for pane
+        assert_eq!(generate_claude_title(&ctx), "blog:fix-auth");
+    }
+
+    #[test]
+    fn test_compact_path() {
+        // Short paths stay as-is
+        assert_eq!(compact_path("blog"), "blog");
+        assert_eq!(compact_path("blog2"), "blog2");
+        assert_eq!(compact_path("ab"), "ab");
+        // Long paths get compacted
+        assert_eq!(compact_path("magic-monitor"), "ma..or");
+        assert_eq!(compact_path("settings"), "se..gs");
+        assert_eq!(compact_path("idvorkin"), "id..in");
+    }
+
+    #[test]
+    fn test_shorten_pane_title() {
+        assert_eq!(shorten_pane_title("hello", 10), "hello");
+        assert_eq!(shorten_pane_title("hello", 5), "hello");
+        assert_eq!(shorten_pane_title("hello", 4), "hel…");
+        assert_eq!(shorten_pane_title("hello", 1), "…");
+        assert_eq!(shorten_pane_title("hello", 0), "");
+        assert_eq!(shorten_pane_title("", 10), "");
     }
 }
