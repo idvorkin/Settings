@@ -502,36 +502,53 @@ function safe_init()
           bash --login -c 'exec claude'
     }
 
-    # Run Claude with all permissions (only in containers)
-    function yolo-claude() {
-        # Check if we're in a container using multiple methods
-        local in_container=false
-
+    function _in_container() {
         # Method 1: Check for .dockerenv file
         if [[ -f /.dockerenv ]]; then
-            in_container=true
+            return 0
         # Method 2: Check for docker in cgroup
         elif grep -q 'docker' /proc/1/cgroup 2>/dev/null; then
-            in_container=true
+            return 0
         # Method 3: Check for docker in self cgroup
         elif grep -q 'docker' /proc/self/cgroup 2>/dev/null; then
-            in_container=true
+            return 0
         # Method 4: Check for our custom DOCKER_CONTAINER_NAME env var
         elif [[ -n "$DOCKER_CONTAINER_NAME" ]]; then
-            in_container=true
+            return 0
         fi
 
-        if [[ "$in_container" != "true" ]]; then
-            echo "Error: yolo-claude can only be run inside a container"
-            echo "This command runs Claude with unrestricted permissions - use containers for safety"
-            return 1
+        return 1
+    }
+
+    function _require_container() {
+        if _in_container; then
+            return 0
         fi
+
+        echo "Error: $1 can only be run inside a container"
+        echo "This command runs with unrestricted permissions - use containers for safety"
+        return 1
+    }
+
+    # Run Claude with all permissions (only in containers)
+    function yolo-claude() {
+        _require_container "yolo-claude" || return 1
 
         echo "Running Claude with full permissions (YOLO mode)..."
         echo "WARNING: All safety restrictions disabled - use with caution!"
 
         # Run Claude with all tools enabled
         claude --dangerously-skip-permissions "$@"
+    }
+
+    # Run Codex with all permissions (only in containers)
+    function yolo-codex() {
+        _require_container "yolo-codex" || return 1
+
+        echo "⬢ [Docker] ❮ codex --dangerously-bypass-approvals-and-sandbox --search"
+        echo "WARNING: All safety restrictions disabled - use with caution!"
+
+        codex --dangerously-bypass-approvals-and-sandbox --search "$@"
     }
 
     export COLORTERM=truecolor
@@ -868,4 +885,3 @@ precommit-update-dir() {
 safe_init
 default_init
 export_secrets
-
