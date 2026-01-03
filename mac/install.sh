@@ -43,6 +43,7 @@ brew install --cask kindavim
 # Display resolutions shifting
 # Messes stuff up, ignore for now.
 # brew install jakehilborn/jakehilborn/displayplacer
+brew install --cask betterdisplay
 
 # Video player, better than vlc
 # Also check out mpv
