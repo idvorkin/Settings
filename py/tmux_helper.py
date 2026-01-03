@@ -12,6 +12,7 @@ import typer
 import subprocess
 import json
 import os
+import shutil
 from pathlib import Path
 from pydantic import BaseModel
 import psutil
@@ -655,10 +656,13 @@ def launch_servers():
     # Mac-only windows
     if is_mac:
         blog_dir = Path.home() / "blog"
-        if blog_dir.exists():
+        has_jekyll = shutil.which("jekyll") is not None
+        if blog_dir.exists() and has_jekyll:
             ensure_process("blog", "jekyll", ["jekyll", "serve"], blog_dir)
-        else:
+        elif not blog_dir.exists():
             print(f"  blog: {blog_dir} not found, skipping")
+        else:
+            print("  blog: jekyll not installed, skipping")
 
     # Agent dashboard
     agent_dir = Path.home() / "gits" / "agent-dashboard"
