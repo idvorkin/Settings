@@ -1,14 +1,23 @@
 {
-	"permissions": {
-		"allow": [
-			"Bash(bash:*)",
-			"Bash(chmod:*)",
-			"Bash(./run-docker.py --help)",
-			"Bash(./run-docker.py:*)",
-			"Bash(git add:*)"
-		],
-		"deny": [],
-		"ask": [],
-		"defaultMode": "acceptEdits"
-	}
+  "permissions": {
+    "allow": [
+      "Bash(bash:*)",
+      "Bash(chmod:*)",
+      "Bash(./run-docker.py --help)",
+      "Bash(./run-docker.py:*)",
+      "Bash(git add:*)",
+      "Bash(docker ps:*)",
+      "Bash(./claude-docker.py delete:*)",
+      "Bash(docker volume ls:*)",
+      "Bash(./claude-docker.py start-all:*)",
+      "Bash(docker inspect:*)",
+      "Bash(./claude-docker.py create:*)",
+      "Bash(./claude-docker.py list:*)",
+      "Bash(docker start:*)",
+      "Bash(docker stop:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "acceptEdits"
+  }
 }

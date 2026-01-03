@@ -102,7 +102,11 @@ class ContainerState:
     def add_container(
         self, name: str, image: str, jekyll_port: int, livereload_port: int
     ):
-        """Add a new container to state"""
+        """Add a new container to state (removes any existing entry with same name)"""
+        # Remove any existing entry with same name first
+        self.state["containers"] = [
+            c for c in self.state["containers"] if c["name"] != name
+        ]
         container = {
             "name": name,
             "image": image,
@@ -842,13 +846,13 @@ class DockerManager:
         cmd.extend(["-p", f"{jekyll_port}:4000", "-p", f"{livereload_port}:35729"])
 
         # Add image and command
-        # Start with a shell command that creates tmux session and keeps container running
+        # Start with a loop that keeps recreating tmux session if it dies
         cmd.extend(
             [
                 image,
                 "sh",
                 "-c",
-                "/home/linuxbrew/.linuxbrew/bin/tmux new-session -d -s main /home/linuxbrew/.linuxbrew/bin/zsh && tail -f /dev/null",
+                "while true; do /home/linuxbrew/.linuxbrew/bin/tmux new-session -d -s main /home/linuxbrew/.linuxbrew/bin/zsh 2>/dev/null; sleep 5; done",
             ]
         )
 
