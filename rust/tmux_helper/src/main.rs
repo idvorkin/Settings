@@ -1221,4 +1221,47 @@ mod tests {
         assert_eq!(shorten_pane_title("hello", 0), "");
         assert_eq!(shorten_pane_title("", 10), "");
     }
+
+    #[test]
+    fn test_shorten_path_middle_repo_depth() {
+        assert_eq!(
+            shorten_path_middle("repo/subdir/leaf", 30),
+            "repo/subdir/leaf"
+        );
+        assert_eq!(
+            shorten_path_middle("repo/subdir/leaf", 12),
+            "repo/…/leaf"
+        );
+    }
+
+    #[test]
+    fn test_shorten_path_middle_home_path() {
+        assert_eq!(shorten_path_middle("~/deep/path/leaf", 20), "~/deep/path/leaf");
+        assert_eq!(shorten_path_middle("~/deep/path/leaf", 10), "~/…/leaf");
+    }
+
+    #[test]
+    fn test_shorten_path_middle_absolute_path() {
+        assert_eq!(shorten_path_middle("/var/www/app", 20), "/var/www/app");
+        assert_eq!(shorten_path_middle("/var/www/app", 8), "/…/app");
+    }
+
+    #[test]
+    fn test_shorten_path_middle_tight_widths() {
+        assert_eq!(shorten_path_middle("repo/leaf", 1), "…");
+        assert_eq!(shorten_path_middle("repo/leaf", 4), "repo");
+        assert_eq!(shorten_path_middle("repo/leaf", 6), "repo");
+    }
+
+    #[test]
+    fn test_format_ai_title_no_pane_rich_path() {
+        assert_eq!(
+            format_ai_title_no_pane("repo/subdir/leaf", "cx", 20),
+            "cx repo/subdir/leaf"
+        );
+        assert_eq!(
+            format_ai_title_no_pane("repo/subdir/leaf", "cx", 12),
+            "cx repo/…/l…"
+        );
+    }
 }
