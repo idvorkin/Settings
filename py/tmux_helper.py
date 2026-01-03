@@ -640,10 +640,17 @@ def launch_servers():
     if not created_new:
         ensure_process("monitor", "btm", ["btm"])
 
+    # Desktop Mac only - caffeinate to keep machine awake (skip on laptops)
+    if is_mac:
+        model = subprocess.run(
+            ["sysctl", "-n", "hw.model"], capture_output=True, text=True
+        ).stdout.strip()
+        is_laptop = "MacBook" in model
+        if not is_laptop:
+            ensure_process("awake", "caffeinate", ["caffeinate", "-d", "-i", "-s"])
+
     # Mac-only windows
     if is_mac:
-        ensure_process("awake", "caffeinate", ["caffeinate", "-d", "-i", "-s"])
-
         blog_dir = Path.home() / "blog"
         if blog_dir.exists():
             ensure_process("blog", "jekyll", ["jekyll", "serve"], blog_dir)
