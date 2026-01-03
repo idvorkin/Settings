@@ -169,6 +169,9 @@ def check(
     pick: bool = typer.Option(
         False, "--pick", "-p", help="Pick which packages to install"
     ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Show output on install failures"
+    ),
 ):
     """Check which brew packages are missing."""
     if not IS_MACOS:
@@ -210,15 +213,17 @@ def check(
     if install:
         all_formulae = [p for _, pkgs in missing_formula_cats for p in pkgs]
         all_casks = [p for _, pkgs in missing_cask_cats for p in pkgs]
-        install_packages(all_formulae, all_casks)
+        install_packages(all_formulae, all_casks, verbose)
     elif pick:
-        pick_and_install(missing_formula_cats, missing_cask_cats)
+        pick_and_install(missing_formula_cats, missing_cask_cats, verbose)
     elif typer.confirm("\nInstall packages?"):
-        pick_and_install(missing_formula_cats, missing_cask_cats)
+        pick_and_install(missing_formula_cats, missing_cask_cats, verbose)
 
 
 def pick_and_install(
-    formula_cats: list[tuple[str, list[str]]], cask_cats: list[tuple[str, list[str]]]
+    formula_cats: list[tuple[str, list[str]]],
+    cask_cats: list[tuple[str, list[str]]],
+    verbose: bool = False,
 ):
     """Interactive picker to select packages to install."""
     choices = []
@@ -253,7 +258,7 @@ def pick_and_install(
     formulae = [pkg for kind, pkg in selected if kind == "formula"]
     casks = [pkg for kind, pkg in selected if kind == "cask"]
 
-    install_packages(formulae, casks)
+    install_packages(formulae, casks, verbose)
 
 
 def ensure_taps():
@@ -269,29 +274,40 @@ def ensure_taps():
             console.print(f"  [red]✗[/red] {tap}")
 
 
-def install_packages(formulae: list[str], casks: list[str]):
+def install_packages(formulae: list[str], casks: list[str], verbose: bool = False):
     """Install the given packages."""
     ensure_taps()
+    had_failures = False
 
     if formulae:
         console.print(f"\n[bold]Installing {len(formulae)} formulae...[/bold]")
         for pkg in formulae:
             console.print(f"  [cyan]{pkg}[/cyan]...")
-            result = subprocess.run(["brew", "install", pkg], capture_output=True)
+            result = subprocess.run(
+                ["brew", "install", pkg], capture_output=True, text=True
+            )
             if result.returncode != 0:
+                had_failures = True
                 console.print("    [red]Failed[/red]")
+                if verbose:
+                    console.print(f"    [dim]{result.stderr.strip()}[/dim]")
 
     if casks:
         console.print(f"\n[bold]Installing {len(casks)} casks...[/bold]")
         for pkg in casks:
             console.print(f"  [cyan]{pkg}[/cyan]...")
             result = subprocess.run(
-                ["brew", "install", "--cask", pkg], capture_output=True
+                ["brew", "install", "--cask", pkg], capture_output=True, text=True
             )
             if result.returncode != 0:
+                had_failures = True
                 console.print("    [red]Failed[/red]")
+                if verbose:
+                    console.print(f"    [dim]{result.stderr.strip()}[/dim]")
 
     console.print("\n[green]Done![/green]")
+    if had_failures and not verbose:
+        console.print("[dim]Some packages failed. Use -v to see error output.[/dim]")
 
 
 @app.command()
