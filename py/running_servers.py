@@ -244,6 +244,20 @@ class ServerFinder:
     def __init__(self, adapter: PlatformAdapter):
         self.adapter = adapter
 
+    def _find_best_directory(self, pid: int) -> Path | None:
+        """Walk up process tree to find first meaningful (non-root) directory."""
+        current_pid = pid
+        for _ in range(10):  # Max depth to prevent infinite loops
+            cwd = self.adapter.get_process_cwd(current_pid)
+            if cwd and str(cwd) != "/":
+                return cwd
+            ppid = self.adapter.get_parent_pid(current_pid)
+            if not ppid or ppid == current_pid or ppid <= 1:
+                break
+            current_pid = ppid
+        # Fall back to original process cwd even if it's /
+        return self.adapter.get_process_cwd(pid)
+
     def find_servers(self, exclude_ports: set[int] | None = None) -> list[dict]:
         """Find all listening servers with their ports, directories, and process info."""
         exclude_ports = exclude_ports or set()
@@ -253,7 +267,7 @@ class ServerFinder:
         for port, pid in ports.items():
             if port in exclude_ports:
                 continue
-            cwd = self.adapter.get_process_cwd(pid)
+            cwd = self._find_best_directory(pid)
             name = self.adapter.get_process_name(pid)
             cmdline = self.adapter.get_process_cmdline(pid)
             tree = self.adapter.get_process_tree(pid)
