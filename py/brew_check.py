@@ -41,14 +41,14 @@ MAC_TAPS = [
 # fmt: off
 FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Essential", "git tmux zsh neovim python3 uv".split()),
-    ("Modern CLI", "zoxide bat eza procs htop starship yazi television bottom rg fastfetch".split()),
+    ("Modern CLI", "zoxide bat eza procs starship yazi television bottom ripgrep fastfetch".split()),
     ("Rust", ["rust"]),
-    ("File Search", "fd fzf ag".split()),
+    ("File Search", "fd fzf the_silver_searcher".split()),
     ("Git Tools", "lazygit gh git-extras git-delta diff-so-fancy difftastic tig pre-commit".split()),
     ("Data Tools", "jq yq dasel fx pup".split()),
     ("Network", "curlie httpie xh wget w3m nmap autossh mosh".split()),
     ("Containers", "docker docker-compose lazydocker".split()),
-    ("Media", "ffmpeg yt-dlp imagemagick optipng png-quant mpv".split()),
+    ("Media", "ffmpeg yt-dlp imagemagick optipng pngquant mpv".split()),
     ("Docs", "pandoc glow grip".split()),
     ("LSPs", "lua-language-server typos-lsp pyright rust-analyzer universal-ctags".split()),
     ("System", "just cpulimit gdu ncdu duf openssl zip npm carapace atuin".split()),
