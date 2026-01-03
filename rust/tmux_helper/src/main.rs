@@ -158,6 +158,120 @@ fn shorten_pane_title(title: &str, max_width: usize) -> String {
     format!("{}…", truncated)
 }
 
+/// Shorten a path by collapsing the middle to "…", preserving root/repo and leaf.
+fn shorten_path_middle(path: &str, max_width: usize) -> String {
+    if path.is_empty() || max_width == 0 {
+        return String::new();
+    }
+
+    let path_len = path.chars().count();
+    if path_len <= max_width {
+        return path.to_string();
+    }
+
+    let (prefix, rest) = if let Some(stripped) = path.strip_prefix("~/") {
+        ("~", stripped)
+    } else if let Some(stripped) = path.strip_prefix('/') {
+        ("/", stripped)
+    } else {
+        ("", path)
+    };
+
+    let parts: Vec<&str> = rest.split('/').filter(|p| !p.is_empty()).collect();
+    if parts.is_empty() {
+        return shorten_pane_title(path, max_width);
+    }
+    if parts.len() == 1 {
+        return shorten_pane_title(path, max_width);
+    }
+
+    let last = parts.last().unwrap();
+    let base = if prefix.is_empty() {
+        parts.first().unwrap().to_string()
+    } else {
+        prefix.to_string()
+    };
+
+    let mut candidate = if prefix.is_empty() {
+        format!("{}/…/{}", base, last)
+    } else if prefix == "/" {
+        format!("/…/{}", last)
+    } else {
+        format!("{}/…/{}", base, last)
+    };
+
+    if candidate.chars().count() <= max_width {
+        return candidate;
+    }
+
+    let prefix_len = if prefix.is_empty() {
+        format!("{}/…/", base).chars().count()
+    } else if prefix == "/" {
+        "/…/".chars().count()
+    } else {
+        format!("{}/…/", base).chars().count()
+    };
+
+    if max_width <= prefix_len {
+        return shorten_pane_title(&base, max_width);
+    }
+
+    let space_for_leaf = max_width - prefix_len;
+    let shortened_leaf = shorten_pane_title(last, space_for_leaf);
+    if shortened_leaf.is_empty() {
+        return shorten_pane_title(&base, max_width);
+    }
+
+    candidate = if prefix.is_empty() {
+        format!("{}/…/{}", base, shortened_leaf)
+    } else if prefix == "/" {
+        format!("/…/{}", shortened_leaf)
+    } else {
+        format!("{}/…/{}", base, shortened_leaf)
+    };
+    candidate
+}
+
+fn read_proc_cmdline(pid: u32) -> Option<String> {
+    if pid == 0 {
+        return None;
+    }
+    let path = format!("/proc/{}/cmdline", pid);
+    let Ok(bytes) = fs::read(path) else {
+        return None;
+    };
+    if bytes.is_empty() {
+        return None;
+    }
+    let cmdline = bytes
+        .split(|b| *b == 0)
+        .filter(|s| !s.is_empty())
+        .map(|s| String::from_utf8_lossy(s))
+        .collect::<Vec<_>>()
+        .join(" ");
+    if cmdline.is_empty() {
+        None
+    } else {
+        Some(cmdline)
+    }
+}
+
+fn format_ai_title_no_pane(short_path: &str, label: &str, window_width: u32) -> String {
+    let available = window_width as usize;
+    let label_len = label.chars().count();
+    if available <= label_len {
+        return label.to_string();
+    }
+
+    let path_width = available.saturating_sub(label_len + 1);
+    let rich = shorten_path_middle(short_path, path_width);
+    if rich.is_empty() {
+        return label.to_string();
+    }
+
+    format!("{} {}", label, rich)
+}
+
 #[derive(Debug)]
 struct PaneInfo {
     pane_id: String,
@@ -172,8 +286,10 @@ struct PaneInfo {
 
 #[derive(Debug)]
 struct ProcessInfo {
+    pid: u32,
     name: String,
     cmdline: String,
+    exe: Option<String>,
     cwd: String,
     children: Vec<ProcessInfo>,
 }
@@ -225,6 +341,7 @@ fn get_process_info(system: &System, pid: u32) -> Option<ProcessInfo> {
         .collect();
 
     Some(ProcessInfo {
+        pid: pid.as_u32(),
         name: process.name().to_string_lossy().to_string(),
         cmdline: process
             .cmd()
@@ -232,6 +349,7 @@ fn get_process_info(system: &System, pid: u32) -> Option<ProcessInfo> {
             .map(|s| s.to_string_lossy())
             .collect::<Vec<_>>()
             .join(" "),
+        exe: process.exe().map(|p| p.to_string_lossy().to_string()),
         cwd: process
             .cwd()
             .map(|p| p.to_string_lossy().to_string())
@@ -242,8 +360,24 @@ fn get_process_info(system: &System, pid: u32) -> Option<ProcessInfo> {
 
 fn process_tree_has_pattern(info: &ProcessInfo, patterns: &[&str]) -> bool {
     let cmdline_lower = info.cmdline.to_lowercase();
-    if patterns.iter().any(|p| cmdline_lower.contains(p)) {
+    let name_lower = info.name.to_lowercase();
+    if patterns
+        .iter()
+        .any(|p| cmdline_lower.contains(p) || name_lower.contains(p))
+    {
         return true;
+    }
+    if let Some(exe) = info.exe.as_ref() {
+        let exe_lower = exe.to_lowercase();
+        if patterns.iter().any(|p| exe_lower.contains(p)) {
+            return true;
+        }
+    }
+    if let Some(proc_cmdline) = read_proc_cmdline(info.pid) {
+        let proc_lower = proc_cmdline.to_lowercase();
+        if patterns.iter().any(|p| proc_lower.contains(p)) {
+            return true;
+        }
     }
     info.children
         .iter()
@@ -314,12 +448,12 @@ pub fn get_short_path(cwd: &str, git_repo: Option<&str>) -> String {
 
 /// Generate a window title from process info with optional pane context.
 ///
-/// When running Claude and there's room, includes shortened pane title:
-/// - "claude <pane_title> <path>" if width allows
-/// - Falls back to "claude <path>" if not enough room
+/// When running Claude/Codex and there's room, includes shortened pane title:
+/// - "path:pane_title"
+/// - Falls back to "cl|cx <path>" (richer path) if no pane title
 ///
 /// Title format rules (in priority order):
-/// 1. Known dev tools with path: "ai <path>", "claude [pane] <path>", "vi <path>", "docker <path>"
+/// 1. Known dev tools with path: "ai <path>", "cl|cx [pane] <path>", "vi <path>", "docker <path>"
 /// 2. Plain shell (no children): "z <path>"
 /// 3. Shell with known child commands: handled by get_child_command_title()
 ///    - just: "j <subcommand> <path>" (e.g., "j dev blog")
@@ -336,7 +470,10 @@ fn generate_title_with_context(info: &ProcessInfo, ctx: &TitleContext) -> Option
         return Some(format!("ai {}", short_path));
     }
     if process_tree_has_pattern(info, &["@anthropic-ai/claude-code", "claude"]) {
-        return Some(generate_claude_title(ctx));
+        return Some(generate_ai_title(ctx, "cl"));
+    }
+    if process_tree_has_pattern(info, &["@openai/codex", "codex"]) {
+        return Some(generate_ai_title(ctx, "cx"));
     }
     if process_tree_has_pattern(info, &["vim", "nvim"]) {
         return Some(format!("vi {}", short_path));
@@ -386,18 +523,20 @@ fn clean_pane_title(title: &str) -> &str {
         .trim()
 }
 
-/// Generate a Claude title with dynamic width and optional pane name
+/// Generate a Claude/Codex title with dynamic width and optional pane name.
 ///
-/// Format: "path:pane_name" - compact and informative
+/// Format with pane title: "path:pane_name"
 /// - Path is compacted to 2..2 format if longer than 6 chars
 /// - Pane title has ✳ prefix stripped
-fn generate_claude_title(ctx: &TitleContext) -> String {
+///
+/// Format without pane title: "cl|cx <path>" (richer path, middle-ellipsized if needed)
+fn generate_ai_title(ctx: &TitleContext, label: &str) -> String {
     let compact = compact_path(ctx.short_path);
 
     // If no pane title, just return path
     let pane_title = match ctx.pane_title {
         Some(t) if !t.is_empty() => clean_pane_title(t),
-        _ => return compact,
+        _ => return format_ai_title_no_pane(ctx.short_path, label, ctx.window_width),
     };
 
     if pane_title.is_empty() {
@@ -496,8 +635,11 @@ fn generate_title_from_tmux(command: &str, short_path: &str) -> String {
     if cmd_lower.contains("aider") {
         format!("ai {}", short_path)
     } else if cmd_lower.contains("claude") {
-        // Just use compacted path (no pane title in fallback)
-        compact_path(short_path)
+        // Just use richer path (no pane title in fallback)
+        format_ai_title_no_pane(short_path, "cl", 80)
+    } else if cmd_lower.contains("codex") {
+        // Just use richer path (no pane title in fallback)
+        format_ai_title_no_pane(short_path, "cx", 80)
     } else if cmd_lower == "vim" || cmd_lower == "nvim" {
         format!("vi {}", short_path)
     } else if cmd_lower.contains("docker") {
@@ -873,8 +1015,10 @@ mod tests {
 
     fn make_process_info(name: &str, cmdline: &str, children: Vec<ProcessInfo>) -> ProcessInfo {
         ProcessInfo {
+            pid: 1,
             name: name.to_string(),
             cmdline: cmdline.to_string(),
+            exe: None,
             cwd: "/home/user/project".to_string(),
             children,
         }
@@ -898,11 +1042,22 @@ mod tests {
     fn test_generate_title_claude() {
         let child = make_process_info("claude", "@anthropic-ai/claude-code", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        // No prefix, just compacted path
-        // "myproject" (9 chars) -> "my..ct" (6 chars)
-        assert_eq!(generate_title(&info, "myproject"), Some("my..ct".to_string()));
-        // Short paths stay as-is
-        assert_eq!(generate_title(&info, "blog"), Some("blog".to_string()));
+        assert_eq!(
+            generate_title(&info, "myproject"),
+            Some("cl myproject".to_string())
+        );
+        assert_eq!(generate_title(&info, "blog"), Some("cl blog".to_string()));
+    }
+
+    #[test]
+    fn test_generate_title_codex() {
+        let child = make_process_info("node", "@openai/codex", vec![]);
+        let info = make_process_info("zsh", "/bin/zsh", vec![child]);
+        assert_eq!(
+            generate_title(&info, "myproject"),
+            Some("cx myproject".to_string())
+        );
+        assert_eq!(generate_title(&info, "blog"), Some("cx blog".to_string()));
     }
 
     #[test]
@@ -973,7 +1128,7 @@ mod tests {
             pane_title: Some("fix-auth"),
             window_width: 40,
         };
-        assert_eq!(generate_claude_title(&ctx), "blog:fix-auth");
+        assert_eq!(generate_ai_title(&ctx, "cl"), "blog:fix-auth");
     }
 
     #[test]
@@ -984,7 +1139,7 @@ mod tests {
             pane_title: Some("✳ PR Review Workflow"),
             window_width: 40,
         };
-        assert_eq!(generate_claude_title(&ctx), "blog:PR Review Workflow");
+        assert_eq!(generate_ai_title(&ctx, "cl"), "blog:PR Review Workflow");
     }
 
     #[test]
@@ -996,18 +1151,18 @@ mod tests {
             window_width: 40,
         };
         // magic-monitor (13 chars) -> ma..or (6 chars)
-        assert_eq!(generate_claude_title(&ctx), "ma..or:Screen Effects");
+        assert_eq!(generate_ai_title(&ctx, "cl"), "ma..or:Screen Effects");
     }
 
     #[test]
     fn test_generate_claude_title_no_pane_title() {
-        // Without pane title, just path
+        // Without pane title, add label and show richer path
         let ctx = TitleContext {
             short_path: "blog",
             pane_title: None,
             window_width: 40,
         };
-        assert_eq!(generate_claude_title(&ctx), "blog");
+        assert_eq!(generate_ai_title(&ctx, "cl"), "cl blog");
     }
 
     #[test]
@@ -1019,7 +1174,7 @@ mod tests {
             window_width: 15,
         };
         // blog: = 5 chars, leaves 10 for pane
-        assert_eq!(generate_claude_title(&ctx), "blog:fix-auth");
+        assert_eq!(generate_ai_title(&ctx, "cl"), "blog:fix-auth");
     }
 
     #[test]
