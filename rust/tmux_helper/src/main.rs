@@ -236,23 +236,46 @@ fn read_proc_cmdline(pid: u32) -> Option<String> {
     if pid == 0 {
         return None;
     }
-    let path = format!("/proc/{}/cmdline", pid);
-    let Ok(bytes) = fs::read(path) else {
-        return None;
-    };
-    if bytes.is_empty() {
-        return None;
+    #[cfg(target_os = "linux")]
+    {
+        let path = format!("/proc/{}/cmdline", pid);
+        let Ok(bytes) = fs::read(path) else {
+            return None;
+        };
+        if bytes.is_empty() {
+            return None;
+        }
+        let cmdline = bytes
+            .split(|b| *b == 0)
+            .filter(|s| !s.is_empty())
+            .map(|s| String::from_utf8_lossy(s))
+            .collect::<Vec<_>>()
+            .join(" ");
+        if cmdline.is_empty() {
+            None
+        } else {
+            Some(cmdline)
+        }
     }
-    let cmdline = bytes
-        .split(|b| *b == 0)
-        .filter(|s| !s.is_empty())
-        .map(|s| String::from_utf8_lossy(s))
-        .collect::<Vec<_>>()
-        .join(" ");
-    if cmdline.is_empty() {
+    #[cfg(target_os = "macos")]
+    {
+        let output = Command::new("ps")
+            .args(["-p", &pid.to_string(), "-o", "args="])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let cmdline = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if cmdline.is_empty() {
+            None
+        } else {
+            Some(cmdline)
+        }
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    {
         None
-    } else {
-        Some(cmdline)
     }
 }
 
