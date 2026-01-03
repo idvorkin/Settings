@@ -642,10 +642,13 @@ def launch_servers():
 
     # Desktop Mac only - caffeinate to keep machine awake (skip on laptops)
     if is_mac:
-        model = subprocess.run(
-            ["sysctl", "-n", "hw.model"], capture_output=True, text=True
-        ).stdout.strip()
-        is_laptop = "MacBook" in model
+        # sysctl hw.model returns "Mac16,12" not "MacBook", so use system_profiler
+        result = subprocess.run(
+            ["system_profiler", "SPHardwareDataType"],
+            capture_output=True,
+            text=True,
+        )
+        is_laptop = "MacBook" in result.stdout
         if not is_laptop:
             ensure_process("awake", "caffeinate", ["caffeinate", "-d", "-i", "-s"])
 
