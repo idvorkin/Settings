@@ -1027,7 +1027,7 @@ def notebook(
         None, help="Email numbers to select (space or comma separated)"
     ),
 ):
-    """List Kindle notebook emails, let user select one, and journal it (or copy to clipboard with --journal=False)"""
+    """List Kindle notebook emails, let the user select one or more, and journal them (or copy the selected URL(s) to the clipboard with --journal=False)"""
     try:
         service = authenticate()
 
