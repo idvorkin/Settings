@@ -1,0 +1,6 @@
+# Ghostty configuration
+# https://ghostty.org/docs/config
+
+keybind = cmd+a=unbind
+clipboard-read = allow
+clipboard-write = allow
