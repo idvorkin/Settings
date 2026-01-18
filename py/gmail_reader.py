@@ -1249,7 +1249,7 @@ def notebook(
                     )
                 else:
                     console.print(
-                        "[yellow]Here's the URLs (manual copy required):[/yellow]"
+                        "[yellow]Here are the URLs (manual copy required):[/yellow]"
                     )
                     for _, selected_url in selected_urls:
                         console.print(selected_url)
