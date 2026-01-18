@@ -8,6 +8,8 @@
 #     "google-api-python-client",
 #     "google-auth-httplib2",
 #     "google-auth-oauthlib",
+#     "questionary",
+#     "requests",
 # ]
 # ///
 """
@@ -35,7 +37,13 @@ import importlib.util
 import subprocess
 import sys
 import time
+import shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+try:
+    import questionary
+except Exception:
+    questionary = None
 app = typer.Typer(
     help="Gmail Reader - Access and manage your Gmail from the command line",
     no_args_is_help=True,
@@ -554,12 +562,29 @@ def ping_url(url, attempts=2, delay=1):
             f"[cyan]Warming up URL with {attempts} pings (delay: {delay}s)...[/cyan]"
         )
 
+        success = False
         for i in range(attempts):
             try:
-                response = requests.head(url, timeout=5)
+                response = requests.head(url, timeout=5, allow_redirects=True)
                 console.print(
                     f"[cyan]Ping {i + 1}/{attempts}: Status {response.status_code}[/cyan]"
                 )
+                if response.status_code < 400:
+                    success = True
+                elif response.status_code == 405:
+                    try:
+                        response = requests.get(
+                            url,
+                            timeout=5,
+                            allow_redirects=True,
+                        )
+                        console.print(
+                            f"[cyan]Ping {i + 1}/{attempts} (GET): Status {response.status_code}[/cyan]"
+                        )
+                        if response.status_code < 400:
+                            success = True
+                    finally:
+                        response.close()
             except Exception as e:
                 console.print(
                     f"[yellow]Ping {i + 1}/{attempts} failed: {str(e)}[/yellow]"
@@ -568,10 +593,121 @@ def ping_url(url, attempts=2, delay=1):
             if i < attempts - 1:  # Don't sleep after the last attempt
                 time.sleep(delay)
 
-        return True
+        return success
     except Exception as e:
         console.print(f"[yellow]URL warm-up failed: {str(e)}[/yellow]")
         return False
+
+
+def warm_url_with_retries(
+    selected_email,
+    selected_url,
+    rounds=3,
+    attempts=2,
+    delay=1,
+    round_delay=5,
+):
+    """Warm a single URL with retries; returns (email, url, ready)."""
+    for round_index in range(rounds):
+        try:
+            if ping_url(selected_url, attempts=attempts, delay=delay):
+                return selected_email, selected_url, True
+        except Exception as e:
+            console.print(
+                f"[yellow]Warm-up failed; retrying:[/yellow] {selected_email.subject} ({e})"
+            )
+
+        if round_index < rounds - 1:
+            console.print(
+                f"[cyan]Retrying {selected_email.subject} after {round_delay}s...[/cyan]"
+            )
+            time.sleep(round_delay)
+
+    return selected_email, selected_url, False
+
+
+def build_journal_output_path(selected_email):
+    """Build a per-email output path based on the subject."""
+    match = re.search(r'"([^"]+)"', selected_email.subject)
+    if match:
+        base_name = match.group(1)
+    else:
+        base_name = re.sub(r"[^A-Za-z0-9._-]+", "_", selected_email.subject).strip("_")
+        if not base_name:
+            base_name = selected_email.id[:8]
+
+    base_name = re.sub(r"[^A-Za-z0-9._-]+", "_", base_name).strip("_")
+    if not base_name:
+        base_name = selected_email.id[:8]
+
+    output_path = Path.cwd() / f"{base_name}-{selected_email.id[:8]}.md"
+
+    cache_dir = Path.home() / "tmp" / "journal"
+    cache_path = cache_dir / output_path.name
+    return output_path, cache_path
+
+
+def run_journal_with_retries(
+    selected_email,
+    selected_url,
+    output_path,
+    cache_path,
+    attempts,
+    retry_delay,
+    warm_args,
+):
+    """Run journal with retries; returns True on success."""
+    for attempt in range(attempts):
+        try:
+            console.print(
+                f"[cyan]Running journal command with URL...[/cyan] {selected_email.subject}"
+            )
+            start_time = datetime.now()
+            subprocess.run(
+                ["journal", "--output", str(output_path), selected_url], check=True
+            )
+            end_time = datetime.now()
+            duration = end_time - start_time
+            console.print(
+                f"[green]Journal command completed successfully in {duration.total_seconds():.2f} seconds[/green]"
+            )
+            console.print(f"[green]Processed:[/green] {selected_email.subject}")
+            if output_path.exists():
+                cache_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(output_path, cache_path)
+                console.print(f"[green]Cached copy:[/green] {cache_path}")
+            return True
+        except KeyboardInterrupt:
+            # Handle Ctrl+C by copying to clipboard instead
+            clipboard_success = copy_to_clipboard(selected_url)
+            if clipboard_success:
+                console.print(
+                    f"[green]Journal canceled. Download link copied to clipboard:[/green] {selected_url}"
+                )
+            else:
+                console.print(
+                    f"[yellow]Journal canceled. Here's the URL (manual copy required):[/yellow] {selected_url}"
+                )
+            raise
+        except subprocess.CalledProcessError as e:
+            console.print(f"[red]Error running journal command: {e}[/red]")
+            if attempt >= attempts - 1:
+                return False
+            console.print(f"[yellow]Retrying journal after {retry_delay}s...[/yellow]")
+            time.sleep(retry_delay)
+            _, _, ready = warm_url_with_retries(
+                selected_email, selected_url, **warm_args
+            )
+            if not ready:
+                console.print(
+                    f"[yellow]Download link not ready; skipping:[/yellow] {selected_email.subject}"
+                )
+                return False
+        except FileNotFoundError:
+            console.print("[red]Error: 'journal' command not found[/red]")
+            return False
+
+    return False
 
 
 @app.command()
@@ -878,12 +1014,17 @@ def stats():
 
 @app.command()
 def notebook(
-    days: int = typer.Option(30, help="Show emails from the last N days"),
+    days: int = typer.Option(14, help="Show emails from the last N days"),
     journal: bool = typer.Option(
-        True, help="Run 'journal' with the found URL (press Ctrl+C to cancel)"
+        True,
+        "--journal/--no-journal",
+        help="Run 'journal' with the found URL (press Ctrl+C to cancel)",
     ),
     url_only: bool = typer.Option(
         False, help="Just list the URL without copying or journaling"
+    ),
+    email_numbers: Optional[str] = typer.Option(
+        None, help="Email numbers to select (space or comma separated)"
     ),
 ):
     """List Kindle notebook emails, let user select one, and journal it (or copy to clipboard with --journal=False)"""
@@ -891,6 +1032,11 @@ def notebook(
         service = authenticate()
 
         # Get Kindle notebook emails
+        if days > 14:
+            console.print(
+                "[yellow]Capping lookback to 14 days (older notebook links won't download).[/yellow]"
+            )
+            days = 14
         emails = get_kindle_notebook_emails(service, 100, days)
 
         if not emails:
@@ -909,104 +1055,204 @@ def notebook(
         console.print(table)
         console.print(f"\n[bold]Total:[/bold] {len(emails)} Kindle notebook emails")
 
-        # Let user select an email
-        selection = typer.prompt(
-            "Enter the number of the email to extract download link from", type=int
-        )
-
-        if selection < 1 or selection > len(emails):
-            console.print(
-                f"[red]Invalid selection. Please enter a number between 1 and {len(emails)}.[/red]"
-            )
-            return
-
-        # Get the selected email
-        selected_email = emails[selection - 1]
-
-        if not selected_email.body_html:
-            console.print("[yellow]No HTML content found in this email.[/yellow]")
-            return
-
-        # Extract download links from HTML
-        matches = extract_download_links(selected_email.body_html)
-
-        if not matches:
-            console.print(
-                "[yellow]No download links found in the selected email.[/yellow]"
-            )
-            return
-
-        # If multiple links found, let user select which one
-        if len(matches) > 1:
-            console.print("[bold]Multiple download links found:[/bold]")
-            for i, (url, text) in enumerate(matches):
+        if email_numbers:
+            tokens = re.split(r"[,\s]+", email_numbers.strip())
+            try:
+                selections = [int(token) for token in tokens if token]
+            except ValueError:
                 console.print(
-                    f"{i + 1}. [green]Text:[/green] {text.strip() or 'No text'}"
-                )
-                console.print(f"   [blue]URL:[/blue] {url}")
-                console.print("-" * 30)
-
-            link_selection = typer.prompt(
-                "Enter the number of the link to copy", type=int
-            )
-
-            if link_selection < 1 or link_selection > len(matches):
-                console.print(
-                    f"[red]Invalid selection. Please enter a number between 1 and {len(matches)}.[/red]"
+                    "[red]Invalid --emails value. Use numbers separated by spaces or commas.[/red]"
                 )
                 return
 
-            selected_url = matches[link_selection - 1][0]
+            if not selections:
+                console.print("[yellow]No emails selected.[/yellow]")
+                return
+
+            if any(
+                selection < 1 or selection > len(emails) for selection in selections
+            ):
+                console.print(
+                    f"[red]Invalid selection. Enter numbers between 1 and {len(emails)}.[/red]"
+                )
+                return
+
+            selected_indices = [selection - 1 for selection in selections]
+        elif questionary:
+            choices = [
+                questionary.Choice(
+                    f"{i + 1}. {format_date(email.date)} | {email.subject}", value=i
+                )
+                for i, email in enumerate(emails)
+            ]
+            selected_indices = questionary.checkbox(
+                "Select emails (space to toggle, enter to confirm)", choices=choices
+            ).ask()
+            if not selected_indices:
+                console.print("[yellow]No emails selected.[/yellow]")
+                return
         else:
-            # Just one link found
-            selected_url = matches[0][0]
-
-        # Handle the URL based on user preference
-        if url_only:
-            # Just print the URL without any additional actions
-            console.print(f"[bold]URL:[/bold] {selected_url}")
-        elif journal:
+            # Let user select email(s) without questionary installed
+            raw_selection = typer.prompt(
+                "Enter email number(s) (space or comma separated)", type=str
+            )
+            tokens = re.split(r"[,\s]+", raw_selection.strip())
             try:
-                # Warm up the URL first
-                ping_url(selected_url, attempts=2, delay=1)
+                selections = [int(token) for token in tokens if token]
+            except ValueError:
+                console.print(
+                    "[red]Invalid selection. Use numbers separated by spaces or commas.[/red]"
+                )
+                return
 
+            if not selections:
+                console.print("[yellow]No emails selected.[/yellow]")
+                return
+
+            if any(
+                selection < 1 or selection > len(emails) for selection in selections
+            ):
                 console.print(
-                    "[cyan]Running journal command with URL... (press Ctrl+C to cancel and copy to clipboard)[/cyan]"
+                    f"[red]Invalid selection. Enter numbers between 1 and {len(emails)}.[/red]"
                 )
-                start_time = datetime.now()
-                subprocess.run(["journal", selected_url], check=True)
-                end_time = datetime.now()
-                duration = end_time - start_time
+                return
+
+            selected_indices = [selection - 1 for selection in selections]
+
+        selected_urls = []
+        for selection_index in selected_indices:
+            selected_email = emails[selection_index]
+
+            if not selected_email.body_html:
                 console.print(
-                    f"[green]Journal command completed successfully in {duration.total_seconds():.2f} seconds[/green]"
+                    f"[yellow]No HTML content found in:[/yellow] {selected_email.subject}"
                 )
-                console.print(f"[green]Processed:[/green] {selected_email.subject}")
-            except KeyboardInterrupt:
-                # Handle Ctrl+C by copying to clipboard instead
-                clipboard_success = copy_to_clipboard(selected_url)
-                if clipboard_success:
+                continue
+
+            # Extract download links from HTML
+            matches = extract_download_links(selected_email.body_html)
+
+            if not matches:
+                console.print(
+                    f"[yellow]No download links found in:[/yellow] {selected_email.subject}"
+                )
+                continue
+
+            # If multiple links found, let user select which one
+            if len(matches) > 1:
+                console.print(
+                    f"[bold]Multiple download links found for:[/bold] {selected_email.subject}"
+                )
+                for i, (url, text) in enumerate(matches):
                     console.print(
-                        f"[green]Journal canceled. Download link copied to clipboard:[/green] {selected_url}"
+                        f"{i + 1}. [green]Text:[/green] {text.strip() or 'No text'}"
+                    )
+                    console.print(f"   [blue]URL:[/blue] {url}")
+                    console.print("-" * 30)
+
+                link_selection = typer.prompt(
+                    "Enter the number of the link to copy", type=int
+                )
+
+                if link_selection < 1 or link_selection > len(matches):
+                    console.print(
+                        f"[red]Invalid selection. Please enter a number between 1 and {len(matches)}.[/red]"
+                    )
+                    return
+
+                selected_url = matches[link_selection - 1][0]
+            else:
+                # Just one link found
+                selected_url = matches[0][0]
+
+            selected_urls.append((selected_email, selected_url))
+
+        if not selected_urls:
+            console.print(
+                "[yellow]No download links found in the selected emails.[/yellow]"
+            )
+            return
+
+        # Handle the URL(s) based on user preference
+        if url_only:
+            for selected_email, selected_url in selected_urls:
+                console.print(f"[bold]URL:[/bold] {selected_url}")
+                console.print(f"[dim]From:[/dim] {selected_email.subject}")
+        elif journal:
+            warm_args = {
+                "rounds": 3,
+                "attempts": 2,
+                "delay": 1,
+                "round_delay": 5,
+            }
+            journal_attempts = 3
+            journal_retry_delay = 5
+            with ThreadPoolExecutor(max_workers=min(4, len(selected_urls))) as executor:
+                future_map = {
+                    executor.submit(
+                        warm_url_with_retries, selected_email, selected_url, **warm_args
+                    ): (selected_email, selected_url)
+                    for selected_email, selected_url in selected_urls
+                }
+
+                journal_futures = []
+                for future in as_completed(future_map):
+                    try:
+                        selected_email, selected_url, ready = future.result()
+                    except Exception as e:
+                        selected_email, _ = future_map[future]
+                        console.print(
+                            f"[yellow]Warm-up failed; skipping:[/yellow] {selected_email.subject} ({e})"
+                        )
+                        continue
+                    if not ready:
+                        console.print(
+                            f"[yellow]Download link not ready; skipping:[/yellow] {selected_email.subject}"
+                        )
+                        continue
+
+                    output_path, cache_path = build_journal_output_path(selected_email)
+                    journal_futures.append(
+                        executor.submit(
+                            run_journal_with_retries,
+                            selected_email,
+                            selected_url,
+                            output_path,
+                            cache_path,
+                            journal_attempts,
+                            journal_retry_delay,
+                            warm_args,
+                        )
+                    )
+
+                for future in as_completed(journal_futures):
+                    try:
+                        future.result()
+                    except KeyboardInterrupt:
+                        return
+        else:
+            urls_text = "\n".join(url for _, url in selected_urls)
+            clipboard_success = copy_to_clipboard(urls_text)
+            if clipboard_success:
+                if len(selected_urls) == 1:
+                    console.print(
+                        f"[green]Download link copied to clipboard:[/green] {selected_urls[0][1]}"
                     )
                 else:
                     console.print(
-                        f"[yellow]Journal canceled. Here's the URL (manual copy required):[/yellow] {selected_url}"
+                        f"[green]Download links copied to clipboard:[/green] {len(selected_urls)} links"
                     )
-            except subprocess.CalledProcessError as e:
-                console.print(f"[red]Error running journal command: {e}[/red]")
-            except FileNotFoundError:
-                console.print("[red]Error: 'journal' command not found[/red]")
-        else:
-            # Copy URL to clipboard
-            clipboard_success = copy_to_clipboard(selected_url)
-            if clipboard_success:
-                console.print(
-                    f"[green]Download link copied to clipboard:[/green] {selected_url}"
-                )
             else:
-                console.print(
-                    f"[yellow]Here's the URL (manual copy required):[/yellow] {selected_url}"
-                )
+                if len(selected_urls) == 1:
+                    console.print(
+                        f"[yellow]Here's the URL (manual copy required):[/yellow] {selected_urls[0][1]}"
+                    )
+                else:
+                    console.print(
+                        "[yellow]Here's the URLs (manual copy required):[/yellow]"
+                    )
+                    for _, selected_url in selected_urls:
+                        console.print(selected_url)
 
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
