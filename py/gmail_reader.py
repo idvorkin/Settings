@@ -1061,7 +1061,7 @@ def notebook(
                 selections = [int(token) for token in tokens if token]
             except ValueError:
                 console.print(
-                    "[red]Invalid --emails value. Use numbers separated by spaces or commas.[/red]"
+                    "[red]Invalid --email-numbers value. Use numbers separated by spaces or commas.[/red]"
                 )
                 return
 
