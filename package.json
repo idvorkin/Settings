@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "load-asciicast": "^2.1.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "loose-envify": "^1.4.0",
     "js-tokens": "^4.0.0",
     "ansi-to-rgb": "^1.0.0",
