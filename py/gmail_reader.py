@@ -647,6 +647,72 @@ def build_journal_output_path(selected_email):
     return output_path, cache_path
 
 
+def build_pdf_output_path(
+    selected_email: EmailMessage, output_dir: Path | None = None
+) -> Path:
+    """Build a PDF output path based on the email subject."""
+    match = re.search(r'"([^"]+)"', selected_email.subject)
+    if match:
+        base_name = match.group(1)
+    else:
+        base_name = re.sub(r"[^A-Za-z0-9._-]+", "_", selected_email.subject).strip("_")
+        if not base_name:
+            base_name = selected_email.id[:8]
+
+    base_name = re.sub(r"[^A-Za-z0-9._-]+", "_", base_name).strip("_")
+    if not base_name:
+        base_name = selected_email.id[:8]
+
+    target_dir = output_dir or Path.cwd()
+    return target_dir / f"{base_name}.pdf"
+
+
+def download_pdf(url: str, output_path: Path, warm_first: bool = True) -> bool:
+    """Download a PDF from a URL to the specified path.
+
+    Args:
+        url: URL to download from
+        output_path: Path to save the PDF
+        warm_first: Whether to ping the URL first to warm it up
+
+    Returns:
+        True if successful, False otherwise
+    """
+    import requests
+
+    try:
+        if warm_first:
+            console.print("[cyan]Warming up download link...[/cyan]")
+            ping_url(url, attempts=2, delay=1)
+
+        console.print("[cyan]Downloading PDF...[/cyan]")
+        response = requests.get(url, timeout=60, allow_redirects=True)
+        response.raise_for_status()
+
+        # Check content type
+        content_type = response.headers.get("content-type", "")
+        if "pdf" not in content_type.lower() and not url.lower().endswith(".pdf"):
+            console.print(
+                f"[yellow]Warning: Content-Type is '{content_type}', may not be a PDF[/yellow]"
+            )
+
+        # Write the file
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "wb") as f:
+            f.write(response.content)
+
+        file_size = len(response.content)
+        console.print(f"[green]Downloaded:[/green] {output_path} ({file_size:,} bytes)")
+        return True
+
+    except requests.RequestException as e:
+        console.print(f"[red]Download failed:[/red] {e}")
+        return False
+    except IOError as e:
+        console.print(f"[red]Failed to save file:[/red] {e}")
+        return False
+
+
 def run_journal_with_retries(
     selected_email,
     selected_url,
@@ -1023,6 +1089,12 @@ def notebook(
     url_only: bool = typer.Option(
         False, help="Just list the URL without copying or journaling"
     ),
+    download: bool = typer.Option(
+        False, help="Download the PDF file(s) to current directory"
+    ),
+    output_dir: Optional[str] = typer.Option(
+        None, help="Directory to save downloaded PDFs (used with --download)"
+    ),
     email_numbers: Optional[str] = typer.Option(
         None, help="Email numbers to select (space or comma separated)"
     ),
@@ -1178,6 +1250,18 @@ def notebook(
             for selected_email, selected_url in selected_urls:
                 console.print(f"[bold]URL:[/bold] {selected_url}")
                 console.print(f"[dim]From:[/dim] {selected_email.subject}")
+        elif download:
+            # Download PDFs directly
+            out_dir = Path(output_dir) if output_dir else None
+            success_count = 0
+            for selected_email, selected_url in selected_urls:
+                pdf_path = build_pdf_output_path(selected_email, out_dir)
+                console.print(f"\n[bold]Downloading:[/bold] {selected_email.subject}")
+                if download_pdf(selected_url, pdf_path):
+                    success_count += 1
+            console.print(
+                f"\n[green]Downloaded {success_count}/{len(selected_urls)} PDFs[/green]"
+            )
         elif journal:
             warm_args = {
                 "rounds": 3,
