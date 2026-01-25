@@ -95,7 +95,145 @@ def load_cached_commands():
     return cached_data["commands"]
 
 
-# Early exit for alfred command
+# Parameter completions for commands that support them (defined early for fast path)
+PARAM_COMPLETIONS: dict[str, dict[str, list[str]]] = {
+    "p_foo": {
+        "color": ["red", "green", "blue", "yellow", "purple"],
+        "size": ["small", "medium", "large", "xlarge"],
+    },
+    "p_bar": {
+        "fruit": ["apple", "banana", "cherry", "date"],
+        "count": ["1", "2", "3", "5", "10"],
+    },
+}
+
+
+def get_cached_commands_list() -> list[tuple[str, str]] | None:
+    """Load command list from cache if valid. Returns list of (name, subtitle) tuples."""
+    cache_path = get_cache_path()
+    if not cache_path.exists():
+        return None
+    try:
+        with open(cache_path, "rb") as f:
+            cached_data = pickle.load(f)
+        if cached_data["hash"] != get_script_hash():
+            return None
+        # Parse the cached JSON to extract command list
+        import json as json_mod
+
+        data = json_mod.loads(cached_data["commands"])
+        return [(item["title"], item["subtitle"]) for item in data["items"]]
+    except Exception:
+        return None
+
+
+def fast_alfred_complete(query: str) -> str:
+    """Fast path for alfred-complete using cached commands."""
+    commands = get_cached_commands_list()
+    if commands is None:
+        return None  # Fall back to slow path
+
+    has_trailing_space = query.endswith(" ")
+    query_stripped = query.strip()
+    parts = query_stripped.split() if query_stripped else []
+
+    items = []
+
+    if len(parts) == 0:
+        # Show all commands
+        for name, subtitle in commands:
+            cmd_key = name.replace("-", "_")
+            autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else None
+            items.append(
+                {
+                    "title": name,
+                    "subtitle": subtitle,
+                    "arg": name,
+                    "autocomplete": autocomplete,
+                }
+            )
+    elif len(parts) == 1 and not has_trailing_space:
+        # Partial command - filter matching commands
+        prefix = parts[0].lower()
+        for name, subtitle in commands:
+            if name.lower().startswith(prefix) or prefix in name.lower():
+                cmd_key = name.replace("-", "_")
+                autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else None
+                items.append(
+                    {
+                        "title": name,
+                        "subtitle": subtitle,
+                        "arg": name,
+                        "autocomplete": autocomplete,
+                    }
+                )
+    else:
+        # Command entered, show parameter completions
+        cmd = parts[0].replace("-", "_")
+        param_values = parts[1:] if len(parts) > 1 else []
+
+        if cmd in PARAM_COMPLETIONS:
+            param_names = list(PARAM_COMPLETIONS[cmd].keys())
+
+            if has_trailing_space:
+                current_param_idx = len(param_values)
+            else:
+                current_param_idx = max(0, len(param_values) - 1)
+
+            if current_param_idx < len(param_names):
+                param_name = param_names[current_param_idx]
+                options = PARAM_COMPLETIONS[cmd][param_name]
+
+                filter_text = ""
+                if not has_trailing_space and len(param_values) > current_param_idx:
+                    filter_text = param_values[current_param_idx].lower()
+
+                for option in options:
+                    if not filter_text or option.lower().startswith(filter_text):
+                        cmd_display = cmd.replace("_", "-")
+                        full_args = param_values[:current_param_idx] + [option]
+                        arg = f"{cmd_display} {' '.join(full_args)}"
+
+                        next_param_idx = current_param_idx + 1
+                        autocomplete = (
+                            f"{arg} " if next_param_idx < len(param_names) else None
+                        )
+
+                        items.append(
+                            {
+                                "title": option,
+                                "subtitle": f"{param_name} for {cmd_display}",
+                                "arg": arg,
+                                "autocomplete": autocomplete,
+                            }
+                        )
+            else:
+                cmd_display = cmd.replace("_", "-")
+                arg = f"{cmd_display} {' '.join(param_values)}"
+                items.append(
+                    {
+                        "title": f"Run: {arg}",
+                        "subtitle": "Press Enter to execute",
+                        "arg": arg,
+                        "autocomplete": None,
+                    }
+                )
+        else:
+            cmd_display = cmd.replace("_", "-")
+            arg = query_stripped
+            items.append(
+                {
+                    "title": f"Run: {arg}",
+                    "subtitle": "Press Enter to execute",
+                    "arg": arg,
+                    "autocomplete": None,
+                }
+            )
+
+    return json.dumps({"items": items}, indent=2)
+
+
+# Early exit for alfred commands
 if len(sys.argv) >= 2 and sys.argv[1] == "alfred":
     # Handle alfred command
     cached_result = load_cached_commands()
@@ -103,6 +241,16 @@ if len(sys.argv) >= 2 and sys.argv[1] == "alfred":
         print(cached_result)
         sys.exit(0)
     print("Cache Status: Miss", file=sys.stderr)
+    app = load_full_imports()
+elif len(sys.argv) >= 2 and sys.argv[1] == "alfred-complete":
+    # Handle alfred-complete command (fast path)
+    query = sys.argv[2] if len(sys.argv) > 2 else ""
+    result = fast_alfred_complete(query)
+    if result:
+        print(result)
+        sys.exit(0)
+    # Fall back to slow path if cache miss
+    print("Cache Status: Miss (alfred-complete)", file=sys.stderr)
     app = load_full_imports()
 else:
     # Not an alfred command, load full imports
@@ -819,11 +967,25 @@ def ghimgpaste(
         print(f"[red]Error during git operations: {str(e)}[/red]")
 
 
+# Parameter completions for commands that support them
+PARAM_COMPLETIONS: dict[str, dict[str, list[str]]] = {
+    "p_foo": {
+        "color": ["red", "green", "blue", "yellow", "purple"],
+        "size": ["small", "medium", "large", "xlarge"],
+    },
+    "p_bar": {
+        "fruit": ["apple", "banana", "cherry", "date"],
+        "count": ["1", "2", "3", "5", "10"],
+    },
+}
+
+
 class AlfredItems(BaseModel):
     class Item(BaseModel):
         title: str
         subtitle: str
         arg: str
+        autocomplete: str | None = None
 
     items: List[Item]
 
@@ -853,9 +1015,13 @@ def alfred():
 
     print("Cache Status: Miss", file=sys.stderr)
 
-    # If no valid cache, generate commands
-    commands = [c.callback.__name__.replace("_", "-") for c in app.registered_commands]  # type:ignore
-    items = [AlfredItems.Item(title=c, subtitle=c, arg=c) for c in commands]
+    # If no valid cache, generate commands with docstrings
+    items = []
+    for cmd in app.registered_commands:
+        name = cmd.callback.__name__.replace("_", "-")  # type: ignore
+        doc = cmd.callback.__doc__ or name  # type: ignore
+        subtitle = doc.split("\n")[0] if doc else name
+        items.append(AlfredItems.Item(title=name, subtitle=subtitle, arg=name))
     alfred_items = AlfredItems(items=items)
     json_output = alfred_items.model_dump_json(indent=4)
 
@@ -1895,6 +2061,157 @@ def cliptofile():
     pyperclip.copy(full_path)
     print(f"[green]Image saved to: {full_path}[/green]")
     print("[green]Full path copied to clipboard![/green]")
+
+
+@app.command()
+def p_foo(
+    color: Annotated[str, typer.Argument(help="Color choice")] = "",
+    size: Annotated[str, typer.Argument(help="Size choice")] = "",
+):
+    """Test command with color and size parameters"""
+    print(f"[green]p_foo called with color={color}, size={size}[/green]")
+
+
+@app.command()
+def p_bar(
+    fruit: Annotated[str, typer.Argument(help="Fruit choice")] = "",
+    count: Annotated[str, typer.Argument(help="Count choice")] = "",
+):
+    """Test command with fruit and count parameters"""
+    print(f"[green]p_bar called with fruit={fruit}, count={count}[/green]")
+
+
+def _get_all_commands() -> list[tuple[str, str]]:
+    """Get all registered commands with their docstrings."""
+    commands = []
+    for cmd in app.registered_commands:
+        name = cmd.callback.__name__.replace("_", "-")  # type: ignore
+        doc = cmd.callback.__doc__ or ""  # type: ignore
+        # Get first line of docstring
+        subtitle = doc.split("\n")[0] if doc else name
+        commands.append((name, subtitle))
+    return commands
+
+
+@app.command()
+def alfred_complete(
+    query: Annotated[str, typer.Argument(help="Query string from Alfred")] = "",
+):
+    """Generate Alfred completions for commands and parameters.
+
+    Handles three cases:
+    1. Empty query: show all commands
+    2. Partial command: filter commands
+    3. Command with space: show parameter completions
+    """
+    # Don't strip - we need to detect trailing space for parameter completion
+    has_trailing_space = query.endswith(" ")
+    query_stripped = query.strip()
+    parts = query_stripped.split() if query_stripped else []
+
+    items: list[AlfredItems.Item] = []
+
+    if len(parts) == 0:
+        # Show all commands
+        for name, subtitle in _get_all_commands():
+            # Commands with params get autocomplete for drilling down
+            cmd_key = name.replace("-", "_")
+            autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else None
+            items.append(
+                AlfredItems.Item(
+                    title=name,
+                    subtitle=subtitle,
+                    arg=name,
+                    autocomplete=autocomplete,
+                )
+            )
+    elif len(parts) == 1 and not has_trailing_space:
+        # Partial command - filter matching commands
+        prefix = parts[0].lower()
+        for name, subtitle in _get_all_commands():
+            if name.lower().startswith(prefix) or prefix in name.lower():
+                cmd_key = name.replace("-", "_")
+                autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else None
+                items.append(
+                    AlfredItems.Item(
+                        title=name,
+                        subtitle=subtitle,
+                        arg=name,
+                        autocomplete=autocomplete,
+                    )
+                )
+    else:
+        # Command entered, show parameter completions
+        cmd = parts[0].replace("-", "_")
+        param_values = parts[1:] if len(parts) > 1 else []
+
+        if cmd in PARAM_COMPLETIONS:
+            param_names = list(PARAM_COMPLETIONS[cmd].keys())
+            current_param_idx = len(param_values)
+
+            # If we have a trailing space, we're ready for next param
+            if has_trailing_space:
+                current_param_idx = len(param_values)
+            else:
+                # Still typing current param, filter it
+                current_param_idx = max(0, len(param_values) - 1)
+
+            if current_param_idx < len(param_names):
+                param_name = param_names[current_param_idx]
+                options = PARAM_COMPLETIONS[cmd][param_name]
+
+                # Filter if user is typing
+                filter_text = ""
+                if not has_trailing_space and len(param_values) > current_param_idx:
+                    filter_text = param_values[current_param_idx].lower()
+
+                for option in options:
+                    if not filter_text or option.lower().startswith(filter_text):
+                        # Build the full arg with all previous params + this option
+                        cmd_display = cmd.replace("_", "-")
+                        full_args = param_values[:current_param_idx] + [option]
+                        arg = f"{cmd_display} {' '.join(full_args)}"
+
+                        # Autocomplete for drilling to next param
+                        next_param_idx = current_param_idx + 1
+                        if next_param_idx < len(param_names):
+                            autocomplete = f"{arg} "
+                        else:
+                            autocomplete = None
+
+                        items.append(
+                            AlfredItems.Item(
+                                title=option,
+                                subtitle=f"{param_name} for {cmd_display}",
+                                arg=arg,
+                                autocomplete=autocomplete,
+                            )
+                        )
+            else:
+                # All params filled, show final command
+                cmd_display = cmd.replace("_", "-")
+                arg = f"{cmd_display} {' '.join(param_values)}"
+                items.append(
+                    AlfredItems.Item(
+                        title=f"Run: {arg}",
+                        subtitle="Press Enter to execute",
+                        arg=arg,
+                    )
+                )
+        else:
+            # Command doesn't have param completions, just show it
+            cmd_display = cmd.replace("_", "-")
+            arg = query
+            items.append(
+                AlfredItems.Item(
+                    title=f"Run: {arg}",
+                    subtitle="Press Enter to execute",
+                    arg=arg,
+                )
+            )
+
+    alfred_items = AlfredItems(items=items)
+    print(alfred_items.model_dump_json(indent=2))
 
 
 if __name__ == "__main__":
