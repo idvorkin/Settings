@@ -389,6 +389,7 @@ function TelescopePlugins()
 				{ "nvim-lua/plenary.nvim" },
 			},
 		},
+		"radyz/telescope-gitsigns", -- Telescope picker for git hunks
 	}
 end
 plugins = appendTables(plugins, TelescopePlugins())
@@ -405,11 +406,15 @@ function ConfigureTelescopePlugins()
 		require("telescope").load_extension(extension)
 	end
 
+	-- Load git_signs extension if available
+	pcall(function()
+		require("telescope").load_extension("git_signs")
+	end)
+
 	vim.cmd([[
     cab ls :Telescope buffers<CR>
     command! Gitfiles Telescope git_files
     command! IMessageChat :lua require('nvim-messages').imessage()
-    command! GitStatus Telescope git_status
     command! Registers Telescope registers
     command! History Telescope command_history
     command! LiveGrep Telescope live_grep
@@ -424,6 +429,7 @@ function ConfigureTelescopePlugins()
     command! FileBrowser  Telescope file_browser path=%:p:h select_buffer=true
     command! Gist Telescope gh gist limit=20
     command! Issues Telescope gh issues
+    command! Hunks Telescope git_signs git_signs
     ]])
 
 	-- Configure Tags and BTags to show full symbol names without clipping
@@ -441,6 +447,101 @@ function ConfigureTelescopePlugins()
 			symbol_width = 80, -- Increase symbol name width to show full names
 			symbol_type_width = 1, -- Minimize symbol type column to 1 character
 		})
+	end, {})
+
+	-- GitStatus: show uncommitted changes and switch to normal mode
+	vim.api.nvim_create_user_command("GitStatus", function()
+		-- Switch to normal mode: show hunks vs HEAD (uncommitted changes)
+		local gs = require("gitsigns")
+		gs.change_base(nil, true)
+		vim.notify("GitSigns: Normal mode (]c/[c walks uncommitted changes)", vim.log.levels.INFO)
+
+		-- Telescope picker showing uncommitted changes
+		require("telescope.builtin").git_status()
+	end, {})
+
+	-- PR-related commands for viewing all changes in current PR
+	vim.api.nvim_create_user_command("PRStatus", function()
+		-- Switch to PR mode: show hunks vs origin/main
+		local gs = require("gitsigns")
+		gs.change_base("origin/main", true)
+		vim.notify("GitSigns: PR mode (]c/[c walks PR hunks vs origin/main)", vim.log.levels.INFO)
+
+		-- Telescope picker showing all files changed in PR with diff preview
+		local previewers = require("telescope.previewers")
+		local pickers = require("telescope.pickers")
+		local finders = require("telescope.finders")
+		local conf = require("telescope.config").values
+		local actions = require("telescope.actions")
+		local action_state = require("telescope.actions.state")
+
+		pickers
+			.new({}, {
+				prompt_title = "PR Changed Files",
+				finder = finders.new_oneshot_job({ "git", "diff", "--name-only", "origin/main...HEAD" }),
+				previewer = previewers.new_termopen_previewer({
+					get_command = function(entry)
+						return { "git", "diff", "origin/main...HEAD", "--color=always", "--", entry.value }
+					end,
+				}),
+				sorter = conf.file_sorter({}),
+				attach_mappings = function(prompt_bufnr, map)
+					actions.select_default:replace(function()
+						actions.close(prompt_bufnr)
+						local selection = action_state.get_selected_entry()
+						vim.cmd("edit " .. selection[1])
+						-- Refresh gitsigns after opening file to show hunks with new base
+						vim.defer_fn(function()
+							require("gitsigns").refresh()
+						end, 100)
+					end)
+					return true
+				end,
+			})
+			:find()
+	end, {})
+
+	vim.api.nvim_create_user_command("PRDiff", function()
+		-- Show full diff of all PR changes in Fugitive
+		vim.cmd("Git diff origin/main...HEAD")
+	end, {})
+
+	-- Toggle between PR mode and normal mode for gitsigns hunk walking
+	vim.api.nvim_create_user_command("PRMode", function()
+		local gs = require("gitsigns")
+		local config = require("gitsigns.config").config
+		if config.base == nil or config.base == "" then
+			-- Switch to PR mode: compare against origin/main
+			gs.change_base("origin/main", true)
+			vim.notify("GitSigns: PR mode (]c/[c walks PR hunks vs origin/main)", vim.log.levels.INFO)
+		else
+			-- Switch back to normal mode: compare against HEAD
+			gs.change_base(nil, true)
+			vim.notify("GitSigns: Normal mode (]c/[c walks uncommitted changes)", vim.log.levels.INFO)
+		end
+	end, {})
+
+	-- Debug command to check gitsigns status
+	vim.api.nvim_create_user_command("PRDebug", function()
+		local gs = require("gitsigns")
+		local config = require("gitsigns.config").config
+		print("GitSigns base: " .. (config.base or "nil (showing uncommitted changes)"))
+
+		-- Check for hunks in current buffer
+		local hunks = vim.b.gitsigns_status_dict or {}
+		print("Hunks: " .. vim.inspect(hunks))
+
+		-- Check ]c mapping
+		local maps = vim.api.nvim_buf_get_keymap(0, "n")
+		for _, map in ipairs(maps) do
+			if map.lhs == "]c" then
+				print("]c mapping found: " .. vim.inspect(map))
+			end
+		end
+
+		-- Trigger refresh
+		gs.refresh()
+		print("Refreshed gitsigns")
 	end, {})
 end
 
