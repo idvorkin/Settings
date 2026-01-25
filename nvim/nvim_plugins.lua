@@ -449,6 +449,88 @@ function ConfigureTelescopePlugins()
 		})
 	end, {})
 
+	-- ============================================================================
+	-- PR REVIEW WORKFLOW COMMANDS
+	-- ============================================================================
+	--
+	-- This section provides a comprehensive workflow for reviewing pull requests
+	-- in Neovim using GitSigns mode switching and Telescope pickers.
+	--
+	-- CONCEPT:
+	-- --------
+	-- GitSigns can compare your current buffer against different bases:
+	--   - Normal mode: base = nil (HEAD) → shows uncommitted changes
+	--   - PR mode: base = "origin/main" → shows all changes in your branch vs main
+	--
+	-- When you switch modes, the ]c and [c hunk navigation adapts automatically.
+	-- This lets you review PRs the same way you review uncommitted work.
+	--
+	-- COMMANDS:
+	-- ---------
+	-- :GitStatus   - Show uncommitted changes in Telescope, switch to normal mode
+	--                ]c/[c navigate uncommitted hunks only
+	--
+	-- :PRStatus    - Show all PR files in Telescope, switch to PR mode
+	--                ]c/[c navigate all changes vs origin/main
+	--                Preview shows git diff for each file
+	--
+	-- :PRDiff      - Show full diff of entire PR in Fugitive
+	--                Runs: git diff origin/main...HEAD
+	--
+	-- :Hunks       - Show all hunks in current buffer (Telescope picker)
+	--                Respects current mode (PR vs normal)
+	--                Actions: cc=stage, dd=reset
+	--
+	-- :PRMode      - Toggle between PR mode and normal mode
+	--                Use if you want to switch modes without opening pickers
+	--
+	-- :PRDebug     - Diagnostic info: current mode, hunks, mappings
+	--                Use if ]c/[c doesn't work as expected
+	--
+	-- WORKFLOW EXAMPLE:
+	-- -----------------
+	-- 1. Start reviewing a PR:
+	--      :PRStatus
+	--    → Opens Telescope with all changed files
+	--    → Automatically enters PR mode
+	--    → Preview shows diff for each file
+	--
+	-- 2. Select a file, press <CR> to open it
+	--    → File opens with GitSigns showing hunks vs origin/main
+	--    → ]c/[c to walk through all PR changes in this file
+	--
+	-- 3. Review hunks in current buffer:
+	--      :Hunks
+	--    → Telescope picker with all hunks in this file
+	--    → Navigate and preview each hunk
+	--
+	-- 4. Need to make local edits?
+	--      :GitStatus
+	--    → Switches to normal mode
+	--    → ]c/[c now shows only your uncommitted changes
+	--
+	-- 5. Back to PR review:
+	--      :PRMode
+	--    → Toggles back to PR mode
+	--    → ]c/[c shows PR changes again
+	--
+	-- TECHNICAL DETAILS:
+	-- ------------------
+	-- - Uses gitsigns.change_base() API to switch comparison target
+	-- - Mode state is global (affects all buffers)
+	-- - Automatic gitsigns.refresh() after file selection
+	-- - Telescope integration via telescope-gitsigns plugin
+	-- - Assumes base branch is "origin/main" (hardcoded)
+	--
+	-- LIMITATIONS:
+	-- ------------
+	-- - Hardcoded to "origin/main" (may need customization for master/develop)
+	-- - Git commands are synchronous (may freeze on large repos)
+	-- - Requires origin/main to exist (fetch first if missing)
+	-- - 100ms delay for gitsigns refresh is heuristic
+	--
+	-- ============================================================================
+
 	-- GitStatus: show uncommitted changes and switch to normal mode
 	vim.api.nvim_create_user_command("GitStatus", function()
 		-- Switch to normal mode: show hunks vs HEAD (uncommitted changes)
