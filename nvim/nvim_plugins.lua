@@ -400,16 +400,12 @@ function ConfigureTelescopePlugins()
 		"file_browser",
 		"frecency",
 		"gh",
+		"git_signs",
 	}
 
 	for _, extension in ipairs(extensions) do
 		require("telescope").load_extension(extension)
 	end
-
-	-- Load git_signs extension if available
-	pcall(function()
-		require("telescope").load_extension("git_signs")
-	end)
 
 	vim.cmd([[
     cab ls :Telescope buffers<CR>
