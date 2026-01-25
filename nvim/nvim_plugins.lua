@@ -460,7 +460,7 @@ function ConfigureTelescopePlugins()
 	-- --------
 	-- GitSigns can compare your current buffer against different bases:
 	--   - Normal mode: base = nil (HEAD) → shows uncommitted changes
-	--   - PR mode: base = "origin/main" → shows all changes in your branch vs main
+	--   - PR mode: base = "upstream/main" → shows all changes in your branch vs main
 	--
 	-- When you switch modes, the ]c and [c hunk navigation adapts automatically.
 	-- This lets you review PRs the same way you review uncommitted work.
@@ -471,11 +471,11 @@ function ConfigureTelescopePlugins()
 	--                ]c/[c navigate uncommitted hunks only
 	--
 	-- :PRStatus    - Show all PR files in Telescope, switch to PR mode
-	--                ]c/[c navigate all changes vs origin/main
+	--                ]c/[c navigate all changes vs upstream/main
 	--                Preview shows git diff for each file
 	--
 	-- :PRDiff      - Show full diff of entire PR in Fugitive
-	--                Runs: git diff origin/main...HEAD
+	--                Runs: git diff upstream/main...HEAD
 	--
 	-- :Hunks       - Show all hunks in current buffer (Telescope picker)
 	--                Respects current mode (PR vs normal)
@@ -496,7 +496,7 @@ function ConfigureTelescopePlugins()
 	--    → Preview shows diff for each file
 	--
 	-- 2. Select a file, press <CR> to open it
-	--    → File opens with GitSigns showing hunks vs origin/main
+	--    → File opens with GitSigns showing hunks vs upstream/main
 	--    → ]c/[c to walk through all PR changes in this file
 	--
 	-- 3. Review hunks in current buffer:
@@ -520,13 +520,13 @@ function ConfigureTelescopePlugins()
 	-- - Mode state is global (affects all buffers)
 	-- - Automatic gitsigns.refresh() after file selection
 	-- - Telescope integration via telescope-gitsigns plugin
-	-- - Assumes base branch is "origin/main" (hardcoded)
+	-- - Assumes base branch is "upstream/main" (hardcoded)
 	--
 	-- LIMITATIONS:
 	-- ------------
-	-- - Hardcoded to "origin/main" (may need customization for master/develop)
+	-- - Hardcoded to "upstream/main" (may need customization for master/develop)
 	-- - Git commands are synchronous (may freeze on large repos)
-	-- - Requires origin/main to exist (fetch first if missing)
+	-- - Requires upstream/main to exist (fetch first if missing)
 	-- - 100ms delay for gitsigns refresh is heuristic
 	--
 	-- ============================================================================
@@ -544,10 +544,10 @@ function ConfigureTelescopePlugins()
 
 	-- PR-related commands for viewing all changes in current PR
 	vim.api.nvim_create_user_command("PRStatus", function()
-		-- Switch to PR mode: show hunks vs origin/main
+		-- Switch to PR mode: show hunks vs upstream/main
 		local gs = require("gitsigns")
-		gs.change_base("origin/main", true)
-		vim.notify("GitSigns: PR mode (]c/[c walks PR hunks vs origin/main)", vim.log.levels.INFO)
+		gs.change_base("upstream/main", true)
+		vim.notify("GitSigns: PR mode (]c/[c walks PR hunks vs upstream/main)", vim.log.levels.INFO)
 
 		-- Telescope picker showing all files changed in PR with diff preview
 		local previewers = require("telescope.previewers")
@@ -560,10 +560,10 @@ function ConfigureTelescopePlugins()
 		pickers
 			.new({}, {
 				prompt_title = "PR Changed Files",
-				finder = finders.new_oneshot_job({ "git", "diff", "--name-only", "origin/main...HEAD" }),
+				finder = finders.new_oneshot_job({ "git", "diff", "--name-only", "upstream/main...HEAD" }),
 				previewer = previewers.new_termopen_previewer({
 					get_command = function(entry)
-						return { "git", "diff", "origin/main...HEAD", "--color=always", "--", entry.value }
+						return { "git", "diff", "upstream/main...HEAD", "--color=always", "--", entry.value }
 					end,
 				}),
 				sorter = conf.file_sorter({}),
@@ -585,7 +585,7 @@ function ConfigureTelescopePlugins()
 
 	vim.api.nvim_create_user_command("PRDiff", function()
 		-- Show full diff of all PR changes in Fugitive
-		vim.cmd("Git diff origin/main...HEAD")
+		vim.cmd("Git diff upstream/main...HEAD")
 	end, {})
 
 	-- Toggle between PR mode and normal mode for gitsigns hunk walking
@@ -593,9 +593,9 @@ function ConfigureTelescopePlugins()
 		local gs = require("gitsigns")
 		local config = require("gitsigns.config").config
 		if config.base == nil or config.base == "" then
-			-- Switch to PR mode: compare against origin/main
-			gs.change_base("origin/main", true)
-			vim.notify("GitSigns: PR mode (]c/[c walks PR hunks vs origin/main)", vim.log.levels.INFO)
+			-- Switch to PR mode: compare against upstream/main
+			gs.change_base("upstream/main", true)
+			vim.notify("GitSigns: PR mode (]c/[c walks PR hunks vs upstream/main)", vim.log.levels.INFO)
 		else
 			-- Switch back to normal mode: compare against HEAD
 			gs.change_base(nil, true)
