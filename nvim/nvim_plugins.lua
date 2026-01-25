@@ -389,6 +389,7 @@ function TelescopePlugins()
 				{ "nvim-lua/plenary.nvim" },
 			},
 		},
+		"radyz/telescope-gitsigns", -- Telescope picker for git hunks
 	}
 end
 plugins = appendTables(plugins, TelescopePlugins())
@@ -399,6 +400,7 @@ function ConfigureTelescopePlugins()
 		"file_browser",
 		"frecency",
 		"gh",
+		"git_signs",
 	}
 
 	for _, extension in ipairs(extensions) do
@@ -409,7 +411,6 @@ function ConfigureTelescopePlugins()
     cab ls :Telescope buffers<CR>
     command! Gitfiles Telescope git_files
     command! IMessageChat :lua require('nvim-messages').imessage()
-    command! GitStatus Telescope git_status
     command! Registers Telescope registers
     command! History Telescope command_history
     command! LiveGrep Telescope live_grep
@@ -424,6 +425,7 @@ function ConfigureTelescopePlugins()
     command! FileBrowser  Telescope file_browser path=%:p:h select_buffer=true
     command! Gist Telescope gh gist limit=20
     command! Issues Telescope gh issues
+    command! Hunks Telescope git_signs git_signs
     ]])
 
 	-- Configure Tags and BTags to show full symbol names without clipping
@@ -441,6 +443,183 @@ function ConfigureTelescopePlugins()
 			symbol_width = 80, -- Increase symbol name width to show full names
 			symbol_type_width = 1, -- Minimize symbol type column to 1 character
 		})
+	end, {})
+
+	-- ============================================================================
+	-- PR REVIEW WORKFLOW COMMANDS
+	-- ============================================================================
+	--
+	-- This section provides a comprehensive workflow for reviewing pull requests
+	-- in Neovim using GitSigns mode switching and Telescope pickers.
+	--
+	-- CONCEPT:
+	-- --------
+	-- GitSigns can compare your current buffer against different bases:
+	--   - Normal mode: base = nil (HEAD) → shows uncommitted changes
+	--   - PR mode: base = "upstream/main" → shows all changes in your branch vs main
+	--
+	-- When you switch modes, the ]c and [c hunk navigation adapts automatically.
+	-- This lets you review PRs the same way you review uncommitted work.
+	--
+	-- COMMANDS:
+	-- ---------
+	-- :GitStatus   - Show uncommitted changes in Telescope, switch to normal mode
+	--                ]c/[c navigate uncommitted hunks only
+	--
+	-- :PRStatus    - Show all PR files in Telescope, switch to PR mode
+	--                ]c/[c navigate all changes vs upstream/main
+	--                Preview shows git diff for each file
+	--
+	-- :PRDiff      - Show full diff of entire PR in Fugitive
+	--                Runs: git diff upstream/main...HEAD
+	--
+	-- :Hunks       - Show all hunks in current buffer (Telescope picker)
+	--                Respects current mode (PR vs normal)
+	--                Actions: cc=stage, dd=reset
+	--
+	-- :PRMode      - Toggle between PR mode and normal mode
+	--                Use if you want to switch modes without opening pickers
+	--
+	-- :PRDebug     - Diagnostic info: current mode, hunks, mappings
+	--                Use if ]c/[c doesn't work as expected
+	--
+	-- WORKFLOW EXAMPLE:
+	-- -----------------
+	-- 1. Start reviewing a PR:
+	--      :PRStatus
+	--    → Opens Telescope with all changed files
+	--    → Automatically enters PR mode
+	--    → Preview shows diff for each file
+	--
+	-- 2. Select a file, press <CR> to open it
+	--    → File opens with GitSigns showing hunks vs upstream/main
+	--    → ]c/[c to walk through all PR changes in this file
+	--
+	-- 3. Review hunks in current buffer:
+	--      :Hunks
+	--    → Telescope picker with all hunks in this file
+	--    → Navigate and preview each hunk
+	--
+	-- 4. Need to make local edits?
+	--      :GitStatus
+	--    → Switches to normal mode
+	--    → ]c/[c now shows only your uncommitted changes
+	--
+	-- 5. Back to PR review:
+	--      :PRMode
+	--    → Toggles back to PR mode
+	--    → ]c/[c shows PR changes again
+	--
+	-- TECHNICAL DETAILS:
+	-- ------------------
+	-- - Uses gitsigns.change_base() API to switch comparison target
+	-- - Mode state is global (affects all buffers)
+	-- - Automatic gitsigns.refresh() after file selection
+	-- - Telescope integration via telescope-gitsigns plugin
+	-- - Assumes base branch is "upstream/main" (hardcoded)
+	--
+	-- LIMITATIONS:
+	-- ------------
+	-- - Hardcoded to "upstream/main" (may need customization for master/develop)
+	-- - Git commands are synchronous (may freeze on large repos)
+	-- - Requires upstream/main to exist (fetch first if missing)
+	-- - 100ms delay for gitsigns refresh is heuristic
+	--
+	-- ============================================================================
+
+	-- GitStatus: show uncommitted changes and switch to normal mode
+	vim.api.nvim_create_user_command("GitStatus", function()
+		-- Switch to normal mode: show hunks vs HEAD (uncommitted changes)
+		local gs = require("gitsigns")
+		gs.change_base(nil, true)
+		vim.notify("GitSigns: Normal mode (]c/[c walks uncommitted changes)", vim.log.levels.INFO)
+
+		-- Telescope picker showing uncommitted changes
+		require("telescope.builtin").git_status()
+	end, {})
+
+	-- PR-related commands for viewing all changes in current PR
+	vim.api.nvim_create_user_command("PRStatus", function()
+		-- Switch to PR mode: show hunks vs upstream/main
+		local gs = require("gitsigns")
+		gs.change_base("upstream/main", true)
+		vim.notify("GitSigns: PR mode (]c/[c walks PR hunks vs upstream/main)", vim.log.levels.INFO)
+
+		-- Telescope picker showing all files changed in PR with diff preview
+		local previewers = require("telescope.previewers")
+		local pickers = require("telescope.pickers")
+		local finders = require("telescope.finders")
+		local conf = require("telescope.config").values
+		local actions = require("telescope.actions")
+		local action_state = require("telescope.actions.state")
+
+		pickers
+			.new({}, {
+				prompt_title = "PR Changed Files",
+				finder = finders.new_oneshot_job({ "git", "diff", "--name-only", "upstream/main...HEAD" }),
+				previewer = previewers.new_termopen_previewer({
+					get_command = function(entry)
+						return { "git", "diff", "upstream/main...HEAD", "--color=always", "--", entry.value }
+					end,
+				}),
+				sorter = conf.file_sorter({}),
+				attach_mappings = function(prompt_bufnr, map)
+					actions.select_default:replace(function()
+						actions.close(prompt_bufnr)
+						local selection = action_state.get_selected_entry()
+						vim.cmd("edit " .. selection[1])
+						-- Refresh gitsigns after opening file to show hunks with new base
+						vim.defer_fn(function()
+							require("gitsigns").refresh()
+						end, 100)
+					end)
+					return true
+				end,
+			})
+			:find()
+	end, {})
+
+	vim.api.nvim_create_user_command("PRDiff", function()
+		-- Show full diff of all PR changes in Fugitive
+		vim.cmd("Git diff upstream/main...HEAD")
+	end, {})
+
+	-- Toggle between PR mode and normal mode for gitsigns hunk walking
+	vim.api.nvim_create_user_command("PRMode", function()
+		local gs = require("gitsigns")
+		local config = require("gitsigns.config").config
+		if config.base == nil or config.base == "" then
+			-- Switch to PR mode: compare against upstream/main
+			gs.change_base("upstream/main", true)
+			vim.notify("GitSigns: PR mode (]c/[c walks PR hunks vs upstream/main)", vim.log.levels.INFO)
+		else
+			-- Switch back to normal mode: compare against HEAD
+			gs.change_base(nil, true)
+			vim.notify("GitSigns: Normal mode (]c/[c walks uncommitted changes)", vim.log.levels.INFO)
+		end
+	end, {})
+
+	-- Debug command to check gitsigns status
+	vim.api.nvim_create_user_command("PRDebug", function()
+		local gs = require("gitsigns")
+		local config = require("gitsigns.config").config
+		print("GitSigns base: " .. (config.base or "nil (showing uncommitted changes)"))
+
+		-- Check for hunks in current buffer
+		local hunks = vim.b.gitsigns_status_dict or {}
+		print("Hunks: " .. vim.inspect(hunks))
+
+		-- Check ]c mapping
+		local maps = vim.api.nvim_buf_get_keymap(0, "n")
+		for _, map in ipairs(maps) do
+			if map.lhs == "]c" then
+				print("]c mapping found: " .. vim.inspect(map))
+			end
+		end
+
+		-- Trigger refresh
+		gs.refresh()
+		print("Refreshed gitsigns")
 	end, {})
 end
 
