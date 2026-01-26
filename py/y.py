@@ -1,4 +1,4 @@
-#!uv run
+#!/opt/homebrew/bin/uv run
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
@@ -127,6 +127,16 @@ def get_cached_commands_list() -> list[tuple[str, str]] | None:
         return None
 
 
+def _make_item(
+    title: str, subtitle: str, arg: str, autocomplete: str | None = None
+) -> dict:
+    """Build an Alfred item dict, excluding None values."""
+    item = {"title": title, "subtitle": subtitle, "arg": arg}
+    if autocomplete is not None:
+        item["autocomplete"] = autocomplete
+    return item
+
+
 def fast_alfred_complete(query: str) -> str:
     """Fast path for alfred-complete using cached commands."""
     commands = get_cached_commands_list()
@@ -140,33 +150,19 @@ def fast_alfred_complete(query: str) -> str:
     items = []
 
     if len(parts) == 0:
-        # Show all commands
+        # Show all commands - all get autocomplete (with space if has params, without if not)
         for name, subtitle in commands:
             cmd_key = name.replace("-", "_")
-            autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else None
-            items.append(
-                {
-                    "title": name,
-                    "subtitle": subtitle,
-                    "arg": name,
-                    "autocomplete": autocomplete,
-                }
-            )
+            autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else name
+            items.append(_make_item(name, subtitle, name, autocomplete))
     elif len(parts) == 1 and not has_trailing_space:
         # Partial command - filter matching commands
         prefix = parts[0].lower()
         for name, subtitle in commands:
             if name.lower().startswith(prefix) or prefix in name.lower():
                 cmd_key = name.replace("-", "_")
-                autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else None
-                items.append(
-                    {
-                        "title": name,
-                        "subtitle": subtitle,
-                        "arg": name,
-                        "autocomplete": autocomplete,
-                    }
-                )
+                autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else name
+                items.append(_make_item(name, subtitle, name, autocomplete))
     else:
         # Command entered, show parameter completions
         cmd = parts[0].replace("-", "_")
@@ -200,35 +196,21 @@ def fast_alfred_complete(query: str) -> str:
                         )
 
                         items.append(
-                            {
-                                "title": option,
-                                "subtitle": f"{param_name} for {cmd_display}",
-                                "arg": arg,
-                                "autocomplete": autocomplete,
-                            }
+                            _make_item(
+                                option,
+                                f"{param_name} for {cmd_display}",
+                                arg,
+                                autocomplete,
+                            )
                         )
             else:
                 cmd_display = cmd.replace("_", "-")
                 arg = f"{cmd_display} {' '.join(param_values)}"
-                items.append(
-                    {
-                        "title": f"Run: {arg}",
-                        "subtitle": "Press Enter to execute",
-                        "arg": arg,
-                        "autocomplete": None,
-                    }
-                )
+                items.append(_make_item(f"Run: {arg}", "Press Enter to execute", arg))
         else:
             cmd_display = cmd.replace("_", "-")
             arg = query_stripped
-            items.append(
-                {
-                    "title": f"Run: {arg}",
-                    "subtitle": "Press Enter to execute",
-                    "arg": arg,
-                    "autocomplete": None,
-                }
-            )
+            items.append(_make_item(f"Run: {arg}", "Press Enter to execute", arg))
 
     return json.dumps({"items": items}, indent=2)
 
@@ -1023,7 +1005,7 @@ def alfred():
         subtitle = doc.split("\n")[0] if doc else name
         items.append(AlfredItems.Item(title=name, subtitle=subtitle, arg=name))
     alfred_items = AlfredItems(items=items)
-    json_output = alfred_items.model_dump_json(indent=4)
+    json_output = alfred_items.model_dump_json(indent=4, exclude_none=True)
 
     # Save to cache for future use
     save_commands_cache(json_output)
@@ -2211,7 +2193,7 @@ def alfred_complete(
             )
 
     alfred_items = AlfredItems(items=items)
-    print(alfred_items.model_dump_json(indent=2))
+    print(alfred_items.model_dump_json(indent=2, exclude_none=True))
 
 
 if __name__ == "__main__":
