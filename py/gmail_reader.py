@@ -682,10 +682,12 @@ def download_pdf(url: str, output_path: Path, warm_first: bool = True) -> bool:
 
     try:
         if warm_first:
-            console.print("[cyan]Warming up download link...[/cyan]")
+            console.print(
+                f"[cyan]Warming up download link for {output_path.name}...[/cyan]"
+            )
             ping_url(url, attempts=2, delay=1)
 
-        console.print("[cyan]Downloading PDF...[/cyan]")
+        console.print(f"[cyan]Downloading {output_path.name}...[/cyan]")
         response = requests.get(url, timeout=60, allow_redirects=True)
         response.raise_for_status()
 
@@ -693,7 +695,7 @@ def download_pdf(url: str, output_path: Path, warm_first: bool = True) -> bool:
         content_type = response.headers.get("content-type", "")
         if "pdf" not in content_type.lower() and not url.lower().endswith(".pdf"):
             console.print(
-                f"[yellow]Warning: Content-Type is '{content_type}', may not be a PDF[/yellow]"
+                f"[yellow]Warning: {output_path.name} Content-Type is '{content_type}', may not be a PDF[/yellow]"
             )
 
         # Write the file
@@ -706,10 +708,10 @@ def download_pdf(url: str, output_path: Path, warm_first: bool = True) -> bool:
         return True
 
     except requests.RequestException as e:
-        console.print(f"[red]Download failed:[/red] {e}")
+        console.print(f"[red]Download failed for {output_path.name}:[/red] {e}")
         return False
     except IOError as e:
-        console.print(f"[red]Failed to save file:[/red] {e}")
+        console.print(f"[red]Failed to save {output_path.name}:[/red] {e}")
         return False
 
 
@@ -1256,7 +1258,9 @@ def notebook(
             success_count = 0
             for selected_email, selected_url in selected_urls:
                 pdf_path = build_pdf_output_path(selected_email, out_dir)
-                console.print(f"\n[bold]Downloading:[/bold] {selected_email.subject}")
+                console.print(
+                    f"\n[bold]Downloading:[/bold] {pdf_path.name} ({selected_email.subject})"
+                )
                 if download_pdf(selected_url, pdf_path):
                     success_count += 1
             console.print(
