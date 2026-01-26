@@ -544,22 +544,24 @@ def copy_to_clipboard(text):
         return False
 
 
-def ping_url(url, attempts=2, delay=1):
+def ping_url(url, attempts=2, delay=1, filename=None):
     """Ping a URL to warm it up
 
     Args:
         url: URL to ping
         attempts: Number of ping attempts
         delay: Delay between attempts in seconds
+        filename: Optional filename to include in messages
 
     Returns:
         True if successful, False otherwise
     """
+    file_info = f" for {filename}" if filename else ""
     try:
         import requests
 
         console.print(
-            f"[cyan]Warming up URL with {attempts} pings (delay: {delay}s)...[/cyan]"
+            f"[cyan]Warming up URL{file_info} with {attempts} pings (delay: {delay}s)...[/cyan]"
         )
 
         success = False
@@ -567,7 +569,7 @@ def ping_url(url, attempts=2, delay=1):
             try:
                 response = requests.head(url, timeout=5, allow_redirects=True)
                 console.print(
-                    f"[cyan]Ping {i + 1}/{attempts}: Status {response.status_code}[/cyan]"
+                    f"[cyan]Ping{file_info} {i + 1}/{attempts}: Status {response.status_code}[/cyan]"
                 )
                 if response.status_code < 400:
                     success = True
@@ -579,7 +581,7 @@ def ping_url(url, attempts=2, delay=1):
                             allow_redirects=True,
                         )
                         console.print(
-                            f"[cyan]Ping {i + 1}/{attempts} (GET): Status {response.status_code}[/cyan]"
+                            f"[cyan]Ping{file_info} {i + 1}/{attempts} (GET): Status {response.status_code}[/cyan]"
                         )
                         if response.status_code < 400:
                             success = True
@@ -587,7 +589,7 @@ def ping_url(url, attempts=2, delay=1):
                         response.close()
             except Exception as e:
                 console.print(
-                    f"[yellow]Ping {i + 1}/{attempts} failed: {str(e)}[/yellow]"
+                    f"[yellow]Ping{file_info} {i + 1}/{attempts} failed: {str(e)}[/yellow]"
                 )
 
             if i < attempts - 1:  # Don't sleep after the last attempt
@@ -595,7 +597,7 @@ def ping_url(url, attempts=2, delay=1):
 
         return success
     except Exception as e:
-        console.print(f"[yellow]URL warm-up failed: {str(e)}[/yellow]")
+        console.print(f"[yellow]URL warm-up{file_info} failed: {str(e)}[/yellow]")
         return False
 
 
@@ -682,10 +684,7 @@ def download_pdf(url: str, output_path: Path, warm_first: bool = True) -> bool:
 
     try:
         if warm_first:
-            console.print(
-                f"[cyan]Warming up download link for {output_path.name}...[/cyan]"
-            )
-            ping_url(url, attempts=2, delay=1)
+            ping_url(url, attempts=2, delay=1, filename=output_path.name)
 
         console.print(f"[cyan]Downloading {output_path.name}...[/cyan]")
         response = requests.get(url, timeout=60, allow_redirects=True)
