@@ -107,6 +107,153 @@ PARAM_COMPLETIONS: dict[str, dict[str, list[str]]] = {
     },
 }
 
+# Commands with dynamic completions (queried at runtime)
+DYNAMIC_COMPLETION_COMMANDS = {"ter"}
+
+
+def _get_iterm_tabs() -> list[tuple[str, str, str]]:
+    """Get iTerm2 tabs via AppleScript. Returns list of (title, 'iTerm2 tab', 'iterm:win:tab:session')."""
+    import subprocess as sp
+
+    script = """
+    tell application "iTerm2"
+        set output to ""
+        set winIdx to 0
+        repeat with w in windows
+            set winIdx to winIdx + 1
+            set tabIdx to 0
+            repeat with t in tabs of w
+                set tabIdx to tabIdx + 1
+                set sessIdx to 0
+                repeat with s in sessions of t
+                    set sessIdx to sessIdx + 1
+                    set output to output & (name of s) & "|||" & winIdx & ":" & tabIdx & ":" & sessIdx & "\\n"
+                end repeat
+            end repeat
+        end repeat
+        return output
+    end tell
+    """
+    try:
+        result = sp.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+        if result.returncode != 0:
+            return []
+
+        tabs = []
+        for line in result.stdout.strip().split("\n"):
+            if "|||" in line:
+                title, coords = line.split("|||", 1)
+                # coords is "win:tab:session"
+                tabs.append((title.strip(), "iTerm2 tab", f"iterm:{coords.strip()}"))
+        return tabs
+    except Exception:
+        return []
+
+
+def _get_ghostty_tabs() -> list[tuple[str, str, str]]:
+    """Get Ghostty tabs via Window menu. Returns list of (title, 'Ghostty tab', 'ghostty:title')."""
+    import subprocess as sp
+
+    script = """
+    tell application "System Events"
+        tell process "Ghostty"
+            get name of every menu item of menu "Window" of menu bar 1
+        end tell
+    end tell
+    """
+    try:
+        result = sp.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+        if result.returncode != 0:
+            return []
+
+        tabs = []
+        # Parse the comma-separated list from AppleScript
+        items = result.stdout.strip().split(", ")
+        for item in items:
+            # Tab entries look like terminal titles, skip menu commands
+            # Menu commands are things like "Minimize", "Zoom", etc.
+            skip_items = {
+                "Minimize",
+                "Minimize All",
+                "Zoom",
+                "Zoom All",
+                "Fill",
+                "Center",
+                "missing value",
+                "Move & Resize",
+                "Full Screen Tile",
+                "Remove Window from Set",
+                "Toggle Full Screen",
+                "Show/Hide All Terminals",
+                "Show Previous Tab",
+                "Show Next Tab",
+                "Move Tab to New Window",
+                "Merge All Windows",
+                "Zoom Split",
+                "Select Previous Split",
+                "Select Next Split",
+                "Select Split",
+                "Resize Split",
+                "Return To Default Size",
+                "Float on Top",
+                "Use as Default",
+                "Bring All to Front",
+                "Arrange in Front",
+            }
+            if item not in skip_items and item:
+                tabs.append((item, "Ghostty tab", f"ghostty:{item}"))
+        return tabs
+    except Exception:
+        return []
+
+
+def _get_terminal_windows_for_completion() -> list[tuple[str, str, str]]:
+    """Get terminal windows/tabs for completion. Returns list of (title, description, identifier)."""
+    import subprocess as sp
+
+    results = []
+
+    # Get iTerm2 tabs (more granular than yabai windows)
+    results.extend(_get_iterm_tabs())
+
+    # Get Ghostty tabs from Window menu
+    results.extend(_get_ghostty_tabs())
+
+    # Get other terminal windows from yabai (Terminal, Warp, etc. - not Ghostty/iTerm)
+    terminal_apps_yabai = ["Terminal", "Warp", "Alacritty", "kitty"]
+    try:
+        result = sp.run(
+            ["yabai", "-m", "query", "--windows"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if result.returncode == 0:
+            import json as j
+
+            windows = j.loads(result.stdout)
+            for win in windows:
+                app = win.get("app", "")
+                if app in terminal_apps_yabai and not win.get("is-minimized", False):
+                    title = win.get("title", "")
+                    win_id = win.get("id", 0)
+                    display_title = title[:50] + "..." if len(title) > 50 else title
+                    results.append((display_title, f"{app} window", f"yabai:{win_id}"))
+    except Exception:
+        pass
+
+    return results
+
 
 def get_cached_commands_list() -> list[tuple[str, str]] | None:
     """Load command list from cache if valid. Returns list of (name, subtitle) tuples."""
@@ -139,21 +286,62 @@ def _make_item(
 
 def fast_alfred_complete(query: str) -> str:
     """Fast path for alfred-complete using cached commands."""
-    commands = get_cached_commands_list()
-    if commands is None:
-        return None  # Fall back to slow path
-
     has_trailing_space = query.endswith(" ")
     query_stripped = query.strip()
     parts = query_stripped.split() if query_stripped else []
 
+    # Handle dynamic completions first (before cache check)
+    # These need to run even without cache since they query live data
+    if len(parts) >= 1:
+        cmd = parts[0].replace("-", "_")
+        if cmd in DYNAMIC_COMPLETION_COMMANDS:
+            items = []
+            param_values = parts[1:] if len(parts) > 1 else []
+
+            if cmd == "ter":
+                terminal_windows = _get_terminal_windows_for_completion()
+                filter_text = (
+                    param_values[0].lower()
+                    if param_values and not has_trailing_space
+                    else ""
+                )
+
+                for title, description, identifier in terminal_windows:
+                    if not filter_text or filter_text in title.lower():
+                        arg = f"ter {identifier}"
+                        items.append(
+                            _make_item(
+                                title,
+                                description,
+                                arg,
+                                None,
+                            )
+                        )
+
+                if not items:
+                    items.append(
+                        _make_item(
+                            "No terminal windows found", "Try opening a terminal", "ter"
+                        )
+                    )
+
+            return json.dumps({"items": items}, indent=2)
+
+    # Now check cache for regular completions
+    commands = get_cached_commands_list()
+    if commands is None:
+        return None  # Fall back to slow path
+
     items = []
+
+    def has_completions(cmd_key: str) -> bool:
+        return cmd_key in PARAM_COMPLETIONS or cmd_key in DYNAMIC_COMPLETION_COMMANDS
 
     if len(parts) == 0:
         # Show all commands - all get autocomplete (with space if has params, without if not)
         for name, subtitle in commands:
             cmd_key = name.replace("-", "_")
-            autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else name
+            autocomplete = f"{name} " if has_completions(cmd_key) else name
             items.append(_make_item(name, subtitle, name, autocomplete))
     elif len(parts) == 1 and not has_trailing_space:
         # Partial command - filter matching commands
@@ -161,13 +349,15 @@ def fast_alfred_complete(query: str) -> str:
         for name, subtitle in commands:
             if name.lower().startswith(prefix) or prefix in name.lower():
                 cmd_key = name.replace("-", "_")
-                autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else name
+                autocomplete = f"{name} " if has_completions(cmd_key) else name
                 items.append(_make_item(name, subtitle, name, autocomplete))
     else:
         # Command entered, show parameter completions
         cmd = parts[0].replace("-", "_")
         param_values = parts[1:] if len(parts) > 1 else []
 
+        # Dynamic completions are handled at the top of the function
+        # so we only handle static PARAM_COMPLETIONS here
         if cmd in PARAM_COMPLETIONS:
             param_names = list(PARAM_COMPLETIONS[cmd].keys())
 
@@ -1011,6 +1201,36 @@ def alfred():
     save_commands_cache(json_output)
 
     print(json_output)
+
+
+@app.command()
+def alfred_ter():
+    """Generate JSON output of terminal tabs for Alfred workflow (use with 'yt' keyword)"""
+    import builtins  # Use standard print, not Rich's print (which interprets [...] as markup)
+
+    terminals = _get_terminal_windows_for_completion()
+
+    items = []
+    for title, description, identifier in terminals:
+        items.append(
+            AlfredItems.Item(
+                title=title,
+                subtitle=description,
+                arg=f"ter {identifier}",
+            )
+        )
+
+    if not items:
+        items.append(
+            AlfredItems.Item(
+                title="No terminals found",
+                subtitle="Open a terminal first",
+                arg="",
+            )
+        )
+
+    alfred_items = AlfredItems(items=items)
+    builtins.print(alfred_items.model_dump_json(indent=4, exclude_none=True))
 
 
 # Flow constants
@@ -2043,6 +2263,212 @@ def cliptofile():
     pyperclip.copy(full_path)
     print(f"[green]Image saved to: {full_path}[/green]")
     print("[green]Full path copied to clipboard![/green]")
+
+
+def _focus_iterm_tab(coords: str) -> bool:
+    """Focus an iTerm2 tab by coordinates (win:tab:session). Returns True on success."""
+    parts = coords.split(":")
+    if len(parts) != 3:
+        return False
+    win_idx, tab_idx, sess_idx = parts
+
+    script = f"""
+    tell application "iTerm2"
+        activate
+        set targetWindow to window {win_idx}
+        tell targetWindow
+            select tab {tab_idx}
+            tell tab {tab_idx}
+                select session {sess_idx}
+            end tell
+        end tell
+    end tell
+    """
+    result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+    return result.returncode == 0
+
+
+def _focus_ghostty_tab(title: str) -> bool:
+    """Focus a Ghostty tab by clicking its Window menu item. Returns True on success."""
+    # Escape quotes in title for AppleScript
+    escaped_title = title.replace('"', '\\"')
+
+    script = f'''
+    tell application "Ghostty"
+        activate
+        reopen
+    end tell
+    delay 0.2
+    tell application "System Events"
+        tell process "Ghostty"
+            set frontmost to true
+            click menu item "{escaped_title}" of menu "Window" of menu bar 1
+        end tell
+    end tell
+    '''
+    result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+    return result.returncode == 0
+
+
+def _ter_log(msg: str):
+    """Log to ~/tmp/y_ter.log for debugging."""
+    from datetime import datetime
+
+    log_file = Path.home() / "tmp" / "y_ter.log"
+    try:
+        with open(log_file, "a") as f:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"[{timestamp}] {msg}\n")
+    except Exception:
+        pass
+
+
+@app.command()
+def ter(
+    target: Annotated[
+        str, typer.Argument(help="Tab identifier, window ID, or title substring")
+    ] = "",
+    list_only: Annotated[
+        bool, typer.Option("--list", "-l", help="List terminals without focusing")
+    ] = False,
+    debug: Annotated[
+        bool,
+        typer.Option("--debug", "-d", help="Enable debug logging to ~/tmp/y_ter.log"),
+    ] = False,
+):
+    """Switch focus to terminal tab/window
+
+    Without arguments: lists available terminals/tabs.
+    With identifier: focuses that specific tab/window (from Alfred completions).
+    With text: searches for terminal with matching title and focuses it.
+
+    Identifier formats:
+      iterm:W:T:S  - iTerm2 window W, tab T, session S
+      ghostty:TITLE - Ghostty tab by title
+      yabai:ID     - Yabai window ID
+      <number>     - Yabai window ID (legacy)
+      <text>       - Search by title substring
+
+    Debug log: ~/tmp/y_ter.log
+    """
+    if debug:
+        _ter_log(f"ter called with target='{target}' list_only={list_only}")
+
+    terminal_apps = ["Ghostty", "iTerm2", "Terminal", "Warp", "Alacritty", "kitty"]
+
+    # No target - list available terminals
+    if not target or list_only:
+        from rich.markup import escape
+
+        terminals = _get_terminal_windows_for_completion()
+        if not terminals:
+            print("[yellow]No terminal windows found[/yellow]")
+            return
+        if debug:
+            _ter_log(f"Listing {len(terminals)} terminals")
+        print("[bold]Available terminals:[/bold]")
+        for title, description, identifier in terminals:
+            # Escape Rich markup in titles and identifiers (e.g., [mosh] would be interpreted as markup)
+            safe_title = escape(title)
+            safe_id = escape(identifier)
+            print(f"  {safe_title} [dim]({description})[/dim]")
+            print(f"    [dim]y ter {safe_id}[/dim]")
+        return
+
+    # Handle specific identifier formats
+    if target:
+        if debug:
+            _ter_log(f"Processing target: '{target}'")
+
+        # iTerm2 tab identifier
+        if target.startswith("iterm:"):
+            coords = target[6:]  # Remove "iterm:" prefix
+            if debug:
+                _ter_log(f"Focusing iTerm2 tab with coords: {coords}")
+            if _focus_iterm_tab(coords):
+                if debug:
+                    _ter_log("iTerm2 focus SUCCESS")
+                return
+            if debug:
+                _ter_log("iTerm2 focus FAILED")
+            print(f"[yellow]Failed to focus iTerm2 tab {coords}[/yellow]")
+            return
+
+        # Ghostty tab identifier
+        if target.startswith("ghostty:"):
+            title = target[8:]  # Remove "ghostty:" prefix
+            if debug:
+                _ter_log(f"Focusing Ghostty tab with title: '{title}'")
+            if _focus_ghostty_tab(title):
+                if debug:
+                    _ter_log("Ghostty focus SUCCESS")
+                return
+            if debug:
+                _ter_log("Ghostty focus FAILED")
+            print(f"[yellow]Failed to focus Ghostty tab '{title}'[/yellow]")
+            return
+
+        # Yabai window identifier
+        if target.startswith("yabai:"):
+            win_id = target[6:]  # Remove "yabai:" prefix
+            if debug:
+                _ter_log(f"Focusing yabai window with id: {win_id}")
+            call_yabai(f"-m window --focus {win_id}")
+            return
+
+        # Try as title substring FIRST - search iTerm tabs, Ghostty tabs, and yabai windows
+        target_lower = target.lower()
+        if debug:
+            _ter_log(f"Searching for title containing: '{target_lower}'")
+
+        # Search Ghostty tabs
+        for title, _, identifier in _get_ghostty_tabs():
+            if target_lower in title.lower():
+                if debug:
+                    _ter_log(f"Found Ghostty match: '{title}'")
+                ghostty_title = identifier[8:]  # Remove "ghostty:" prefix
+                if _focus_ghostty_tab(ghostty_title):
+                    if debug:
+                        _ter_log("Ghostty focus SUCCESS")
+                    return
+
+        # Search iTerm tabs
+        for title, _, identifier in _get_iterm_tabs():
+            if target_lower in title.lower():
+                if debug:
+                    _ter_log(f"Found iTerm match: '{title}'")
+                coords = identifier[6:]  # Remove "iterm:" prefix
+                if _focus_iterm_tab(coords):
+                    if debug:
+                        _ter_log("iTerm focus SUCCESS")
+                    return
+
+        # Search other terminal windows via yabai
+        try:
+            windows = get_windows().windows
+            for win in windows:
+                if win.app in terminal_apps and target_lower in win.title.lower():
+                    if debug:
+                        _ter_log(f"Found yabai match: '{win.title}' (id={win.id})")
+                    call_yabai(f"-m window --focus {win.id}")
+                    return
+        except Exception:
+            pass
+
+        # Last resort: try as plain window ID (legacy/backwards compat)
+        try:
+            win_id = int(target)
+            if debug:
+                _ter_log(f"Trying as yabai window ID: {win_id}")
+            call_yabai(f"-m window --focus {win_id}")
+            return
+        except ValueError:
+            pass
+        except Exception as e:
+            if debug:
+                _ter_log(f"Yabai window ID failed: {e}")
+
+        print(f"[yellow]No terminal matching '{target}'[/yellow]")
 
 
 @app.command()
