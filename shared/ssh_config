@@ -55,8 +55,9 @@ Host bedrock-4
     HostName mc.zacookiegames.com
     User ubuntu
 
+#OLD - Hostname devvm5807.prn0.facebook.com
 Host devbox
-    Hostname devvm5807.prn0.facebook.com
+    Hostname devvm28379.ftw0.facebook.com
     LocalForward 8087 devvm5807.prn0.facebook.com:8087
     LocalForward 8011 localhost:8011
     RemoteForward 2224 127.0.0.1:2224
