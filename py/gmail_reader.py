@@ -170,12 +170,12 @@ def authenticate():
                 str(credentials_path), SCOPES
             )
             creds = flow.run_local_server(port=0)
-        except Exception:
+        except Exception as e:
             from urllib.parse import urlparse, parse_qs
             from google_auth_oauthlib.flow import Flow
 
             console.print(
-                "[yellow]No browser available. Using manual auth flow.[/yellow]"
+                f"[yellow]Browser auth failed ({e}). Using manual auth flow.[/yellow]"
             )
             flow = Flow.from_client_secrets_file(
                 str(credentials_path), scopes=SCOPES, redirect_uri="http://localhost:1"
