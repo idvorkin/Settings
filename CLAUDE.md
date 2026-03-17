@@ -156,6 +156,14 @@ The repository uses these linters (configured in .pre-commit-config.yaml):
 4. Create PR using `gh pr create`
 5. Link PR to issue
 
+### Push Access
+The AI tools account (`idvorkin-ai-tools`) may not have push access to all repos. If a direct push is denied, push from a fork instead:
+```bash
+gh repo fork --remote-name fork
+git push fork <branch-name>
+gh pr create --head idvorkin-ai-tools:<branch-name>
+```
+
 ## Terminal Command Conventions
 
 ### Important Usage Notes

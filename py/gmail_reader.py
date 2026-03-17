@@ -86,9 +86,6 @@ class EmailMessage(BaseModel):
     body_html: Optional[str] = None
     labels: List[str] = []
 
-    class Config:
-        arbitrary_types_allowed = True
-
 
 def get_token_path():
     """Get the path to the token file"""
@@ -160,14 +157,46 @@ def authenticate():
                     "2. Create a new project\n"
                     "3. Enable the Gmail API\n"
                     "4. Create OAuth 2.0 credentials (Desktop app)\n"
-                    "5. Download the credentials.json file\n"
-                    f"6. Save it to: [bold]{credentials_path}[/bold]"
+                    "5. Go to Google Auth platform → Audience → Test users, add your Gmail address\n"
+                    "6. Download the credentials.json file\n"
+                    f"7. Save it to: [bold]{credentials_path}[/bold]"
                 )
             )
             raise typer.Exit(1)
 
-        flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
-        creds = flow.run_local_server(port=0)
+        # Try browser-based flow first, fall back to manual paste for headless servers
+        try:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                str(credentials_path), SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+        except Exception as e:
+            from urllib.parse import urlparse, parse_qs
+            from google_auth_oauthlib.flow import Flow
+
+            console.print(
+                f"[yellow]Browser auth failed ({e}). Using manual auth flow.[/yellow]"
+            )
+            flow = Flow.from_client_secrets_file(
+                str(credentials_path), scopes=SCOPES, redirect_uri="http://localhost:1"
+            )
+            auth_url, _ = flow.authorization_url(
+                prompt="consent", access_type="offline"
+            )
+            console.print(
+                f"\n[bold]1.[/bold] Open this URL in any browser:\n\n{auth_url}\n"
+            )
+            console.print(
+                "[bold]2.[/bold] Authorize, then copy the ENTIRE URL from the address bar"
+            )
+            console.print("   (the page won't load — that's expected)\n")
+            response = typer.prompt("Paste the redirect URL").strip()
+            params = parse_qs(urlparse(response).query)
+            if "code" not in params:
+                console.print("[red]No 'code' parameter found in URL.[/red]")
+                raise typer.Exit(1)
+            flow.fetch_token(code=params["code"][0])
+            creds = flow.credentials
 
         # Save the credentials for the next run
         with open(token_path, "wb") as token:
@@ -332,8 +361,9 @@ def setup():
             "2. Create a new project\n"
             "3. Enable the Gmail API\n"
             "4. Create OAuth 2.0 credentials (Desktop app)\n"
-            "5. Download the credentials.json file\n"
-            f"6. Save it to: [bold]{credentials_path}[/bold]"
+            "5. Go to Google Auth platform → Audience → Test users, add your Gmail address\n"
+            "6. Download the credentials.json file\n"
+            f"7. Save it to: [bold]{credentials_path}[/bold]"
         )
     )
 
@@ -445,7 +475,7 @@ def get_kindle_notebook_emails(service, max_results=100, days=None):
         List of EmailMessage objects
     """
     # Build query for Kindle notebook emails
-    query_parts = ['from:"Amazon Kindle"', '"You sent a file"']
+    query_parts = ['from:"Amazon Kindle"', '"sent a file"']
 
     if days:
         date_limit = (datetime.now() - timedelta(days=days)).strftime("%Y/%m/%d")
