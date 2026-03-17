@@ -32,7 +32,7 @@ from rich.progress import Progress
 from rich.panel import Panel
 from rich.markdown import Markdown
 from typing import List, Optional, Any, Dict
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 import importlib.util
 import subprocess
 import sys
@@ -86,7 +86,7 @@ class EmailMessage(BaseModel):
     body_html: Optional[str] = None
     labels: List[str] = []
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 def get_token_path():
