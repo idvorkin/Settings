@@ -159,8 +159,9 @@ def authenticate():
                     "2. Create a new project\n"
                     "3. Enable the Gmail API\n"
                     "4. Create OAuth 2.0 credentials (Desktop app)\n"
-                    "5. Download the credentials.json file\n"
-                    f"6. Save it to: [bold]{credentials_path}[/bold]"
+                    "5. Go to Google Auth platform → Audience → Test users, add your Gmail address\n"
+                    "6. Download the credentials.json file\n"
+                    f"7. Save it to: [bold]{credentials_path}[/bold]"
                 )
             )
             raise typer.Exit(1)
@@ -331,8 +332,9 @@ def setup():
             "2. Create a new project\n"
             "3. Enable the Gmail API\n"
             "4. Create OAuth 2.0 credentials (Desktop app)\n"
-            "5. Download the credentials.json file\n"
-            f"6. Save it to: [bold]{credentials_path}[/bold]"
+            "5. Go to Google Auth platform → Audience → Test users, add your Gmail address\n"
+            "6. Download the credentials.json file\n"
+            f"7. Save it to: [bold]{credentials_path}[/bold]"
         )
     )
 
