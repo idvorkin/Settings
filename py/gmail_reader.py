@@ -86,8 +86,7 @@ class EmailMessage(BaseModel):
     body_html: Optional[str] = None
     labels: List[str] = []
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {"arbitrary_types_allowed": True}
 
 
 def get_token_path():
@@ -445,7 +444,7 @@ def get_kindle_notebook_emails(service, max_results=100, days=None):
         List of EmailMessage objects
     """
     # Build query for Kindle notebook emails
-    query_parts = ['from:"Amazon Kindle"', '"You sent a file"']
+    query_parts = ['from:"Amazon Kindle"', '"sent a file"']
 
     if days:
         date_limit = (datetime.now() - timedelta(days=days)).strftime("%Y/%m/%d")
