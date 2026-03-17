@@ -164,8 +164,39 @@ def authenticate():
             )
             raise typer.Exit(1)
 
-        flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
-        creds = flow.run_local_server(port=0)
+        # Try browser-based flow first, fall back to manual paste for headless servers
+        try:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                str(credentials_path), SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+        except Exception:
+            from urllib.parse import urlparse, parse_qs
+            from google_auth_oauthlib.flow import Flow
+
+            console.print(
+                "[yellow]No browser available. Using manual auth flow.[/yellow]"
+            )
+            flow = Flow.from_client_secrets_file(
+                str(credentials_path), scopes=SCOPES, redirect_uri="http://localhost:1"
+            )
+            auth_url, _ = flow.authorization_url(
+                prompt="consent", access_type="offline"
+            )
+            console.print(
+                f"\n[bold]1.[/bold] Open this URL in any browser:\n\n{auth_url}\n"
+            )
+            console.print(
+                "[bold]2.[/bold] Authorize, then copy the ENTIRE URL from the address bar"
+            )
+            console.print("   (the page won't load — that's expected)\n")
+            response = typer.prompt("Paste the redirect URL").strip()
+            params = parse_qs(urlparse(response).query)
+            if "code" not in params:
+                console.print("[red]No 'code' parameter found in URL.[/red]")
+                raise typer.Exit(1)
+            flow.fetch_token(code=params["code"][0])
+            creds = flow.credentials
 
         # Save the credentials for the next run
         with open(token_path, "wb") as token:
