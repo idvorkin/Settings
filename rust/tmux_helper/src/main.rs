@@ -53,6 +53,11 @@ enum Commands {
     },
     /// Native TUI picker for session/window/pane (ratatui)
     PickTui,
+    /// Open a file in a side nvim pane, reusing the pane across calls
+    SideEdit {
+        /// File path to open in the side pane
+        file: String,
+    },
     /// Debug: show raw key events (press q to quit)
     DebugKeys,
 }
@@ -65,6 +70,7 @@ const STATE_VERTICAL: &str = "vertical";
 const STATE_THIRD_HORIZONTAL: &str = "third_horizontal";
 const STATE_THIRD_VERTICAL: &str = "third_vertical";
 const STATE_NORMAL: &str = "normal";
+const SIDE_EDIT_PANE_OPTION: &str = "@side_edit_pane_id";
 
 // Pane title cache file - stores original pane titles for future computation
 fn get_pane_title_cache_path() -> PathBuf {
@@ -827,28 +833,72 @@ fn set_tmux_option(option: &str, value: &str) {
         .output();
 }
 
-fn get_current_panes() -> Vec<String> {
-    run_tmux_command(&["list-panes", "-F", "#{pane_id}"])
-        .map(|s| s.lines().map(|l| l.to_string()).collect())
-        .unwrap_or_default()
-}
+fn ensure_two_panes(command: Option<&str>, caller_pane_id: Option<&str>) -> (Vec<String>, bool) {
+    let panes = if let Some(target) = caller_pane_id {
+        run_tmux_command(&["list-panes", "-t", target, "-F", "#{pane_id}"])
+    } else {
+        run_tmux_command(&["list-panes", "-F", "#{pane_id}"])
+    }
+    .map(|s| {
+        s.lines()
+            .filter(|l| !l.is_empty())
+            .map(|l| l.to_string())
+            .collect::<Vec<_>>()
+    })
+    .unwrap_or_default();
 
-fn ensure_two_panes(command: Option<&str>) -> (Vec<String>, bool) {
-    let panes = get_current_panes();
     if panes.len() == 1 {
-        let mut args = vec!["split-window", "-h", "-c", "#{pane_current_path}"];
+        let cwd = caller_pane_id
+            .and_then(|t| {
+                run_tmux_command(&["display-message", "-t", t, "-p", "#{pane_current_path}"]).ok()
+            })
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| "#{pane_current_path}".to_string());
+
+        let mut args = vec!["split-window", "-h", "-c", &cwd];
+        if let Some(t) = caller_pane_id {
+            args.extend(["-t", t]);
+        }
         if let Some(cmd) = command.filter(|c| !c.is_empty()) {
             args.push(cmd);
         }
         let _ = Command::new("tmux").args(&args).output();
-        let _ = Command::new("tmux").args(["select-layout", "even-horizontal"]).output();
-        return (get_current_panes(), true);
+
+        if let Some(t) = caller_pane_id {
+            let _ = Command::new("tmux")
+                .args(["select-layout", "-t", t, "even-horizontal"])
+                .output();
+        } else {
+            let _ = Command::new("tmux")
+                .args(["select-layout", "even-horizontal"])
+                .output();
+        }
+
+        let new_panes = if let Some(t) = caller_pane_id {
+            run_tmux_command(&["list-panes", "-t", t, "-F", "#{pane_id}"])
+        } else {
+            run_tmux_command(&["list-panes", "-F", "#{pane_id}"])
+        }
+        .map(|s| {
+            s.lines()
+                .filter(|l| !l.is_empty())
+                .map(|l| l.to_string())
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+        return (new_panes, true);
     }
     (panes, false)
 }
 
-fn get_layout_orientation() -> Option<String> {
-    let pane_info = run_tmux_command(&["list-panes", "-F", "#{pane_left},#{pane_top}"]).ok()?;
+fn get_layout_orientation_for(caller_pane_id: Option<&str>) -> Option<String> {
+    let pane_info = if let Some(t) = caller_pane_id {
+        run_tmux_command(&["list-panes", "-t", t, "-F", "#{pane_left},#{pane_top}"])
+    } else {
+        run_tmux_command(&["list-panes", "-F", "#{pane_left},#{pane_top}"])
+    }
+    .ok()?;
     let lines: Vec<&str> = pane_info.lines().collect();
     if lines.len() < 2 {
         return None;
@@ -871,7 +921,8 @@ fn get_layout_orientation() -> Option<String> {
 }
 
 fn rotate() -> Result<()> {
-    let (panes, created_new) = ensure_two_panes(None);
+    let caller_pane_id = std::env::var("TMUX_PANE").ok();
+    let (panes, created_new) = ensure_two_panes(None, caller_pane_id.as_deref());
     if panes.is_empty() {
         return Ok(());
     }
@@ -899,17 +950,19 @@ fn rotate() -> Result<()> {
 }
 
 fn third(command: &str) -> Result<()> {
+    let caller_pane_id = std::env::var("TMUX_PANE").ok();
+    let caller = caller_pane_id.as_deref();
     let cmd_opt = if command.is_empty() {
         None
     } else {
         Some(command)
     };
-    let (panes, created_new) = ensure_two_panes(cmd_opt);
+    let (panes, created_new) = ensure_two_panes(cmd_opt, caller);
     if panes.len() != 2 {
         return Ok(());
     }
 
-    let orientation = match get_layout_orientation() {
+    let orientation = match get_layout_orientation_for(caller) {
         Some(o) => o,
         None => return Ok(()),
     };
@@ -936,9 +989,19 @@ fn third(command: &str) -> Result<()> {
         }
         set_tmux_option(THIRD_STATE_OPTION, STATE_NORMAL);
     } else {
-        // Get window dimensions
-        let window_info =
-            run_tmux_command(&["display-message", "-p", "#{window_width},#{window_height}"])?;
+        // Get window dimensions — use caller pane as target for background safety
+        let dim_args: Vec<&str> = if let Some(t) = caller {
+            vec![
+                "display-message",
+                "-t",
+                t,
+                "-p",
+                "#{window_width},#{window_height}",
+            ]
+        } else {
+            vec!["display-message", "-p", "#{window_width},#{window_height}"]
+        };
+        let window_info = run_tmux_command(&dim_args)?;
         let parts: Vec<&str> = window_info.split(',').collect();
         if parts.len() != 2 {
             return Ok(());
@@ -974,6 +1037,263 @@ fn third(command: &str) -> Result<()> {
             .args(["select-pane", "-t", &panes[1]])
             .output();
     }
+
+    Ok(())
+}
+
+/// Read $TMUX_PANE — the pane that invoked this binary.
+/// Reliable even when the window is backgrounded.
+fn get_caller_pane_id() -> Option<String> {
+    std::env::var("TMUX_PANE").ok().filter(|s| !s.is_empty())
+}
+
+/// Return all pane IDs in the window that contains `window_target`.
+fn get_panes_in_window(window_target: &str) -> Vec<String> {
+    run_tmux_command(&["list-panes", "-t", window_target, "-F", "#{pane_id}"])
+        .map(|s| {
+            s.lines()
+                .filter(|l| !l.is_empty())
+                .map(|l| l.to_string())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Return the current working directory of `pane_id`.
+fn get_pane_cwd(pane_id: &str) -> String {
+    run_tmux_command(&[
+        "display-message",
+        "-t",
+        pane_id,
+        "-p",
+        "#{pane_current_path}",
+    ])
+    .unwrap_or_default()
+}
+
+/// Return true if nvim/vim is the foreground process in `pane_id`.
+fn is_vim_in_pane(pane_id: &str, system: &System) -> bool {
+    let pid_str = run_tmux_command(&["display-message", "-t", pane_id, "-p", "#{pane_pid}"])
+        .unwrap_or_default();
+    let pid: u32 = match pid_str.trim().parse() {
+        Ok(p) if p > 0 => p,
+        _ => return false,
+    };
+    match get_process_info(system, pid) {
+        Some(info) => process_tree_has_pattern(&info, &["vim", "nvim"]),
+        None => false,
+    }
+}
+
+/// Escape a path for use in a nvim Ex command (`:e`).
+fn escape_for_vim_ex(path: &str) -> String {
+    path.replace('\\', "\\\\")
+        .replace(' ', "\\ ")
+        .replace('#', "\\#")
+        .replace('%', "\\%")
+}
+
+/// Shell-quote a path (single-quote wrapping, like shlex.quote).
+fn shell_quote(path: &str) -> String {
+    format!("'{}'", path.replace('\'', "'\\''"))
+}
+
+/// Split caller's pane and start nvim. Returns new pane ID or None.
+fn create_side_pane(caller_pane_id: &str, shell_file: &str) -> Option<String> {
+    let caller_cwd = {
+        let cwd = get_pane_cwd(caller_pane_id);
+        if cwd.is_empty() {
+            std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string())
+        } else {
+            cwd
+        }
+    };
+
+    let third_state = get_tmux_option(THIRD_STATE_OPTION);
+    let is_third_active =
+        third_state == STATE_THIRD_HORIZONTAL || third_state == STATE_THIRD_VERTICAL;
+
+    let new_pane_id = run_tmux_command(&[
+        "split-window",
+        "-h",
+        "-c",
+        &caller_cwd,
+        "-t",
+        caller_pane_id,
+        "-P",
+        "-F",
+        "#{pane_id}",
+    ])
+    .ok()
+    .filter(|s| !s.is_empty())?;
+
+    // Re-apply 1/3 width to caller if @third_state was active
+    if is_third_active {
+        if let Ok(width_str) = run_tmux_command(&[
+            "display-message",
+            "-t",
+            caller_pane_id,
+            "-p",
+            "#{window_width}",
+        ]) {
+            if let Ok(width) = width_str.trim().parse::<i32>() {
+                let target = (width as f32 * 0.33) as i32;
+                let _ = Command::new("tmux")
+                    .args([
+                        "resize-pane",
+                        "-t",
+                        caller_pane_id,
+                        "-x",
+                        &target.to_string(),
+                    ])
+                    .output();
+            }
+        }
+    }
+
+    // Poll up to 500ms for the new pane's shell to be ready
+    let deadline = std::time::Instant::now() + std::time::Duration::from_millis(500);
+    loop {
+        let pid_str = run_tmux_command(&["display-message", "-t", &new_pane_id, "-p", "#{pane_pid}"])
+            .unwrap_or_default();
+        if pid_str.trim().parse::<u32>().map(|p| p > 0).unwrap_or(false) {
+            break;
+        }
+        if std::time::Instant::now() >= deadline {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+
+    // Launch nvim
+    let nvim_cmd = format!("nvim {}", shell_file);
+    let _ = Command::new("tmux")
+        .args(["send-keys", "-t", &new_pane_id, &nvim_cmd, "Enter"])
+        .output();
+
+    // Restore focus to caller
+    let _ = Command::new("tmux")
+        .args(["select-pane", "-t", caller_pane_id])
+        .output();
+
+    Some(new_pane_id)
+}
+
+/// Open a file in an existing pane, reusing nvim if running.
+fn open_file_in_pane(pane_id: &str, shell_file: &str, vim_file: &str, system: &System) {
+    if is_vim_in_pane(pane_id, system) {
+        // Double Escape handles insert/visual/command-line modes
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, "Escape"])
+            .output();
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, "Escape"])
+            .output();
+        // C-\ C-n exits terminal mode (no-op in normal mode)
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, r"C-\"])
+            .output();
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, "C-n"])
+            .output();
+        // Open file with vim-escaped path
+        let ex_cmd = format!(":e {}", vim_file);
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, &ex_cmd, "Enter"])
+            .output();
+    } else {
+        let nvim_cmd = format!("nvim {}", shell_file);
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, &nvim_cmd, "Enter"])
+            .output();
+    }
+}
+
+fn side_edit(file: &str) -> Result<()> {
+    // 1. Must be inside tmux
+    let caller_pane_id = get_caller_pane_id()
+        .context("$TMUX_PANE is not set. side-edit must be run inside a tmux pane.")?;
+
+    // 2. Resolve file path
+    let expanded = if file.starts_with('~') {
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/".to_string());
+        file.replacen('~', &home, 1)
+    } else {
+        file.to_string()
+    };
+    let file_path = if std::path::Path::new(&expanded).is_absolute() {
+        expanded
+    } else {
+        let cwd = get_pane_cwd(&caller_pane_id);
+        let base = if cwd.is_empty() {
+            std::env::current_dir()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|_| ".".to_string())
+        } else {
+            cwd
+        };
+        format!("{}/{}", base, expanded)
+    };
+
+    let shell_file = shell_quote(&file_path);
+    let vim_file = escape_for_vim_ex(&file_path);
+
+    // 3. Enumerate panes in caller's window
+    let window_panes = get_panes_in_window(&caller_pane_id);
+    if window_panes.is_empty() {
+        anyhow::bail!("Could not list panes in current window.");
+    }
+
+    // 4. Look up stored side-edit pane (window-local)
+    let stored_pane_id = get_tmux_option(SIDE_EDIT_PANE_OPTION);
+
+    let side_pane_id: String = if !stored_pane_id.is_empty()
+        && window_panes.contains(&stored_pane_id)
+        && stored_pane_id != caller_pane_id
+    {
+        stored_pane_id
+    } else {
+        let other_panes: Vec<&String> = window_panes
+            .iter()
+            .filter(|p| p.as_str() != caller_pane_id)
+            .collect();
+
+        match other_panes.len() {
+            0 => {
+                // Only caller pane — create split
+                let new_id = create_side_pane(&caller_pane_id, &shell_file)
+                    .context("Failed to create side pane.")?;
+                set_tmux_option(SIDE_EDIT_PANE_OPTION, &new_id);
+                return Ok(());
+            }
+            1 => {
+                let adopted = other_panes[0].clone();
+                set_tmux_option(SIDE_EDIT_PANE_OPTION, &adopted);
+                adopted
+            }
+            n => {
+                anyhow::bail!(
+                    "Window has {} other panes and no registered side-edit pane. \
+                     Close extra panes or run from a 1-pane window.",
+                    n
+                );
+            }
+        }
+    };
+
+    // 5. Open file in the side pane
+    let mut system = System::new();
+    system.refresh_processes_specifics(
+        sysinfo::ProcessesToUpdate::All,
+        true,
+        ProcessRefreshKind::everything(),
+    );
+    open_file_in_pane(&side_pane_id, &shell_file, &vim_file, &system);
+
+    // 6. Restore focus to caller
+    let _ = Command::new("tmux")
+        .args(["select-pane", "-t", &caller_pane_id])
+        .output();
 
     Ok(())
 }
@@ -1022,6 +1342,7 @@ fn main() -> Result<()> {
         Some(Commands::Rotate) => rotate(),
         Some(Commands::Third { command }) => third(&command),
         Some(Commands::PickTui) => picker::pick_tui(),
+        Some(Commands::SideEdit { file }) => side_edit(&file),
         Some(Commands::DebugKeys) => debug_keys(),
         None => {
             // Show help when no command given
