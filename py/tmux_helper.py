@@ -12,6 +12,8 @@ import typer
 import subprocess
 import json
 import os
+import shlex
+import time
 from pathlib import Path
 from pydantic import BaseModel
 import psutil
@@ -24,6 +26,7 @@ STATE_VERTICAL = "vertical"
 STATE_THIRD_HORIZONTAL = "third_horizontal"
 STATE_THIRD_VERTICAL = "third_vertical"
 STATE_NORMAL = "normal"
+SIDE_EDIT_PANE_OPTION = "@side_edit_pane_id"
 
 
 # Helper functions
@@ -43,46 +46,144 @@ def run_tmux_command(cmd: list[str], capture_output: bool = False) -> str | None
 
 
 def get_tmux_option(option: str) -> str:
-    """Get tmux global option value"""
+    """Get tmux window-local option value (matches Rust -wqv convention)"""
     return (
-        run_tmux_command(["tmux", "show-option", "-gqv", option], capture_output=True)
+        run_tmux_command(["tmux", "show-option", "-wqv", option], capture_output=True)
         or ""
     )
 
 
 def set_tmux_option(option: str, value: str) -> None:
-    """Set tmux global option"""
-    run_tmux_command(["tmux", "set-option", "-g", option, value])
+    """Set tmux window-local option (matches Rust -w convention)"""
+    run_tmux_command(["tmux", "set-option", "-w", option, value])
 
 
-def ensure_two_panes(command: str | None = None) -> tuple[list[str], bool]:
-    """Ensure window has at least 2 panes, return (pane IDs, created_new_pane)
+def get_caller_pane_id() -> str | None:
+    """Return the pane ID of the shell that invoked this script.
+
+    Uses $TMUX_PANE which tmux sets in every pane's environment.
+    This is reliable even when the window is in the background, unlike
+    'tmux display-message -p' which targets the currently active pane.
+    """
+    return os.environ.get("TMUX_PANE") or None
+
+
+def get_window_option(option: str, window_target: str | None = None) -> str:
+    """Get a window-local tmux option value."""
+    cmd = ["tmux", "show-option", "-wqv"]
+    if window_target:
+        cmd.extend(["-t", window_target])
+    cmd.append(option)
+    return run_tmux_command(cmd, capture_output=True) or ""
+
+
+def set_window_option(
+    option: str, value: str, window_target: str | None = None
+) -> None:
+    """Set a window-local tmux option value."""
+    cmd = ["tmux", "set-option", "-w"]
+    if window_target:
+        cmd.extend(["-t", window_target])
+    cmd.extend([option, value])
+    run_tmux_command(cmd)
+
+
+def get_panes_in_window(window_target: str) -> list[str]:
+    """Return list of pane IDs in the window that contains window_target."""
+    result = run_tmux_command(
+        ["tmux", "list-panes", "-t", window_target, "-F", "#{pane_id}"],
+        capture_output=True,
+    )
+    if not result:
+        return []
+    return [p for p in result.split("\n") if p]
+
+
+def get_pane_cwd(pane_id: str) -> str:
+    """Return the current working directory of pane_id, or '' on error."""
+    return (
+        run_tmux_command(
+            ["tmux", "display-message", "-t", pane_id, "-p", "#{pane_current_path}"],
+            capture_output=True,
+        )
+        or ""
+    )
+
+
+def is_vim_in_pane(pane_id: str) -> bool:
+    """Return True if nvim/vim is the foreground process in pane_id."""
+    pid_str = run_tmux_command(
+        ["tmux", "display-message", "-t", pane_id, "-p", "#{pane_pid}"],
+        capture_output=True,
+    )
+    if not pid_str or not pid_str.isdigit():
+        return False
+    process_info = get_process_info(int(pid_str))
+    return is_vim_running(process_info)
+
+
+def is_pane_safe_to_adopt(pane_id: str) -> bool:
+    """Return True if pane is running vim/nvim or an idle shell (safe for side-edit).
+
+    Returns False if pane is running another foreground process (tig, REPL, htop, etc.)
+    to avoid injecting keystrokes into arbitrary programs.
+    """
+    pid_str = run_tmux_command(
+        ["tmux", "display-message", "-t", pane_id, "-p", "#{pane_pid}"],
+        capture_output=True,
+    )
+    if not pid_str or not pid_str.isdigit():
+        return False
+    process_info = get_process_info(int(pid_str))
+    if is_vim_running(process_info):
+        return True
+    # Idle shell: zsh/bash/sh with no non-utility children
+    if process_info.get("name") in (
+        "zsh",
+        "bash",
+        "sh",
+    ) and not has_non_utility_children(process_info):
+        return True
+    return False
+
+
+def ensure_two_panes(
+    command: str | None = None, caller_pane_id: str | None = None
+) -> tuple[list[str], bool]:
+    """Ensure window has at least 2 panes, return (pane IDs, created_new_pane).
 
     Args:
         command: Optional command to run in the new pane when created
+        caller_pane_id: Pane ID to anchor to (defaults to $TMUX_PANE / active pane).
+                        Fixes background-window targeting when provided.
     """
-    panes = run_tmux_command(
-        ["tmux", "list-panes", "-F", "#{pane_id}"], capture_output=True
-    )
+    target = caller_pane_id
+
+    list_cmd = ["tmux", "list-panes", "-F", "#{pane_id}"]
+    if target:
+        list_cmd = ["tmux", "list-panes", "-t", target, "-F", "#{pane_id}"]
+
+    panes = run_tmux_command(list_cmd, capture_output=True)
     if not panes:
         return ([], False)
 
-    pane_list = panes.split("\n")
+    pane_list = [p for p in panes.split("\n") if p]
     if len(pane_list) == 1:
-        # Create split with optional command
+        cwd = get_pane_cwd(target) if target else "#{pane_current_path}"
+        split_cmd = ["tmux", "split-window", "-h", "-c", cwd]
+        if target:
+            split_cmd.extend(["-t", target])
         if command:
-            run_tmux_command(
-                ["tmux", "split-window", "-h", "-c", "#{pane_current_path}", command]
-            )
-        else:
-            run_tmux_command(
-                ["tmux", "split-window", "-h", "-c", "#{pane_current_path}"]
-            )
-        run_tmux_command(["tmux", "select-layout", "even-horizontal"])
-        panes = run_tmux_command(
-            ["tmux", "list-panes", "-F", "#{pane_id}"], capture_output=True
-        )
-        pane_list = panes.split("\n") if panes else []
+            split_cmd.append(command)
+        run_tmux_command(split_cmd)
+
+        layout_cmd = ["tmux", "select-layout", "even-horizontal"]
+        if target:
+            layout_cmd = ["tmux", "select-layout", "-t", target, "even-horizontal"]
+        run_tmux_command(layout_cmd)
+
+        panes = run_tmux_command(list_cmd, capture_output=True)
+        pane_list = [p for p in panes.split("\n") if p] if panes else []
         return (pane_list, True)
 
     return (pane_list, False)
@@ -285,10 +386,15 @@ def is_docker_running(process_info: dict) -> bool:
 
 
 def get_tmux_pane_pid(pane_id: str | None = None) -> int:
-    """Get the process ID of the specified tmux pane or current pane if none specified"""
+    """Get the process ID of the specified tmux pane.
+
+    When pane_id is None, uses $TMUX_PANE (caller's pane) to avoid
+    the background-window bug where display-message targets the active pane.
+    """
+    target = pane_id or get_caller_pane_id()
     cmd = ["tmux", "display-message"]
-    if pane_id:
-        cmd.extend(["-t", pane_id])
+    if target:
+        cmd.extend(["-t", target])
     cmd.extend(["-p", "#{pane_pid}"])
 
     result = run_tmux_command(cmd, capture_output=True)
@@ -518,7 +624,8 @@ def rename_all():
 @app.command()
 def rotate():
     """Toggle between even-horizontal and even-vertical layouts"""
-    panes, created_new_pane = ensure_two_panes()
+    caller_pane_id = get_caller_pane_id()
+    panes, created_new_pane = ensure_two_panes(caller_pane_id=caller_pane_id)
     if not panes:
         return
 
@@ -531,13 +638,21 @@ def rotate():
     # If not set, default to vertical (so first toggle goes to horizontal)
     current_state = get_tmux_option(LAYOUT_STATE_OPTION)
 
+    # Build select-layout command with background-window-safe targeting
+    def select_layout(layout: str) -> None:
+        cmd = ["tmux", "select-layout"]
+        if caller_pane_id:
+            cmd.extend(["-t", caller_pane_id])
+        cmd.append(layout)
+        run_tmux_command(cmd)
+
     # Toggle layout based on state
     if current_state == STATE_HORIZONTAL:
-        run_tmux_command(["tmux", "select-layout", "even-vertical"])
+        select_layout("even-vertical")
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_VERTICAL)
     else:
         # Default to horizontal for any other state or if not set
-        run_tmux_command(["tmux", "select-layout", "even-horizontal"])
+        select_layout("even-horizontal")
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_HORIZONTAL)
 
 
@@ -688,7 +803,10 @@ def third(
         tmux_helper third "tig status"         # Split and run tig
         tmux_helper third "git diff | delta"   # Split and run git diff
     """
-    panes, created_new = ensure_two_panes(command if command else None)
+    caller_pane_id = get_caller_pane_id()
+    panes, created_new = ensure_two_panes(
+        command if command else None, caller_pane_id=caller_pane_id
+    )
     if not panes or len(panes) != 2:
         return  # Only works with exactly 2 panes
 
@@ -716,11 +834,12 @@ def third(
             run_tmux_command(["tmux", "select-layout", "even-vertical"])
         set_tmux_option(THIRD_STATE_OPTION, STATE_NORMAL)
     else:
-        # Get window dimensions
-        window_info = run_tmux_command(
-            ["tmux", "display-message", "-p", "#{window_width},#{window_height}"],
-            capture_output=True,
-        )
+        # Get window dimensions — use caller pane as target for background safety
+        dim_cmd = ["tmux", "display-message"]
+        if caller_pane_id:
+            dim_cmd.extend(["-t", caller_pane_id])
+        dim_cmd.extend(["-p", "#{window_width},#{window_height}"])
+        window_info = run_tmux_command(dim_cmd, capture_output=True)
         if not window_info:
             return
 
@@ -748,6 +867,222 @@ def third(
     # If command provided, focus the working pane
     if command:
         run_tmux_command(["tmux", "select-pane", "-t", panes[1]])
+
+
+def escape_for_vim_ex(path: str) -> str:
+    """Escape a path for use in a vim/nvim Ex command like :e.
+
+    Nvim Ex commands use backslash-escaping, not shell quoting.
+    """
+    return (
+        path.replace("\\", "\\\\")
+        .replace(" ", "\\ ")
+        .replace("#", "\\#")
+        .replace("%", "\\%")
+    )
+
+
+def create_side_pane(caller_pane_id: str, shell_file: str) -> str | None:
+    """Split caller's pane and start nvim in the new pane.
+
+    Args:
+        caller_pane_id: Pane ID to split from.
+        shell_file: Shell-quoted file path (via shlex.quote).
+
+    Returns the new pane's ID, or None on failure.
+    Respects @third_state: if active, re-applies the 1/3 sizing to caller.
+    Polls briefly for the new pane's shell to be ready before sending nvim.
+    """
+    caller_cwd = get_pane_cwd(caller_pane_id) or os.path.expanduser("~")
+
+    third_state = get_tmux_option(THIRD_STATE_OPTION)
+    is_third_active = third_state in [STATE_THIRD_HORIZONTAL, STATE_THIRD_VERTICAL]
+
+    # Split right from caller, capture new pane ID directly via -P -F
+    new_pane_id = run_tmux_command(
+        [
+            "tmux",
+            "split-window",
+            "-h",
+            "-c",
+            caller_cwd,
+            "-t",
+            caller_pane_id,
+            "-P",
+            "-F",
+            "#{pane_id}",
+        ],
+        capture_output=True,
+    )
+    if not new_pane_id:
+        return None
+    new_pane_id = new_pane_id.strip()
+
+    # If @third_state is active, resize caller to keep its 1/3 width
+    if is_third_active:
+        window_width_str = run_tmux_command(
+            ["tmux", "display-message", "-t", caller_pane_id, "-p", "#{window_width}"],
+            capture_output=True,
+        )
+        if window_width_str and window_width_str.isdigit():
+            target_caller_width = int(int(window_width_str) * 0.33)
+            run_tmux_command(
+                [
+                    "tmux",
+                    "resize-pane",
+                    "-t",
+                    caller_pane_id,
+                    "-x",
+                    str(target_caller_width),
+                ]
+            )
+
+    # Poll for new pane readiness (up to 0.5s in 50ms steps)
+    deadline = time.monotonic() + 0.5
+    while time.monotonic() < deadline:
+        pid_str = run_tmux_command(
+            ["tmux", "display-message", "-t", new_pane_id, "-p", "#{pane_pid}"],
+            capture_output=True,
+        )
+        if pid_str and pid_str.isdigit() and int(pid_str) > 0:
+            try:
+                proc = psutil.Process(int(pid_str))
+                if proc.status() != psutil.STATUS_ZOMBIE:
+                    break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+        time.sleep(0.05)
+
+    # Launch nvim in the new pane (shell context — use shell-quoted path)
+    run_tmux_command(
+        ["tmux", "send-keys", "-t", new_pane_id, f"nvim {shell_file}", "Enter"]
+    )
+
+    # Restore focus to caller
+    run_tmux_command(["tmux", "select-pane", "-t", caller_pane_id])
+    return new_pane_id
+
+
+def open_file_in_pane(pane_id: str, shell_file: str, vim_file: str) -> None:
+    """Open a file in an existing pane, reusing nvim if already running.
+
+    Args:
+        pane_id: Target pane ID.
+        shell_file: Shell-quoted file path (via shlex.quote) for launching nvim.
+        vim_file: Vim Ex-escaped file path (via escape_for_vim_ex) for :e command.
+
+    Key sequence handles: normal, insert, visual, command-line, and terminal modes.
+    Double Escape + C-\\ C-n ensures we reach normal mode from any state.
+    """
+    if is_vim_in_pane(pane_id):
+        # Double Escape handles insert/visual/command-line modes
+        run_tmux_command(["tmux", "send-keys", "-t", pane_id, "Escape"])
+        run_tmux_command(["tmux", "send-keys", "-t", pane_id, "Escape"])
+        # C-\ C-n exits terminal mode (no-op in normal mode)
+        run_tmux_command(["tmux", "send-keys", "-t", pane_id, "C-\\"])
+        run_tmux_command(["tmux", "send-keys", "-t", pane_id, "C-n"])
+        # Now reliably in normal mode — open the file (vim escaping, not shell)
+        run_tmux_command(
+            ["tmux", "send-keys", "-t", pane_id, f":e {vim_file}", "Enter"]
+        )
+    else:
+        # No nvim running — launch it fresh (shell context — use shell quoting)
+        run_tmux_command(
+            ["tmux", "send-keys", "-t", pane_id, f"nvim {shell_file}", "Enter"]
+        )
+
+
+@app.command()
+def side_edit(
+    file: str = typer.Argument(..., help="File path to open in the side pane"),
+):
+    """Open a file in a side nvim pane, reusing an existing side pane when possible.
+
+    Uses $TMUX_PANE to reliably target the caller's window even when backgrounded.
+    Stores the side pane ID as a window-local option (@side_edit_pane_id).
+
+    Examples:
+        tmux_helper side-edit /path/to/file.py
+        tmux_helper side-edit ~/notes/todo.md
+    """
+    # 1. Verify we are inside tmux
+    caller_pane_id = get_caller_pane_id()
+    if not caller_pane_id:
+        print("ERROR: $TMUX_PANE is not set. side-edit must be run inside a tmux pane.")
+        raise typer.Exit(1)
+
+    # 2. Resolve file path (expand ~ and make absolute relative to caller's cwd)
+    file_path = Path(os.path.expanduser(file))
+    if not file_path.is_absolute():
+        caller_cwd = get_pane_cwd(caller_pane_id)
+        if caller_cwd:
+            file_path = Path(caller_cwd) / file_path
+        else:
+            file_path = Path.cwd() / file_path
+    shell_file = shlex.quote(str(file_path))  # For shell: nvim '/path/to/file'
+    vim_file = escape_for_vim_ex(str(file_path))  # For nvim Ex: :e /path/to/file
+
+    # 3. Enumerate panes in caller's window
+    window_panes = get_panes_in_window(caller_pane_id)
+    if not window_panes:
+        print("ERROR: Could not list panes in current window.")
+        raise typer.Exit(1)
+
+    # 4. Look up stored side-edit pane
+    stored_pane_id = get_window_option(
+        SIDE_EDIT_PANE_OPTION, window_target=caller_pane_id
+    )
+
+    side_pane_id: str | None = None
+    if (
+        stored_pane_id
+        and stored_pane_id in window_panes
+        and stored_pane_id != caller_pane_id
+    ):
+        side_pane_id = stored_pane_id
+
+    # 5. Decide what to do
+    if side_pane_id is None:
+        other_panes = [p for p in window_panes if p != caller_pane_id]
+
+        if len(other_panes) == 0:
+            # Only caller pane — create a split
+            side_pane_id = create_side_pane(caller_pane_id, shell_file)
+            if side_pane_id is None:
+                print("ERROR: Failed to create side pane.")
+                raise typer.Exit(1)
+            set_window_option(
+                SIDE_EDIT_PANE_OPTION, side_pane_id, window_target=caller_pane_id
+            )
+            return  # _create_side_pane already launched nvim and restored focus
+
+        elif len(other_panes) == 1:
+            candidate = other_panes[0]
+            if not is_pane_safe_to_adopt(candidate):
+                print(
+                    "ERROR: The other pane is running a foreground process. "
+                    "Close it or use a 1-pane window so side-edit can create its own."
+                )
+                raise typer.Exit(1)
+            # Pane is idle shell or vim — safe to adopt
+            side_pane_id = candidate
+            set_window_option(
+                SIDE_EDIT_PANE_OPTION, side_pane_id, window_target=caller_pane_id
+            )
+
+        else:
+            # 2+ other panes — can't safely pick one
+            print(
+                f"ERROR: Window has {len(other_panes)} other panes and no registered "
+                f"side-edit pane. Close extra panes or run from a 1-pane window."
+            )
+            raise typer.Exit(1)
+
+    # 6. Open file in the side pane
+    open_file_in_pane(side_pane_id, shell_file, vim_file)
+
+    # 7. Restore focus to caller
+    run_tmux_command(["tmux", "select-pane", "-t", caller_pane_id])
 
 
 if __name__ == "__main__":
