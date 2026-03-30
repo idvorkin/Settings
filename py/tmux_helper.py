@@ -46,16 +46,16 @@ def run_tmux_command(cmd: list[str], capture_output: bool = False) -> str | None
 
 
 def get_tmux_option(option: str) -> str:
-    """Get tmux global option value"""
+    """Get tmux window-local option value (matches Rust -wqv convention)"""
     return (
-        run_tmux_command(["tmux", "show-option", "-gqv", option], capture_output=True)
+        run_tmux_command(["tmux", "show-option", "-wqv", option], capture_output=True)
         or ""
     )
 
 
 def set_tmux_option(option: str, value: str) -> None:
-    """Set tmux global option"""
-    run_tmux_command(["tmux", "set-option", "-g", option, value])
+    """Set tmux window-local option (matches Rust -w convention)"""
+    run_tmux_command(["tmux", "set-option", "-w", option, value])
 
 
 def get_caller_pane_id() -> str | None:
@@ -120,6 +120,31 @@ def is_vim_in_pane(pane_id: str) -> bool:
         return False
     process_info = get_process_info(int(pid_str))
     return is_vim_running(process_info)
+
+
+def is_pane_safe_to_adopt(pane_id: str) -> bool:
+    """Return True if pane is running vim/nvim or an idle shell (safe for side-edit).
+
+    Returns False if pane is running another foreground process (tig, REPL, htop, etc.)
+    to avoid injecting keystrokes into arbitrary programs.
+    """
+    pid_str = run_tmux_command(
+        ["tmux", "display-message", "-t", pane_id, "-p", "#{pane_pid}"],
+        capture_output=True,
+    )
+    if not pid_str or not pid_str.isdigit():
+        return False
+    process_info = get_process_info(int(pid_str))
+    if is_vim_running(process_info):
+        return True
+    # Idle shell: zsh/bash/sh with no non-utility children
+    if process_info.get("name") in (
+        "zsh",
+        "bash",
+        "sh",
+    ) and not has_non_utility_children(process_info):
+        return True
+    return False
 
 
 def ensure_two_panes(
@@ -599,7 +624,8 @@ def rename_all():
 @app.command()
 def rotate():
     """Toggle between even-horizontal and even-vertical layouts"""
-    panes, created_new_pane = ensure_two_panes(caller_pane_id=get_caller_pane_id())
+    caller_pane_id = get_caller_pane_id()
+    panes, created_new_pane = ensure_two_panes(caller_pane_id=caller_pane_id)
     if not panes:
         return
 
@@ -612,13 +638,21 @@ def rotate():
     # If not set, default to vertical (so first toggle goes to horizontal)
     current_state = get_tmux_option(LAYOUT_STATE_OPTION)
 
+    # Build select-layout command with background-window-safe targeting
+    def select_layout(layout: str) -> None:
+        cmd = ["tmux", "select-layout"]
+        if caller_pane_id:
+            cmd.extend(["-t", caller_pane_id])
+        cmd.append(layout)
+        run_tmux_command(cmd)
+
     # Toggle layout based on state
     if current_state == STATE_HORIZONTAL:
-        run_tmux_command(["tmux", "select-layout", "even-vertical"])
+        select_layout("even-vertical")
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_VERTICAL)
     else:
         # Default to horizontal for any other state or if not set
-        run_tmux_command(["tmux", "select-layout", "even-horizontal"])
+        select_layout("even-horizontal")
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_HORIZONTAL)
 
 
@@ -1023,8 +1057,15 @@ def side_edit(
             return  # _create_side_pane already launched nvim and restored focus
 
         elif len(other_panes) == 1:
-            # One other pane — adopt it as side-edit pane
-            side_pane_id = other_panes[0]
+            candidate = other_panes[0]
+            if not is_pane_safe_to_adopt(candidate):
+                print(
+                    "ERROR: The other pane is running a foreground process. "
+                    "Close it or use a 1-pane window so side-edit can create its own."
+                )
+                raise typer.Exit(1)
+            # Pane is idle shell or vim — safe to adopt
+            side_pane_id = candidate
             set_window_option(
                 SIDE_EDIT_PANE_OPTION, side_pane_id, window_target=caller_pane_id
             )

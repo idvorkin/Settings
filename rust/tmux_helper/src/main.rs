@@ -934,15 +934,20 @@ fn rotate() -> Result<()> {
 
     let current_state = get_tmux_option(LAYOUT_STATE_OPTION);
 
+    let select_layout = |layout: &str| {
+        let mut args = vec!["select-layout"];
+        if let Some(ref t) = caller_pane_id {
+            args.extend(["-t", t]);
+        }
+        args.push(layout);
+        let _ = Command::new("tmux").args(&args).output();
+    };
+
     if current_state == STATE_HORIZONTAL {
-        let _ = Command::new("tmux")
-            .args(["select-layout", "even-vertical"])
-            .output();
+        select_layout("even-vertical");
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_VERTICAL);
     } else {
-        let _ = Command::new("tmux")
-            .args(["select-layout", "even-horizontal"])
-            .output();
+        select_layout("even-horizontal");
         set_tmux_option(LAYOUT_STATE_OPTION, STATE_HORIZONTAL);
     }
 
@@ -1083,6 +1088,31 @@ fn is_vim_in_pane(pane_id: &str, system: &System) -> bool {
         Some(info) => process_tree_has_pattern(&info, &["vim", "nvim"]),
         None => false,
     }
+}
+
+/// Return true if pane is running vim/nvim or an idle shell (safe for side-edit).
+/// Returns false if running another foreground process to avoid injecting keystrokes.
+fn is_pane_safe_to_adopt(pane_id: &str, system: &System) -> bool {
+    let pid_str = run_tmux_command(&["display-message", "-t", pane_id, "-p", "#{pane_pid}"])
+        .unwrap_or_default();
+    let pid: u32 = match pid_str.trim().parse() {
+        Ok(p) if p > 0 => p,
+        _ => return false,
+    };
+    let info = match get_process_info(system, pid) {
+        Some(i) => i,
+        None => return false,
+    };
+    // Vim/nvim running — safe
+    if process_tree_has_pattern(&info, &["vim", "nvim"]) {
+        return true;
+    }
+    // Idle shell (no children) — safe
+    let name = info.name.to_lowercase();
+    if (name == "zsh" || name == "bash" || name == "sh") && info.children.is_empty() {
+        return true;
+    }
+    false
 }
 
 /// Escape a path for use in a nvim Ex command (`:e`).
@@ -1267,7 +1297,20 @@ fn side_edit(file: &str) -> Result<()> {
                 return Ok(());
             }
             1 => {
-                let adopted = other_panes[0].clone();
+                let candidate = other_panes[0];
+                let mut sys = System::new();
+                sys.refresh_processes_specifics(
+                    sysinfo::ProcessesToUpdate::All,
+                    true,
+                    ProcessRefreshKind::everything(),
+                );
+                if !is_pane_safe_to_adopt(candidate, &sys) {
+                    anyhow::bail!(
+                        "The other pane is running a foreground process. \
+                         Close it or use a 1-pane window so side-edit can create its own."
+                    );
+                }
+                let adopted = candidate.clone();
                 set_tmux_option(SIDE_EDIT_PANE_OPTION, &adopted);
                 adopted
             }
