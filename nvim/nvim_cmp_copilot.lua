@@ -13,11 +13,6 @@ npm install -g typescript typescript-language-server
 -- Hymn, now I can use LSP install, which is cool.
 
 require("mason").setup({})
-require("mason-lspconfig").setup({
-	handlers = {
-		require("lsp-zero").default_setup,
-	},
-})
 
 -- Setup LSP Config using new Neovim 0.11+ API
 -- Configure LSPs
@@ -41,7 +36,7 @@ vim.lsp.config.typos_lsp = {
 }
 
 -- Enable debug logs for the LSP client. Recommended for debugging only.
-vim.lsp.set_log_level("warn")
+vim.lsp.log.set_level("warn")
 
 local ruff_on_attach = function(client, _)
 	-- Disable hover in favor of Pyright
@@ -151,7 +146,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 vim.cmd("command! Errors Trouble diagnostics toggle filter.buf=0")
 
 local has_words_before = function()
-	if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then
+	if vim.bo[0].buftype == "prompt" then
 		return false
 	end
 	local line, col = unpack(vim.api.nvim_win_get_cursor(0))

@@ -148,7 +148,7 @@ function GitCommitAndPush()
 			end
 		end,
 		on_exit = function()
-			vim.api.nvim_buf_set_option(preview_buf, "modifiable", false)
+			vim.bo[preview_buf].modifiable = false
 		end,
 	})
 

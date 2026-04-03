@@ -210,7 +210,6 @@ local plugins = {
 			"nvim-neotest/neotest-plenary",
 			"nvim-neotest/neotest-python",
 			"nvim-lua/plenary.nvim",
-			"antoinemadec/FixCursorHold.nvim",
 			"nvim-treesitter/nvim-treesitter",
 		},
 	},
@@ -288,7 +287,6 @@ local plugins = {
 			},
 		},
 	},
-	"stevearc/dressing.nvim",
 	{
 		"max397574/better-escape.nvim",
 		opts = {
@@ -360,16 +358,10 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
--- TSPlaygroundToggle
--- :TSHighlightCapturesUnderCursor
--- :TSNodeUnderCursor
---
+-- Tree-sitter inspection: use :InspectTree, :Inspect, :EditQuery (built-in since 0.10)
 plugins = appendTables(plugins, {
-	"tree-sitter/tree-sitter-json",
-	"nvim-treesitter/playground",
 	"nvim-treesitter/nvim-treesitter",
 	"nvim-treesitter/nvim-treesitter-textobjects",
-	"MDeiml/tree-sitter-markdown",
 })
 
 function TelescopePlugins()
@@ -812,14 +804,6 @@ local git_plugins = {
 			})
 		end,
 	},
-	{
-		"olimorris/codecompanion.nvim",
-		config = true,
-		dependencies = {
-			"nvim-lua/plenary.nvim",
-			"nvim-treesitter/nvim-treesitter",
-		},
-	},
 }
 plugins = appendTables(plugins, git_plugins)
 -- cmp and friends
@@ -958,8 +942,6 @@ plugins = appendTables(plugins, {
 
 plugins = appendTables(plugins, {
 	{ "williamboman/mason.nvim" },
-	{ "williamboman/mason-lspconfig.nvim" },
-	{ "VonHeikemen/lsp-zero.nvim", branch = "v3.x" },
 	{ "neovim/nvim-lspconfig" },
 	{ "L3MON4D3/LuaSnip" },
 	{

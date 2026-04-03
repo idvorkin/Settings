@@ -113,6 +113,10 @@ dofile(settings_dir .. "nvim_cmp_copilot.lua")
 dofile(settings_dir .. "nvim_git.lua")
 dofile(settings_dir .. "nvim_color.lua")
 
+-- Neovim 0.12 built-in features
+vim.cmd.packadd("nvim.undotree") -- :Undotree
+vim.opt.diffopt:append("inline:word") -- word-level inline diffs
+
 vim.cmd([[
 command! -nargs=* ZMT lua ZenModeToggleFunction(<f-args>)
 ]])
