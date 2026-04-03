@@ -749,7 +749,6 @@ local git_plugins = {
 		opts = {},
 		dependencies = {
 			"nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-			"stevearc/dressing.nvim",
 			"nvim-lua/plenary.nvim",
 			"MunifTanjim/nui.nvim",
 			--- The below is optional, make sure to setup it properly if you have lazy=true
@@ -970,6 +969,5 @@ function ReloadSnippets()
 end
 
 vim.lsp.enable({ "pyrefly" })
-vim.lsp.enable({ "tsserver" })
 ReloadSnippets()
 vim.api.nvim_set_keymap("n", "<leader><leader>s", ":lua ReloadSnippets()<cr>", {})
