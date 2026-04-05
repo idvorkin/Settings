@@ -3,7 +3,8 @@ local blog_root = vim.fn.expand("~/blog")
 local buf_path = vim.api.nvim_buf_get_name(0)
 
 if vim.startswith(buf_path, blog_root) then
-	local blog_links = require("nvim_blog_links")
+	local settings_dir = os.getenv("HOME") .. "/settings/nvim/"
+	local blog_links = dofile(settings_dir .. "nvim_blog_links.lua")
 
 	vim.keymap.set("n", "gf", function()
 		local line = vim.api.nvim_get_current_line()
