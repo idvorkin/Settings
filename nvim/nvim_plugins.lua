@@ -30,13 +30,6 @@ local vscode_compatible_plugins = {
 	{
 		"sontungexpt/url-open",
 		cmd = "URLOpenUnderCursor",
-		keys = {
-			{
-				"gx",
-				"<cmd>URLOpenUnderCursor<cr>",
-				desc = "Open URL",
-			},
-		},
 		config = function()
 			local status_ok, url_open = pcall(require, "url-open")
 			if not status_ok then
@@ -848,7 +841,7 @@ local function setupMarkdown()
 			ft = "markdown", -- Only load for markdown files
 			opts = {
 				mappings = {
-					link_follow = "gx", -- Use gx to follow markdown links
+					link_follow = false, -- Handled by blog_links ftplugin
 				},
 			},
 		},
