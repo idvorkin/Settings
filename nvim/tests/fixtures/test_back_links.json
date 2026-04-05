@@ -1,0 +1,21 @@
+{
+	"redirects": {
+		"/ai-brain": "/ai-second-brain",
+		"/old-page": "/middle-redirect",
+		"/middle-redirect": "/final-page"
+	},
+	"url_info": {
+		"/ai-journal": {
+			"markdown_path": "_d/ai-journal.md",
+			"title": "AI Journal"
+		},
+		"/ai-second-brain": {
+			"markdown_path": "_d/ai-second-brain.md",
+			"title": "AI Second Brain"
+		},
+		"/final-page": {
+			"markdown_path": "_d/final-page.md",
+			"title": "Final Page"
+		}
+	}
+}

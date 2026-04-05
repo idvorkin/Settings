@@ -55,3 +55,56 @@ describe("parse_link", function()
 		assert.is_nil(result)
 	end)
 end)
+
+describe("load", function()
+	it("loads and parses back-links.json from blog root", function()
+		local fixture_root = vim.fn.getcwd() .. "/nvim/tests/fixtures"
+		local data = blog_links.load(fixture_root, "test_back_links.json")
+		assert.is_not_nil(data)
+		assert.is_not_nil(data.redirects)
+		assert.is_not_nil(data.url_info)
+		assert.equals("/ai-second-brain", data.redirects["/ai-brain"])
+	end)
+
+	it("returns nil for missing file", function()
+		local data = blog_links.load("/nonexistent/path")
+		assert.is_nil(data)
+	end)
+
+	it("caches on repeated calls", function()
+		local fixture_root = vim.fn.getcwd() .. "/nvim/tests/fixtures"
+		local data1 = blog_links.load(fixture_root, "test_back_links.json")
+		local data2 = blog_links.load(fixture_root, "test_back_links.json")
+		assert.equals(data1, data2)
+	end)
+end)
+
+describe("resolve", function()
+	before_each(function()
+		blog_links._clear_cache()
+	end)
+
+	it("resolves a direct slug to absolute path", function()
+		local fixture_root = vim.fn.getcwd() .. "/nvim/tests/fixtures"
+		local path = blog_links.resolve(fixture_root, "/ai-journal", "test_back_links.json")
+		assert.equals(fixture_root .. "/_d/ai-journal.md", path)
+	end)
+
+	it("follows a single redirect", function()
+		local fixture_root = vim.fn.getcwd() .. "/nvim/tests/fixtures"
+		local path = blog_links.resolve(fixture_root, "/ai-brain", "test_back_links.json")
+		assert.equals(fixture_root .. "/_d/ai-second-brain.md", path)
+	end)
+
+	it("follows a redirect chain", function()
+		local fixture_root = vim.fn.getcwd() .. "/nvim/tests/fixtures"
+		local path = blog_links.resolve(fixture_root, "/old-page", "test_back_links.json")
+		assert.equals(fixture_root .. "/_d/final-page.md", path)
+	end)
+
+	it("returns nil for unknown slug", function()
+		local fixture_root = vim.fn.getcwd() .. "/nvim/tests/fixtures"
+		local path = blog_links.resolve(fixture_root, "/nonexistent", "test_back_links.json")
+		assert.is_nil(path)
+	end)
+end)
