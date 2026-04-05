@@ -53,10 +53,20 @@ enum Commands {
     },
     /// Native TUI picker for session/window/pane (ratatui)
     PickTui,
-    /// Open a file in a side nvim pane, reusing the pane across calls
+    /// Open a file in a side nvim pane, reusing the pane across calls.
+    /// Supports file:line syntax (e.g. foo.py:42). No args = print status only.
     SideEdit {
-        /// File path to open in the side pane
-        file: String,
+        /// File path to open (supports file:line syntax)
+        file: Option<String>,
+    },
+    /// Run a shell command in the side pane (reuses same pane as side-edit).
+    /// No args = print status only.
+    SideRun {
+        /// Command to run in the side pane
+        command: Option<String>,
+        /// Force kill nvim if it's running in the side pane
+        #[arg(long)]
+        force: bool,
     },
     /// Debug: show raw key events (press q to quit)
     DebugKeys,
@@ -1115,6 +1125,128 @@ fn is_pane_safe_to_adopt(pane_id: &str, system: &System) -> bool {
     false
 }
 
+/// Parse a file argument for trailing `:line` syntax.
+/// Returns (file_path, Option<line_number>).
+fn parse_file_line(input: &str) -> (String, Option<usize>) {
+    if let Some(colon_pos) = input.rfind(':') {
+        let (path, rest) = input.split_at(colon_pos);
+        let num_str = &rest[1..]; // skip the ':'
+        if !path.is_empty() {
+            if let Ok(line) = num_str.parse::<usize>() {
+                if line > 0 {
+                    return (path.to_string(), Some(line));
+                }
+            }
+        }
+    }
+    (input.to_string(), None)
+}
+
+/// Find the nvim PID in a pane's process tree, if any.
+fn find_nvim_pid_in_pane(pane_id: &str, system: &System) -> Option<u32> {
+    let pid_str = run_tmux_command(&["display-message", "-t", pane_id, "-p", "#{pane_pid}"])
+        .unwrap_or_default();
+    let pid: u32 = pid_str.trim().parse().ok().filter(|p| *p > 0)?;
+    let info = get_process_info(system, pid)?;
+    find_nvim_in_tree(&info)
+}
+
+/// Recursively find nvim/vim PID in a process tree.
+fn find_nvim_in_tree(info: &ProcessInfo) -> Option<u32> {
+    let name_lower = info.name.to_lowercase();
+    if name_lower == "nvim" || name_lower == "vim" {
+        return Some(info.pid);
+    }
+    for child in &info.children {
+        if let Some(pid) = find_nvim_in_tree(child) {
+            return Some(pid);
+        }
+    }
+    None
+}
+
+/// Get the file argument from an nvim process via /proc/cmdline.
+fn get_nvim_current_file(nvim_pid: u32) -> Option<String> {
+    let cmdline = read_proc_cmdline(nvim_pid)?;
+    // cmdline is space-separated; find last arg that isn't a flag
+    cmdline
+        .split_whitespace()
+        .skip(1) // skip "nvim" itself
+        .filter(|arg| !arg.starts_with('-') && !arg.starts_with('+'))
+        .last()
+        .map(|s| s.to_string())
+}
+
+/// Pane status info for stdout output.
+struct SidePaneStatus {
+    pane_id: String,
+    nvim_running: bool,
+    file: Option<String>,
+}
+
+/// Get the current side pane status.
+fn get_side_pane_status(caller_pane_id: &str) -> SidePaneStatus {
+    // Query the window-local option scoped to the caller's window (not tmux's "current" window)
+    let stored = run_tmux_command(&[
+        "show-option", "-wqv", "-t", caller_pane_id, SIDE_EDIT_PANE_OPTION,
+    ])
+    .unwrap_or_default();
+    let window_panes = get_panes_in_window(caller_pane_id);
+
+    // Find the side pane: use stored option if valid, else detect single other pane
+    let side_pane_id = if !stored.is_empty()
+        && window_panes.contains(&stored)
+        && stored != caller_pane_id
+    {
+        Some(stored)
+    } else {
+        // No valid stored pane — look for a single other pane as the obvious candidate
+        let others: Vec<&String> = window_panes
+            .iter()
+            .filter(|p| p.as_str() != caller_pane_id)
+            .collect();
+        if others.len() == 1 {
+            Some(others[0].clone())
+        } else {
+            None
+        }
+    };
+
+    let side_pane_id = match side_pane_id {
+        Some(id) => id,
+        None => {
+            return SidePaneStatus {
+                pane_id: "none".to_string(),
+                nvim_running: false,
+                file: None,
+            };
+        }
+    };
+
+    let mut sys = System::new();
+    sys.refresh_processes_specifics(
+        sysinfo::ProcessesToUpdate::All,
+        true,
+        ProcessRefreshKind::everything(),
+    );
+
+    let nvim_pid = find_nvim_pid_in_pane(&side_pane_id, &sys);
+    let file = nvim_pid.and_then(get_nvim_current_file);
+
+    SidePaneStatus {
+        pane_id: side_pane_id,
+        nvim_running: nvim_pid.is_some(),
+        file,
+    }
+}
+
+/// Print pane status to stdout.
+fn print_pane_status(status: &SidePaneStatus) {
+    println!("pane_id: {}", status.pane_id);
+    println!("nvim: {}", status.nvim_running);
+    println!("file: {}", status.file.as_deref().unwrap_or(""));
+}
+
 /// Escape a path for use in a nvim Ex command (`:e`).
 fn escape_for_vim_ex(path: &str) -> String {
     path.replace('\\', "\\\\")
@@ -1128,8 +1260,116 @@ fn shell_quote(path: &str) -> String {
     format!("'{}'", path.replace('\'', "'\\''"))
 }
 
-/// Split caller's pane and start nvim. Returns new pane ID or None.
-fn create_side_pane(caller_pane_id: &str, shell_file: &str) -> Option<String> {
+
+/// Open a file in an existing pane, reusing nvim if running.
+fn open_file_in_pane(
+    pane_id: &str,
+    shell_file: &str,
+    vim_file: &str,
+    line: Option<usize>,
+    system: &System,
+) {
+    if is_vim_in_pane(pane_id, system) {
+        // Double Escape handles insert/visual/command-line modes
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, "Escape"])
+            .output();
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, "Escape"])
+            .output();
+        // C-\ C-n exits terminal mode (no-op in normal mode)
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, r"C-\"])
+            .output();
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, "C-n"])
+            .output();
+        // Open file with vim-escaped path, optionally at line
+        let ex_cmd = match line {
+            Some(n) => format!(":e +{} {}", n, vim_file),
+            None => format!(":e {}", vim_file),
+        };
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, &ex_cmd, "Enter"])
+            .output();
+    } else {
+        let nvim_cmd = match line {
+            Some(n) => format!("nvim +{} {}", n, shell_file),
+            None => format!("nvim {}", shell_file),
+        };
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", pane_id, &nvim_cmd, "Enter"])
+            .output();
+    }
+}
+
+/// Resolve the side pane: find existing or create a new shell pane. Returns the pane ID.
+fn resolve_side_pane(caller_pane_id: &str) -> Result<String> {
+    let window_panes = get_panes_in_window(caller_pane_id);
+    if window_panes.is_empty() {
+        anyhow::bail!("Could not list panes in current window.");
+    }
+
+    // Query window-local option scoped to caller's window
+    let stored_pane_id = run_tmux_command(&[
+        "show-option", "-wqv", "-t", caller_pane_id, SIDE_EDIT_PANE_OPTION,
+    ])
+    .unwrap_or_default();
+
+    if !stored_pane_id.is_empty()
+        && window_panes.contains(&stored_pane_id)
+        && stored_pane_id != caller_pane_id
+    {
+        return Ok(stored_pane_id);
+    }
+
+    let other_panes: Vec<&String> = window_panes
+        .iter()
+        .filter(|p| p.as_str() != caller_pane_id)
+        .collect();
+
+    match other_panes.len() {
+        0 => {
+            // Only caller pane — create a shell split
+            let new_id = create_side_pane_shell(caller_pane_id)
+                .context("Failed to create side pane.")?;
+            let _ = Command::new("tmux")
+                .args(["set-option", "-w", "-t", caller_pane_id, SIDE_EDIT_PANE_OPTION, &new_id])
+                .output();
+            Ok(new_id)
+        }
+        1 => {
+            let candidate = other_panes[0];
+            let mut sys = System::new();
+            sys.refresh_processes_specifics(
+                sysinfo::ProcessesToUpdate::All,
+                true,
+                ProcessRefreshKind::everything(),
+            );
+            if !is_pane_safe_to_adopt(candidate, &sys) {
+                anyhow::bail!(
+                    "The other pane is running a foreground process. \
+                     Close it or use a 1-pane window so side-edit can create its own."
+                );
+            }
+            let adopted = candidate.clone();
+            let _ = Command::new("tmux")
+                .args(["set-option", "-w", "-t", caller_pane_id, SIDE_EDIT_PANE_OPTION, &adopted])
+                .output();
+            Ok(adopted)
+        }
+        n => {
+            anyhow::bail!(
+                "Window has {} other panes and no registered side-edit pane. \
+                 Close extra panes or run from a 1-pane window.",
+                n
+            );
+        }
+    }
+}
+
+/// Create a side pane with just a shell (no nvim). Returns new pane ID.
+fn create_side_pane_shell(caller_pane_id: &str) -> Option<String> {
     let caller_cwd = {
         let cwd = get_pane_cwd(caller_pane_id);
         if cwd.is_empty() {
@@ -1157,7 +1397,6 @@ fn create_side_pane(caller_pane_id: &str, shell_file: &str) -> Option<String> {
     .ok()
     .filter(|s| !s.is_empty())?;
 
-    // Re-apply 1/3 width to caller if @third_state was active
     if is_third_active {
         if let Ok(width_str) = run_tmux_command(&[
             "display-message",
@@ -1169,13 +1408,7 @@ fn create_side_pane(caller_pane_id: &str, shell_file: &str) -> Option<String> {
             if let Ok(width) = width_str.trim().parse::<i32>() {
                 let target = (width as f32 * 0.33) as i32;
                 let _ = Command::new("tmux")
-                    .args([
-                        "resize-pane",
-                        "-t",
-                        caller_pane_id,
-                        "-x",
-                        &target.to_string(),
-                    ])
+                    .args(["resize-pane", "-t", caller_pane_id, "-x", &target.to_string()])
                     .output();
             }
         }
@@ -1195,12 +1428,6 @@ fn create_side_pane(caller_pane_id: &str, shell_file: &str) -> Option<String> {
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
 
-    // Launch nvim
-    let nvim_cmd = format!("nvim {}", shell_file);
-    let _ = Command::new("tmux")
-        .args(["send-keys", "-t", &new_pane_id, &nvim_cmd, "Enter"])
-        .output();
-
     // Restore focus to caller
     let _ = Command::new("tmux")
         .args(["select-pane", "-t", caller_pane_id])
@@ -1209,47 +1436,29 @@ fn create_side_pane(caller_pane_id: &str, shell_file: &str) -> Option<String> {
     Some(new_pane_id)
 }
 
-/// Open a file in an existing pane, reusing nvim if running.
-fn open_file_in_pane(pane_id: &str, shell_file: &str, vim_file: &str, system: &System) {
-    if is_vim_in_pane(pane_id, system) {
-        // Double Escape handles insert/visual/command-line modes
-        let _ = Command::new("tmux")
-            .args(["send-keys", "-t", pane_id, "Escape"])
-            .output();
-        let _ = Command::new("tmux")
-            .args(["send-keys", "-t", pane_id, "Escape"])
-            .output();
-        // C-\ C-n exits terminal mode (no-op in normal mode)
-        let _ = Command::new("tmux")
-            .args(["send-keys", "-t", pane_id, r"C-\"])
-            .output();
-        let _ = Command::new("tmux")
-            .args(["send-keys", "-t", pane_id, "C-n"])
-            .output();
-        // Open file with vim-escaped path
-        let ex_cmd = format!(":e {}", vim_file);
-        let _ = Command::new("tmux")
-            .args(["send-keys", "-t", pane_id, &ex_cmd, "Enter"])
-            .output();
-    } else {
-        let nvim_cmd = format!("nvim {}", shell_file);
-        let _ = Command::new("tmux")
-            .args(["send-keys", "-t", pane_id, &nvim_cmd, "Enter"])
-            .output();
-    }
-}
-
-fn side_edit(file: &str) -> Result<()> {
-    // 1. Must be inside tmux
+fn side_edit(file: Option<&str>) -> Result<()> {
     let caller_pane_id = get_caller_pane_id()
         .context("$TMUX_PANE is not set. side-edit must be run inside a tmux pane.")?;
 
-    // 2. Resolve file path
-    let expanded = if file.starts_with('~') {
+    // No file — status only
+    let file = match file {
+        Some(f) => f,
+        None => {
+            let status = get_side_pane_status(&caller_pane_id);
+            print_pane_status(&status);
+            return Ok(());
+        }
+    };
+
+    // Parse file:line
+    let (raw_path, line) = parse_file_line(file);
+
+    // Resolve file path
+    let expanded = if raw_path.starts_with('~') {
         let home = std::env::var("HOME").unwrap_or_else(|_| "/".to_string());
-        file.replacen('~', &home, 1)
+        raw_path.replacen('~', &home, 1)
     } else {
-        file.to_string()
+        raw_path
     };
     let file_path = if std::path::Path::new(&expanded).is_absolute() {
         expanded
@@ -1268,75 +1477,101 @@ fn side_edit(file: &str) -> Result<()> {
     let shell_file = shell_quote(&file_path);
     let vim_file = escape_for_vim_ex(&file_path);
 
-    // 3. Enumerate panes in caller's window
-    let window_panes = get_panes_in_window(&caller_pane_id);
-    if window_panes.is_empty() {
-        anyhow::bail!("Could not list panes in current window.");
-    }
+    // Resolve or create the side pane
+    let side_pane_id = resolve_side_pane(&caller_pane_id)?;
 
-    // 4. Look up stored side-edit pane (window-local)
-    let stored_pane_id = get_tmux_option(SIDE_EDIT_PANE_OPTION);
-
-    let side_pane_id: String = if !stored_pane_id.is_empty()
-        && window_panes.contains(&stored_pane_id)
-        && stored_pane_id != caller_pane_id
-    {
-        stored_pane_id
-    } else {
-        let other_panes: Vec<&String> = window_panes
-            .iter()
-            .filter(|p| p.as_str() != caller_pane_id)
-            .collect();
-
-        match other_panes.len() {
-            0 => {
-                // Only caller pane — create split
-                let new_id = create_side_pane(&caller_pane_id, &shell_file)
-                    .context("Failed to create side pane.")?;
-                set_tmux_option(SIDE_EDIT_PANE_OPTION, &new_id);
-                return Ok(());
-            }
-            1 => {
-                let candidate = other_panes[0];
-                let mut sys = System::new();
-                sys.refresh_processes_specifics(
-                    sysinfo::ProcessesToUpdate::All,
-                    true,
-                    ProcessRefreshKind::everything(),
-                );
-                if !is_pane_safe_to_adopt(candidate, &sys) {
-                    anyhow::bail!(
-                        "The other pane is running a foreground process. \
-                         Close it or use a 1-pane window so side-edit can create its own."
-                    );
-                }
-                let adopted = candidate.clone();
-                set_tmux_option(SIDE_EDIT_PANE_OPTION, &adopted);
-                adopted
-            }
-            n => {
-                anyhow::bail!(
-                    "Window has {} other panes and no registered side-edit pane. \
-                     Close extra panes or run from a 1-pane window.",
-                    n
-                );
-            }
-        }
-    };
-
-    // 5. Open file in the side pane
     let mut system = System::new();
     system.refresh_processes_specifics(
         sysinfo::ProcessesToUpdate::All,
         true,
         ProcessRefreshKind::everything(),
     );
-    open_file_in_pane(&side_pane_id, &shell_file, &vim_file, &system);
 
-    // 6. Restore focus to caller
+    // Open file in the side pane (handles both nvim-reuse and fresh launch)
+    open_file_in_pane(&side_pane_id, &shell_file, &vim_file, line, &system);
+
+    // Restore focus to caller
     let _ = Command::new("tmux")
         .args(["select-pane", "-t", &caller_pane_id])
         .output();
+
+    // Print status
+    let status = get_side_pane_status(&caller_pane_id);
+    print_pane_status(&status);
+
+    Ok(())
+}
+
+fn side_run(command: Option<&str>, force: bool) -> Result<()> {
+    let caller_pane_id = get_caller_pane_id()
+        .context("$TMUX_PANE is not set. side-run must be run inside a tmux pane.")?;
+
+    // No command — status only
+    let cmd = match command {
+        Some(c) => c,
+        None => {
+            let status = get_side_pane_status(&caller_pane_id);
+            print_pane_status(&status);
+            return Ok(());
+        }
+    };
+
+    // Resolve or create the side pane
+    let side_pane_id = resolve_side_pane(&caller_pane_id)?;
+
+    // Check if nvim is running
+    let mut system = System::new();
+    system.refresh_processes_specifics(
+        sysinfo::ProcessesToUpdate::All,
+        true,
+        ProcessRefreshKind::everything(),
+    );
+
+    if is_vim_in_pane(&side_pane_id, &system) {
+        if !force {
+            eprintln!(
+                "nvim is running in the side pane ({}). You may lose unsaved work.\n\
+                 Use --force to kill it and run your command.",
+                side_pane_id
+            );
+            // Still print status so caller gets pane info
+            let status = get_side_pane_status(&caller_pane_id);
+            print_pane_status(&status);
+            anyhow::bail!("nvim is running in side pane; use --force to override");
+        }
+        // Force: send :qa! to nvim
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", &side_pane_id, "Escape"])
+            .output();
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", &side_pane_id, "Escape"])
+            .output();
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", &side_pane_id, r"C-\"])
+            .output();
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", &side_pane_id, "C-n"])
+            .output();
+        let _ = Command::new("tmux")
+            .args(["send-keys", "-t", &side_pane_id, ":qa!", "Enter"])
+            .output();
+        // Brief wait for nvim to exit
+        std::thread::sleep(std::time::Duration::from_millis(200));
+    }
+
+    // Send the command
+    let _ = Command::new("tmux")
+        .args(["send-keys", "-t", &side_pane_id, cmd, "Enter"])
+        .output();
+
+    // Restore focus to caller
+    let _ = Command::new("tmux")
+        .args(["select-pane", "-t", &caller_pane_id])
+        .output();
+
+    // Print status
+    let status = get_side_pane_status(&caller_pane_id);
+    print_pane_status(&status);
 
     Ok(())
 }
@@ -1385,7 +1620,8 @@ fn main() -> Result<()> {
         Some(Commands::Rotate) => rotate(),
         Some(Commands::Third { command }) => third(&command),
         Some(Commands::PickTui) => picker::pick_tui(),
-        Some(Commands::SideEdit { file }) => side_edit(&file),
+        Some(Commands::SideEdit { file }) => side_edit(file.as_deref()),
+        Some(Commands::SideRun { command, force }) => side_run(command.as_deref(), force),
         Some(Commands::DebugKeys) => debug_keys(),
         None => {
             // Show help when no command given
@@ -1627,5 +1863,48 @@ mod tests {
             format_ai_title_no_pane("repo/subdir/leaf", "cx", 12),
             "cx repo/…/l…"
         );
+    }
+
+    #[test]
+    fn test_parse_file_line_with_line() {
+        assert_eq!(
+            parse_file_line("foo.py:42"),
+            ("foo.py".to_string(), Some(42))
+        );
+    }
+
+    #[test]
+    fn test_parse_file_line_no_line() {
+        assert_eq!(parse_file_line("foo.py"), ("foo.py".to_string(), None));
+    }
+
+    #[test]
+    fn test_parse_file_line_absolute_path() {
+        assert_eq!(
+            parse_file_line("/home/user/foo.py:10"),
+            ("/home/user/foo.py".to_string(), Some(10))
+        );
+    }
+
+    #[test]
+    fn test_parse_file_line_not_a_number() {
+        assert_eq!(
+            parse_file_line("foo.py:bar"),
+            ("foo.py:bar".to_string(), None)
+        );
+    }
+
+    #[test]
+    fn test_parse_file_line_zero() {
+        // Line 0 is invalid, treat as no line
+        assert_eq!(
+            parse_file_line("foo.py:0"),
+            ("foo.py:0".to_string(), None)
+        );
+    }
+
+    #[test]
+    fn test_parse_file_line_colon_only() {
+        assert_eq!(parse_file_line("foo.py:"), ("foo.py:".to_string(), None));
     }
 }
