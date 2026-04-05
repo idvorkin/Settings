@@ -119,4 +119,16 @@ function M._clear_cache()
 	_cache_path = nil
 end
 
+--- Build a browser URL for a blog permalink.
+--- @param slug string Permalink slug (e.g. "/ai-journal")
+--- @param anchor string|nil Optional anchor (without #)
+--- @return string Full URL
+function M.browser_url(slug, anchor)
+	local url = "https://idvork.in" .. slug
+	if anchor then
+		url = url .. "#" .. anchor
+	end
+	return url
+end
+
 return M
