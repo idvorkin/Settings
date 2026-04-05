@@ -1,34 +1,49 @@
 -- Blog link following: gf opens source file, gx opens in browser
-local blog_root = vim.fn.expand("~/blog")
-local buf_path = vim.api.nvim_buf_get_name(0)
+-- Detect blog root by walking up from current file looking for back-links.json
+local buf_dir = vim.fn.expand("%:p:h")
+local blog_root = vim.fs.root(buf_dir, "back-links.json")
 
-if vim.startswith(buf_path, blog_root) then
+if blog_root then
 	local settings_dir = os.getenv("HOME") .. "/settings/nvim/"
 	local blog_links = dofile(settings_dir .. "nvim_blog_links.lua")
 
-	vim.keymap.set("n", "gf", function()
+	local function follow_blog_link()
 		local line = vim.api.nvim_get_current_line()
 		local col = vim.api.nvim_win_get_cursor(0)[2]
 		local link = blog_links.parse_link(line, col)
 		if not link then
-			-- Fall back to built-in gf
-			vim.cmd("normal! gf")
-			return
+			return false
 		end
 		if link.slug == "" and link.anchor then
 			-- Same-page anchor: search in current buffer
 			vim.fn.search("^#+\\s.*" .. link.anchor:gsub("%-", "[- ]"), "w")
-			return
+			return true
 		end
 		local path = blog_links.resolve(blog_root, link.slug)
 		if not path then
 			vim.notify("blog_links: no file for " .. link.slug, vim.log.levels.WARN)
-			return
+			return true
 		end
+		-- Push to tag stack so Ctrl-t jumps back
+		local from = { vim.fn.bufnr("%"), vim.fn.line("."), vim.fn.col("."), 0 }
+		local tagname = link.slug:gsub("^/", "")
+		vim.fn.settagstack(vim.fn.win_getid(), { items = { { tagname = tagname, from = from } } }, "t")
 		vim.cmd("edit " .. vim.fn.fnameescape(path))
 		if link.anchor then
-			-- Search for heading matching anchor (Jekyll: lowercase, spaces→dashes)
-			vim.fn.search("^#+\\s.*" .. link.anchor:gsub("%-", "[- ]"), "wi")
+			vim.fn.search("\\c^#+\\s.*" .. link.anchor:gsub("%-", "[- ]"), "w")
+		end
+		return true
+	end
+
+	vim.keymap.set("n", "gf", function()
+		if not follow_blog_link() then
+			vim.cmd("normal! gf")
+		end
+	end, { buffer = true, desc = "Follow blog link to source file" })
+
+	vim.keymap.set("n", "<C-]>", function()
+		if not follow_blog_link() then
+			vim.lsp.buf.definition()
 		end
 	end, { buffer = true, desc = "Follow blog link to source file" })
 
