@@ -37,7 +37,7 @@ if blog_root then
 
 	vim.keymap.set("n", "gf", function()
 		if not follow_blog_link() then
-			vim.cmd("normal! gf")
+			pcall(vim.cmd, "normal! gf")
 		end
 	end, { buffer = true, desc = "Follow blog link to source file" })
 
@@ -52,8 +52,14 @@ if blog_root then
 		local col = vim.api.nvim_win_get_cursor(0)[2]
 		local link = blog_links.parse_link(line, col)
 		if not link then
-			-- Fall back to url-open for non-blog links
-			vim.cmd("URLOpenUnderCursor")
+			pcall(vim.cmd, "URLOpenUnderCursor")
+			return
+		end
+		if link.slug == "" then
+			-- Same-page anchor: jump to heading in current buffer
+			if link.anchor then
+				vim.fn.search("^#+\\s.*" .. link.anchor:gsub("%-", "[- ]"), "w")
+			end
 			return
 		end
 		local url = blog_links.browser_url(link.slug, link.anchor)
