@@ -1086,18 +1086,28 @@ fn get_pane_cwd(pane_id: &str) -> String {
     .unwrap_or_default()
 }
 
-/// Return true if nvim/vim is the foreground process in `pane_id`.
-fn is_vim_in_pane(pane_id: &str, system: &System) -> bool {
+/// Inspect a pane for vim/nvim in its process tree.
+///
+/// Returns:
+/// - `Some(true)`  — pane was inspected and has vim/nvim somewhere in the tree
+/// - `Some(false)` — pane was inspected and has no vim/nvim
+/// - `None`        — inspection failed (pid query failed, process gone from snapshot, etc.)
+///
+/// Uses the same broad matching as `process_tree_has_pattern` (name + cmdline + exe substring),
+/// so it catches wrappers like `nvim.appimage`, `nvim-qt`, embedded under shells, etc.
+fn inspect_pane_for_vim(pane_id: &str, system: &System) -> Option<bool> {
     let pid_str = run_tmux_command(&["display-message", "-t", pane_id, "-p", "#{pane_pid}"])
-        .unwrap_or_default();
-    let pid: u32 = match pid_str.trim().parse() {
-        Ok(p) if p > 0 => p,
-        _ => return false,
-    };
-    match get_process_info(system, pid) {
-        Some(info) => process_tree_has_pattern(&info, &["vim", "nvim"]),
-        None => false,
-    }
+        .ok()?;
+    let pid: u32 = pid_str.trim().parse().ok().filter(|p| *p > 0)?;
+    let info = get_process_info(system, pid)?;
+    Some(process_tree_has_pattern(&info, &["vim", "nvim"]))
+}
+
+/// Return true if nvim/vim is anywhere in the process tree of `pane_id`.
+/// Treats inspection failure as "no" — callers that need to distinguish
+/// uninspectable from absent should call `inspect_pane_for_vim` directly.
+fn is_vim_in_pane(pane_id: &str, system: &System) -> bool {
+    inspect_pane_for_vim(pane_id, system).unwrap_or(false)
 }
 
 /// Return true if pane is running vim/nvim or an idle shell (safe for side-edit).
@@ -1152,9 +1162,14 @@ fn find_nvim_pid_in_pane(pane_id: &str, system: &System) -> Option<u32> {
 }
 
 /// Recursively find nvim/vim PID in a process tree.
+///
+/// Matches the binary basename (from `name` or `exe`) so wrappers like
+/// `nvim.appimage` and `nvim-qt` are recognized. Avoids cmdline-substring
+/// matching here because we need a *specific* pid for `/proc/<pid>/cmdline`,
+/// and a parent shell whose cmdline accidentally contains "vim" would
+/// otherwise win over the real nvim child.
 fn find_nvim_in_tree(info: &ProcessInfo) -> Option<u32> {
-    let name_lower = info.name.to_lowercase();
-    if name_lower == "nvim" || name_lower == "vim" {
+    if node_is_vim_binary(info) {
         return Some(info.pid);
     }
     for child in &info.children {
@@ -1163,6 +1178,34 @@ fn find_nvim_in_tree(info: &ProcessInfo) -> Option<u32> {
         }
     }
     None
+}
+
+/// True if this process node looks like a vim/nvim binary by basename.
+fn node_is_vim_binary(info: &ProcessInfo) -> bool {
+    if basename_is_vim(&info.name) {
+        return true;
+    }
+    if let Some(exe) = info.exe.as_ref() {
+        // exe is a path; pull off the trailing component without bringing
+        // std::path::Path into scope here.
+        let base = exe.rsplit('/').next().unwrap_or(exe);
+        if basename_is_vim(base) {
+            return true;
+        }
+    }
+    false
+}
+
+/// True if a binary basename is vim/nvim or a recognizable variant
+/// (`nvim.appimage`, `nvim-qt`, `vim.basic`, ...).
+fn basename_is_vim(name: &str) -> bool {
+    let lower = name.to_lowercase();
+    lower == "vim"
+        || lower == "nvim"
+        || lower.starts_with("nvim.")
+        || lower.starts_with("nvim-")
+        || lower.starts_with("vim.")
+        || lower.starts_with("vim-")
 }
 
 /// Get the file argument from an nvim process via /proc/cmdline.
@@ -1179,12 +1222,26 @@ fn get_nvim_current_file(nvim_pid: u32) -> Option<String> {
 
 /// Pane status info for stdout output.
 struct SidePaneStatus {
+    /// Resolved side pane id, or `"none"` if no candidate exists,
+    /// or `"ambiguous"` if multiple candidates are running vim/nvim.
     pane_id: String,
-    nvim_running: bool,
+    /// `Some(true|false)` after a real inspection; `None` if we couldn't inspect
+    /// (e.g., pid query failed). Callers should treat `None` as "unknown",
+    /// not "false".
+    nvim_running: Option<bool>,
     file: Option<String>,
 }
 
 /// Get the current side pane status.
+///
+/// Resolution priority:
+/// 1. Stored `@side_edit_pane_id` window option, if still in this window
+/// 2. The single "other" pane in this window
+/// 3. Walk every other pane in the window and pick the unique one running vim/nvim
+///
+/// Importantly, when there's no obvious side pane this still **looks** at every
+/// candidate pane and reports `Some(false)` if none have vim — only failing
+/// inspections produce `None`/"unknown".
 fn get_side_pane_status(caller_pane_id: &str) -> SidePaneStatus {
     // Query the window-local option scoped to the caller's window (not tmux's "current" window)
     let stored = run_tmux_command(&[
@@ -1192,36 +1249,11 @@ fn get_side_pane_status(caller_pane_id: &str) -> SidePaneStatus {
     ])
     .unwrap_or_default();
     let window_panes = get_panes_in_window(caller_pane_id);
-
-    // Find the side pane: use stored option if valid, else detect single other pane
-    let side_pane_id = if !stored.is_empty()
-        && window_panes.contains(&stored)
-        && stored != caller_pane_id
-    {
-        Some(stored)
-    } else {
-        // No valid stored pane — look for a single other pane as the obvious candidate
-        let others: Vec<&String> = window_panes
-            .iter()
-            .filter(|p| p.as_str() != caller_pane_id)
-            .collect();
-        if others.len() == 1 {
-            Some(others[0].clone())
-        } else {
-            None
-        }
-    };
-
-    let side_pane_id = match side_pane_id {
-        Some(id) => id,
-        None => {
-            return SidePaneStatus {
-                pane_id: "none".to_string(),
-                nvim_running: false,
-                file: None,
-            };
-        }
-    };
+    let others: Vec<String> = window_panes
+        .iter()
+        .filter(|p| p.as_str() != caller_pane_id)
+        .cloned()
+        .collect();
 
     let mut sys = System::new();
     sys.refresh_processes_specifics(
@@ -1230,20 +1262,91 @@ fn get_side_pane_status(caller_pane_id: &str) -> SidePaneStatus {
         ProcessRefreshKind::everything(),
     );
 
-    let nvim_pid = find_nvim_pid_in_pane(&side_pane_id, &sys);
-    let file = nvim_pid.and_then(get_nvim_current_file);
+    let stored_valid = !stored.is_empty()
+        && window_panes.contains(&stored)
+        && stored != caller_pane_id;
 
-    SidePaneStatus {
-        pane_id: side_pane_id,
-        nvim_running: nvim_pid.is_some(),
-        file,
+    // Helper: build status for a single resolved pane.
+    let build_for_pane = |pane: String, sys: &System| -> SidePaneStatus {
+        let nvim_running = inspect_pane_for_vim(&pane, sys);
+        let file = if nvim_running == Some(true) {
+            find_nvim_pid_in_pane(&pane, sys).and_then(get_nvim_current_file)
+        } else {
+            None
+        };
+        SidePaneStatus {
+            pane_id: pane,
+            nvim_running,
+            file,
+        }
+    };
+
+    if stored_valid {
+        return build_for_pane(stored, &sys);
+    }
+
+    if others.len() == 1 {
+        return build_for_pane(others[0].clone(), &sys);
+    }
+
+    if others.is_empty() {
+        // No other panes in this window — definitively no side pane,
+        // and therefore definitively no nvim in a side pane. We did "look".
+        return SidePaneStatus {
+            pane_id: "none".to_string(),
+            nvim_running: Some(false),
+            file: None,
+        };
+    }
+
+    // Multiple "other" panes and no stored id — actually look at each one
+    // instead of giving up at the resolution step.
+    let mut vim_panes: Vec<String> = Vec::new();
+    let mut any_uninspectable = false;
+    for pane in &others {
+        match inspect_pane_for_vim(pane, &sys) {
+            Some(true) => vim_panes.push(pane.clone()),
+            Some(false) => {}
+            None => any_uninspectable = true,
+        }
+    }
+
+    match vim_panes.len() {
+        1 => {
+            let pane = vim_panes.remove(0);
+            let file = find_nvim_pid_in_pane(&pane, &sys).and_then(get_nvim_current_file);
+            SidePaneStatus {
+                pane_id: pane,
+                nvim_running: Some(true),
+                file,
+            }
+        }
+        0 => SidePaneStatus {
+            pane_id: "none".to_string(),
+            // We inspected every pane we could; only call it "unknown"
+            // if at least one inspection actually failed.
+            nvim_running: if any_uninspectable { None } else { Some(false) },
+            file: None,
+        },
+        _ => SidePaneStatus {
+            // Multiple panes have vim — we don't know which is "the" side pane,
+            // but we definitely *did* find vim running.
+            pane_id: "ambiguous".to_string(),
+            nvim_running: Some(true),
+            file: None,
+        },
     }
 }
 
 /// Print pane status to stdout.
 fn print_pane_status(status: &SidePaneStatus) {
     println!("pane_id: {}", status.pane_id);
-    println!("nvim: {}", status.nvim_running);
+    let nvim_str = match status.nvim_running {
+        Some(true) => "true",
+        Some(false) => "false",
+        None => "unknown",
+    };
+    println!("nvim: {}", nvim_str);
     println!("file: {}", status.file.as_deref().unwrap_or(""));
 }
 
@@ -1637,11 +1740,21 @@ mod tests {
     use super::*;
 
     fn make_process_info(name: &str, cmdline: &str, children: Vec<ProcessInfo>) -> ProcessInfo {
+        make_process_info_full(1, name, cmdline, None, children)
+    }
+
+    fn make_process_info_full(
+        pid: u32,
+        name: &str,
+        cmdline: &str,
+        exe: Option<&str>,
+        children: Vec<ProcessInfo>,
+    ) -> ProcessInfo {
         ProcessInfo {
-            pid: 1,
+            pid,
             name: name.to_string(),
             cmdline: cmdline.to_string(),
-            exe: None,
+            exe: exe.map(|s| s.to_string()),
             cwd: "/home/user/project".to_string(),
             children,
         }
@@ -1906,5 +2019,80 @@ mod tests {
     #[test]
     fn test_parse_file_line_colon_only() {
         assert_eq!(parse_file_line("foo.py:"), ("foo.py:".to_string(), None));
+    }
+
+    // ---- Side-pane vim detection ----
+
+    #[test]
+    fn test_basename_is_vim_plain() {
+        assert!(basename_is_vim("nvim"));
+        assert!(basename_is_vim("vim"));
+        assert!(basename_is_vim("NVIM")); // case-insensitive
+    }
+
+    #[test]
+    fn test_basename_is_vim_variants() {
+        // Wrappers and packaged binaries should match.
+        assert!(basename_is_vim("nvim.appimage"));
+        assert!(basename_is_vim("nvim-qt"));
+        assert!(basename_is_vim("vim.basic"));
+        assert!(basename_is_vim("vim-tiny"));
+    }
+
+    #[test]
+    fn test_basename_is_vim_negatives() {
+        // Names that contain "vim" but aren't a vim binary should not match.
+        assert!(!basename_is_vim("vimrc"));
+        assert!(!basename_is_vim("nvimpager"));
+        assert!(!basename_is_vim("notvim"));
+        assert!(!basename_is_vim("zsh"));
+        assert!(!basename_is_vim(""));
+    }
+
+    #[test]
+    fn test_find_nvim_in_tree_direct() {
+        let info = make_process_info_full(42, "nvim", "nvim foo.rs", None, vec![]);
+        assert_eq!(find_nvim_in_tree(&info), Some(42));
+    }
+
+    #[test]
+    fn test_find_nvim_in_tree_in_child() {
+        let child = make_process_info_full(99, "nvim", "nvim file.rs", None, vec![]);
+        let parent = make_process_info_full(10, "zsh", "/bin/zsh", None, vec![child]);
+        // Should return the child's pid, not the shell's.
+        assert_eq!(find_nvim_in_tree(&parent), Some(99));
+    }
+
+    #[test]
+    fn test_find_nvim_in_tree_appimage_via_exe() {
+        // sysinfo's `name` may be a generic loader; rely on `exe` basename.
+        let info = make_process_info_full(
+            7,
+            "AppRun",
+            "/tmp/.mount/AppRun",
+            Some("/opt/nvim/nvim.appimage"),
+            vec![],
+        );
+        assert_eq!(find_nvim_in_tree(&info), Some(7));
+    }
+
+    #[test]
+    fn test_find_nvim_in_tree_no_match_does_not_pick_shell() {
+        // A shell whose cmdline accidentally contains "vim" must NOT be picked
+        // as the nvim pid — that would yield a wrong /proc/<pid>/cmdline.
+        let parent = make_process_info_full(
+            10,
+            "zsh",
+            "/bin/zsh -c 'edit vimrc'",
+            None,
+            vec![],
+        );
+        assert_eq!(find_nvim_in_tree(&parent), None);
+    }
+
+    #[test]
+    fn test_find_nvim_in_tree_empty() {
+        let info = make_process_info_full(1, "zsh", "/bin/zsh", None, vec![]);
+        assert_eq!(find_nvim_in_tree(&info), None);
     }
 }
