@@ -1,4 +1,4 @@
-#!uv run
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
@@ -183,7 +183,7 @@ def rotate():
 
 
 @app.command()
-def accordian():
+def accordion():
     call_aerospace("layout accordion")
 
 

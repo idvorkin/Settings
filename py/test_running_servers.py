@@ -1,15 +1,27 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["pytest", "typer", "rich"]
+# ///
 """Tests for running_servers.
 
 Uses a MockAdapter so tests work on any platform without touching real /proc or lsof.
+
+Run directly with uv (no venv setup needed):
+    ./test_running_servers.py
 """
 
+import sys
 from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
-import running_servers
-from running_servers import PlatformAdapter, ServerFinder, app
+# Make sibling running_servers.py importable regardless of cwd.
+sys.path.insert(0, str(Path(__file__).parent))
+
+import running_servers  # noqa: E402
+from running_servers import PlatformAdapter, ServerFinder, app  # noqa: E402
 
 
 class MockAdapter(PlatformAdapter):
@@ -199,3 +211,7 @@ def test_check_process_filter_match_exits_zero(runner, monkeypatch, tmp_path):
     )
     result = runner.invoke(app, ["check", str(tmp_path), "--process", "jekyll"])
     assert result.exit_code == 0, result.output
+
+
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__, "-v"]))

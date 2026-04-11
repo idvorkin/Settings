@@ -52,14 +52,15 @@ uv tool install --force mypy
 ## Python Development Conventions
 
 ### UV Shebang Usage
-All Python scripts should use UV shebangs for easy deployment:
+All Python scripts in `py/` use PEP 723 inline script dependencies — no venv setup required, run directly:
 ```python
-#!/usr/bin/env uv run --script
+#!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
 # dependencies = ["typer", "rich", "pydantic"]
 # ///
 ```
+The `-S` in `env -S` is required so `env` splits `uv run --script` into multiple args — without it, the kernel passes the whole string as a single argument to `env` and the shebang fails on both macOS and Linux.
 
 ### CLI Framework
 Use Typer for all command-line interfaces:
@@ -101,29 +102,31 @@ console.print("[green]Success![/green] Operation completed")
 
 ### Testing Organization
 - Test files mirror source structure: `py/foo.py` → `py/test_foo.py`
-- Use pytest fixtures for shared test data
-- Mock external dependencies
-- Test both success and error cases
+- Test files are standalone PEP 723 scripts — pytest is declared in the inline `# /// script` block so you can run them directly: `./py/test_foo.py`. No `py/.venv/` setup needed.
+- `if __name__ == "__main__": sys.exit(pytest.main([__file__, "-v"]))` at the bottom lets direct execution invoke pytest on the file.
+- For CLI commands, inject dependencies via ABC (see `PlatformAdapter` in `py/running_servers.py`) and test with a MockAdapter subclass + `typer.testing.CliRunner`.
+- Mock external dependencies; test both success and error cases.
+- `just test` runs nvim lua tests, **not** Python tests — run Python test files directly.
 
-## Before Implementing
+## Shared Conventions
 
-Follow [chop-conventions/dev-inner-loop/before-implementing.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/before-implementing.md):
-1. **Spec first** - understand what success looks like
-2. **Confirm understanding** - ask if unclear
-3. **Read existing code** - understand context
-4. **Check patterns** - match existing conventions
-5. **Plan for context loss** - create tracking issue for non-trivial work
+This repo follows the conventions in [chop-conventions/dev-inner-loop](https://github.com/idvorkin/chop-conventions/tree/main/dev-inner-loop). Key references:
 
-## Bug Investigation
+- [clean-code.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/clean-code.md) — code quality standards
+- [clean-commits.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/clean-commits.md) — commit message standards
+- [pr-workflow.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/pr-workflow.md) — pull request process
+- [guardrails.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/guardrails.md) — safety rules requiring user approval
+- [repo-modes.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/repo-modes.md) — AI-tools vs human-supervised modes (this repo is human-supervised: no direct pushes to main)
+- [retros.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/retros.md) — periodic retrospective process
+- [running-commands.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/running-commands.md) — command-line conventions
 
-Follow [chop-conventions/dev-inner-loop/bug-investigation.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/bug-investigation.md):
-1. **Spec**: Is this actually a bug? Ask if unclear
-2. **Test**: Add missing test BEFORE fixing
-3. **Arch**: Deeper problem? Create issue, don't patch around bad architecture
+Superseded by skills — use the skill, not a convention doc:
+- **Before implementing** → `superpowers:brainstorming` skill
+- **Bug investigation** → `superpowers:systematic-debugging` skill
 
 ## Guardrails
 
-See [chop-conventions/dev-inner-loop/guardrails.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/guardrails.md)
+See [chop-conventions/dev-inner-loop/guardrails.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/guardrails.md).
 - Never remove failing tests without explicit "YES" approval
 - Never push to main directly - use feature branches and PRs
 - Never force push - can destroy history
