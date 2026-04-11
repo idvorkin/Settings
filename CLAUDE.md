@@ -164,6 +164,16 @@ git push fork <branch-name>
 gh pr create --head idvorkin-ai-tools:<branch-name>
 ```
 
+## OrbStack VM Environment
+
+This dev VM runs under OrbStack on a Mac. Non-obvious constraints that break standard Linux recipes:
+
+- **PID 1 is `sh -c 'while true; do tmux...'`, NOT systemd.** `systemd-run`, `systemctl`, and sysv `/etc/rc*.d` all fail — nothing executes them on boot.
+- **`/sys/fs/cgroup` is mounted `ro,nsdelegate`.** `remount,rw` is denied even for root. No in-VM cgroup writes; VM-level caps must be set Mac-side via `orb config set cpu N`.
+- **User services bootstrap from `~/.zshrc`** via the idempotent `pgrep + setsid` pattern — see the tailscaled, etserver, and cpu-watchdog blocks. New background services go there too.
+- **`ps` is aliased to `procs` and `top` to `btm`.** Use `/usr/bin/ps` and `/usr/bin/top` for standard flags like `--sort=-%cpu` or `-bn2 -d1`.
+- **`pgrep -f` patterns must anchor** to avoid matching your own shell cmdline: `pgrep -f 'bin/myscript.sh$'`, not `pgrep -f myscript`.
+
 ## Terminal Command Conventions
 
 ### Important Usage Notes
