@@ -36,7 +36,18 @@ require_cmd() {
 require_cmd /usr/bin/top
 require_cmd awk
 require_cmd pgrep
-require_cmd cpulimit
+
+# Prefer /usr/bin/cpulimit (apt 3.1+). The brew package on Linux is an
+# unrelated fork stuck at v0.2 that lacks `-q` and silently fails, so if
+# linuxbrew is first on PATH it will shadow the working version.
+if [ -x /usr/bin/cpulimit ]; then
+    CPULIMIT=/usr/bin/cpulimit
+else
+    CPULIMIT=$(command -v cpulimit 2>/dev/null) || {
+        log "missing dependency: cpulimit not found in PATH; exiting"
+        exit 1
+    }
+fi
 
 # Do not throttle anything in this list — stopping them would wedge the VM
 is_excluded() {
@@ -71,7 +82,7 @@ while true; do
             # Already being throttled? (our cpulimit has `-p <pid>` in its args)
             if pgrep -f "cpulimit.*-p $pid " >/dev/null 2>&1; then continue; fi
             log "throttle pid=$pid comm=\"$comm\" cpu=${pcpu}% → cap ${LIMIT_PCT}%"
-            cpulimit -l "$LIMIT_PCT" -p "$pid" -z -q >/dev/null 2>&1 &
+            "$CPULIMIT" -l "$LIMIT_PCT" -p "$pid" -z -q >/dev/null 2>&1 &
         done
     sleep "$INTERVAL"
 done
