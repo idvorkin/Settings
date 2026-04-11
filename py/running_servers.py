@@ -423,25 +423,79 @@ def status(
 @app.command()
 def check(
     directory: Path = typer.Argument(None, help="Directory to check (default: cwd)"),
+    expected_port: int | None = typer.Option(
+        None,
+        "--port",
+        "-p",
+        help="Only succeed if a server is listening on this port in the directory",
+    ),
+    expected_process: str | None = typer.Option(
+        None,
+        "--process",
+        help="Only succeed if a server's process name or cmdline matches (substring, case-insensitive)",
+    ),
 ):
-    """Check what servers are running for a directory."""
+    """Check what servers are running for a directory.
+
+    Exits 0 when matching servers are found, 1 otherwise. Use --port or
+    --process to require a specific server (e.g. `check . --port 4000` to
+    confirm Jekyll is up before taking screenshots). Without filters,
+    succeeds when any server has its cwd in the directory.
+    """
     directory = directory or Path.cwd()
     hostname = get_tailscale_hostname()
     finder = get_finder()
     servers = finder.find_for_directory(directory)
+
+    # Apply filters so callers can ask for a specific server rather than
+    # "any dev server in this cwd" (see issue #60).
+    if expected_port is not None:
+        servers = [s for s in servers if s["port"] == expected_port]
+    if expected_process is not None:
+        needle = expected_process.lower()
+        servers = [
+            s
+            for s in servers
+            if needle in s["process"].lower() or needle in s["cmdline"].lower()
+        ]
 
     if servers:
         console.print(f"[green]✓[/green] Servers running for [cyan]{directory}[/cyan]")
         for s in servers:
             url = get_url(s["port"], hostname)
             console.print(
-                f"  :{s['port']} [yellow]{s['process']}[/yellow] → [blue]{url}[/blue]"
+                f"  :{s['port']} [yellow]{s['process']}[/yellow] "
+                f"[dim]({s['cmdline']})[/dim] → [blue]{url}[/blue]"
             )
+        return
+
+    # No match — explain why and exit non-zero so shell callers can branch.
+    if expected_port is not None or expected_process is not None:
+        criteria_parts = []
+        if expected_port is not None:
+            criteria_parts.append(f"port {expected_port}")
+        if expected_process is not None:
+            criteria_parts.append(f"process matching '{expected_process}'")
+        criteria = " and ".join(criteria_parts)
+        console.print(
+            f"[yellow]✗[/yellow] No server with {criteria} in [cyan]{directory}[/cyan]"
+        )
+        # Still show what is running in the dir so the caller can see the
+        # stray processes that confused them.
+        other = finder.find_for_directory(directory)
+        if other:
+            console.print("[dim]  Other servers in this directory:[/dim]")
+            for s in other:
+                console.print(
+                    f"[dim]    :{s['port']} {s['process']} ({s['cmdline']})[/dim]"
+                )
     else:
         console.print(f"[yellow]✗[/yellow] No servers for [cyan]{directory}[/cyan]")
         available = finder.find_available_port()
         if available:
             console.print(f"  Available port: [cyan]{available}[/cyan]")
+
+    raise typer.Exit(code=1)
 
 
 @app.command()
