@@ -423,12 +423,23 @@ def status(
 @app.command()
 def check(
     directory: Path = typer.Argument(None, help="Directory to check (default: cwd)"),
+    port_filter: int = typer.Option(
+        None, "--port", "-p", help="Only succeed if a server is on this port"
+    ),
 ):
-    """Check what servers are running for a directory."""
+    """Check what servers are running for a directory.
+
+    Exits with code 1 when no matching server is found, so callers can use it as a gate.
+    Use --port to require a server on a specific port (e.g. --port 4000 for Jekyll).
+    """
     directory = directory or Path.cwd()
     hostname = get_tailscale_hostname()
     finder = get_finder()
     servers = finder.find_for_directory(directory)
+
+    # Filter by port if requested
+    if port_filter is not None:
+        servers = [s for s in servers if s["port"] == port_filter]
 
     if servers:
         console.print(f"[green]✓[/green] Servers running for [cyan]{directory}[/cyan]")
@@ -438,10 +449,16 @@ def check(
                 f"  :{s['port']} [yellow]{s['process']}[/yellow] → [blue]{url}[/blue]"
             )
     else:
-        console.print(f"[yellow]✗[/yellow] No servers for [cyan]{directory}[/cyan]")
-        available = finder.find_available_port()
-        if available:
-            console.print(f"  Available port: [cyan]{available}[/cyan]")
+        if port_filter is not None:
+            console.print(
+                f"[yellow]✗[/yellow] No server on port [cyan]{port_filter}[/cyan] for [cyan]{directory}[/cyan]"
+            )
+        else:
+            console.print(f"[yellow]✗[/yellow] No servers for [cyan]{directory}[/cyan]")
+            available = finder.find_available_port()
+            if available:
+                console.print(f"  Available port: [cyan]{available}[/cyan]")
+        raise typer.Exit(code=1)
 
 
 @app.command()
