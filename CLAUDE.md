@@ -164,9 +164,16 @@ git push fork <branch-name>
 gh pr create --head idvorkin-ai-tools:<branch-name>
 ```
 
-## OrbStack VM Environment
+## devvm Environment (OrbStack Linux VM)
 
-This dev VM runs under OrbStack on a Mac. Non-obvious constraints that break standard Linux recipes:
+Claude sometimes runs on the Mac host, sometimes inside the "devvm" — an OrbStack Linux VM reachable over Tailscale as `c-NNNN`. **Check which environment you're in before applying the rules below**, because they only hold inside the devvm:
+
+```bash
+# Check: are we in the devvm?
+[ "$(whoami)" = "developer" ] && uname -r | grep -q orbstack && echo "devvm" || echo "not devvm (Mac host or other)"
+```
+
+If the check prints `devvm`, the following non-obvious constraints apply. If it prints `not devvm`, ignore this whole section — standard macOS rules apply instead.
 
 - **PID 1 is `sh -c 'while true; do tmux...'`, NOT systemd.** `systemd-run`, `systemctl`, and sysv `/etc/rc*.d` all fail — nothing executes them on boot.
 - **`/sys/fs/cgroup` is mounted `ro,nsdelegate`.** `remount,rw` is denied even for root. No in-VM cgroup writes; VM-level caps must be set Mac-side via `orb config set cpu N`.
