@@ -62,10 +62,6 @@ ln -s -f ~/settings/shared/.ideavim ~/.ideavimrc
 ln -s -f ~/settings/shared/aider.conf.yml ~/.aider.conf.yml
 ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
 
-# Reactive CPU runaway watchdog — launched from ~/.zshrc on interactive shells
-mkdir -p ~/bin
-ln -s -f ~/settings/shared/cpu-watchdog.sh ~/bin/cpu-watchdog.sh
-
 # Todo consider enumerating the directory and linking all of them
 ln -s -f ~/settings/nvim ~/.config/nvim
 ln -s -f ~/settings/config/carapace/ ~/.config/carapace

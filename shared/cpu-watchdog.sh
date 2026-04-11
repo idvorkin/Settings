@@ -25,6 +25,19 @@ log() {
     printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOG"
 }
 
+# Fail fast if any required external command is missing — otherwise the loop
+# runs silently without throttling and we'd only notice when the VM melts.
+require_cmd() {
+    command -v "$1" >/dev/null 2>&1 || {
+        log "missing dependency: $1 not found in PATH; exiting"
+        exit 1
+    }
+}
+require_cmd /usr/bin/top
+require_cmd awk
+require_cmd pgrep
+require_cmd cpulimit
+
 # Do not throttle anything in this list — stopping them would wedge the VM
 is_excluded() {
     case "$1" in
@@ -41,10 +54,10 @@ log "cpu-watchdog starting (limit=${LIMIT_PCT}% threshold=${THRESHOLD}% interval
 while true; do
     # top -bn2 -d1 → second iteration has instantaneous CPU over 1s
     # -w512 prevents COMMAND truncation. awk concatenates cols 12..NF as COMMAND.
-    /usr/bin/top -bn2 -d1 -w512 2>/dev/null \
+    LC_ALL=C LANG=C /usr/bin/top -bn2 -d1 -w512 2>/dev/null \
         | awk '
             /^top - /{iter++}
-            iter==2 && $1 ~ /^[0-9]+$/ {
+            iter==2 && $1 ~ /^[0-9]+$/ && $9 ~ /^[0-9]+([.][0-9]+)?$/ {
                 comm=""
                 for (i=12; i<=NF; i++) comm = comm (i>12 ? " " : "") $i
                 print $1, $9, comm
