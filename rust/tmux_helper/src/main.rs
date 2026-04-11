@@ -1196,16 +1196,31 @@ fn node_is_vim_binary(info: &ProcessInfo) -> bool {
     false
 }
 
-/// True if a binary basename is vim/nvim or a recognizable variant
-/// (`nvim.appimage`, `nvim-qt`, `vim.basic`, ...).
+/// True if a binary basename is vim/nvim or a recognizable packaged variant.
+///
+/// Uses an explicit allow-list for hyphenated wrapper names so unrelated tools
+/// like `vim-addon-manager` or `nvim-lsp-installer` (whose names start with
+/// `vim-`/`nvim-` but are not themselves editors) cannot win the pid race in
+/// `find_nvim_in_tree`. Dotted variants (`nvim.appimage`, `vim.basic`) stay as
+/// a prefix rule because the dot is a strong signal it's a packaged binary.
 fn basename_is_vim(name: &str) -> bool {
     let lower = name.to_lowercase();
-    lower == "vim"
-        || lower == "nvim"
-        || lower.starts_with("nvim.")
-        || lower.starts_with("nvim-")
-        || lower.starts_with("vim.")
-        || lower.starts_with("vim-")
+    if lower.starts_with("nvim.") || lower.starts_with("vim.") {
+        return true;
+    }
+    matches!(
+        lower.as_str(),
+        "vim"
+            | "nvim"
+            | "nvim-qt"
+            | "nvim-qt.exe"
+            | "vim-tiny"
+            | "vim-basic"
+            | "vim-nox"
+            | "vim-gtk"
+            | "vim-gtk3"
+            | "vim-athena"
+    )
 }
 
 /// Get the file argument from an nvim process via /proc/cmdline.
@@ -1223,7 +1238,9 @@ fn get_nvim_current_file(nvim_pid: u32) -> Option<String> {
 /// Pane status info for stdout output.
 struct SidePaneStatus {
     /// Resolved side pane id, or `"none"` if no candidate exists,
-    /// or `"ambiguous"` if multiple candidates are running vim/nvim.
+    /// or `"ambiguous"` if we cannot confidently identify a single side pane.
+    /// These sentinel values are part of the wire format for shell consumers
+    /// of `side-edit`/`side-run` status output — do not silently rename.
     pane_id: String,
     /// `Some(true|false)` after a real inspection; `None` if we couldn't inspect
     /// (e.g., pid query failed). Callers should treat `None` as "unknown",
@@ -1232,16 +1249,130 @@ struct SidePaneStatus {
     file: Option<String>,
 }
 
-/// Get the current side pane status.
+/// Resolved side pane choice from `resolve_side_pane`.
+#[derive(Debug, PartialEq, Eq)]
+enum ResolvedSidePane {
+    /// A specific pane id (we are confident this is "the" side pane).
+    Pane(String),
+    /// No candidate pane exists (window has only the caller pane).
+    None,
+    /// Multiple plausible candidates — caller cannot route to a single pane.
+    Ambiguous,
+}
+
+/// Result of resolving which pane is "the" side pane and whether vim is on it.
+#[derive(Debug, PartialEq, Eq)]
+struct ResolvedStatus {
+    pane: ResolvedSidePane,
+    nvim_running: Option<bool>,
+}
+
+/// Pure resolver: pick the side pane and inspect it for vim/nvim.
 ///
-/// Resolution priority:
-/// 1. Stored `@side_edit_pane_id` window option, if still in this window
-/// 2. The single "other" pane in this window
-/// 3. Walk every other pane in the window and pick the unique one running vim/nvim
+/// (Named `pick_side_pane` rather than `resolve_side_pane` because the latter
+/// is already taken by the imperative resolve-or-adopt-or-create helper used
+/// by `side_edit`/`side_run`.)
 ///
-/// Importantly, when there's no obvious side pane this still **looks** at every
-/// candidate pane and reports `Some(false)` if none have vim — only failing
-/// inspections produce `None`/"unknown".
+/// Resolution order (first match wins):
+/// 1. `stored` is non-empty AND in `window_panes` AND not equal to `caller_pane_id`
+///    → use `stored` and call `inspect(stored)`.
+/// 2. Exactly one "other" pane in the window → use it and call `inspect`.
+/// 3. Zero "other" panes → `None`/`Some(false)` (definitively no side pane).
+/// 4. Multiple "other" panes → walk each one with `inspect`. If exactly one
+///    pane reports `Some(true)` AND no other pane reported `None`, use it.
+///    Otherwise:
+///    - 0 vim panes, no inspection failures → `None`/`Some(false)`
+///    - 0 vim panes, some inspection failures → `None`/`None` (unknown)
+///    - 1 vim pane, but other panes were uninspectable → `Ambiguous`/`Some(true)`
+///      (one of the uninspectable panes might also have vim — refuse to pick)
+///    - >1 vim panes → `Ambiguous`/`Some(true)`
+///
+/// Pure: takes an injectable `inspect` closure so all branches can be unit-tested
+/// with a fake inspector instead of needing tmux + sysinfo.
+fn pick_side_pane<F>(
+    caller_pane_id: &str,
+    window_panes: &[String],
+    stored: &str,
+    mut inspect: F,
+) -> ResolvedStatus
+where
+    F: FnMut(&str) -> Option<bool>,
+{
+    // Step 1: stored option, if still valid for this window.
+    let stored_valid = !stored.is_empty()
+        && window_panes.iter().any(|p| p == stored)
+        && stored != caller_pane_id;
+    if stored_valid {
+        let nvim_running = inspect(stored);
+        return ResolvedStatus {
+            pane: ResolvedSidePane::Pane(stored.to_string()),
+            nvim_running,
+        };
+    }
+
+    let others: Vec<&String> = window_panes
+        .iter()
+        .filter(|p| p.as_str() != caller_pane_id)
+        .collect();
+
+    // Step 2: exactly one other pane is the obvious side pane.
+    if others.len() == 1 {
+        let pane = others[0].clone();
+        let nvim_running = inspect(&pane);
+        return ResolvedStatus {
+            pane: ResolvedSidePane::Pane(pane),
+            nvim_running,
+        };
+    }
+
+    // Step 3: no other panes — definitively nothing to inspect.
+    if others.is_empty() {
+        return ResolvedStatus {
+            pane: ResolvedSidePane::None,
+            nvim_running: Some(false),
+        };
+    }
+
+    // Step 4: multiple other panes — walk each one.
+    let mut vim_panes: Vec<String> = Vec::new();
+    let mut any_uninspectable = false;
+    for pane in &others {
+        match inspect(pane) {
+            Some(true) => vim_panes.push((*pane).clone()),
+            Some(false) => {}
+            None => any_uninspectable = true,
+        }
+    }
+
+    match vim_panes.len() {
+        1 if !any_uninspectable => ResolvedStatus {
+            pane: ResolvedSidePane::Pane(vim_panes.remove(0)),
+            nvim_running: Some(true),
+        },
+        1 => {
+            // One confirmed vim pane, but at least one other pane could not be
+            // inspected and could *also* be running vim. Refuse to silently
+            // route to a possibly-wrong pane.
+            ResolvedStatus {
+                pane: ResolvedSidePane::Ambiguous,
+                nvim_running: Some(true),
+            }
+        }
+        0 => ResolvedStatus {
+            pane: ResolvedSidePane::None,
+            // We inspected every pane we could; call it "unknown" only if at
+            // least one inspection actually failed.
+            nvim_running: if any_uninspectable { None } else { Some(false) },
+        },
+        _ => ResolvedStatus {
+            pane: ResolvedSidePane::Ambiguous,
+            nvim_running: Some(true),
+        },
+    }
+}
+
+/// Get the current side pane status (queries tmux + sysinfo, then delegates
+/// to the pure `resolve_side_pane` for branch logic).
 fn get_side_pane_status(caller_pane_id: &str) -> SidePaneStatus {
     // Query the window-local option scoped to the caller's window (not tmux's "current" window)
     let stored = run_tmux_command(&[
@@ -1249,11 +1380,6 @@ fn get_side_pane_status(caller_pane_id: &str) -> SidePaneStatus {
     ])
     .unwrap_or_default();
     let window_panes = get_panes_in_window(caller_pane_id);
-    let others: Vec<String> = window_panes
-        .iter()
-        .filter(|p| p.as_str() != caller_pane_id)
-        .cloned()
-        .collect();
 
     let mut sys = System::new();
     sys.refresh_processes_specifics(
@@ -1262,92 +1388,49 @@ fn get_side_pane_status(caller_pane_id: &str) -> SidePaneStatus {
         ProcessRefreshKind::everything(),
     );
 
-    let stored_valid = !stored.is_empty()
-        && window_panes.contains(&stored)
-        && stored != caller_pane_id;
+    let resolved = pick_side_pane(caller_pane_id, &window_panes, &stored, |p| {
+        inspect_pane_for_vim(p, &sys)
+    });
 
-    // Helper: build status for a single resolved pane.
-    let build_for_pane = |pane: String, sys: &System| -> SidePaneStatus {
-        let nvim_running = inspect_pane_for_vim(&pane, sys);
-        let file = if nvim_running == Some(true) {
-            find_nvim_pid_in_pane(&pane, sys).and_then(get_nvim_current_file)
-        } else {
-            None
-        };
-        SidePaneStatus {
-            pane_id: pane,
-            nvim_running,
-            file,
+    let (pane_id, file) = match resolved.pane {
+        ResolvedSidePane::Pane(p) => {
+            let file = if resolved.nvim_running == Some(true) {
+                find_nvim_pid_in_pane(&p, &sys).and_then(get_nvim_current_file)
+            } else {
+                None
+            };
+            (p, file)
         }
+        ResolvedSidePane::None => ("none".to_string(), None),
+        ResolvedSidePane::Ambiguous => ("ambiguous".to_string(), None),
     };
 
-    if stored_valid {
-        return build_for_pane(stored, &sys);
-    }
-
-    if others.len() == 1 {
-        return build_for_pane(others[0].clone(), &sys);
-    }
-
-    if others.is_empty() {
-        // No other panes in this window — definitively no side pane,
-        // and therefore definitively no nvim in a side pane. We did "look".
-        return SidePaneStatus {
-            pane_id: "none".to_string(),
-            nvim_running: Some(false),
-            file: None,
-        };
-    }
-
-    // Multiple "other" panes and no stored id — actually look at each one
-    // instead of giving up at the resolution step.
-    let mut vim_panes: Vec<String> = Vec::new();
-    let mut any_uninspectable = false;
-    for pane in &others {
-        match inspect_pane_for_vim(pane, &sys) {
-            Some(true) => vim_panes.push(pane.clone()),
-            Some(false) => {}
-            None => any_uninspectable = true,
-        }
-    }
-
-    match vim_panes.len() {
-        1 => {
-            let pane = vim_panes.remove(0);
-            let file = find_nvim_pid_in_pane(&pane, &sys).and_then(get_nvim_current_file);
-            SidePaneStatus {
-                pane_id: pane,
-                nvim_running: Some(true),
-                file,
-            }
-        }
-        0 => SidePaneStatus {
-            pane_id: "none".to_string(),
-            // We inspected every pane we could; only call it "unknown"
-            // if at least one inspection actually failed.
-            nvim_running: if any_uninspectable { None } else { Some(false) },
-            file: None,
-        },
-        _ => SidePaneStatus {
-            // Multiple panes have vim — we don't know which is "the" side pane,
-            // but we definitely *did* find vim running.
-            pane_id: "ambiguous".to_string(),
-            nvim_running: Some(true),
-            file: None,
-        },
+    SidePaneStatus {
+        pane_id,
+        nvim_running: resolved.nvim_running,
+        file,
     }
 }
 
-/// Print pane status to stdout.
-fn print_pane_status(status: &SidePaneStatus) {
-    println!("pane_id: {}", status.pane_id);
+/// Format pane status for stdout. Extracted from `print_pane_status` so the
+/// wire format can be unit-tested.
+fn format_pane_status(status: &SidePaneStatus) -> String {
     let nvim_str = match status.nvim_running {
         Some(true) => "true",
         Some(false) => "false",
         None => "unknown",
     };
-    println!("nvim: {}", nvim_str);
-    println!("file: {}", status.file.as_deref().unwrap_or(""));
+    format!(
+        "pane_id: {}\nnvim: {}\nfile: {}",
+        status.pane_id,
+        nvim_str,
+        status.file.as_deref().unwrap_or(""),
+    )
+}
+
+/// Print pane status to stdout.
+fn print_pane_status(status: &SidePaneStatus) {
+    println!("{}", format_pane_status(status));
 }
 
 /// Escape a path for use in a nvim Ex command (`:e`).
@@ -1630,19 +1713,30 @@ fn side_run(command: Option<&str>, force: bool) -> Result<()> {
         ProcessRefreshKind::everything(),
     );
 
-    if is_vim_in_pane(&side_pane_id, &system) {
+    // Fail-safe: if inspection fails (None), assume vim *might* be there.
+    // Sending Enter-terminated keystrokes into a live nvim with unsaved buffers
+    // would silently destroy work, so any state other than `Some(false)` blocks
+    // the run unless the user explicitly says `--force`.
+    let vim_state = inspect_pane_for_vim(&side_pane_id, &system);
+    if vim_state != Some(false) {
         if !force {
+            let reason = match vim_state {
+                Some(true) => "nvim is running",
+                None => "side pane could not be inspected",
+                Some(false) => unreachable!(),
+            };
             eprintln!(
-                "nvim is running in the side pane ({}). You may lose unsaved work.\n\
-                 Use --force to kill it and run your command.",
-                side_pane_id
+                "{} in side pane ({}). You may lose unsaved work.\n\
+                 Use --force to override and run your command.",
+                reason, side_pane_id
             );
             // Still print status so caller gets pane info
             let status = get_side_pane_status(&caller_pane_id);
             print_pane_status(&status);
-            anyhow::bail!("nvim is running in side pane; use --force to override");
+            anyhow::bail!("side pane unsafe ({}); use --force to override", reason);
         }
-        // Force: send :qa! to nvim
+        // Force: send :qa! to nvim. Harmless no-op if it wasn't actually nvim,
+        // since send-keys to a shell prompt just types `:qa!` and Enter.
         let _ = Command::new("tmux")
             .args(["send-keys", "-t", &side_pane_id, "Escape"])
             .output();
@@ -2047,6 +2141,12 @@ mod tests {
         assert!(!basename_is_vim("notvim"));
         assert!(!basename_is_vim("zsh"));
         assert!(!basename_is_vim(""));
+        // Hyphenated tools that are NOT editors must not match — these would
+        // otherwise short-circuit `find_nvim_in_tree` and return the wrong pid.
+        assert!(!basename_is_vim("vim-addon-manager"));
+        assert!(!basename_is_vim("nvim-lsp-installer"));
+        assert!(!basename_is_vim("vim-startuptime"));
+        assert!(!basename_is_vim("nvim-treesitter-cli"));
     }
 
     #[test]
@@ -2094,5 +2194,251 @@ mod tests {
     fn test_find_nvim_in_tree_empty() {
         let info = make_process_info_full(1, "zsh", "/bin/zsh", None, vec![]);
         assert_eq!(find_nvim_in_tree(&info), None);
+    }
+
+    // ---- pick_side_pane resolver ----
+    //
+    // The inspect closure is faked so we can exercise every branch without
+    // touching tmux or sysinfo. Each test sets up a window pane list, an
+    // optional stored id, and a closure that returns the desired Option<bool>.
+
+    fn make_pane_ids(ids: &[&str]) -> Vec<String> {
+        ids.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn test_pick_stored_valid() {
+        // Stored pane is in the window and not the caller — use it directly.
+        let panes = make_pane_ids(&["%1", "%2", "%3"]);
+        let result = pick_side_pane("%1", &panes, "%2", |p| {
+            assert_eq!(p, "%2");
+            Some(true)
+        });
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::Pane("%2".to_string()),
+                nvim_running: Some(true),
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_stored_not_in_window_falls_through() {
+        // Stored id refers to a pane no longer in this window — fall through
+        // to step 2 (single other pane).
+        let panes = make_pane_ids(&["%1", "%2"]);
+        let result = pick_side_pane("%1", &panes, "%99", |p| {
+            assert_eq!(p, "%2");
+            Some(false)
+        });
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::Pane("%2".to_string()),
+                nvim_running: Some(false),
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_stored_equals_caller_falls_through() {
+        // Stored id equals caller — must not pick the caller's own pane.
+        let panes = make_pane_ids(&["%1", "%2"]);
+        let result = pick_side_pane("%1", &panes, "%1", |p| {
+            assert_eq!(p, "%2");
+            Some(true)
+        });
+        assert_eq!(result.pane, ResolvedSidePane::Pane("%2".to_string()));
+    }
+
+    #[test]
+    fn test_pick_single_other_pane() {
+        let panes = make_pane_ids(&["%1", "%2"]);
+        let result = pick_side_pane("%1", &panes, "", |p| {
+            assert_eq!(p, "%2");
+            Some(true)
+        });
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::Pane("%2".to_string()),
+                nvim_running: Some(true),
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_no_other_panes_is_definite_false() {
+        // Window has only the caller pane. We did "look" — there is nothing
+        // to inspect, therefore there is definitely no nvim in a side pane.
+        let panes = make_pane_ids(&["%1"]);
+        let result = pick_side_pane("%1", &panes, "", |_| {
+            panic!("inspect must not be called when there are no other panes")
+        });
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::None,
+                nvim_running: Some(false),
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_multi_no_vim() {
+        // 3 other panes, none have vim — definite false (we walked all).
+        let panes = make_pane_ids(&["%1", "%2", "%3", "%4"]);
+        let result = pick_side_pane("%1", &panes, "", |_| Some(false));
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::None,
+                nvim_running: Some(false),
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_multi_unique_vim() {
+        // 3 other panes, exactly one has vim, all others inspectable —
+        // confidently pick that one.
+        let panes = make_pane_ids(&["%1", "%2", "%3", "%4"]);
+        let result = pick_side_pane("%1", &panes, "", |p| match p {
+            "%3" => Some(true),
+            _ => Some(false),
+        });
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::Pane("%3".to_string()),
+                nvim_running: Some(true),
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_multi_multiple_vim_is_ambiguous() {
+        let panes = make_pane_ids(&["%1", "%2", "%3", "%4"]);
+        let result = pick_side_pane("%1", &panes, "", |_| Some(true));
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::Ambiguous,
+                nvim_running: Some(true),
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_multi_all_uninspectable_is_unknown() {
+        // Walked every pane but every inspection failed — answer is unknown,
+        // not false.
+        let panes = make_pane_ids(&["%1", "%2", "%3"]);
+        let result = pick_side_pane("%1", &panes, "", |_| None);
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::None,
+                nvim_running: None,
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_multi_some_uninspectable_no_vim() {
+        // Mixed: some panes uninspectable, others returned Some(false). No
+        // confirmed vim anywhere — must report unknown, since one of the
+        // uninspectable panes might have had vim.
+        let panes = make_pane_ids(&["%1", "%2", "%3", "%4"]);
+        let result = pick_side_pane("%1", &panes, "", |p| match p {
+            "%2" => Some(false),
+            "%3" => None,
+            "%4" => Some(false),
+            _ => panic!("unexpected pane {p}"),
+        });
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::None,
+                nvim_running: None,
+            }
+        );
+    }
+
+    #[test]
+    fn test_pick_multi_one_vim_with_uninspectable_is_ambiguous() {
+        // The Fix #2 case: one pane confirmed vim, but another pane could not
+        // be inspected. The uninspectable one MIGHT also have vim. Refuse to
+        // route to a possibly-wrong pane — promote to Ambiguous.
+        let panes = make_pane_ids(&["%1", "%2", "%3", "%4"]);
+        let result = pick_side_pane("%1", &panes, "", |p| match p {
+            "%2" => Some(true),
+            "%3" => None,
+            "%4" => Some(false),
+            _ => panic!("unexpected pane {p}"),
+        });
+        assert_eq!(
+            result,
+            ResolvedStatus {
+                pane: ResolvedSidePane::Ambiguous,
+                nvim_running: Some(true),
+            }
+        );
+    }
+
+    // ---- format_pane_status wire format ----
+
+    #[test]
+    fn test_format_pane_status_unknown_prints_unknown_not_false() {
+        // Regression guard: the whole point of Option<bool> is that None must
+        // print as `unknown`, never as `false`.
+        let s = SidePaneStatus {
+            pane_id: "%5".to_string(),
+            nvim_running: None,
+            file: None,
+        };
+        let out = format_pane_status(&s);
+        assert!(out.contains("nvim: unknown"), "got: {out}");
+        assert!(!out.contains("nvim: false"), "got: {out}");
+    }
+
+    #[test]
+    fn test_format_pane_status_true_with_file() {
+        let s = SidePaneStatus {
+            pane_id: "%5".to_string(),
+            nvim_running: Some(true),
+            file: Some("/tmp/foo.rs".to_string()),
+        };
+        assert_eq!(
+            format_pane_status(&s),
+            "pane_id: %5\nnvim: true\nfile: /tmp/foo.rs"
+        );
+    }
+
+    #[test]
+    fn test_format_pane_status_false_no_file() {
+        let s = SidePaneStatus {
+            pane_id: "none".to_string(),
+            nvim_running: Some(false),
+            file: None,
+        };
+        assert_eq!(
+            format_pane_status(&s),
+            "pane_id: none\nnvim: false\nfile: "
+        );
+    }
+
+    #[test]
+    fn test_format_pane_status_ambiguous() {
+        let s = SidePaneStatus {
+            pane_id: "ambiguous".to_string(),
+            nvim_running: Some(true),
+            file: None,
+        };
+        assert_eq!(
+            format_pane_status(&s),
+            "pane_id: ambiguous\nnvim: true\nfile: "
+        );
     }
 }
