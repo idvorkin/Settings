@@ -28,8 +28,8 @@ log() {
 # Do not throttle anything in this list — stopping them would wedge the VM
 is_excluded() {
     case "$1" in
-        cpulimit|tailscaled|etserver|sh|init|systemd|dolt|\
-        "tmux:"*|kthreadd|kworker*|ksoftirqd*|migration*|rcu_*) return 0 ;;
+        cpulimit|tailscaled|etserver|etterminal|etclient|sh|init|systemd|dolt|\
+        tmux|"tmux:"*|kthreadd|kworker*|ksoftirqd*|migration*|rcu_*) return 0 ;;
     esac
     return 1
 }
