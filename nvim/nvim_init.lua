@@ -25,7 +25,9 @@ if vim.g.vscode then
 end
 
 dofile(settings_dir .. "nvim_plugins.lua")
-print("nvim_plugins done")
+vim.schedule(function()
+	print("nvim_plugins done")
+end)
 
 require("aerial").setup({
 	placement = "edge",
@@ -77,37 +79,47 @@ vim.cmd([[
 -- For TS Highlights
 --  :TSHighlightCapturesUnderCursor
 
-require("nvim-treesitter.configs").setup({
-	-- A list of parser names, or "all" (the five listed parsers should always be installed)
-	ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "markdown_inline", "python", "javascript", "regex" },
+-- Tree-sitter highlighting via Neovim 0.12+ built-in (no nvim-treesitter plugin).
+-- Parsers installed previously by nvim-treesitter remain on disk and are picked up.
+-- Inspect with :InspectTree, :Inspect, :EditQuery
+vim.api.nvim_create_autocmd("FileType", {
+	callback = function(args)
+		pcall(vim.treesitter.start, args.buf)
+	end,
+})
 
-	-- Install parsers synchronously (only applied to `ensure_installed`)
-	sync_install = false,
-
-	-- Automatically install missing parsers when entering buffer
-	-- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
-	auto_install = true,
-
-	highlight = {
-		enable = true,
-		-- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-		-- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-		-- Using this option may slow down your editor, and you may see some duplicate highlights.
-		-- Instead of true it can also be a list of languages
-		-- additional_vim_regex_highlighting = {'markdown','markdown_inline'},
-		additional_vim_regex_highlighting = false,
+-- mini.nvim modules
+require("mini.surround").setup({
+	mappings = {
+		add = "ys",
+		delete = "ds",
+		find = "",
+		find_left = "",
+		highlight = "",
+		replace = "cs",
+		update_n_lines = "",
 	},
-	textobjects = {
-		select = {
-			enable = true,
-			lookahead = true,
-			keymaps = {
-				["af"] = "@function.outer",
-				["if"] = "@function.inner",
-			},
-		},
+	search_method = "cover_or_next",
+})
+-- Re-enable default Vim `s` (mini.surround shadows it otherwise)
+vim.keymap.set({ "n", "x" }, "s", "s", { noremap = true })
+
+require("mini.bracketed").setup() -- unified ]/[ navigation
+require("mini.hipatterns").setup({
+	highlight = {
+		fixme = { pattern = "%f[%w]()FIXME()%f[%W]", group = "MiniHipatternsFixme" },
+		hack = { pattern = "%f[%w]()HACK()%f[%W]", group = "MiniHipatternsHack" },
+		todo = { pattern = "%f[%w]()TODO()%f[%W]", group = "MiniHipatternsTodo" },
+		note = { pattern = "%f[%w]()NOTE()%f[%W]", group = "MiniHipatternsNote" },
 	},
 })
+require("mini.splitjoin").setup() -- gS to split/join arg lists
+
+-- nerdcommenter compat: \cc and \cu now use built-in gc/gcc
+vim.keymap.set("n", "<leader>cc", "gcc", { remap = true, desc = "Toggle comment (line)" })
+vim.keymap.set("n", "<leader>cu", "gcc", { remap = true, desc = "Toggle comment (line)" })
+vim.keymap.set("x", "<leader>cc", "gc", { remap = true, desc = "Toggle comment (selection)" })
+vim.keymap.set("x", "<leader>cu", "gc", { remap = true, desc = "Toggle comment (selection)" })
 
 dofile(settings_dir .. "nvim_cmp_copilot.lua")
 dofile(settings_dir .. "nvim_git.lua")
@@ -133,15 +145,6 @@ function ZenModeToggleFunction(width)
 	})
 end
 
-require("neotest").setup({
-	adapters = {
-		require("neotest-python")({
-			dap = { justMyCode = false },
-		}),
-		require("neotest-plenary"),
-	},
-})
-
 local hostname = vim.fn.hostname()
 
 function CheckCopilotHost()
@@ -156,9 +159,13 @@ function CheckCopilotHost()
 	end
 
 	if is_allowed then
-		print("Enabling Copilot on host: " .. hostname)
+		vim.schedule(function()
+			print("Enabling Copilot on host: " .. hostname)
+		end)
 	else
-		print("Disabling  Copilot on host: " .. hostname)
+		vim.schedule(function()
+			print("Disabling  Copilot on host: " .. hostname)
+		end)
 		vim.cmd("Copilot disable")
 	end
 end
@@ -267,4 +274,6 @@ end, { nargs = "?" })
 vim.cmd("command! WorkNotes :Explore scp://idvorkin@devbox//home/idvorkin/work_notes/")
 
 -- vim.opt.laststatus = 3
-print("nvim_init.lua loaded")
+vim.schedule(function()
+	print("nvim_init.lua loaded")
+end)

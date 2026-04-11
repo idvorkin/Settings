@@ -47,9 +47,7 @@ local vscode_compatible_plugins = {
 	"dhruvasagar/vim-table-mode",
 	-- :Rename a file
 	"danro/rename.vim",
-	-- Comment \cc
-	-- Uncomment \cu
-	"scrooloose/nerdcommenter",
+	-- Comments: built-in gc/gcc (Neovim 0.10+); \cc/\cu aliases set in nvim_init.lua
 	"preservim/vim-markdown",
 
 	"panozzaj/vim-autocorrect",
@@ -194,16 +192,6 @@ local plugins = {
 					{ wordcount, cond = is_markdown },
 				},
 			},
-		},
-	},
-	{
-		"nvim-neotest/neotest",
-		dependencies = {
-			"nvim-neotest/nvim-nio",
-			"nvim-neotest/neotest-plenary",
-			"nvim-neotest/neotest-python",
-			"nvim-lua/plenary.nvim",
-			"nvim-treesitter/nvim-treesitter",
 		},
 	},
 	{
@@ -352,10 +340,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- Tree-sitter inspection: use :InspectTree, :Inspect, :EditQuery (built-in since 0.10)
-plugins = appendTables(plugins, {
-	"nvim-treesitter/nvim-treesitter",
-	"nvim-treesitter/nvim-treesitter-textobjects",
-})
+-- Highlighting is started via a FileType autocmd in nvim_init.lua; no plugin needed.
 
 function TelescopePlugins()
 	return {
@@ -642,27 +627,11 @@ end
 -- C-L Insert markdown link to issue
 -- <cr> Insert reference to issue number (probably want C-L instead)
 
-plugins = appendTables(plugins, { "tpope/vim-surround" })
---[[
-     Cool does wrapping
-    help surround
-
-    Wrap current line
-    ys -> you surround, motion, element
-    yss* <- Wrap 'Surround' line '*'
-    ds" -> delete surround
-    cs" -> change surround
-
-    Setup surround for b (old)  and i(talics) for markdown.
-    echo char2nr('b') -> 105
-    "
-    Cheat Sheet
-    " - yssX - soround the current line with italics(i) or bold(b) or something
-    " else.
-    "
-    - Once in visual mode, S will do the surround followed by the b so like
-    select text in visual mode, then Sb will make it bold.
-]]
+-- Surround: provided by mini.surround (setup in nvim_init.lua)
+--   ys{motion}{char}  add surround
+--   ds{char}          delete surround
+--   cs{old}{new}      change surround
+--   visual: S{char}   surround selection
 
 local git_plugins = {
 	"tpope/vim-fugitive",
@@ -799,16 +768,9 @@ local git_plugins = {
 }
 plugins = appendTables(plugins, git_plugins)
 -- cmp and friends
+-- Snippets: provided by mini.snippets (setup in snippets.lua)
 local cmp_and_friends = {
-	{
-		"L3MON4D3/LuaSnip",
-		-- follow latest release.
-		version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
-		-- install jsregexp (optional!).
-		build = "make install_jsregexp",
-	},
 	"hrsh7th/nvim-cmp",
-	"saadparwaiz1/cmp_luasnip",
 	"hrsh7th/cmp-nvim-lsp",
 	{ "stevanmilic/nvim-lspimport" },
 	"hrsh7th/cmp-buffer",
@@ -935,7 +897,6 @@ plugins = appendTables(plugins, {
 plugins = appendTables(plugins, {
 	{ "williamboman/mason.nvim" },
 	{ "neovim/nvim-lspconfig" },
-	{ "L3MON4D3/LuaSnip" },
 	{
 		"smjonas/inc-rename.nvim",
 		config = function()

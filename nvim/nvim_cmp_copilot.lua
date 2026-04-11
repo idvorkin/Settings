@@ -163,15 +163,15 @@ cmp.setup({
 		completion = cmp.config.window.bordered(),
 		documentation = cmp.config.window.bordered(),
 	},
+	snippet = {
+		expand = function(args)
+			-- LSP-server-provided snippets expanded via mini.snippets
+			require("mini.snippets").default_insert({ body = args.body })
+		end,
+	},
 	sources = cmp.config.sources({
 		{ name = "copilot" },
 		{ name = "nvim_lsp" },
-		{ name = "luasnip" },
-		snippet = {
-			expand = function(args)
-				require("luasnip").lsp_expand(args.body)
-			end,
-		},
 		{ name = "conjure" },
 		--       {name = 'buffer'},  Exclude buffer as it's pretty noisy
 	}),
