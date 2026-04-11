@@ -31,6 +31,12 @@ Essential packages are installed via Homebrew from `shared/brew_packages.sh`:
 - CLI utilities: `bat`, `eza`, `fzf`, `ripgrep`, `fd`
 - Git enhancements: `gh`, `lazygit`, `git-delta`
 
+### CocoaPods / Ruby gems PATH
+`pod` installed via `gem` lives at `/opt/homebrew/lib/ruby/gems/<ver>/bin/pod`, not in default PATH. Without it, `npx expo prebuild` and `pod install` fail with `spawn pod ENOENT`. Export before running iOS native commands:
+```bash
+export PATH="/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH"
+```
+
 ### Python Environment Setup
 Python tools are managed via UV for speed and consistency:
 ```bash
