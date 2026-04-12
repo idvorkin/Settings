@@ -616,3 +616,53 @@ mod ip_tests {
         assert_eq!(items.len(), 1);
     }
 }
+
+/// Scan one scrollback line and return all detected items in that line.
+/// A single line can contribute to multiple categories.
+pub(crate) fn scan_line(line: &str, line_index: usize) -> Vec<Item> {
+    let mut out = Vec::new();
+
+    // URLs (cascade through GitHub → Blog/Other).
+    for m in url_regex().find_iter(line) {
+        let raw = strip_trailing_punct(m.as_str());
+        if let Some(item) = classify_github(raw, line_index) {
+            out.push(item);
+        } else if let Some(item) = classify_other_url(raw, line_index) {
+            out.push(item);
+        }
+    }
+
+    // Servers (ssh + Tailscale; two Tailscale regexes may double-match).
+    out.extend(find_servers(line, line_index));
+    // IPs
+    out.extend(find_ips(line, line_index));
+
+    out
+}
+
+#[cfg(test)]
+mod scan_line_tests {
+    use super::*;
+
+    #[test]
+    fn scans_pr_url_in_context() {
+        let items = scan_line("Merge pull request #68 https://github.com/a/b/pull/68 ok", 0);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].category, Category::PullRequest);
+    }
+
+    #[test]
+    fn mixes_url_and_ip_on_same_line() {
+        let items = scan_line("curl https://example.com from 10.0.0.1", 0);
+        assert!(items.iter().any(|i| i.category == Category::OtherLink));
+        assert!(items.iter().any(|i| i.category == Category::Ip));
+    }
+
+    #[test]
+    fn no_cross_category_for_pr_url() {
+        // A PR URL must NOT also appear under OtherLink.
+        let items = scan_line("https://github.com/a/b/pull/1", 0);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].category, Category::PullRequest);
+    }
+}
