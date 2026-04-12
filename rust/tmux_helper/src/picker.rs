@@ -647,6 +647,12 @@ fn run_picker_tui(mut app: PickerApp<'_>) -> Result<Option<String>> {
                     }
                 }
                 (_, KeyCode::Enter) => app.select_current(),
+                (_, KeyCode::F(2)) => {
+                    // Cross-picker swap: exit pick-tui and exec pick-links.
+                    // See LINK_PICKER_SPEC.md §Cross-picker shortcut.
+                    app.should_quit = true;
+                    app.selected_target = Some("__swap_to_pick_links__".into());
+                }
                 (_, KeyCode::F(1)) | (KeyModifiers::CONTROL, KeyCode::Char('/')) => {
                     app.show_help = true
                 }
@@ -685,6 +691,17 @@ fn run_picker_tui(mut app: PickerApp<'_>) -> Result<Option<String>> {
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    drop(terminal);
+
+    // Cross-picker swap: if F2 was pressed, exec pick-links after teardown.
+    // Short-circuits BEFORE the caller can dispatch `tmux switch-client` on the sentinel.
+    if matches!(app.selected_target.as_deref(), Some("__swap_to_pick_links__")) {
+        use std::os::unix::process::CommandExt;
+        let err = std::process::Command::new("rmux_helper")
+            .arg("pick-links")
+            .exec();
+        return Err(anyhow::anyhow!("exec pick-links failed: {err}"));
+    }
 
     Ok(app.selected_target)
 }
