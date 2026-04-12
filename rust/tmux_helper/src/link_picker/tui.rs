@@ -426,9 +426,125 @@ fn preview_for_selection(app: &App) -> Text<'static> {
         .unwrap_or_else(|_| Text::raw(body))
 }
 
-// Key handling is stubbed here for Task 14; wired in Task 15.
-fn handle_key(app: &mut App, _mods: KeyModifiers, code: KeyCode) {
+fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
+    // Esc: drill-out or quit
     if matches!(code, KeyCode::Esc) {
-        app.action = Some(Action::Quit);
+        if app.drilled_in.is_some() {
+            app.drilled_in = None;
+            app.rebuild_filter();
+        } else {
+            app.action = Some(Action::Quit);
+        }
+        return;
+    }
+
+    // Ctrl-C: clear query or quit
+    if matches!(code, KeyCode::Char('c')) && mods.contains(KeyModifiers::CONTROL) {
+        if !app.query.is_empty() {
+            app.query.clear();
+            app.rebuild_filter();
+        } else {
+            app.action = Some(Action::Quit);
+        }
+        return;
+    }
+
+    // Navigation
+    match code {
+        KeyCode::Down | KeyCode::Char('\x0e') => app.move_selection(1),
+        KeyCode::Up | KeyCode::Char('\x10') => app.move_selection(-1),
+        KeyCode::Right => app.drill_in(),
+        KeyCode::Left => {
+            if app.drilled_in.is_some() {
+                app.drilled_in = None;
+                app.rebuild_filter();
+            }
+        }
+        KeyCode::Enter => app.on_enter(),
+        KeyCode::F(2) => app.action = Some(Action::SwapToPickTui),
+        KeyCode::F(1) => { /* help overlay — TODO v1.1 */ }
+        KeyCode::Backspace => {
+            app.query.pop();
+            app.rebuild_filter();
+        }
+        KeyCode::Char('l') if mods.contains(KeyModifiers::CONTROL) => {
+            app.horizontal = !app.horizontal;
+        }
+        KeyCode::Char('n') if mods.contains(KeyModifiers::CONTROL) => app.move_selection(1),
+        KeyCode::Char('p') if mods.contains(KeyModifiers::CONTROL) => app.move_selection(-1),
+        // Digit 1-9: jump to Nth category drilled-in view
+        KeyCode::Char(c @ '1'..='9') if mods.is_empty() && app.query.is_empty() => {
+            let n = (c as u8 - b'0') as usize;
+            if let Some(cat) = app.categories_present.get(n - 1) {
+                app.drilled_in = Some(*cat);
+                app.rebuild_filter();
+            }
+        }
+        KeyCode::Char(c) if c.is_ascii_graphic() || c == ' ' => {
+            app.query.push(c);
+            app.rebuild_filter();
+        }
+        _ => {}
+    }
+}
+
+impl App {
+    /// Move selection by `delta`. Headers are selectable per spec — do NOT skip them.
+    /// (Plan deviation: the plan's version skipped headers, contradicting the spec.)
+    fn move_selection(&mut self, delta: i32) {
+        let Some(cur) = self.list_state.selected() else {
+            return;
+        };
+        let len = self.filtered.len() as i32;
+        if len == 0 {
+            return;
+        }
+        let next = (cur as i32 + delta).clamp(0, len - 1);
+        self.list_state.select(Some(next as usize));
+    }
+
+    fn drill_in(&mut self) {
+        if self.drilled_in.is_some() {
+            return;
+        }
+        let Some(cur) = self.list_state.selected() else {
+            return;
+        };
+        let Some(&idx) = self.filtered.get(cur) else {
+            return;
+        };
+        let cat = if let Some(c) = sentinel_to_category(idx) {
+            c
+        } else {
+            self.rows[idx].category
+        };
+        self.drilled_in = Some(cat);
+        self.rebuild_filter();
+    }
+
+    fn on_enter(&mut self) {
+        let Some(cur) = self.list_state.selected() else {
+            return;
+        };
+        let Some(&idx) = self.filtered.get(cur) else {
+            return;
+        };
+        if let Some(cat) = sentinel_to_category(idx) {
+            // Header: drill in
+            self.drilled_in = Some(cat);
+            self.rebuild_filter();
+            return;
+        }
+        // Leaf: default action
+        let row = self.rows[idx].clone();
+        self.action = Some(default_action(&row));
+    }
+}
+
+/// Default Enter action per category (see spec §Actions → Default).
+pub(crate) fn default_action(row: &Row) -> Action {
+    match row.category {
+        Category::Server | Category::Ip => Action::Ssh(row.clone()),
+        _ => Action::Yank(row.clone()),
     }
 }
