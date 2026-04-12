@@ -215,11 +215,27 @@ mod filter_tests {
 
     #[test]
     fn tag_leak_is_prevented_by_unit_separator() {
-        let r = mk(Category::PullRequest, "#68", "writing prose all day");
-        // "pr" tag should NOT leak into matching against "prose"
+        // A Server row whose key (hostname) starts with "ose-..." must NOT match
+        // the query "serverose" — the `\x1f` separator between the `server` tag
+        // and the key prevents the two from being seen as a single substring.
+        // Without the separator the search string would be `serverose-host ...`
+        // and the substring `serverose` would match; with the separator we get
+        // `server\x1fose-host ...` and the boundary breaks the match.
+        let r = mk(Category::Server, "ose-host", "context unrelated");
         let s = row_search_string(&r);
-        assert!(s.starts_with("pr\x1f"));
-        assert!(!s[..3].contains("prose"));
+        assert!(s.starts_with("server\x1f"), "tag should be at the start");
+        assert!(
+            s.contains("server\x1fose"),
+            "separator must sit between tag and key"
+        );
+        // The whole concatenated string lowercased must NOT contain "serverose"
+        // because the `\x1f` byte breaks the substring.
+        assert!(
+            !s.to_lowercase().contains("serverose"),
+            "unit separator must prevent `server` + `ose` from forming `serverose`"
+        );
+        // End-to-end: match_row for the `serverose` token should return false.
+        assert!(!match_row(&r, &[String::from("serverose")]));
     }
 
     #[test]
@@ -421,7 +437,7 @@ fn preview_for_selection(app: &App) -> Text<'static> {
         "{}\n\ncanonical: {}\nkey: {}\nrepo/host: {}\ncount: {}",
         r.context, r.canonical, r.key, r.repo_or_host, r.count
     );
-    body.clone()
+    body.as_str()
         .into_text()
         .unwrap_or_else(|_| Text::raw(body))
 }

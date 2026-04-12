@@ -45,7 +45,7 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
         }
         tui::Action::Open(row) => open_url(&row.canonical)?,
         tui::Action::GhWeb(row) => gh_web(&row)?,
-        tui::Action::Ssh(row) => ssh_host(&row)?,
+        tui::Action::Ssh(row) => ssh_host(&row, &pane_id)?,
         tui::Action::SwapToPickTui => {
             use std::os::unix::process::CommandExt;
             // execvp: never returns on success
@@ -108,13 +108,18 @@ fn gh_web(row: &detect::Row) -> Result<()> {
     Ok(())
 }
 
-fn ssh_host(row: &detect::Row) -> Result<()> {
+fn ssh_host(row: &detect::Row, pane_id: &str) -> Result<()> {
     // Use tmux new-window in the originating pane's session.
-    let pane = env::var("TMUX_PANE").unwrap_or_default();
     let host_arg = format!("ssh {}", row.canonical);
-    Command::new("tmux")
-        .args(["new-window", "-t", &pane, &host_arg])
+    let status = Command::new("tmux")
+        .args(["new-window", "-t", pane_id, "-c", "#{pane_current_path}", &host_arg])
         .status()?;
+    if !status.success() {
+        return Err(anyhow!(
+            "tmux new-window failed with exit status {}",
+            status.code().unwrap_or(-1)
+        ));
+    }
     Ok(())
 }
 
