@@ -443,3 +443,85 @@ mod other_url_tests {
         assert_eq!(item.key, "example.com");
     }
 }
+
+pub(crate) fn find_servers(line: &str, line_index: usize) -> Vec<Item> {
+    static SSH_RE: OnceLock<Regex> = OnceLock::new();
+    static TS_HOST_RE: OnceLock<Regex> = OnceLock::new();
+    static TS_NET_RE: OnceLock<Regex> = OnceLock::new();
+    let ssh = SSH_RE.get_or_init(|| {
+        // `ssh` token, optional flags (with optional value args for short opts), optional user@, then host
+        Regex::new(
+            r"\bssh\b(?:\s+(?:-[a-zA-Z]\s+\S+|-\S+))*\s+(?:[a-zA-Z_][\w-]*@)?([a-zA-Z0-9][\w.\-]*[a-zA-Z0-9])\b",
+        )
+        .unwrap()
+    });
+    let ts_host = TS_HOST_RE.get_or_init(|| Regex::new(r"\bc-\d{4,5}\b").unwrap());
+    let ts_net = TS_NET_RE.get_or_init(|| Regex::new(r"\b[a-z][a-z0-9-]*\.ts\.net\b").unwrap());
+
+    let mut out = Vec::new();
+    for cap in ssh.captures_iter(line) {
+        if let Some(h) = cap.get(1) {
+            out.push(mk_server(h.as_str(), line_index));
+        }
+    }
+    for m in ts_host.find_iter(line) {
+        out.push(mk_server(m.as_str(), line_index));
+    }
+    for m in ts_net.find_iter(line) {
+        out.push(mk_server(m.as_str(), line_index));
+    }
+    out
+}
+
+fn mk_server(host: &str, line_index: usize) -> Item {
+    Item {
+        category: Category::Server,
+        canonical: host.to_string(),
+        key: host.to_string(),
+        repo_or_host: "—".to_string(),
+        line_index,
+    }
+}
+
+#[cfg(test)]
+mod server_tests {
+    use super::*;
+
+    #[test]
+    fn extracts_ssh_bare_host() {
+        let items = find_servers("ssh c-5001 \"uname -a\"", 0);
+        assert_eq!(items.len(), 2, "ssh + tailscale regex both match c-5001");
+        assert!(items.iter().any(|i| i.canonical == "c-5001"));
+    }
+
+    #[test]
+    fn extracts_ssh_user_at_host_stripping_user() {
+        let items = find_servers("ssh igor@dev.example.com", 0);
+        assert_eq!(items[0].canonical, "dev.example.com");
+    }
+
+    #[test]
+    fn extracts_ssh_with_options() {
+        let items = find_servers("ssh -i ~/.ssh/id_ed25519 -p 2222 build.host", 0);
+        assert!(items.iter().any(|i| i.canonical == "build.host"));
+    }
+
+    #[test]
+    fn extracts_tailscale_c_pattern() {
+        let items = find_servers("Tailscale peer c-5001 is up", 0);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].canonical, "c-5001");
+    }
+
+    #[test]
+    fn rejects_c_numbers_outside_range() {
+        let items = find_servers("c-2 c-123456", 0);
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn extracts_ts_net_hostname() {
+        let items = find_servers("ping mydev.ts.net", 0);
+        assert!(items.iter().any(|i| i.canonical == "mydev.ts.net"));
+    }
+}
