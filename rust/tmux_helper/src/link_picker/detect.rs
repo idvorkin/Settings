@@ -666,3 +666,143 @@ mod scan_line_tests {
         assert_eq!(items[0].category, Category::PullRequest);
     }
 }
+
+use std::collections::HashMap;
+use unicode_width::UnicodeWidthStr;
+
+/// Strip an anchor substring from a line, collapse whitespace, trim, truncate to max display width.
+pub(crate) fn make_context(line: &str, anchor: &str, max_width: usize) -> String {
+    // Remove the anchor substring; collapse runs of whitespace to single space.
+    let removed = line.replacen(anchor, "", 1);
+    let collapsed: String = removed.split_whitespace().collect::<Vec<_>>().join(" ");
+    truncate_to_width(&collapsed, max_width)
+}
+
+pub(crate) fn truncate_to_width(s: &str, max: usize) -> String {
+    let w = UnicodeWidthStr::width(s);
+    if w <= max {
+        return s.to_string();
+    }
+    // Walk characters, accumulating width, until we reach max-1 (room for `…`).
+    let budget = max.saturating_sub(1);
+    let mut acc = String::new();
+    let mut used = 0;
+    for ch in s.chars() {
+        let cw = UnicodeWidthStr::width(ch.to_string().as_str());
+        if used + cw > budget {
+            break;
+        }
+        acc.push(ch);
+        used += cw;
+    }
+    acc.push('…');
+    acc
+}
+
+/// Top-level detection: parse the whole scrollback and return deduped,
+/// recency-ordered rows.
+pub fn parse(raw: &str) -> Vec<Row> {
+    // Collect items + keep a reference to the line for context extraction.
+    let lines: Vec<&str> = raw.lines().collect();
+    let mut items_by_key: HashMap<(Category, String), Vec<Item>> = HashMap::new();
+    for (idx, line) in lines.iter().enumerate() {
+        for item in scan_line(line, idx) {
+            items_by_key
+                .entry((item.category, item.canonical.clone()))
+                .or_default()
+                .push(item);
+        }
+    }
+
+    // Build rows: most_recent_line = max line_index in the group.
+    let mut rows: Vec<Row> = items_by_key
+        .into_iter()
+        .map(|((category, canonical), group)| {
+            let count = group.len();
+            let most_recent = group.iter().map(|i| i.line_index).max().unwrap_or(0);
+            let exemplar = group.iter().find(|i| i.line_index == most_recent).unwrap();
+            let context = make_context(lines[most_recent], &canonical, 60);
+            Row {
+                category,
+                canonical,
+                key: exemplar.key.clone(),
+                repo_or_host: exemplar.repo_or_host.clone(),
+                context,
+                enriched: None,
+                count,
+                most_recent_line: most_recent,
+            }
+        })
+        .collect();
+
+    // Sort: category ASC (display order), then most_recent_line DESC,
+    // ties broken by canonical ASC for determinism.
+    rows.sort_by(|a, b| {
+        (a.category as u8, std::cmp::Reverse(a.most_recent_line), &a.canonical)
+            .cmp(&(b.category as u8, std::cmp::Reverse(b.most_recent_line), &b.canonical))
+    });
+
+    rows
+}
+
+#[cfg(test)]
+mod parse_tests {
+    use super::*;
+
+    #[test]
+    fn dedups_same_server_across_sources() {
+        let raw = "ssh c-5001 \"pwd\"\nssh igor@c-5001 \"ls\"\npeer c-5001 up\n";
+        let rows = parse(raw);
+        let servers: Vec<&Row> = rows.iter().filter(|r| r.category == Category::Server).collect();
+        assert_eq!(servers.len(), 1);
+        assert_eq!(servers[0].canonical, "c-5001");
+        assert!(servers[0].count >= 3);
+    }
+
+    #[test]
+    fn orders_by_recency_within_category() {
+        let raw = "https://github.com/a/b/pull/1\nhttps://github.com/a/b/pull/2\n";
+        let rows = parse(raw);
+        let prs: Vec<&Row> = rows.iter().filter(|r| r.category == Category::PullRequest).collect();
+        assert_eq!(prs.len(), 2);
+        // Most recent (pull/2, line 1) comes first
+        assert_eq!(prs[0].key, "#2");
+        assert_eq!(prs[1].key, "#1");
+    }
+
+    #[test]
+    fn pr_url_does_not_leak_to_other_links() {
+        let raw = "see https://github.com/a/b/pull/1 now\n";
+        let rows = parse(raw);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].category, Category::PullRequest);
+    }
+
+    #[test]
+    fn context_strips_url_and_collapses_whitespace() {
+        let raw = "Merge pull request   #68   https://github.com/a/b/pull/68   idvorkin\n";
+        let rows = parse(raw);
+        let pr = rows.iter().find(|r| r.category == Category::PullRequest).unwrap();
+        assert!(!pr.context.contains("https://"));
+        assert!(!pr.context.contains("   ")); // no runs of whitespace
+        assert!(pr.context.contains("Merge pull request"));
+    }
+
+    #[test]
+    fn context_truncates_with_ellipsis() {
+        let long = "a".repeat(200);
+        let raw = format!("{long} https://example.com rest\n");
+        let rows = parse(&raw);
+        let row = rows.iter().find(|r| r.category == Category::OtherLink).unwrap();
+        assert!(row.context.ends_with('…'));
+        assert!(UnicodeWidthStr::width(row.context.as_str()) <= 60);
+    }
+
+    #[test]
+    fn parse_is_idempotent() {
+        let raw = "ssh c-5001\nhttps://github.com/a/b/pull/1\n";
+        let a = parse(raw);
+        let b = parse(raw);
+        assert_eq!(a, b);
+    }
+}
