@@ -38,7 +38,6 @@ struct App {
     drilled_in: Option<Category>,
     horizontal: bool,
     action: Option<Action>,
-    error_msg: Option<String>,
 }
 
 impl App {
@@ -52,7 +51,6 @@ impl App {
             drilled_in: None,
             horizontal: true,
             action: None,
-            error_msg: None,
         };
         app.rebuild_filter();
         app
@@ -302,13 +300,13 @@ fn draw(f: &mut Frame, app: &mut App) {
     // Top bar with breadcrumb or flat hints.
     let top = if let Some(cat) = app.drilled_in {
         format!(
-            "pick> {}_  │ Links › {}  │ ↑↓ Enter:act ←:back F2:sess ?:help",
+            "pick> {}_  │ Links › {}  │ ↑↓ Enter:act ←:back F2:sess",
             app.query,
             cat.display()
         )
     } else {
         format!(
-            "pick> {}_  │ ↑↓ Enter:act →:drill y:yank o:open g:gh F2:sess ?:help",
+            "pick> {}_  │ ↑↓ Enter:act →:drill y:yank o:open g:gh F2:sess",
             app.query
         )
     };
@@ -519,8 +517,6 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
                         | Category::Repo
                 ) {
                     app.action = Some(Action::GhWeb(row));
-                } else {
-                    app.error_msg = Some("g: not a GitHub row".into());
                 }
             }
         }

@@ -1,5 +1,11 @@
 # rmux_helper pick-links Specification
 
+## Invocation
+
+- `rmux_helper pick-links` — launches the TUI picker popup. Binds to `C-a L` in tmux.
+- `rmux_helper pick-links --json` — emits detected items as JSON to stdout and exits (no enrichment, no TUI). Useful for scripts and tests.
+- `rmux_helper pick-links --enrich-deadline-ms N` — overrides the default 3-second enrichment deadline. `0` disables gh enrichment entirely.
+
 ## Categories (fixed display order)
 
 1. Pull Requests — `github.com/OWNER/REPO/pull/N`
@@ -77,3 +83,7 @@ Digit-only tokens match the `key` column only.
 ## OSC 52 timing
 
 Write sequence, in order: TUI exits → `disable_raw_mode` → `LeaveAlternateScreen` → drop `Terminal` → flush stdout/stderr → open `/dev/tty` → write `\e]52;c;<base64>\e\\` → flush tty → `exit(0)`.
+
+## Empty state
+
+When scrollback contains no detectable items, the TUI is not entered. `pick_links` prints `pick-links: no links, servers, or IPs in scrollback` to stderr and exits 0.

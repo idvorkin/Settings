@@ -49,6 +49,7 @@ impl Category {
         }
     }
 
+    #[cfg(test)]
     pub fn all() -> &'static [Category] {
         &[
             Category::PullRequest,
