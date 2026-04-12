@@ -75,7 +75,7 @@ This eliminates all the duplicate code while maintaining the same functionality.
 
 _**User**_
 
-I"m hitting htis erro: [11:35:10.311] Igor Tools[Run Script] Processing complete
+I"m hitting this error: [11:35:10.311] Igor Tools[Run Script] Processing complete
 [11:35:10.320] Igor Tools[Run Script] No connected objects, discarding output '🤖 Fixing clipboard text with AI...
 Error running ai-clip: 
 '

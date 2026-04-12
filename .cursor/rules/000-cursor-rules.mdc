@@ -95,7 +95,7 @@ Common glob patterns for different rule types:
   - <rule>
   - <critical>
 - Always indent content within XML or nested XML tags by 2 spaces
-- Keep rules as short as possbile
+- Keep rules as short as possible
 - Use Mermaid syntax if it will be shorter or clearer than describing a complex rule
 - Use Emojis where appropriate to convey meaning that will improve rule understanding by the AI Agent
 - Keep examples as short as possible to clearly convey the positive or negative example
@@ -105,7 +105,7 @@ Common glob patterns for different rule types:
 - Follow semantic versioning (MAJOR.MINOR.PATCH)
 - Document changes in commit messages
 - Start at version 1.0.0 for new rule
-- Always update the version if modifying an existing rule - use your judgement of the impact of the change to the rule to determin if its a major minor or patch increment.
+- Always update the version if modifying an existing rule - use your judgement of the impact of the change to the rule to determine if its a major minor or patch increment.
 
 ## AI Optimization Tips
 

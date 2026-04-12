@@ -36,12 +36,12 @@ function! StripPerfCounterTags()
 endfunction
 
 function! FixMojiBake()
-    " See charector under cursor -
+    " See character under cursor -
     "   ga
-    " Search for non unicode charecters
+    " Search for non unicode characters
     " /[^\x00-\x7F]
 
-    " Replace hypens
+    " Replace hyphens
     :%s/\%x97/-/g
     :%s/\%x96/-/g
 
@@ -145,7 +145,7 @@ function! SetupPlugins()
     Bundle "scrooloose/nerdtree"
     Bundle "rking/ag.vim"
     Bundle "OrangeT/vim-csharp.git"
-    " OmniSharp doesn't seem to wrok on WSL, let it go.
+    " OmniSharp doesn't seem to work on WSL, let it go.
     " Bundle "OmniSharp/omnisharp-vim"
     Bundle "lukaszkorecki/workflowish"
     Bundle "keith/swift.vim"
@@ -171,28 +171,28 @@ call SetupPlugins()
 
 func! SetupAutoFixEnglish()
     " Can fix with Sed
-    " sed -i -e 's/ teh / the /g' *
+    " sed -i -e 's/ the / the /g' *
     " grab these from .aspell.en.prepl
-     :iab teh the
-     :iab hte the
-     :iab taht that
+     :iab the the
+     :iab the the
+     :iab that that
      :iab ot to
-     :iab hte the
+     :iab the the
      :iab zach Zach
      :iab alot a lot
      :iab amelia Amelia
      :iab tori Tori
      :iab ammon Ammon
-     :iab adn and
+     :iab and and
      :iab nad and
-     :iab cna can
+     :iab can can
      :iab dont don't
      :iab   fi if
      :iab   fo of
-     :iab iwll will
-     :iab wiht with
+     :iab will will
+     :iab with with
     :iab htgorugh through
-    :iab htis this
+    :iab this this
     :iab htourhg through
 endfunc
 
@@ -229,7 +229,7 @@ func! WriteOn()
     :Goyo
     :PencilSoft
     :Limelight
-    " :ALEDisable " Remove spelling and grammer
+    " :ALEDisable " Remove spelling and grammar
 endfunc
 command! IGWriteOn :call WriteOn()
 command! IGWriteOff :call WriteOff()
@@ -238,7 +238,7 @@ func! WriteOff()
     :Goyo
     :PencilOff
     :Limelight!
-    " :ALEEnable "Remove spelling and grammer
+    " :ALEEnable "Remove spelling and grammar
 endfunc
 
 
@@ -337,7 +337,7 @@ autocmd BufEnter *md :exe ":SoftPencil"
 " autocmd BufLeave *md :exe ":Limelight!"
 " let g:vim_markdown_folding_disabled = 1
 
-" Break lines on word boudnaries only
+" Break lines on word boundaries only
 set linebreak
 
 
@@ -493,7 +493,7 @@ function! FixEscapeKey()
     :call EscapeKey()
 endfunction
 "
-" Reload when saving vimrc, which is the whole point of changin dotfile
+" Reload when saving vimrc, which is the whole point of changing dotfile
 augroup reload_vimrc | au!
         au BufWritePost *default_vimrc source ~/.vimrc
         au BufWritePost *_ivim.rc.vim source ~/.vimrc

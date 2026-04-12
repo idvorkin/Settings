@@ -12,12 +12,10 @@ import base64
 import os
 import subprocess
 import sys
-from typing import Callable
-from icecream import ic
 
 
 def normal_to_clipboard(b64: str) -> str:
-    return "\x1B]52;c;" + b64 + "\a"
+    return "\x1b]52;c;" + b64 + "\a"
 
 
 # Seems like on mosh atleast, normal escape sequence just works ...
@@ -31,11 +29,11 @@ def screen_to_clipboard(b64: str) -> str:
     for i in range(sys.maxsize):
         begin, end = i * 76, min((i + 1) * 76, len(b64))
         out.append(
-            ("\x1BP\x1B]52;;" if begin == 0 else "\x1B\x5C\x1BP") + b64[begin:end]
+            ("\x1bP\x1b]52;;" if begin == 0 else "\x1b\x5c\x1bP") + b64[begin:end]
         )
         if end == len(b64):
             break
-    out.append("\x07\x1B\x5C")
+    out.append("\x07\x1b\x5c")
 
     return "".join(out)
 
@@ -61,7 +59,7 @@ def run():
             sys.exit(1)
         # Ah, arcane argv
         all_params = " ".join(sys.argv[1:])
-        b=all_params.encode('utf-8')
+        b = all_params.encode("utf-8")
 
     new_clipboard_content = b.rstrip(b"\n\r")
 
@@ -72,18 +70,19 @@ def run():
     # ic(b64_clipboard_content)
     # clipboard_targets = [tmux_to_clipboard, screen_to_clipboard, normal_to_clipboard]:
     clipboard_targets = [normal_to_clipboard]
-    for to_clipboard in  clipboard_targets:
+    for to_clipboard in clipboard_targets:
         to_clipboard_string = to_clipboard(b64_clipboard_content)
         # ic(to_clipboard_string)
         print(to_clipboard_string, end="")
 
     # also copy into tmp file (create new one daily)
     import datetime
-    import os
+
     filename = os.path.expanduser(f"~/tmp/pbcopy_{datetime.date.today()}")
-    with open(filename, 'a+') as fp:
-        fp.write('\n-------------\n')
+    with open(filename, "a+") as fp:
+        fp.write("\n-------------\n")
         fp.write(new_clipboard_content.decode())
+
 
 if __name__ == "__main__":
     run()

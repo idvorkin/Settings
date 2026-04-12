@@ -6,7 +6,7 @@ _**User**_
 
 @https://blog.gitbutler.com/how-git-core-devs-configure-git/ 
 
-Read that, and tell me what git settings they recomend
+Read that, and tell me what git settings they recommend
 
 ---
 
@@ -86,7 +86,7 @@ The blog post notes that many of these settings were identified in a "Spring Cle
 
 _**User**_
 
-Update my git configuration with thiis
+Update my git configuration with this
 
 ---
 

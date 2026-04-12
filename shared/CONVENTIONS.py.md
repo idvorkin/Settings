@@ -1,6 +1,6 @@
 # Project Management
 
-Add pyproject.toml, add missing dependancies to it, and new utiliies to it.
+Add pyproject.toml, add missing dependencies to it, and new utilities to it.
 
 # Coding conventions used in this project
 
@@ -104,7 +104,7 @@ When adding new scripts, be sure to add them to the scripts section in pyproject
 
 ### When running python
 
-Run it via shebang when avaialble
+Run it via shebang when available
 Run it via uv if not
 
 ### Terminal Command Conventions

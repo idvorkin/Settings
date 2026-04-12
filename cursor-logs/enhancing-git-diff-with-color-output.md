@@ -4,7 +4,7 @@
 
 _**User**_
 
-OK, in the DdC macro, I want ot pipe git diff through delta which gives color output, but hte color otuput can't be saved to a file and viewed, therefore, use like terminal git diff color instead.
+OK, in the DdC macro, I want ot pipe git diff through delta which gives color output, but the color output can't be saved to a file and viewed, therefore, use like terminal git diff color instead.
 
 ---
 
@@ -50,10 +50,10 @@ function GitCommitAndPush()
     -- Create a terminal buffer for colored diff output
     local preview_buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = preview_buf })
-    
+
     -- Use the current window
     vim.api.nvim_win_set_buf(current_win, preview_buf)
-    
+
     -- Open terminal with delta or git diff
     local term_cmd = "git diff --staged " .. vim.fn.shellescape(current_file)
     if vim.fn.executable("delta") == 1 then
@@ -61,7 +61,7 @@ function GitCommitAndPush()
     else
         term_cmd = term_cmd .. " --color"
     end
-    
+
     local term_chan = vim.api.nvim_open_term(preview_buf, {})
     vim.fn.jobstart(term_cmd, {
         on_stdout = function(_, data)
@@ -92,9 +92,9 @@ Validate JSON, YAML, XML, TOML.......................(no files to check)Skipped
 
 E5108: Error executing lua /Users/idvorkin/settings/nvim/nvim_git.lua:184: E474: Invalid argument
 stack traceback:
-        [C]: in function '__newindex'
-        /Users/idvorkin/settings/nvim/nvim_git.lua:184: in function 'GitCommitAndPush'
-        [string ":lua"]:1: in main chunk
+[C]: in function '\_\_newindex'
+/Users/idvorkin/settings/nvim/nvim_git.lua:184: in function 'GitCommitAndPush'
+[string ":lua"]:1: in main chunk
 Press ENTER or type command to continue
 
 ---
@@ -151,9 +151,9 @@ _**User**_
 
 E5108: Error executing lua /Users/idvorkin/settings/nvim/nvim_git.lua:185: E474: Invalid argument
 stack traceback:
-        [C]: in function 'nvim_set_option_value'
-        /Users/idvorkin/settings/nvim/nvim_git.lua:185: in function 'GitCommitAndPush'
-        [string ":lua"]:1: in main chunk
+[C]: in function 'nvim_set_option_value'
+/Users/idvorkin/settings/nvim/nvim_git.lua:185: in function 'GitCommitAndPush'
+[string ":lua"]:1: in main chunk
 
 ---
 
@@ -213,7 +213,4 @@ The key change here is setting `buftype` to "terminal" since we're using a termi
 
 ---
 
-
-
 ---
-

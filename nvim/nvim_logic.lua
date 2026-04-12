@@ -128,7 +128,7 @@ local function open_github_link()
 	-- Get the relative path to the Git repo
 	local relative_path = get_git_relative_path()
 
-	-- Get filename onoly
+	-- Get filename only
 	local path_relative_name = vim.fn.expand("%:t")
 
 	-- Construct the GitHub CLI command

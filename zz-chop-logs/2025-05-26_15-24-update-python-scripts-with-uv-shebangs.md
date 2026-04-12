@@ -338,7 +338,7 @@ All scripts are now configured to use Python 3.13 as the minimum required versio
 
 _**User**_
 
-Great, now run htem all to mak esure they run 
+Great, now run them all to mak esure they run 
 
 ---
 
@@ -640,7 +640,7 @@ Installed 16 packages in 10ms
 │ start                                                                                                    │
 │ stop                                                                                                     │
 │ rotate                                                                                                   │
-│ accordian                                                                                                │
+│ accordion                                                                                                │
 │ zoom                                                                                                     │
 │ tile                                                                                                     │
 │ close                                                                                                    │

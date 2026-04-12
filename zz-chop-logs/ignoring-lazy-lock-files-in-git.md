@@ -148,7 +148,7 @@ _****_
 
 _**User**_
 
-Remember, you alwasy need to use /bin/cat
+Remember, you always need to use /bin/cat
 
 ---
 

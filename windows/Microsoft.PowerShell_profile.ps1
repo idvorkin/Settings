@@ -91,5 +91,5 @@ function Jekyll-Build {bundle exec jekyll build --drafts}
 # Helpful recipes
 ################################################
 #
-# Copy all files ending in .mardown to .md
+# Copy all files ending in .markdown to .md
 #   ls *markdown | % {move "$($_.BaseName).markdown" "$($_.BaseName).md"}

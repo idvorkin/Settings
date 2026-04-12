@@ -974,7 +974,7 @@ This gives it a more notification-like or HUD-style appearance that's less intru
 
 _**User**_
 
-Have the size of the window scale to the text, horizontally and veritcally 
+Have the size of the window scale to the text, horizontally and vertically 
 
 ---
 
