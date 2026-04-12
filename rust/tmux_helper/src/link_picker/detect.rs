@@ -383,3 +383,63 @@ mod github_tests {
         assert!(classify_github("https://gitlab.com/a/b", 0).is_none());
     }
 }
+
+/// Blog host allowlist. v1 is a compile-time constant; v2 will be configurable.
+pub(crate) const BLOG_HOSTS: &[&str] = &["idvorkin.github.io"];
+
+/// Classify a non-GitHub URL into Blog or OtherLink.
+pub(crate) fn classify_other_url(url: &str, line_index: usize) -> Option<Item> {
+    let host_end = url.find("://")? + 3;
+    let rest = &url[host_end..];
+    let slash_at = rest.find('/').unwrap_or(rest.len());
+    let host = &rest[..slash_at];
+    let path = &rest[slash_at..];
+
+    let category = if BLOG_HOSTS.iter().any(|b| host.eq_ignore_ascii_case(b)) {
+        Category::Blog
+    } else {
+        Category::OtherLink
+    };
+
+    // Key = last non-empty path segment, or host if path is empty
+    let last_seg = path
+        .trim_end_matches('/')
+        .rsplit('/')
+        .find(|s| !s.is_empty())
+        .unwrap_or(host)
+        .to_string();
+
+    Some(Item {
+        category,
+        canonical: url.to_string(),
+        key: last_seg,
+        repo_or_host: host.to_string(),
+        line_index,
+    })
+}
+
+#[cfg(test)]
+mod other_url_tests {
+    use super::*;
+
+    #[test]
+    fn blog_host_is_categorized_as_blog() {
+        let item = classify_other_url("https://idvorkin.github.io/posts/ai-agents/", 0).unwrap();
+        assert_eq!(item.category, Category::Blog);
+        assert_eq!(item.repo_or_host, "idvorkin.github.io");
+        assert_eq!(item.key, "ai-agents");
+    }
+
+    #[test]
+    fn non_blog_host_is_other_link() {
+        let item = classify_other_url("https://stackoverflow.com/q/12345", 0).unwrap();
+        assert_eq!(item.category, Category::OtherLink);
+        assert_eq!(item.repo_or_host, "stackoverflow.com");
+    }
+
+    #[test]
+    fn bare_host_uses_host_as_key() {
+        let item = classify_other_url("https://example.com", 0).unwrap();
+        assert_eq!(item.key, "example.com");
+    }
+}
