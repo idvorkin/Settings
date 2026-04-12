@@ -146,8 +146,12 @@ fn resolve_pane_id() -> Result<String> {
 
 /// Capture the full scrollback of `pane_id` via `tmux capture-pane`.
 fn capture_pane(pane_id: &str) -> Result<String> {
+    // NOTE: `-e` (include ANSI escapes) was removed because raw \x1b bytes
+    // in the context column leak through ratatui's cell rendering into the
+    // popup's pty and are interpreted as terminal control sequences,
+    // corrupting the display. Plain text is sufficient for v1.
     let out = Command::new("tmux")
-        .args(["capture-pane", "-p", "-J", "-e", "-S", "-", "-E", "-", "-t", pane_id])
+        .args(["capture-pane", "-p", "-J", "-S", "-", "-E", "-", "-t", pane_id])
         .output()
         .map_err(|e| anyhow!("tmux capture-pane failed: {e}"))?;
     if !out.status.success() {
