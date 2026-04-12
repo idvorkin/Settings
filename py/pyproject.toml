@@ -42,7 +42,7 @@ chop = "chop:app"
 ai-clip = "ai_clip:app"
 ux = "ux:app"
 running-servers = "running_servers:app"
-rbv = "rbv:main"
+rbv = "rbv:app"
 
 [dependency-groups]
 dev = ["ruff"]
