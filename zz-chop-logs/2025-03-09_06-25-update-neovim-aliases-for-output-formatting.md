@@ -56,8 +56,8 @@ _****_
 | `file://$HOME/settings/default_vimrc` | L464 | `:normal o# gJ - Join lines together before wrapping with ffJ fj` |
 | `file://$HOME/settings/default_vimrc` | L981 | `:imap <buffer> ffj  <cr><cr><esc>:% call GptCompleteSimple()<cr>` |
 | `file://$HOME/settings/default_vimrc` | L982 | `:map <buffer> ffj  :call GptCompleteToBottom()<cr>` |
-| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>` |
-| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>` |
+| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage("")<cr>` |
+| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage('--fast')<CR>` |
 
 </details>
 
@@ -89,19 +89,19 @@ Read file: undefined
 
 _****_
 
-Now I need to understand the functions being called (`GptCompleteSimple`, `GptCompleteToBottom`, and `MakeCommitMesage`) to see how they're handling the output wrapping. Let me look for these function definitions:
+Now I need to understand the functions being called (`GptCompleteSimple`, `GptCompleteToBottom`, and `MakeCommitMessage`) to see how they're handling the output wrapping. Let me look for these function definitions:
 
 ---
 
 _****_
 
 <details>
-            <summary>Grep search for "function! GptCompleteSimple|function! GptCompleteToBottom|function! MakeCommitMesage" • **1** files</summary>
+            <summary>Grep search for "function! GptCompleteSimple|function! GptCompleteToBottom|function! MakeCommitMessage" • **1** files</summary>
         
 | File | Line | Match |
 |------|------|-------|
 | `file://$HOME/settings/default_vimrc` | L874 | `function! GptCompleteSimple(gpt_command='stdin',gpt_params='',sink='GptSinkAppend') range` |
-| `file://$HOME/settings/default_vimrc` | L998 | `function! MakeCommitMesage(params)` |
+| `file://$HOME/settings/default_vimrc` | L998 | `function! MakeCommitMessage(params)` |
 
 </details>
 
@@ -197,8 +197,8 @@ _****_
 | `file://$HOME/settings/default_vimrc` | L464 | `:normal o# gJ - Join lines together before wrapping with ffJ fj` |
 | `file://$HOME/settings/default_vimrc` | L981 | `:imap <buffer> ffj  <cr><cr><esc>:% call GptCompleteSimple()<cr>` |
 | `file://$HOME/settings/default_vimrc` | L982 | `:map <buffer> ffj  :call GptCompleteToBottom()<cr>` |
-| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>` |
-| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>` |
+| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage("")<cr>` |
+| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage('--fast')<CR>` |
 
 </details>
 
@@ -396,8 +396,8 @@ _****_
 | `file://$HOME/settings/default_vimrc` | L464 | `:normal o# gJ - Join lines together before wrapping with ffJ fj` |
 | `file://$HOME/settings/default_vimrc` | L981 | `:imap <buffer> ffj  <cr><cr><esc>:% call GptCompleteSimple()<cr>` |
 | `file://$HOME/settings/default_vimrc` | L982 | `:map <buffer> ffj  :call GptCompleteToBottom()<cr>` |
-| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>` |
-| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>` |
+| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage("")<cr>` |
+| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage('--fast')<CR>` |
 
 </details>
 
@@ -540,8 +540,8 @@ _****_
 | `file://$HOME/settings/default_vimrc` | L464 | `:normal o# gJ - Join lines together before wrapping with ffJ fj` |
 | `file://$HOME/settings/default_vimrc` | L981 | `:imap <buffer> ffj  <cr><cr><esc>:% call GptCompleteSimple()<cr>` |
 | `file://$HOME/settings/default_vimrc` | L982 | `:map <buffer> ffj  :call GptCompleteToBottom()<cr>` |
-| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>` |
-| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>` |
+| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage("")<cr>` |
+| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage('--fast')<CR>` |
 
 </details>
 
@@ -668,8 +668,8 @@ _****_
         
 | File | Line | Match |
 |------|------|-------|
-| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>` |
-| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>` |
+| `file://$HOME/settings/default_vimrc` | L991 | `autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage("")<cr>` |
+| `file://$HOME/settings/default_vimrc` | L992 | `autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage('--fast')<CR>` |
 
 </details>
 
@@ -677,18 +677,18 @@ _****_
 
 _****_
 
-Great! I found the commands you're looking for. These are vim mappings that are activated when you're editing a git commit message. Let me look at the `MakeCommitMesage` function to understand how it works and how to modify it to prevent wrapping at 80 characters:
+Great! I found the commands you're looking for. These are vim mappings that are activated when you're editing a git commit message. Let me look at the `MakeCommitMessage` function to understand how it works and how to modify it to prevent wrapping at 80 characters:
 
 ---
 
 _****_
 
 <details>
-            <summary>Grep search for "function.*MakeCommitMesage" • **1** files</summary>
+            <summary>Grep search for "function.*MakeCommitMessage" • **1** files</summary>
         
 | File | Line | Match |
 |------|------|-------|
-| `file://$HOME/settings/default_vimrc` | L998 | `function! MakeCommitMesage(params)` |
+| `file://$HOME/settings/default_vimrc` | L998 | `function! MakeCommitMessage(params)` |
 
 </details>
 
@@ -696,7 +696,7 @@ _****_
 
 _****_
 
-Let me look at the MakeCommitMesage function:
+Let me look at the MakeCommitMessage function:
 
 ---
 
@@ -708,7 +708,7 @@ Read file: undefined
 
 _****_
 
-Now I understand! The `MakeCommitMesage` function:
+Now I understand! The `MakeCommitMessage` function:
 
 1. Creates a temporary file
 2. Runs a command that pipes the git staged diff through a program called 'commit'
@@ -783,9 +783,9 @@ _**Assistant**_
 
 <think>I understand now. The issue isn't with the `commit` program itself but with how its output is being handled in the vim function. When the function reads the output from the git diff and commit commands, it's likely being wrapped at 80 characters due to vim's default text wrapping settings.
 
-Let's look at the MakeCommitMesage function again and modify it to prevent text wrapping when reading the output from the commit program.</think>I understand now - the problem is that the standard input/output is being wrapped at 80 characters when handling the output from the `commit` program in the vim function. This is likely happening because of vim's default text width or wrapping settings that are applied when reading in content.
+Let's look at the MakeCommitMessage function again and modify it to prevent text wrapping when reading the output from the commit program.</think>I understand now - the problem is that the standard input/output is being wrapped at 80 characters when handling the output from the `commit` program in the vim function. This is likely happening because of vim's default text width or wrapping settings that are applied when reading in content.
 
-Let me modify the `MakeCommitMesage` function in your `default_vimrc` file to prevent this wrapping:
+Let me modify the `MakeCommitMessage` function in your `default_vimrc` file to prevent this wrapping:
 
 ---
 
@@ -793,7 +793,7 @@ _****_
 
 ```diff
   
-  function! MakeCommitMesage(params)
+  function! MakeCommitMessage(params)
 +     " Temporarily disable text wrapping
 +     let old_textwidth = &textwidth
 +     set textwidth=0
@@ -819,7 +819,7 @@ _****_
 
 _****_
 
-I've updated the `MakeCommitMesage` function in your `default_vimrc` file to prevent text wrapping when processing the output from the `commit` program. Here's what the changes do:
+I've updated the `MakeCommitMessage` function in your `default_vimrc` file to prevent text wrapping when processing the output from the `commit` program. Here's what the changes do:
 
 1. Before processing the commit message, the function now:
    - Saves your current `textwidth` setting and sets it to 0 (disables hard wrapping)
@@ -843,12 +843,12 @@ Hymn, how did it work before, did it write and read from a temp file?
 
 _**Assistant**_
 
-<think>Let me review the code I see in the attached default_vimrc file to understand how the MakeCommitMesage function worked before my edit.
+<think>Let me review the code I see in the attached default_vimrc file to understand how the MakeCommitMessage function worked before my edit.
 
 Here's the original function:
 
 ```vim
-function! MakeCommitMesage(params)
+function! MakeCommitMessage(params)
     let tempfile = tempname()
     let gpt_from_git_diff = '!git diff --staged | commit ' . a:params
     execute gpt_from_git_diff . ' > ' . shellescape(tempfile)
@@ -863,7 +863,7 @@ endfunction
 And here's the function after my edit:
 
 ```vim
-function! MakeCommitMesage(params)
+function! MakeCommitMessage(params)
     " Temporarily disable text wrapping
     let old_textwidth = &textwidth
     set textwidth=0
@@ -903,7 +903,7 @@ My changes temporarily disabled text wrapping settings while this happened, then
 So yes, it did write to and read from a temp file, and that's how it was working before.</think>Yes, you're right! Looking at the original code, it was already using a temp file approach:
 
 ```vim
-function! MakeCommitMesage(params)
+function! MakeCommitMessage(params)
     let tempfile = tempname()
     let gpt_from_git_diff = '!git diff --staged | commit ' . a:params
     execute gpt_from_git_diff . ' > ' . shellescape(tempfile)
@@ -972,9 +972,9 @@ _****_
 ```diff
   autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/,/--- \*\*9/d<cr>
   
-- function! MakeCommitMesage(params)
+- function! MakeCommitMessage(params)
 + " Alternative implementation that might handle line breaks differently
-+ function! MakeCommitMesage2(params)
++ function! MakeCommitMessage2(params)
       " Temporarily disable text wrapping
       let old_textwidth = &textwidth
       
@@ -995,8 +995,8 @@ _****_
   endfunction
 + 
 + " Map fft to the alternative implementation
-+ autocmd BufEnter *COMMIT_EDITMSG :map fft :call MakeCommitMesage2('')<CR>
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffs :call MakeCommitMesage2('--fast')<CR>
++ autocmd BufEnter *COMMIT_EDITMSG :map fft :call MakeCommitMessage2('')<CR>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffs :call MakeCommitMessage2('--fast')<CR>
   
   cab pbp :r !pbpaste
 ```
@@ -1016,7 +1016,7 @@ _****_
   endfunction
 + 
 + " Original function with col -x to prevent line wrapping
-+ function! MakeCommitMesage(params)
++ function! MakeCommitMessage(params)
 +     " Temporarily disable text wrapping
 +     let old_textwidth = &textwidth
 +     set textwidth=0
@@ -1115,11 +1115,11 @@ Let's also try another approach with a more direct method of reading the file th
 _****_
 
 ```diff
-  autocmd BufEnter *COMMIT_EDITMSG :map fft :call MakeCommitMesage2('')<CR>
-  autocmd BufEnter *COMMIT_EDITMSG :map ffs :call MakeCommitMesage2('--fast')<CR>
+  autocmd BufEnter *COMMIT_EDITMSG :map fft :call MakeCommitMessage2('')<CR>
+  autocmd BufEnter *COMMIT_EDITMSG :map ffs :call MakeCommitMessage2('--fast')<CR>
 + 
 + " A third approach using system() to directly get the output
-+ function! MakeCommitMesage3(params)
++ function! MakeCommitMessage3(params)
 +     " Temporarily disable text wrapping
 +     let old_textwidth = &textwidth
 +     set textwidth=0
@@ -1156,8 +1156,8 @@ _****_
 + endfunction
 + 
 + " Map a new key for the third approach
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffj3 :call MakeCommitMesage3('')<CR>
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffo3 :call MakeCommitMesage3('--fast')<CR>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffj3 :call MakeCommitMessage3('')<CR>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffo3 :call MakeCommitMessage3('--fast')<CR>
   
   cab pbp :r !pbpaste
 ```
@@ -1175,15 +1175,15 @@ _****_
 ```diff
   
   autocmd BufEnter *convo.md call SetupForConvo()
-- autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>
-- autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage("")<cr>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage('--fast')<CR>
 + " Use newer implementation for better no-wrap support
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage3("")<cr>
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage3('--fast')<CR>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage3("")<cr>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage3('--fast')<CR>
 + 
 + " Legacy mappings using the old function for comparison
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffjo  :call MakeCommitMesage("")<cr>
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffoo :call MakeCommitMesage('--fast')<CR>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffjo  :call MakeCommitMessage("")<cr>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffoo :call MakeCommitMessage('--fast')<CR>
   
   " Refactor to share with convo maps
 ```
@@ -1222,13 +1222,13 @@ Give this a try, and if you're still seeing wrapping issues, we can test more sp
 
 _**User**_
 
-For testing aaadd a long line on the top of the temp file and we cna see if that gets read correctly make it 200 chars wide
+For testing aaadd a long line on the top of the temp file and we can see if that gets read correctly make it 200 chars wide
 
 ---
 
 _**Assistant**_
 
-<think>I'll modify the `MakeCommitMesage3` function to add a very long line (200 characters) at the top of the buffer before reading in the commit message. This will help us test if the issue is with line wrapping in the input/output processing.</think>I'll modify the MakeCommitMesage3 function to add a long test line of 200 characters before processing the commit message. This will help us see if the wrapping issue is with reading the content:
+<think>I'll modify the `MakeCommitMessage3` function to add a very long line (200 characters) at the top of the buffer before reading in the commit message. This will help us test if the issue is with line wrapping in the input/output processing.</think>I'll modify the MakeCommitMessage3 function to add a long test line of 200 characters before processing the commit message. This will help us see if the wrapping issue is with reading the content:
 
 ---
 
@@ -1275,7 +1275,7 @@ _****_
 
 _****_
 
-Now let's also modify the original MakeCommitMesage function to do a similar test but using a different approach to see which works better:
+Now let's also modify the original MakeCommitMessage function to do a similar test but using a different approach to see which works better:
 
 ---
 
@@ -1306,7 +1306,7 @@ _****_
 
 _****_
 
-Let's also modify MakeCommitMesage2 to include a test line, but try a slightly different approach with reading the file:
+Let's also modify MakeCommitMessage2 to include a test line, but try a slightly different approach with reading the file:
 
 ---
 
@@ -1344,17 +1344,17 @@ _****_
 
 Great! I've now modified all three functions to include a 200-character test line at the top, each using slightly different approaches:
 
-1. **MakeCommitMesage (mapped to `ffjo` and `ffoo`)**:
+1. **MakeCommitMessage (mapped to `ffjo` and `ffoo`)**:
    - Added a test line of 200 dashes (-)
    - Now using raw output (no stty/col filters) to see if that was causing issues
    - Uses `:read` command to insert the file contents
 
-2. **MakeCommitMesage2 (mapped to `fft` and `ffs`)**:
+2. **MakeCommitMessage2 (mapped to `fft` and `ffs`)**:
    - Added a test line of 200 hash marks (#)
    - Also disabled expandtab setting in case that was affecting tab handling
    - Uses `readfile()` and `append()` to insert the file contents
 
-3. **MakeCommitMesage3 (mapped to `ffj` and `ffo`)**:
+3. **MakeCommitMessage3 (mapped to `ffj` and `ffo`)**:
    - Added a test line of 200 X's
    - Uses `system()` to capture the output directly
    - Inserts the output line by line
@@ -1389,7 +1389,7 @@ There are a few ways to fix this in a shell command:
 
 Let's implement a solution that sets the terminal width to a large value before running the command.</think>Great discovery! If the test lines are working but the output is still wrapping, it means the issue is with the terminal width setting when running the system command. When executing shell commands, the terminal dimensions can be restricted, causing automatic line wrapping.
 
-Let's modify the MakeCommitMesage3 function to set a wider terminal width before running the command:
+Let's modify the MakeCommitMessage3 function to set a wider terminal width before running the command:
 
 ---
 
@@ -1412,7 +1412,7 @@ _****_
 
 _****_
 
-Now, let's also update the original MakeCommitMesage function to use a similar approach for consistency:
+Now, let's also update the original MakeCommitMessage function to use a similar approach for consistency:
 
 ---
 
@@ -1433,7 +1433,7 @@ _****_
 
 _****_
 
-Let's also update the MakeCommitMesage2 function for completeness:
+Let's also update the MakeCommitMessage2 function for completeness:
 
 ---
 
@@ -1486,7 +1486,7 @@ _**Assistant**_
 <think>Now that we've confirmed the fix works (setting the terminal width with COLUMNS and stty), I'll create a cleaner, minimal version that:
 
 1. Removes all the test code
-2. Keeps only the best working function (MakeCommitMesage3)
+2. Keeps only the best working function (MakeCommitMessage3)
 3. Simplifies the code as much as possible while keeping the width fix
 4. Preserves the original mappings
 
@@ -1499,26 +1499,26 @@ _****_
 ```diff
   autocmd BufEnter *convo.md call SetupForConvo()
   " Use newer implementation for better no-wrap support
-- autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage3("")<cr>
-- autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage3('--fast')<CR>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage3("")<cr>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage3('--fast')<CR>
 - 
 - " Legacy mappings using the old function for comparison
-- autocmd BufEnter *COMMIT_EDITMSG :map ffjo  :call MakeCommitMesage("")<cr>
-- autocmd BufEnter *COMMIT_EDITMSG :map ffoo :call MakeCommitMesage('--fast')<CR>
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMesage("")<cr>
-+ autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMesage('--fast')<CR>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffjo  :call MakeCommitMessage("")<cr>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffoo :call MakeCommitMessage('--fast')<CR>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffj  :call MakeCommitMessage("")<cr>
++ autocmd BufEnter *COMMIT_EDITMSG :map ffo :call MakeCommitMessage('--fast')<CR>
   
   " Refactor to share with convo maps
   autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffd :?---?,/---/d<cr>
   autocmd BufEnter *COMMIT_EDITMSG :map <buffer> ffk :?--- \*\*0?,?---?d<cr>:/---/,/--- \*\*9/d<cr>
   
 - " Alternative implementation that might handle line breaks differently
-- function! MakeCommitMesage2(params)
+- function! MakeCommitMessage2(params)
 -     " Temporarily disable text wrapping
 + " Function to generate a commit message using 'commit' tool
 + " Uses the git diff of staged changes
 + " Prevents terminal line wrapping by setting COLUMNS=500
-+ function! MakeCommitMesage(params)
++ function! MakeCommitMessage(params)
 +     " Temporarily disable text wrapping in Vim
       let old_textwidth = &textwidth
       set textwidth=0
@@ -1558,7 +1558,7 @@ _****_
   endfunction
 - 
 - " Original function with col -x to prevent line wrapping
-- function! MakeCommitMesage(params)
+- function! MakeCommitMessage(params)
 -     " Temporarily disable text wrapping
 -     let old_textwidth = &textwidth
 -     set textwidth=0
@@ -1596,11 +1596,11 @@ _****_
 - endfunction
 - 
 - " Map fft to the alternative implementation
-- autocmd BufEnter *COMMIT_EDITMSG :map fft :call MakeCommitMesage2('')<CR>
-- autocmd BufEnter *COMMIT_EDITMSG :map ffs :call MakeCommitMesage2('--fast')<CR>
+- autocmd BufEnter *COMMIT_EDITMSG :map fft :call MakeCommitMessage2('')<CR>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffs :call MakeCommitMessage2('--fast')<CR>
 - 
 - " A third approach using system() to directly get the output
-- function! MakeCommitMesage3(params)
+- function! MakeCommitMessage3(params)
 -     " Temporarily disable text wrapping
 -     let old_textwidth = &textwidth
 -     set textwidth=0
@@ -1646,8 +1646,8 @@ _****_
 - endfunction
 - 
 - " Map a new key for the third approach
-- autocmd BufEnter *COMMIT_EDITMSG :map ffj3 :call MakeCommitMesage3('')<CR>
-- autocmd BufEnter *COMMIT_EDITMSG :map ffo3 :call MakeCommitMesage3('--fast')<CR>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffj3 :call MakeCommitMessage3('')<CR>
+- autocmd BufEnter *COMMIT_EDITMSG :map ffo3 :call MakeCommitMessage3('--fast')<CR>
   
   cab pbp :r !pbpaste
 ```
@@ -1813,7 +1813,7 @@ _****_
 
 ```diff
   " Prevents terminal line wrapping by setting COLUMNS=500
-  function! MakeCommitMesage(params)
+  function! MakeCommitMessage(params)
 -     " Temporarily disable text wrapping in Vim
 -     let old_textwidth = &textwidth
 -     set textwidth=0

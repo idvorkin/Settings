@@ -4,7 +4,7 @@
 
 _**User**_
 
-Have chopp git latsets do a tail of hte file after the git add, maybe last 20 lines
+Have chopp git latsets do a tail of the file after the git add, maybe last 20 lines
 
 ---
 
@@ -14,7 +14,7 @@ _**Assistant**_
 
 Looking at the attached file, it's a tigrc configuration file which configures the behavior of tig, a text-mode interface for git. The file contains various settings and key bindings for tig.
 
-The user's request "Have chopp git latsets do a tail of hte file after the git add, maybe last 20 lines" seems to be asking to add a new key binding or functionality to the tigrc file that would show the last 20 lines of a file after a git add operation.
+The user's request "Have chopp git latsets do a tail of the file after the git add, maybe last 20 lines" seems to be asking to add a new key binding or functionality to the tigrc file that would show the last 20 lines of a file after a git add operation.
 
 Let me edit the file to add this functionality.</think>I'll edit your tigrc file to add a key binding that shows the last 20 lines of a file after git add.
 

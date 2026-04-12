@@ -4,7 +4,7 @@
 
 _**User**_
 
-Running NeoVIM in vscode I'm getting htis 
+Running NeoVIM in vscode I'm getting this 
 
 nvim_set_current_win: BufEnter Autocommands for "*md": Vim:E492: Not an editor command: :SoftPencil. Can you figure out why
 

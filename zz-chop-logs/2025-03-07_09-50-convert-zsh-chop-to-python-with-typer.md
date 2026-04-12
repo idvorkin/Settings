@@ -925,7 +925,7 @@ You can now use the `chop` command just like you would use the zsh functions, bu
 
 _**User**_
 
-chop git-latest isn't gettin the latste file. 
+chop git-latest isn't getting the latste file. 
 
 ---
 
@@ -1345,7 +1345,7 @@ Let's make one more improvement to make the output even cleaner. Let's add a lim
 
 _**User**_
 
-Can you have reresh also do that
+Can you have refresh also do that
 
 ---
 
@@ -1460,11 +1460,11 @@ Content preview of 2025-03-07_09-50-convert-zsh-chop-to-python-with-typer.md:
   ```
   ---
   _****_
-  Great! The updated `_show_tail` function is now working correctly. It's showing only the non-empty lines from the end of the file, whic...
+  Great! The updated `_show_tail` function is now working correctly. It's showing only the non-empty lines from the end of the file, which...
   Let's make one more improvement to make the output even cleaner. Let's add a limit to the line length and add some formatting to make i...
   ---
   _**User**_
-  Can you have reresh also do that
+  Can you have refresh also do that
   ---
   _**Assistant**_
   Yes, let's make sure the `git_refresh` function also uses the improved `_show_tail` function. The function already calls `_show_tail`, ...

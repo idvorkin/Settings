@@ -5,3 +5,14 @@ thm = "thm"
 ratatui = "ratatui"
 hel = "hel"
 pn = "pn"
+# vim abbreviation mappings (iab) — the "typo" IS the key, not a mistake
+ot = "ot"
+fo = "fo"
+
+[default.extend-identifiers]
+tha = "tha"
+ther = "ther"
+mak = "mak"
+
+[files]
+extend-exclude = ["chop-logs/", "cursor-logs/", "zz-chop-logs/"]

@@ -12,12 +12,17 @@ test:
 
 # Install locally and globally
 install:
-    @cd py && uv venv
-    @cd py && . .venv/bin/activate
+    @cd py && uv venv --allow-existing
     @cd py && uv pip install --upgrade --editable .
 
 global-install: install
     @cd py && uv tool install --force  --editable .
+
+# Wire up git hooks and build all tools
+setup:
+    ln -sf ../../shared/settings-git-hooks/post-merge .git/hooks/post-merge
+    just global-install
+    just rinstall
 
 # Install rust tmux helper (skips rebuild if already up-to-date)
 rinstall:

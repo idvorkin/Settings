@@ -4,7 +4,7 @@
 
 _**User**_
 
-1/ Lets rename from cursor-logs to chop-logs, make taht change DRY
+1/ Lets rename from cursor-logs to chop-logs, make that change DRY
 
 ---
 
@@ -16,25 +16,25 @@ Let me edit the file:
 
 ---
 
-_****_
+_\*\*\*\*_
 
 ```diff
       defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{"LSHandlerURLScheme" = "https"; "LSHandlerRoleAll" = "net.kassett.finicky";}'
   }
-+ 
++
 + # Define the logs directory name once
 + CHOP_LOGS_DIR="chop-logs"
-  
+
   function specstory-save() {
       fi
-  
+
 -     # Create cursor-logs directory in git root if it doesn't exist
 -     local cursor_logs_dir="$git_root/cursor-logs"
 -     mkdir -p "$cursor_logs_dir"
 +     # Create logs directory in git root if it doesn't exist
 +     local logs_dir="$git_root/$CHOP_LOGS_DIR"
 +     mkdir -p "$logs_dir"
-  
+
 -     # Copy the selected file to cursor logs in git root
 -     cp "$spec_dir/$selected_file" "$cursor_logs_dir/"
 -     echo "Copied $selected_file to $cursor_logs_dir/"
@@ -42,23 +42,23 @@ _****_
 +     cp "$spec_dir/$selected_file" "$logs_dir/"
 +     echo "Copied $selected_file to $logs_dir/"
   }
-  
+
       fi
-  
+
 -     # Create cursor-logs directory in git root if it doesn't exist
 -     local cursor_logs_dir="$git_root/cursor-logs"
 -     mkdir -p "$cursor_logs_dir"
 +     # Create logs directory in git root if it doesn't exist
 +     local logs_dir="$git_root/$CHOP_LOGS_DIR"
 +     mkdir -p "$logs_dir"
-  
+
 -     # Copy the latest file to cursor logs in git root
 -     cp "$spec_dir/$latest_file" "$cursor_logs_dir/"
 -     echo "Copied $latest_file to $cursor_logs_dir/"
 +     # Copy the latest file to logs directory in git root
 +     cp "$spec_dir/$latest_file" "$logs_dir/"
 +     echo "Copied $latest_file to $logs_dir/"
-  
+
       # Just add the file to git
 -     git -C "$git_root" add "cursor-logs/$latest_file"
 +     git -C "$git_root" add "$CHOP_LOGS_DIR/$latest_file"
@@ -68,9 +68,7 @@ _****_
 
 ---
 
-_****_
-
-
+_\*\*\*\*_
 
 I've made the following changes to make the code more DRY:
 
@@ -97,7 +95,7 @@ I'll help you source the file to test the changes. Let me run the source command
 
 ---
 
-_****_
+_\*\*\*\*_
 
 ```bash
 source ~/settings/shared/zsh_include.sh
@@ -117,17 +115,16 @@ Random
 default_init:unalias:135: no such hash table element: a
 --default_init
 
-igors-Mac-mini in settings on  master [$!?] via  v23.2.0 via 🐍 v3.13.0 (py) on ☁️   
+igors-Mac-mini in settings on  master [$!?] via  v23.2.0 via 🐍 v3.13.0 (py) on ☁️
 ❯
 ```
 
 ---
 
-_****_
-
-
+_\*\*\*\*_
 
 The file has been sourced successfully. The output shows the expected initialization sequence:
+
 1. `safe_init` ran successfully
 2. `default_init` ran successfully
 3. The unalias warnings are normal and not related to our changes (they're trying to unalias commands that weren't aliased)
@@ -150,19 +147,12 @@ I'll help you commit the changes to the zsh_include.sh file:
 
 ---
 
-_****_
-
-
+_\*\*\*\*_
 
 ---
 
-_****_
-
-
+_\*\*\*\*_
 
 ---
 
-
-
 ---
-

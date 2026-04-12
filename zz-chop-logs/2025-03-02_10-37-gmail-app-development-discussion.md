@@ -492,7 +492,7 @@ _**User**_
 
 This worked great. Lets rename, list, read. and kindle.
 
-Give read an option to output with regular print as I'm losin gthe actual hyper links
+Give read an option to output with regular print as I'm losin the actual hyper links
 
 ---
 

@@ -4,7 +4,7 @@
 
 _**User**_
 
-what are hte specstory commands avvailable
+what are the specstory commands avvailable
 
 ---
 
@@ -248,7 +248,7 @@ Would you like me to verify any of these specific commands or make any additiona
 
 _**User**_
 
-What pager are we using wiht fzf commands? 
+What pager are we using with fzf commands? 
 
 ---
 

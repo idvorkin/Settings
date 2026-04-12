@@ -54,7 +54,7 @@ The current binding uses lowercase 'c' which is quick and easy to access during 
 
 _**User**_
 
-Not working, cna I callc ommand directly
+Not working, can I callc command directly
 
 ---
 

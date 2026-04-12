@@ -1,260 +1,259 @@
 {
-  "title": "Synchronize Shift Keys Across All Keyboards",
-  "rules": [
-    {
-      "description": "Synchronize Left and Right Shift Keys",
-      "manipulators": [
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "left_shift",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-              "set_variable": {
-                "name": "shift_key_sync",
-                "value": 1
-              }
-            },
-            {
-              "key_code": "left_shift"
-            }
-          ],
-          "to_after_key_up": [
-            {
-              "set_variable": {
-                "name": "shift_key_sync",
-                "value": 0
-              }
-            }
-          ]
-        },
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "right_shift",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-              "set_variable": {
-                "name": "shift_key_sync",
-                "value": 1
-              }
-            },
-            {
-              "key_code": "right_shift"
-            }
-          ],
-          "to_after_key_up": [
-            {
-              "set_variable": {
-                "name": "shift_key_sync",
-                "value": 0
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "description": "Apply Shift Keys to All Keyboards",
-      "manipulators": [
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "any",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-              "key_code": "VK_PSEUDO_MODIFIER_SHIFT",
-              "modifiers": ["left_shift"]
-            }
-          ],
-          "conditions": [
-            {
-              "type": "variable_if",
-              "name": "shift_key_sync",
-              "value": 1
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "description": "Synchronize Command and Control Keys",
-      "manipulators": [
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "left_command",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-              "set_variable": {
-                "name": "command_key_sync",
-                "value": 1
-              }
-            },
-            {
-              "key_code": "left_command"
-            }
-          ],
-          "to_after_key_up": [
-            {
-              "set_variable": {
-                "name": "command_key_sync",
-                "value": 0
-              }
-            }
-          ]
-        },
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "right_command",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-              "set_variable": {
-                "name": "command_key_sync",
-                "value": 1
-              }
-            },
-            {
-              "key_code": "right_command"
-            }
-          ],
-          "to_after_key_up": [
-            {
-              "set_variable": {
-                "name": "command_key_sync",
-                "value": 0
-              }
-            }
-          ]
-        },
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "left_control",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-              "set_variable": {
-                "name": "control_key_sync",
-                "value": 1
-              }
-            },
-            {
-              "key_code": "left_control"
-            }
-          ],
-          "to_after_key_up": [
-            {
-              "set_variable": {
-                "name": "control_key_sync",
-                "value": 0
-              }
-            }
-          ]
-        },
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "right_control",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-              "set_variable": {
-                "name": "control_key_sync",
-                "value": 1
-              }
-            },
-            {
-              "key_code": "right_control"
-            }
-          ],
-          "to_after_key_up": [
-            {
-              "set_variable": {
-                "name": "control_key_sync",
-                "value": 0
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "description": "Apply Command and Control Keys to All Keyboards",
-      "manipulators": [
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "any",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-              "key_code": "VK_PSEUDO_MODIFIER_COMMAND",
-              "modifiers": ["left_command"]
-            }
-          ],
-          "conditions": [
-            {
-              "type": "variable_if",
-              "name": "command_key_sync",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "type": "basic",
-          "from": {
-            "key_code": "any",
-            "modifiers": {
-              "optional": ["any"]
-            }
-          },
-          "to": [
-            {
-            "key_code": "VK_PSEUDO_MODIFIER_CONTROL",
-            "modifiers": ["left_control"]
-          }
-        ],
-        "conditions": [
-          {
-            "type": "variable_if",
-            "name": "control_key_sync",
-            "value": 1
-          }
-        ]
-      }
-    ]
-  }
-  ]
+	"title": "Synchronize Shift Keys Across All Keyboards",
+	"rules": [
+		{
+			"description": "Synchronize Left and Right Shift Keys",
+			"manipulators": [
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "left_shift",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"set_variable": {
+								"name": "shift_key_sync",
+								"value": 1
+							}
+						},
+						{
+							"key_code": "left_shift"
+						}
+					],
+					"to_after_key_up": [
+						{
+							"set_variable": {
+								"name": "shift_key_sync",
+								"value": 0
+							}
+						}
+					]
+				},
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "right_shift",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"set_variable": {
+								"name": "shift_key_sync",
+								"value": 1
+							}
+						},
+						{
+							"key_code": "right_shift"
+						}
+					],
+					"to_after_key_up": [
+						{
+							"set_variable": {
+								"name": "shift_key_sync",
+								"value": 0
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"description": "Apply Shift Keys to All Keyboards",
+			"manipulators": [
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "any",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"key_code": "VK_PSEUDO_MODIFIER_SHIFT",
+							"modifiers": ["left_shift"]
+						}
+					],
+					"conditions": [
+						{
+							"type": "variable_if",
+							"name": "shift_key_sync",
+							"value": 1
+						}
+					]
+				}
+			]
+		},
+		{
+			"description": "Synchronize Command and Control Keys",
+			"manipulators": [
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "left_command",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"set_variable": {
+								"name": "command_key_sync",
+								"value": 1
+							}
+						},
+						{
+							"key_code": "left_command"
+						}
+					],
+					"to_after_key_up": [
+						{
+							"set_variable": {
+								"name": "command_key_sync",
+								"value": 0
+							}
+						}
+					]
+				},
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "right_command",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"set_variable": {
+								"name": "command_key_sync",
+								"value": 1
+							}
+						},
+						{
+							"key_code": "right_command"
+						}
+					],
+					"to_after_key_up": [
+						{
+							"set_variable": {
+								"name": "command_key_sync",
+								"value": 0
+							}
+						}
+					]
+				},
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "left_control",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"set_variable": {
+								"name": "control_key_sync",
+								"value": 1
+							}
+						},
+						{
+							"key_code": "left_control"
+						}
+					],
+					"to_after_key_up": [
+						{
+							"set_variable": {
+								"name": "control_key_sync",
+								"value": 0
+							}
+						}
+					]
+				},
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "right_control",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"set_variable": {
+								"name": "control_key_sync",
+								"value": 1
+							}
+						},
+						{
+							"key_code": "right_control"
+						}
+					],
+					"to_after_key_up": [
+						{
+							"set_variable": {
+								"name": "control_key_sync",
+								"value": 0
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"description": "Apply Command and Control Keys to All Keyboards",
+			"manipulators": [
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "any",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"key_code": "VK_PSEUDO_MODIFIER_COMMAND",
+							"modifiers": ["left_command"]
+						}
+					],
+					"conditions": [
+						{
+							"type": "variable_if",
+							"name": "command_key_sync",
+							"value": 1
+						}
+					]
+				},
+				{
+					"type": "basic",
+					"from": {
+						"key_code": "any",
+						"modifiers": {
+							"optional": ["any"]
+						}
+					},
+					"to": [
+						{
+							"key_code": "VK_PSEUDO_MODIFIER_CONTROL",
+							"modifiers": ["left_control"]
+						}
+					],
+					"conditions": [
+						{
+							"type": "variable_if",
+							"name": "control_key_sync",
+							"value": 1
+						}
+					]
+				}
+			]
+		}
+	]
 }
-

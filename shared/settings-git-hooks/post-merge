@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Post-merge hook: rebuild tools when their source files change.
+# Runs after every `git pull` / `git merge`.
+
+set -euo pipefail
+
+# Files changed in the merge (comparing HEAD to its first parent)
+changed=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/null || true)
+[ -z "$changed" ] && exit 0
+
+if echo "$changed" | grep -qE '^py/'; then
+    echo "⟳ py/ changed — running just global-install"
+    just global-install
+fi
+
+if echo "$changed" | grep -qE '^rust/'; then
+    echo "⟳ rust/ changed — running just rinstall"
+    just rinstall
+fi

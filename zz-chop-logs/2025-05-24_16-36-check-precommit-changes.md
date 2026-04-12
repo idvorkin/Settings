@@ -1493,7 +1493,7 @@ find . -name "*.md" | head -5
 
 _**User**_
 
-Only fix prettier, don't worry about hte riest of files
+Only fix prettier, don't worry about the riest of files
 
 ---
 

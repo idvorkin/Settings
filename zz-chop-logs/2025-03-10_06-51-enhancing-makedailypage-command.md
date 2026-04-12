@@ -107,7 +107,7 @@ The command will handle both formats gracefully and provide an error message if 
 
 _**User**_
 
-Don't rename the paramater
+Don't rename the parameter
 
 ---
 
@@ -493,7 +493,7 @@ The error message has also been updated to indicate that both formats are suppor
 
 _**User**_
 
-Run pre-commit to see if ther eare errors, adn fix them
+Run pre-commit to see if ther eare errors, and fix them
 
 ---
 

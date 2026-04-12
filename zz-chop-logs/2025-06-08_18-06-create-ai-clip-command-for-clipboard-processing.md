@@ -4,7 +4,7 @@
 
 _**User**_
 
-OK, lets add a command ai-clip.py, that takes the clipboard run it through mavaerick on grok saying fix the spelling and puncuation and copys it back to the clipboard
+OK, lets add a command ai-clip.py, that takes the clipboard run it through mavaerick on grok saying fix the spelling and puncuation and copies it back to the clipboard
 
 e.g. 
 
@@ -838,7 +838,7 @@ _**Assistant**_
 
 _**User**_
 
-Somethign messaged up create a prd for this feature in settings/prd
+Something messaged up create a prd for this feature in settings/prd
 
 ---
 

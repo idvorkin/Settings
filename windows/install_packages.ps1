@@ -111,7 +111,7 @@ ruby2.devkit
 @".split()
 
 #Video Editor
-$packages += "shotcut"
+$packages += "shortcut"
 
 # DVD -> ISO
 $packages += @"

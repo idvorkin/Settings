@@ -162,7 +162,7 @@ Would you like me to make any other improvements to the error handling?
 
 _**User**_
 
-Add confgi command that shoiws which directories are used 
+Add config command that shoiws which directories are used 
 
 ---
 

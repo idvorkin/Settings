@@ -2,7 +2,7 @@
 ; Needs to be copied into: C:\Program Files (x86)\GridMove\Grids
 ;   W-1; W-2; W-3 => 1/3 maximize: Left; Middle; Right
 ;   W-4: 2/3 maximize left
-;   W-5: 2/3 maximize rigth
+;   W-5: 2/3 maximize right
 ;   Or middle button drag.
 ;  
 ; I've been doing this on a clone of the original gridmove

@@ -1,4 +1,4 @@
--- Ugh, and down the rabit hole we go!
+-- Ugh, and down the rabbit hole we go!
 -- I need more contrast on the dashbar
 vim.cmd(":colorscheme catppuccin-macchiato")
 

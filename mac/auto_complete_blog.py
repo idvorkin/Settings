@@ -4,6 +4,7 @@ import dataclasses
 import json
 import os
 
+
 # See https://www.alfredapp.com/help/workflows/inputs/script-filter/json/
 @dataclass
 class alfred_item:
@@ -55,6 +56,8 @@ for redirect in redirects:
     alfred_items += [item]
 
 
-random = alfred_item(uid="random", title="random", subtitle="a random post", arg="random", match="random")
-items = {"items": alfred_items+[random]}
+random = alfred_item(
+    uid="random", title="random", subtitle="a random post", arg="random", match="random"
+)
+items = {"items": alfred_items + [random]}
 print(json.dumps(items, cls=EnhancedJSONEncoder))

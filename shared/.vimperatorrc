@@ -7,7 +7,7 @@
 " Hym not sure why that doesn't work.
 " :ab sodot :source ~/.vimperatorrc
 
-" Acually I should do this  vimium 
+" Actually I should do this  vimium 
 " :nab gs :viewsource
 
 " vim: ft=vim  ts=4 sw=4 sts=0 et fdm=marker fdc=3

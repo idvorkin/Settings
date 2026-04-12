@@ -208,7 +208,7 @@ Let me check if there's any custom completion handling in the script that we sho
 ---
 
 <details>
-            <summary>Grep search for "complet" • **5** files</summary>
+            <summary>Grep search for "complete" • **5** files</summary>
         
 | File | Line | Match |
 |------|------|-------|
@@ -256,7 +256,7 @@ You can check if there's any completion setup in your shell configuration by run
 complete -p y 2>/dev/null || echo "No completion found for 'y'"
 
 # Check your shell config files for y completion
-grep -r "y.*complet" ~/.zshrc ~/.zsh* 2>/dev/null || echo "No y completion in shell config"
+grep -r "y.*complete" ~/.zshrc ~/.zsh* 2>/dev/null || echo "No y completion in shell config"
 ```
 
 The `add_completion=False` should be sufficient to disable Typer's built-in completion system.
@@ -716,7 +716,7 @@ Would you like me to proceed with this commit message, or would you like to make
 
 _**User**_
 
-Comit!
+Commit!
 
 ---
 
