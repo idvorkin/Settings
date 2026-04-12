@@ -148,3 +148,74 @@ mod tests {
         assert!(json.contains("\"canonical\":\"https://github.com/a/b/pull/1\""));
     }
 }
+
+use regex::Regex;
+use std::sync::OnceLock;
+
+/// Base URL regex — matches scheme + greedy body up to whitespace or URL-unsafe chars.
+/// Trailing punctuation is stripped separately (see `strip_trailing_punct`).
+pub(crate) fn url_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r#"https?://[^\s<>"'`()\[\]{}]+"#).unwrap()
+    })
+}
+
+/// Strip trailing `.,;:!?)]}>'"` from a matched URL. Preserves trailing `/`.
+pub(crate) fn strip_trailing_punct(s: &str) -> &str {
+    s.trim_end_matches(|c: char| ".,;:!?)]}>'\"".contains(c))
+}
+
+#[cfg(test)]
+mod url_tests {
+    use super::*;
+
+    fn extract_url(line: &str) -> &str {
+        let m = url_regex().find(line).expect("no URL in line");
+        strip_trailing_punct(m.as_str())
+    }
+
+    #[test]
+    fn extracts_bare_url() {
+        assert_eq!(
+            extract_url("see https://github.com/a/b/pull/1 next"),
+            "https://github.com/a/b/pull/1"
+        );
+    }
+
+    #[test]
+    fn strips_trailing_period() {
+        assert_eq!(
+            extract_url("see https://github.com/a/b/pull/1."),
+            "https://github.com/a/b/pull/1"
+        );
+    }
+
+    #[test]
+    fn strips_trailing_paren_and_quote() {
+        assert_eq!(
+            extract_url("(see https://github.com/a/b/pull/1)"),
+            "https://github.com/a/b/pull/1"
+        );
+        assert_eq!(
+            extract_url("\"https://github.com/a/b/pull/1\""),
+            "https://github.com/a/b/pull/1"
+        );
+    }
+
+    #[test]
+    fn preserves_trailing_slash() {
+        assert_eq!(
+            extract_url("https://idvorkin.github.io/posts/ai-agents/"),
+            "https://idvorkin.github.io/posts/ai-agents/"
+        );
+    }
+
+    #[test]
+    fn handles_query_and_fragment() {
+        assert_eq!(
+            extract_url("https://github.com/a/b/pull/1#discussion_r123"),
+            "https://github.com/a/b/pull/1#discussion_r123"
+        );
+    }
+}
