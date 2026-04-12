@@ -95,7 +95,7 @@ pub struct EnrichedTitle {
     pub author: Option<String>,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum GhState {
     Open,
