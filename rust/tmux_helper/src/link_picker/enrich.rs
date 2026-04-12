@@ -128,3 +128,161 @@ mod cache_tests {
         assert_ne!(parsed.unwrap().version, CACHE_VERSION);
     }
 }
+
+use tokio::process::Command;
+
+#[derive(Debug, Deserialize)]
+struct GhPrJson {
+    title: String,
+    state: String,
+    #[serde(default)]
+    author: Option<GhUser>,
+    #[serde(rename = "isDraft", default)]
+    is_draft: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhIssueJson {
+    title: String,
+    state: String,
+    #[serde(default)]
+    author: Option<GhUser>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhUser {
+    login: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GhCommitJson {
+    title: String,
+    #[serde(default)]
+    author: Option<String>,
+}
+
+/// Parse a GitHub canonical URL of the form `https://github.com/OWNER/REPO/(pull|issues|commit)/ID`.
+pub(crate) fn parse_gh_target(url: &str) -> Option<(String, String, GhKind, String)> {
+    let rest = url.strip_prefix("https://github.com/")?;
+    let mut parts = rest.splitn(4, '/');
+    let owner = parts.next()?.to_string();
+    let repo = parts.next()?.to_string();
+    let kind_str = parts.next()?;
+    let id = parts.next()?.to_string();
+    let kind = match kind_str {
+        "pull" => GhKind::Pr,
+        "issues" => GhKind::Issue,
+        "commit" => GhKind::Commit,
+        _ => return None,
+    };
+    Some((owner, repo, kind, id))
+}
+
+#[derive(Copy, Clone, Debug)]
+pub(crate) enum GhKind { Pr, Issue, Commit }
+
+/// Call `gh` for one canonical URL. Returns `Ok(None)` on any recoverable failure.
+pub(crate) async fn call_gh(canonical_url: &str) -> Result<Option<EnrichedTitle>> {
+    let Some((owner, repo, kind, id)) = parse_gh_target(canonical_url) else {
+        return Ok(None);
+    };
+    let owner_repo = format!("{owner}/{repo}");
+
+    let output = match kind {
+        GhKind::Pr => Command::new("gh")
+            .args(["pr", "view", &id, "-R", &owner_repo, "--json", "title,state,author,isDraft"])
+            .output()
+            .await,
+        GhKind::Issue => Command::new("gh")
+            .args(["issue", "view", &id, "-R", &owner_repo, "--json", "title,state,author"])
+            .output()
+            .await,
+        GhKind::Commit => Command::new("gh")
+            .args([
+                "api",
+                &format!("repos/{owner_repo}/commits/{id}"),
+                "--jq",
+                "{title: (.commit.message | split(\"\\n\")[0]), author: .commit.author.name}",
+            ])
+            .output()
+            .await,
+    };
+
+    let output = match output {
+        Ok(o) => o,
+        Err(_) => return Ok(None), // gh not on PATH
+    };
+    if !output.status.success() {
+        return Ok(None); // 404, auth failure, etc.
+    }
+
+    match kind {
+        GhKind::Pr => {
+            let Ok(p) = serde_json::from_slice::<GhPrJson>(&output.stdout) else {
+                return Ok(None);
+            };
+            let state = if p.is_draft {
+                GhState::Draft
+            } else {
+                match p.state.as_str() {
+                    "OPEN" => GhState::Open,
+                    "MERGED" => GhState::MergedPr,
+                    "CLOSED" => GhState::Closed,
+                    _ => GhState::Open,
+                }
+            };
+            Ok(Some(EnrichedTitle {
+                title: p.title,
+                state,
+                author: p.author.map(|u| u.login),
+            }))
+        }
+        GhKind::Issue => {
+            let Ok(i) = serde_json::from_slice::<GhIssueJson>(&output.stdout) else {
+                return Ok(None);
+            };
+            let state = match i.state.as_str() {
+                "OPEN" => GhState::Open,
+                "CLOSED" => GhState::Closed,
+                _ => GhState::Open,
+            };
+            Ok(Some(EnrichedTitle {
+                title: i.title,
+                state,
+                author: i.author.map(|u| u.login),
+            }))
+        }
+        GhKind::Commit => {
+            let Ok(c) = serde_json::from_slice::<GhCommitJson>(&output.stdout) else {
+                return Ok(None);
+            };
+            Ok(Some(EnrichedTitle {
+                title: c.title,
+                state: GhState::Commit,
+                author: c.author,
+            }))
+        }
+    }
+}
+
+#[cfg(test)]
+mod gh_call_tests {
+    use super::*;
+
+    #[test]
+    fn parse_gh_target_pr() {
+        let (o, r, k, id) = parse_gh_target("https://github.com/a/b/pull/42").unwrap();
+        assert_eq!((o.as_str(), r.as_str(), id.as_str()), ("a", "b", "42"));
+        assert!(matches!(k, GhKind::Pr));
+    }
+
+    #[test]
+    fn parse_gh_target_rejects_non_gh_host() {
+        assert!(parse_gh_target("https://gitlab.com/a/b/pull/1").is_none());
+    }
+
+    #[test]
+    fn parse_gh_target_rejects_repo_home() {
+        assert!(parse_gh_target("https://github.com/a/b").is_none());
+    }
+}
