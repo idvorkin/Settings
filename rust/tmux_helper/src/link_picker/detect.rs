@@ -525,3 +525,94 @@ mod server_tests {
         assert!(items.iter().any(|i| i.canonical == "mydev.ts.net"));
     }
 }
+
+pub(crate) fn find_ips(line: &str, line_index: usize) -> Vec<Item> {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    // Dotted-quad with bounded octets, no look-around (Rust regex limitation).
+    // We do boundary + version-prefix checks in code.
+    let re = RE.get_or_init(|| {
+        Regex::new(r"(?:\d{1,3}\.){3}\d{1,3}").unwrap()
+    });
+
+    let bytes = line.as_bytes();
+    let mut out = Vec::new();
+    for m in re.find_iter(line) {
+        let start = m.start();
+        let end = m.end();
+
+        // Reject: preceded by `v` or `V` (version string)
+        if start > 0 && matches!(bytes[start - 1], b'v' | b'V') {
+            continue;
+        }
+        // Reject: preceded by word-char or `.`
+        if start > 0 && (bytes[start - 1].is_ascii_alphanumeric() || bytes[start - 1] == b'.') {
+            continue;
+        }
+        // Reject: followed by `.<digit>` (longer sequence)
+        if end < bytes.len() && bytes[end] == b'.' {
+            if end + 1 < bytes.len() && bytes[end + 1].is_ascii_digit() {
+                continue;
+            }
+        }
+        // Reject: followed by word-char
+        if end < bytes.len() && bytes[end].is_ascii_alphanumeric() {
+            continue;
+        }
+        // Validate octets
+        let text = m.as_str();
+        let octets: Vec<u16> = text.split('.').map(|s| s.parse().unwrap_or(u16::MAX)).collect();
+        if octets.iter().any(|o| *o > 255) {
+            continue;
+        }
+        out.push(Item {
+            category: Category::Ip,
+            canonical: text.to_string(),
+            key: text.to_string(),
+            repo_or_host: "—".to_string(),
+            line_index,
+        });
+    }
+    out
+}
+
+#[cfg(test)]
+mod ip_tests {
+    use super::*;
+
+    #[test]
+    fn extracts_simple_ipv4() {
+        let items = find_ips("Tailscale peer 100.64.1.5 is online", 0);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].canonical, "100.64.1.5");
+    }
+
+    #[test]
+    fn suppresses_version_prefixed() {
+        let items = find_ips("claude-opus v4.6.0.1 released", 0);
+        assert!(items.is_empty(), "v-prefixed not an IP");
+    }
+
+    #[test]
+    fn suppresses_longer_dotted_sequence() {
+        let items = find_ips("value = 1.2.3.4.5 not an IP", 0);
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn rejects_octet_over_255() {
+        let items = find_ips("nope 300.1.1.1", 0);
+        assert!(items.is_empty());
+    }
+
+    #[test]
+    fn keeps_edge_addresses() {
+        let items = find_ips("range 0.0.0.0 to 255.255.255.255", 0);
+        assert_eq!(items.len(), 2);
+    }
+
+    #[test]
+    fn does_not_filter_private_ranges() {
+        let items = find_ips("local 192.168.1.1", 0);
+        assert_eq!(items.len(), 1);
+    }
+}
