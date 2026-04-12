@@ -62,6 +62,12 @@ def main(ctx: typer.Context) -> None:
         os.execvp("bv", bv_args)
     except FileNotFoundError:
         console.print("[red]'bv' command not found on PATH[/red]")
+        console.print(
+            "Install with: [cyan]brew install dicklesworthstone/tap/bv[/cyan]"
+        )
+        console.print(
+            "See: [blue]https://github.com/Dicklesworthstone/beads_viewer[/blue]"
+        )
         raise typer.Exit(127)
 
 
