@@ -286,3 +286,84 @@ mod gh_call_tests {
         assert!(parse_gh_target("https://github.com/a/b").is_none());
     }
 }
+
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::Semaphore;
+use tokio::task::JoinSet;
+
+const MAX_CONCURRENT: usize = 8;
+
+/// Enrich rows in place. Synchronous wrapper around the tokio runtime.
+/// Returns the rows with `enriched` filled where possible.
+pub fn enrich_rows(mut rows: Vec<crate::link_picker::detect::Row>, deadline_ms: u64) -> Vec<crate::link_picker::detect::Row> {
+    if deadline_ms == 0 {
+        return rows;
+    }
+
+    // Load cache synchronously (fast, no async needed).
+    let mut cache = CacheFile::load_or_reset();
+
+    // Apply cache hits immediately.
+    let mut needs_fetch: Vec<usize> = Vec::new();
+    for (idx, row) in rows.iter_mut().enumerate() {
+        if parse_gh_target(&row.canonical).is_none() {
+            continue; // Not an enrichable category
+        }
+        if let Some(hit) = cache.lookup(&row.canonical) {
+            row.enriched = Some(hit);
+        } else {
+            needs_fetch.push(idx);
+        }
+    }
+
+    if needs_fetch.is_empty() {
+        return rows;
+    }
+
+    // Build a single-thread tokio runtime and fan out.
+    let rt = match tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(rt) => rt,
+        Err(_) => return rows, // Runtime build failed; degrade silently
+    };
+
+    // Pre-collect URLs by index so the spawn closures only capture owned strings.
+    let fetch_list: Vec<(usize, String)> = needs_fetch
+        .iter()
+        .map(|&idx| (idx, rows[idx].canonical.clone()))
+        .collect();
+
+    let deadline = Duration::from_millis(deadline_ms);
+    let fetched: Vec<(usize, EnrichedTitle)> = rt.block_on(async move {
+        let sem = Arc::new(Semaphore::new(MAX_CONCURRENT));
+        let mut set: JoinSet<Option<(usize, EnrichedTitle)>> = JoinSet::new();
+        for (idx, url) in fetch_list {
+            let sem = sem.clone();
+            set.spawn(async move {
+                let _permit = sem.acquire_owned().await.ok()?;
+                call_gh(&url).await.ok().flatten().map(|e| (idx, e))
+            });
+        }
+        let drain = async {
+            let mut out = Vec::new();
+            while let Some(res) = set.join_next().await {
+                if let Ok(Some(pair)) = res {
+                    out.push(pair);
+                }
+            }
+            out
+        };
+        tokio::time::timeout(deadline, drain).await.unwrap_or_default()
+    });
+
+    // Apply fetched results + update cache.
+    for (idx, enrichment) in &fetched {
+        cache.insert(rows[*idx].canonical.clone(), enrichment);
+        rows[*idx].enriched = Some(enrichment.clone());
+    }
+    let _ = cache.save(); // swallow errors silently
+    rows
+}
