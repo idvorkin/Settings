@@ -480,6 +480,39 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
                 app.rebuild_filter();
             }
         }
+        // Override keys (on selected leaf only). Gated on empty query so they
+        // don't collide with typing search queries containing these letters.
+        KeyCode::Char('y') if mods.is_empty() && app.query.is_empty() => {
+            if let Some(row) = app.selected_leaf() {
+                app.action = Some(Action::Yank(row));
+            }
+        }
+        KeyCode::Char('o') if mods.is_empty() && app.query.is_empty() => {
+            if let Some(row) = app.selected_leaf() {
+                app.action = Some(Action::Open(row));
+            }
+        }
+        KeyCode::Char('g') if mods.is_empty() && app.query.is_empty() => {
+            if let Some(row) = app.selected_leaf() {
+                if matches!(
+                    row.category,
+                    Category::PullRequest
+                        | Category::Issue
+                        | Category::Commit
+                        | Category::File
+                        | Category::Repo
+                ) {
+                    app.action = Some(Action::GhWeb(row));
+                } else {
+                    app.error_msg = Some("g: not a GitHub row".into());
+                }
+            }
+        }
+        KeyCode::Char('s') if mods.is_empty() && app.query.is_empty() => {
+            if let Some(row) = app.selected_leaf() {
+                app.action = Some(Action::Ssh(row));
+            }
+        }
         KeyCode::Char(c) if c.is_ascii_graphic() || c == ' ' => {
             app.query.push(c);
             app.rebuild_filter();
@@ -520,6 +553,15 @@ impl App {
         };
         self.drilled_in = Some(cat);
         self.rebuild_filter();
+    }
+
+    fn selected_leaf(&self) -> Option<Row> {
+        let cur = self.list_state.selected()?;
+        let &idx = self.filtered.get(cur)?;
+        if idx >= SENTINEL_BASE {
+            return None;
+        }
+        Some(self.rows[idx].clone())
     }
 
     fn on_enter(&mut self) {
