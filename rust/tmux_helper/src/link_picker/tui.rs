@@ -9,11 +9,11 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
     prelude::*,
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap},
+    widgets::{Block, Borders, Clear, List, ListItem, ListState, Paragraph, Wrap},
     Terminal,
 };
 use std::io;
@@ -37,6 +37,7 @@ struct App {
     query: String,
     drilled_in: Option<Category>,
     horizontal: bool,
+    show_help: bool,
     action: Option<Action>,
 }
 
@@ -50,6 +51,7 @@ impl App {
             query: String::new(),
             drilled_in: None,
             horizontal: true,
+            show_help: false,
             action: None,
         };
         app.rebuild_filter();
@@ -253,6 +255,119 @@ mod filter_tests {
     }
 }
 
+#[cfg(test)]
+mod help_overlay_tests {
+    use super::*;
+
+    fn app_with_one_row() -> App {
+        let row = Row {
+            category: Category::Server,
+            canonical: "c-5001".into(),
+            key: "c-5001".into(),
+            repo_or_host: "—".into(),
+            context: "ssh c-5001".into(),
+            enriched: None,
+            count: 1,
+            most_recent_line: 0,
+        };
+        App::new(vec![row])
+    }
+
+    #[test]
+    fn question_mark_opens_help_overlay() {
+        let mut app = app_with_one_row();
+        assert!(!app.show_help, "help starts hidden");
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Char('?'));
+        assert!(app.show_help, "? opens help");
+        assert!(app.action.is_none(), "? must not trigger an action");
+    }
+
+    #[test]
+    fn f1_opens_help_overlay() {
+        let mut app = app_with_one_row();
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::F(1));
+        assert!(app.show_help, "F1 opens help");
+        assert!(app.action.is_none());
+    }
+
+    #[test]
+    fn any_key_dismisses_help_without_side_effects() {
+        let mut app = app_with_one_row();
+        app.show_help = true;
+        // Arrow key should dismiss help, NOT move selection, NOT trigger action.
+        let selection_before = app.list_state.selected();
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Down);
+        assert!(!app.show_help, "Down dismisses help");
+        assert_eq!(
+            app.list_state.selected(),
+            selection_before,
+            "selection untouched"
+        );
+        assert!(app.action.is_none(), "dismiss must not trigger action");
+    }
+
+    #[test]
+    fn esc_dismisses_help_without_quitting() {
+        let mut app = app_with_one_row();
+        app.show_help = true;
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Esc);
+        assert!(!app.show_help, "Esc dismisses help");
+        assert!(app.action.is_none(), "Esc on help overlay must not quit");
+    }
+
+    #[test]
+    fn enter_dismisses_help_without_firing_default_action() {
+        let mut app = app_with_one_row();
+        app.show_help = true;
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Enter);
+        assert!(!app.show_help);
+        assert!(
+            app.action.is_none(),
+            "Enter on help overlay must not fire default action"
+        );
+    }
+
+    #[test]
+    fn question_mark_does_not_leak_into_query() {
+        // Regression guard: `?` must be intercepted before the generic
+        // ascii_graphic char handler that types into the query field.
+        let mut app = app_with_one_row();
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Char('?'));
+        assert_eq!(app.query, "", "? must not type into query");
+    }
+
+    #[test]
+    fn help_text_documents_every_actionable_key() {
+        // If someone adds a new handler in handle_key but forgets to update
+        // the help panel, this test fires — keep them in lockstep.
+        let body: String = help_lines()
+            .iter()
+            .flat_map(|l| l.spans.iter().map(|s| s.content.to_string()))
+            .collect::<Vec<_>>()
+            .join(" ");
+        for needle in [
+            "Enter",
+            "Esc",
+            "F2",
+            "C-c",
+            "C-l",
+            "y",
+            "o",
+            "g",
+            "s",
+            "Backspace",
+            "drill",
+            "yank",
+            "ssh",
+        ] {
+            assert!(
+                body.contains(needle),
+                "help panel must document `{needle}` — got:\n{body}"
+            );
+        }
+    }
+}
+
 // ----- Run loop + rendering -----
 
 pub fn run(rows: Vec<Row>) -> Result<Action> {
@@ -313,13 +428,13 @@ fn draw(f: &mut Frame, app: &mut App) {
     // Top bar with breadcrumb or flat hints.
     let top = if let Some(cat) = app.drilled_in {
         format!(
-            "pick> {}_  │ Links › {}  │ ↑↓ Enter:act ←:back F2:sess",
+            "pick> {}_  │ Links › {}  │ ↑↓ Enter:act ←:back ?:help F2:sess",
             app.query,
             cat.display()
         )
     } else {
         format!(
-            "pick> {}_  │ ↑↓ Enter:act →:drill y:yank o:open g:gh F2:sess",
+            "pick> {}_  │ ↑↓ Enter:act →:drill y:yank o:open g:gh ?:help F2:sess",
             app.query
         )
     };
@@ -363,6 +478,92 @@ fn draw(f: &mut Frame, app: &mut App) {
         .block(Block::default().borders(Borders::ALL).title("Preview"))
         .wrap(Wrap { trim: false });
     f.render_widget(preview, content_chunks[1]);
+
+    // Help overlay (modal): render last so it paints on top of the list/preview.
+    if app.show_help {
+        draw_help_overlay(f, area);
+    }
+}
+
+/// Build the help overlay content. Pulled out so the exact key list is easy
+/// to eyeball and keep in sync with `handle_key`.
+fn help_lines() -> Vec<Line<'static>> {
+    let hdr = Style::default()
+        .fg(Color::LightCyan)
+        .add_modifier(Modifier::BOLD);
+    let key = Style::default()
+        .fg(Color::LightYellow)
+        .add_modifier(Modifier::BOLD);
+    let dim = Style::default().fg(Color::Gray);
+
+    let kv = |k: &'static str, v: &'static str| -> Line<'static> {
+        Line::from(vec![
+            Span::styled(format!("  {k:<14}"), key),
+            Span::styled(v.to_string(), dim),
+        ])
+    };
+
+    vec![
+        Line::from(Span::styled("Navigation", hdr)),
+        kv("↑ ↓ / C-p C-n", "move selection (headers selectable)"),
+        kv("→ / Enter", "drill into category header"),
+        kv("← / Esc", "drill out (first press), then quit"),
+        kv("1 – 9", "jump into Nth non-empty category (empty query)"),
+        Line::from(""),
+        Line::from(Span::styled("Actions (empty query)", hdr)),
+        kv("Enter", "default: yank URL / ssh server or IP"),
+        kv("y", "yank canonical via OSC 52"),
+        kv("o", "open / xdg-open in browser"),
+        kv("g", "gh view --web (GitHub rows only)"),
+        kv("s", "force ssh in new tmux window"),
+        Line::from(""),
+        Line::from(Span::styled("Filter", hdr)),
+        kv("a – z 0 – 9", "type into filter query"),
+        kv("Backspace", "delete last character"),
+        kv("C-c", "clear query (or quit if empty)"),
+        Line::from(""),
+        Line::from(Span::styled("Display & picker swap", hdr)),
+        kv("C-l", "toggle horizontal/vertical split"),
+        kv("F2", "swap to rmux_helper pick-tui (session picker)"),
+        kv("? / F1", "toggle this help overlay"),
+        Line::from(""),
+        Line::from(Span::styled("  Press any key to dismiss.", dim)),
+    ]
+}
+
+fn draw_help_overlay(f: &mut Frame, area: Rect) {
+    let popup = centered_rect(70, 80, area);
+    // Clear under the popup so the list/preview don't bleed through.
+    f.render_widget(Clear, popup);
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(" Help — pick-links ")
+        .style(Style::default().fg(Color::LightYellow));
+    let para = Paragraph::new(help_lines())
+        .block(block)
+        .wrap(Wrap { trim: false });
+    f.render_widget(para, popup);
+}
+
+/// Centered rect: `percent_x`/`percent_y` of the parent `r`, clamped so the
+/// popup is never wider or taller than the parent. Standard ratatui idiom.
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let vertical = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(r);
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(vertical[1])[1]
 }
 
 fn render_item(app: &App, idx: usize) -> ListItem<'static> {
@@ -372,8 +573,11 @@ fn render_item(app: &App, idx: usize) -> ListItem<'static> {
             .iter()
             .filter(|i| **i < SENTINEL_BASE && app.rows[**i].category == cat)
             .count();
-        return ListItem::new(format!("⊟ {} ({count})", cat.display()))
-            .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+        return ListItem::new(format!("⊟ {} ({count})", cat.display())).style(
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        );
     }
     let r = &app.rows[idx];
     let tree = "├─ ";
@@ -454,6 +658,21 @@ fn preview_for_selection(app: &App) -> Text<'static> {
 }
 
 fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
+    // Help overlay is modal: any key dismisses it, consuming that key so it
+    // can't double as navigation, action, or query input. Must be the first
+    // branch in handle_key for this to be airtight.
+    if app.show_help {
+        app.show_help = false;
+        return;
+    }
+
+    // `?` and F1 open the help overlay. `?` is matched here (before the
+    // generic ascii_graphic handler) so it doesn't type into the query.
+    if matches!(code, KeyCode::Char('?') | KeyCode::F(1)) && !mods.contains(KeyModifiers::CONTROL) {
+        app.show_help = true;
+        return;
+    }
+
     // Esc: drill-out or quit
     if matches!(code, KeyCode::Esc) {
         if app.drilled_in.is_some() {
@@ -489,7 +708,6 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
         }
         KeyCode::Enter => app.on_enter(),
         KeyCode::F(2) => app.action = Some(Action::SwapToPickTui),
-        KeyCode::F(1) => { /* help overlay — TODO v1.1 */ }
         KeyCode::Backspace => {
             app.query.pop();
             app.rebuild_filter();

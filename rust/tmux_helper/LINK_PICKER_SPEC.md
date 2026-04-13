@@ -44,7 +44,10 @@ Categories: fixed order above. Within a category: most-recent line first (closes
 - `Esc`: drill out (first press) or quit (if already flat)
 - `Tab` / `S-Tab`: reserved, no-op
 - `F2`: swap to `pick-tui` (bidirectional)
-- `F1`: help (reserved, TODO v1.1)
+- `?` or `F1`: toggle the modal help overlay. Any key dismisses it (the
+  dismissing key is consumed, so it cannot double as a navigation or action
+  key). `?` is intercepted before the generic filter-query char handler, so
+  it does not type into the search field.
 - `C-l`: toggle layout (horizontal/vertical)
 - `C-c`: clear query or quit
 
