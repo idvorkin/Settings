@@ -117,10 +117,11 @@ fn sentinel_to_category(s: usize) -> Option<Category> {
         3 => Some(Category::Commit),
         4 => Some(Category::File),
         5 => Some(Category::Repo),
-        6 => Some(Category::Blog),
-        7 => Some(Category::OtherLink),
-        8 => Some(Category::Server),
-        9 => Some(Category::Ip),
+        6 => Some(Category::Gist),
+        7 => Some(Category::Blog),
+        8 => Some(Category::OtherLink),
+        9 => Some(Category::Server),
+        10 => Some(Category::Ip),
         _ => None,
     }
 }
@@ -839,6 +840,7 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
                         | Category::Commit
                         | Category::File
                         | Category::Repo
+                        | Category::Gist
                 ) {
                     app.action = Some(Action::GhWeb(row));
                 }
