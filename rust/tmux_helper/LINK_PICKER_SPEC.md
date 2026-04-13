@@ -90,3 +90,11 @@ Write sequence, in order: TUI exits → `disable_raw_mode` → `LeaveAlternateSc
 ## Empty state
 
 When scrollback contains no detectable items, the TUI is not entered. `pick_links` prints `pick-links: no links, servers, or IPs in scrollback` to stderr and exits 0.
+
+## Scrollback capture
+
+`pick-links` scans the current tmux pane's scrollback only — no cross-pane, no cross-session, no external sources. The pane is resolved from `$TMUX_PANE`, falling back to `tmux display-message -p '#{client_active_pane}'`.
+
+History depth is **capped at 300 lines above the visible pane top** (`tmux capture-pane -J -S -300 -E -`). The visible pane content is always included in full; the cap only limits how deep into scrollback we go. This keeps results relevant to recent work — a 50 000-line `history-limit` buffer produces stale context from days-old sessions that drowns real results in noise. 300 lines is roughly several screens of recent scrollback.
+
+The `-J` flag joins soft-wrapped lines so URLs that wrapped across terminal rows read back whole. ANSI escape bytes are NOT captured (`-e` is deliberately omitted) because raw `\x1b` sequences leak through ratatui's cell rendering into the popup pty and corrupt the display.

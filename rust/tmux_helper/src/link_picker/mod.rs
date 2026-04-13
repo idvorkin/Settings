@@ -144,14 +144,41 @@ fn resolve_pane_id() -> Result<String> {
     Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
 
-/// Capture the full scrollback of `pane_id` via `tmux capture-pane`.
+/// History depth (lines above the visible pane top) that pick-links scans.
+/// Capped deliberately — a full 50k-line `history-limit` buffer produces
+/// stale context from days-old work and drowns real results in noise.
+/// 300 lines is roughly several screens of recent scrollback, enough to
+/// catch "that PR URL I pasted ten minutes ago" without going deeper.
+pub(crate) const SCROLLBACK_HISTORY_LINES: u32 = 300;
+
+/// Build the argv for `tmux capture-pane`. Pulled out of `capture_pane` so a
+/// unit test can assert the history cap stays in place across refactors.
+///
+/// `-S -N` starts N lines above the top of the visible pane; `-E -` ends at
+/// the bottom of the visible pane. `-J` joins soft-wrapped lines so URLs
+/// that wrapped across terminal rows read back whole.
+pub(crate) fn capture_pane_args(pane_id: &str) -> Vec<String> {
+    // NOTE: `-e` (include ANSI escapes) was intentionally dropped earlier —
+    // raw \x1b bytes leaked through ratatui's cell rendering into the popup
+    // pty and corrupted the display. Plain text is sufficient.
+    vec![
+        "capture-pane".to_string(),
+        "-p".to_string(),
+        "-J".to_string(),
+        "-S".to_string(),
+        format!("-{SCROLLBACK_HISTORY_LINES}"),
+        "-E".to_string(),
+        "-".to_string(),
+        "-t".to_string(),
+        pane_id.to_string(),
+    ]
+}
+
+/// Capture the recent scrollback of `pane_id` via `tmux capture-pane`.
 fn capture_pane(pane_id: &str) -> Result<String> {
-    // NOTE: `-e` (include ANSI escapes) was removed because raw \x1b bytes
-    // in the context column leak through ratatui's cell rendering into the
-    // popup's pty and are interpreted as terminal control sequences,
-    // corrupting the display. Plain text is sufficient for v1.
+    let args = capture_pane_args(pane_id);
     let out = Command::new("tmux")
-        .args(["capture-pane", "-p", "-J", "-S", "-", "-E", "-", "-t", pane_id])
+        .args(&args)
         .output()
         .map_err(|e| anyhow!("tmux capture-pane failed: {e}"))?;
     if !out.status.success() {
@@ -174,5 +201,38 @@ mod orchestration_tests {
         let json = serde_json::to_string(&rows).unwrap();
         assert!(json.contains("\"category\":\"pull_request\""));
         assert!(json.contains("\"category\":\"server\""));
+    }
+
+    #[test]
+    fn capture_pane_caps_history_at_300_lines() {
+        // Regression guard: the deliberate 300-line history cap must not
+        // silently revert to `-S -` (full history) during refactors.
+        // Going deeper surfaced ancient stale context in earlier --json
+        // dumps and drowned recent work in noise.
+        let args = capture_pane_args("%42");
+        let s_idx = args
+            .iter()
+            .position(|a| a == "-S")
+            .expect("capture-pane must pass -S");
+        assert_eq!(
+            args[s_idx + 1],
+            "-300",
+            "history depth must stay capped at 300 lines above visible top"
+        );
+        let e_idx = args
+            .iter()
+            .position(|a| a == "-E")
+            .expect("capture-pane must pass -E");
+        assert_eq!(
+            args[e_idx + 1],
+            "-",
+            "end must be bottom of visible pane"
+        );
+        assert!(args.contains(&"-J".to_string()), "must join wrapped lines");
+        assert!(args.contains(&"%42".to_string()), "must target the pane");
+        assert!(
+            !args.iter().any(|a| a == "-e"),
+            "must NOT include ANSI escapes (they corrupt popup rendering)"
+        );
     }
 }
