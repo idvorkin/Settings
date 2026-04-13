@@ -124,6 +124,11 @@ Superseded by skills — use the skill, not a convention doc:
 - **Before implementing** → `superpowers:brainstorming` skill
 - **Bug investigation** → `superpowers:systematic-debugging` skill
 
+## Collaboration Preferences
+
+- **Multi-task plans use subagent-driven execution with max parallelization.** Batch cohesive tasks that share files into a single implementer dispatch (e.g. all enrichment files in one go); fire spec + quality reviewers in parallel per task; fall back to inline only for trivial touch-ups.
+- **When a popup/TUI bug is reported, reproduce it yourself first** via the backgrounded `tmux display-popup -E "cmd; echo \$? >/tmp/done" &` recipe (see `### Tmux popup/bind-key gotchas`). Don't ask the user to re-test until you've narrowed the failure locally.
+
 ## Guardrails
 
 See [chop-conventions/dev-inner-loop/guardrails.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/guardrails.md).
