@@ -58,10 +58,11 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
 
 /// Build the argv for `tmux set-buffer -w <payload>`. Pulled out of
 /// `yank_to_clipboard` so a unit test can pin the flags across refactors —
-/// specifically, that `-w` stays (without it tmux would set only its own
-/// internal buffer and skip OSC 52 emission to clients, silently breaking
-/// the Mac-clipboard hop), and that `payload` is passed as a single
-/// argument so whitespace-containing URLs don't get split.
+/// specifically, that `-w` stays (without it tmux sets only its own
+/// internal buffer and skips OSC 52 emission to attached clients, silently
+/// breaking the hop to the outer terminal's clipboard), and that `payload`
+/// is passed as a single argument so whitespace-containing URLs don't get
+/// split.
 pub(crate) fn yank_to_clipboard_args(payload: &str) -> Vec<String> {
     vec![
         "set-buffer".to_string(),
@@ -72,16 +73,18 @@ pub(crate) fn yank_to_clipboard_args(payload: &str) -> Vec<String> {
 
 /// Push `payload` onto the clipboard via `tmux set-buffer -w`.
 ///
-/// The `-w` flag tells tmux to also emit OSC 52 to each attached client's
-/// pty, which is the path verified end-to-end (devvm → tmux server →
-/// terminal emulator → OS clipboard). The earlier direct write to
-/// `/dev/tty` also worked but went through a different code path and was
-/// harder to diagnose when intermediate links broke; routing through tmux
-/// unifies yank with the rest of `rmux_helper`'s "everything goes through
-/// tmux" architecture (capture-pane, display-message, new-window).
+/// The `-w` flag tells tmux to emit OSC 52 to each attached client's pty;
+/// without it, only tmux's internal paste buffer would be set and the
+/// escape never reaches the outer terminal. Success here means tmux
+/// accepted the command and will queue the escape — it does NOT guarantee
+/// the outer terminal actually forwarded OSC 52 to the OS clipboard (some
+/// terminal emulators gate OSC 52 writing behind config options).
 ///
-/// Requires tmux to be running — but so does the whole picker (scrollback
-/// capture fails earlier without it), so this introduces no new dependency.
+/// Routing clipboard writes through tmux also matches the rest of
+/// `rmux_helper`'s architecture — capture-pane, display-message, and
+/// new-window all shell out to tmux — so no new dependency is introduced
+/// (`pick-links` already fails earlier in `capture_pane` if tmux isn't
+/// running).
 fn yank_to_clipboard(payload: &str) -> Result<()> {
     let args = yank_to_clipboard_args(payload);
     let status = Command::new("tmux")
@@ -175,10 +178,11 @@ fn resolve_pane_id() -> Result<String> {
 }
 
 /// History depth (lines above the visible pane top) that pick-links scans.
-/// Capped deliberately — a full 50k-line `history-limit` buffer produces
-/// stale context from days-old work and drowns real results in noise.
-/// 300 lines is roughly several screens of recent scrollback, enough to
-/// catch "that PR URL I pasted ten minutes ago" without going deeper.
+/// Capped deliberately — on typical dev machines the tmux `history-limit`
+/// is several thousand lines, which produces stale context from days-old
+/// work and drowns real results in noise. 300 is roughly several screens
+/// of recent scrollback, enough to catch "that PR URL I pasted ten minutes
+/// ago" without going deeper.
 pub(crate) const SCROLLBACK_HISTORY_LINES: u32 = 300;
 
 /// Build the argv for `tmux capture-pane`. Pulled out of `capture_pane` so a
@@ -210,11 +214,15 @@ fn capture_pane(pane_id: &str) -> Result<String> {
     let out = Command::new("tmux")
         .args(&args)
         .output()
-        .map_err(|e| anyhow!("tmux capture-pane failed: {e}"))?;
+        .map_err(|e| anyhow!("tmux capture-pane failed to spawn: {e}"))?;
     if !out.status.success() {
         let err = String::from_utf8_lossy(&out.stderr).trim().to_string();
+        // Include the full argv so e.g. an ancient tmux rejecting `-S -300`
+        // surfaces the flag in the error rather than a cryptic
+        // "ambiguous option".
         return Err(anyhow!(
-            "tmux capture-pane -t {pane_id} returned nonzero: {err}"
+            "tmux {} returned nonzero: {err}",
+            args.join(" ")
         ));
     }
     Ok(String::from_utf8_lossy(&out.stdout).to_string())
