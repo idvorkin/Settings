@@ -83,6 +83,7 @@
 - `C-r`: Rename window (of currently selected pane)
 - `C-l`: Toggle layout (horizontal/vertical)
 - `?` or `C-/`: Show help overlay
+- `F2`: Swap to link picker (`rmux_helper pick-links`) — exec-based handoff, terminal is restored first. Bidirectional: `F2` in `pick-links` returns here.
 - Type characters: Filter entries by text (printable ASCII only)
 
 ## Filtering

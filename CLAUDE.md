@@ -124,6 +124,11 @@ Superseded by skills — use the skill, not a convention doc:
 - **Before implementing** → `superpowers:brainstorming` skill
 - **Bug investigation** → `superpowers:systematic-debugging` skill
 
+## Collaboration Preferences
+
+- **Multi-task plans use subagent-driven execution with max parallelization.** Batch cohesive tasks that share files into a single implementer dispatch (e.g. all enrichment files in one go); fire spec + quality reviewers in parallel per task; fall back to inline only for trivial touch-ups.
+- **When a popup/TUI bug is reported, reproduce it yourself first** via the backgrounded `tmux display-popup -E "cmd; echo \$? >/tmp/done" &` recipe (see `### Tmux popup/bind-key gotchas`). Don't ask the user to re-test until you've narrowed the failure locally.
+
 ## Guardrails
 
 See [chop-conventions/dev-inner-loop/guardrails.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/guardrails.md).
@@ -188,7 +193,7 @@ If the check prints `devvm`, the following non-obvious constraints apply. If it 
 - **`/sys/fs/cgroup` is mounted `ro,nsdelegate`.** `remount,rw` is denied even for root. No in-VM cgroup writes; VM-level caps must be set Mac-side via `orb config set cpu N`.
 - **User services bootstrap from `~/.zshrc`** via the idempotent `pgrep + setsid` pattern — see the tailscaled, etserver, and cpu-watchdog blocks. New background services go there too.
 - **`ps` is aliased to `procs` and `top` to `btm`.** Use `/usr/bin/ps` and `/usr/bin/top` for standard flags like `--sort=-%cpu` or `-bn2 -d1`.
-- **`pgrep -f` patterns must anchor** to avoid matching your own shell cmdline: `pgrep -f 'bin/myscript.sh$'`, not `pgrep -f myscript`.
+- **`pgrep` without `-f` silently truncates to 15-char name matches** — always use `-f` and anchor the pattern: `pgrep -f 'bin/myscript.sh$'`, not `pgrep -f myscript`.
 
 ## Terminal Command Conventions
 
@@ -315,6 +320,11 @@ To add new tmux commands via `py/tmux_helper.py`:
 cd rust/tmux_helper
 cargo install --path . --force
 ```
+
+### Tmux popup/bind-key gotchas
+
+- **`#{pane_id}` in a `display-popup -E` command argument is NOT reliably format-expanded** from a bind-key context. Don't embed it — resolve at runtime via `tmux display-message -p -t '#{client_active_pane}' '#{pane_id}'` inside the invoked command.
+- **Test a popup-bound TUI non-interactively:** `tmux display-popup -E "cmd; echo \$? >/tmp/done" &; sleep 2; /bin/cat /tmp/done`. No `done` file = TUI alive and blocking on input; anything else = early exit with the captured code.
 
 ## File Organization
 

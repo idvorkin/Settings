@@ -1,4 +1,5 @@
 mod picker;
+mod link_picker;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
@@ -70,6 +71,15 @@ enum Commands {
     },
     /// Debug: show raw key events (press q to quit)
     DebugKeys,
+    /// TUI picker for GitHub links, servers, and IPs in the current tmux pane's scrollback
+    PickLinks {
+        /// Emit JSON of detected items to stdout and exit (no TUI)
+        #[arg(long)]
+        json: bool,
+        /// Enrichment deadline in milliseconds (0 disables gh enrichment)
+        #[arg(long, default_value_t = 3000)]
+        enrich_deadline_ms: u64,
+    },
 }
 
 // Layout state constants
@@ -1820,6 +1830,9 @@ fn main() -> Result<()> {
         Some(Commands::SideEdit { file }) => side_edit(file.as_deref()),
         Some(Commands::SideRun { command, force }) => side_run(command.as_deref(), force),
         Some(Commands::DebugKeys) => debug_keys(),
+        Some(Commands::PickLinks { json, enrich_deadline_ms }) => {
+            link_picker::pick_links(json, enrich_deadline_ms)
+        }
         None => {
             // Show help when no command given
             use clap::CommandFactory;
