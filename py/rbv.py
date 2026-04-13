@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["typer", "rich"]
 # ///
-"""Walk up to find .beads/, export fresh JSONL, launch bv in tree mode."""
+"""Walk up to find .beads/, export fresh JSONL, launch beads_viewer_rust in tree mode."""
 
 import os
 import subprocess
@@ -33,7 +33,7 @@ def find_beads_root() -> str | None:
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
 def main(ctx: typer.Context) -> None:
-    """Export beads JSONL and launch bv from the nearest .beads/ workspace."""
+    """Export beads JSONL and launch beads_viewer_rust from the nearest .beads/ workspace."""
     root = find_beads_root()
     if not root:
         console.print("[red]No .beads/ found in any parent directory[/red]")
@@ -48,25 +48,25 @@ def main(ctx: typer.Context) -> None:
         pass
 
     try:
-        r = subprocess.run(["bd", "export", "--no-memories", "-o", jsonl], cwd=root)
+        r = subprocess.run(["br", "export", "--no-memories", "-o", jsonl], cwd=root)
     except FileNotFoundError:
-        console.print("[red]'bd' command not found on PATH[/red]")
+        console.print("[red]'br' command not found on PATH[/red]")
         raise typer.Exit(127)
     if r.returncode != 0:
         raise typer.Exit(r.returncode)
 
-    # Launch bv with any extra args, from the beads root
-    bv_args = ["bv"] + ctx.args
+    # Launch beads_viewer_rust with any extra args, from the beads root
+    bv_args = ["beads_viewer_rust"] + ctx.args
     os.chdir(root)
     try:
-        os.execvp("bv", bv_args)
+        os.execvp("beads_viewer_rust", bv_args)
     except FileNotFoundError:
-        console.print("[red]'bv' command not found on PATH[/red]")
+        console.print("[red]'beads_viewer_rust' command not found on PATH[/red]")
         console.print(
-            "Install with: [cyan]brew install dicklesworthstone/tap/bv[/cyan]"
+            "Install with: [cyan]cargo install beads_viewer_rust[/cyan]"
         )
         console.print(
-            "See: [blue]https://github.com/Dicklesworthstone/beads_viewer[/blue]"
+            "See: [blue]https://github.com/Dicklesworthstone/beads_viewer_rust[/blue]"
         )
         raise typer.Exit(127)
 
