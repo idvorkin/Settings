@@ -738,12 +738,21 @@ mod ip_tests {
 /// specific PR/issue/commit. Drop them entirely instead of letting them
 /// fall through to `OtherLink` noise.
 pub(crate) fn is_github_noise_url(url: &str) -> bool {
-    // Normalize trailing slash so `.../pull/new` and `.../pull/new/` both match.
-    let base = url.trim_end_matches('/');
-    // Strip query string for the suffix check (templated new-issue pages
-    // like `.../issues/new?template=bug.md` must also be dropped).
-    let without_query = base.split('?').next().unwrap_or(base);
-    without_query.ends_with("/pull/new") || without_query.ends_with("/issues/new")
+    // Strip fragment and query string before the suffix check — both
+    // `?template=bug.md` and `#section-1` (and a combined
+    // `?template=x#section`) would otherwise push the `/pull/new` suffix
+    // out of `ends_with` range and let the URL leak through. Fragment is
+    // stripped first because it follows the query.
+    let path = url
+        .split('#')
+        .next()
+        .unwrap_or(url)
+        .split('?')
+        .next()
+        .unwrap_or(url)
+        // Normalize `.../pull/new/` and `.../pull/new` to the same form.
+        .trim_end_matches('/');
+    path.ends_with("/pull/new") || path.ends_with("/issues/new")
 }
 
 /// Scan one scrollback line and return all detected items in that line.
@@ -832,6 +841,100 @@ mod scan_line_tests {
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].category, Category::PullRequest);
         assert_eq!(items[0].key, "#42");
+    }
+
+    #[test]
+    fn drops_pull_new_with_fragment() {
+        // Regression: the noise filter originally only stripped `?query` not
+        // `#fragment`, so `https://github.com/a/b/pull/new#discussion` slipped
+        // past `ends_with("/pull/new")` and got recategorized as OtherLink.
+        // Fragment-bearing new-PR/issue links must also be dropped entirely.
+        assert!(scan_line("see https://github.com/a/b/pull/new#section-1", 0).is_empty());
+        assert!(scan_line("see https://github.com/a/b/issues/new#tips", 0).is_empty());
+    }
+
+    #[test]
+    fn drops_pull_new_with_query_and_fragment_combined() {
+        // The nasty case: `?template=…#section` — both fragment-then-query
+        // and query-then-fragment forms must drop cleanly.
+        assert!(scan_line(
+            "https://github.com/a/b/issues/new?template=bug.md#form-top",
+            0
+        )
+        .is_empty());
+    }
+}
+
+#[cfg(test)]
+mod noise_url_tests {
+    use super::*;
+
+    // Direct unit tests for `is_github_noise_url`. The `scan_line` tests
+    // already cover the end-to-end "dropped from picker" contract; these
+    // pin the helper's decision boundary without going through the regex
+    // and classify chain.
+
+    #[test]
+    fn flags_bare_pull_new_and_issues_new() {
+        assert!(is_github_noise_url("https://github.com/a/b/pull/new"));
+        assert!(is_github_noise_url("https://github.com/a/b/issues/new"));
+    }
+
+    #[test]
+    fn flags_with_trailing_slash() {
+        assert!(is_github_noise_url("https://github.com/a/b/pull/new/"));
+        assert!(is_github_noise_url("https://github.com/a/b/issues/new/"));
+    }
+
+    #[test]
+    fn flags_with_query_string() {
+        assert!(is_github_noise_url(
+            "https://github.com/a/b/issues/new?template=bug.md"
+        ));
+        assert!(is_github_noise_url(
+            "https://github.com/a/b/pull/new?quick_pull=1"
+        ));
+    }
+
+    #[test]
+    fn flags_with_fragment() {
+        // The bug this function was fixed for: fragments like
+        // `#discussion_r123` must NOT bypass the noise check.
+        assert!(is_github_noise_url(
+            "https://github.com/a/b/pull/new#top"
+        ));
+        assert!(is_github_noise_url(
+            "https://github.com/a/b/issues/new#form"
+        ));
+    }
+
+    #[test]
+    fn flags_with_query_and_fragment() {
+        assert!(is_github_noise_url(
+            "https://github.com/a/b/issues/new?template=bug.md#form"
+        ));
+    }
+
+    #[test]
+    fn does_not_flag_numbered_pr_or_issue() {
+        // Real PRs/issues must not be mistaken for noise, even if the id
+        // string happens to contain "new" as a substring (e.g. a repo
+        // called `newsletter` has a PR URL that contains "new").
+        assert!(!is_github_noise_url("https://github.com/a/b/pull/42"));
+        assert!(!is_github_noise_url("https://github.com/a/b/issues/123"));
+        assert!(!is_github_noise_url(
+            "https://github.com/a/newsletter/pull/1"
+        ));
+    }
+
+    #[test]
+    fn does_not_flag_unrelated_paths_ending_in_new() {
+        // Substrings that happen to end in "new" but aren't `/pull/new`
+        // or `/issues/new` must not be flagged — conservative by design.
+        assert!(!is_github_noise_url("https://github.com/a/b/tree/new"));
+        assert!(!is_github_noise_url(
+            "https://github.com/a/b/blob/main/src/new"
+        ));
     }
 }
 
