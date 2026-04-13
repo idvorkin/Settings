@@ -265,19 +265,24 @@ pub fn run(rows: Vec<Row>) -> Result<Action> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // Drain any stale events queued before the popup opened (e.g. the
-    // `C-a L` keypress leaking into the new pty). Without this, the first
-    // event_loop iteration can consume a phantom event and act on it
-    // unexpectedly. Mirrors picker.rs:595-598.
-    while event::poll(std::time::Duration::from_millis(1))? {
-        let _ = event::read();
+    let mut app = App::new(rows);
+
+    // First draw so the terminal is in its intended state, then drain any
+    // queued events. Tmux popups inject terminal-state responses (cursor
+    // position, device attributes, focus events) shortly after the pty comes
+    // up, and crossterm's parser can treat some of these as key events. Poll
+    // with a longer window than picker.rs's 1ms to catch late arrivals.
+    terminal.draw(|f| draw(f, &mut app))?;
+    for _ in 0..16 {
+        while event::poll(std::time::Duration::from_millis(5))? {
+            let _ = event::read();
+        }
     }
 
-    let mut app = App::new(rows);
     let result = event_loop(&mut app, &mut terminal);
 
-    disable_raw_mode()?;
-    execute!(io::stdout(), LeaveAlternateScreen)?;
+    let _ = disable_raw_mode();
+    let _ = execute!(io::stdout(), LeaveAlternateScreen);
     drop(terminal);
 
     result
