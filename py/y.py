@@ -2108,6 +2108,34 @@ def ai_rhyme():
     _call_ai_clip("seuss", "🎭 Transforming clipboard text to Dr. Seuss style...")
 
 
+@app.command()
+def ou():
+    """Open URL from clipboard in default browser; alert if clipboard has no URL"""
+    import webbrowser
+    from urllib.parse import urlparse
+
+    clip = (pyperclip.paste() or "").strip()
+    parsed = urlparse(clip)
+    is_url = parsed.scheme in ("http", "https") and bool(parsed.netloc)
+
+    if is_url:
+        webbrowser.open(clip)
+        print(f"[green]Opened: {clip}[/green]")
+        return
+
+    # No URL — show alert via ux center popup
+    try:
+        ux_path = PY_TOOLS_PATH / "ux"
+        subprocess.run(
+            [str(ux_path), "center", "No URL in clipboard", "--seconds", "2"],
+            capture_output=True,
+            check=False,
+        )
+    except Exception as e:
+        print(f"[dim]Note: Could not show popup: {e}[/dim]")
+    print("[yellow]No URL in clipboard[/yellow]")
+
+
 def _find_highest_numbered_file(directory: Path, prefix: str) -> int:
     """Find the highest number in files matching prefix<N>.png pattern.
 
