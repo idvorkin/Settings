@@ -280,6 +280,13 @@ pub(crate) fn classify_github(url: &str, line_index: usize) -> Option<Item> {
         }),
         Some("pull") => {
             let num = tail?.split('/').next()?;
+            // Require the id to be a positive integer. Rejects `.../pull/new`
+            // (blank template page), `.../pull/compare`, and any other
+            // non-numeric tail that would otherwise produce a garbage
+            // `#<word>` row.
+            if num.is_empty() || !num.chars().all(|c| c.is_ascii_digit()) {
+                return None;
+            }
             // Strip non-#LN fragments from PR URLs (canonical form drops them).
             Some(Item {
                 category: Category::PullRequest,
@@ -291,6 +298,10 @@ pub(crate) fn classify_github(url: &str, line_index: usize) -> Option<Item> {
         }
         Some("issues") => {
             let num = tail?.split('/').next()?;
+            // Same numeric requirement as PRs — rejects `.../issues/new`.
+            if num.is_empty() || !num.chars().all(|c| c.is_ascii_digit()) {
+                return None;
+            }
             Some(Item {
                 category: Category::Issue,
                 canonical: format!("{canonical_base}/issues/{num}"),
@@ -433,6 +444,29 @@ mod github_tests {
         assert!(classify_github("https://github.com/a/b/blob/main", 0).is_none());
         assert!(classify_github("https://github.com/a/b/blob/m", 0).is_none());
         assert!(classify_github("https://github.com/a/b/tree/main", 0).is_none());
+    }
+
+    #[test]
+    fn rejects_pull_new_template_page() {
+        // `.../pull/new` is GitHub's "create new PR" blank template page —
+        // not a reference to a specific PR. The literal tail `new` is not
+        // a numeric PR id, so classify_github must reject it rather than
+        // produce a garbage `#new` row.
+        assert!(classify_github("https://github.com/a/b/pull/new", 0).is_none());
+    }
+
+    #[test]
+    fn rejects_issues_new_template_page() {
+        // Same rationale for `.../issues/new` — blank issue template.
+        assert!(classify_github("https://github.com/a/b/issues/new", 0).is_none());
+    }
+
+    #[test]
+    fn still_accepts_numeric_pr_id() {
+        // Regression guard: the numeric requirement must NOT reject
+        // legitimate multi-digit PR numbers.
+        let item = classify_github("https://github.com/a/b/pull/12345", 0).unwrap();
+        assert_eq!(item.key, "#12345");
     }
 }
 
@@ -699,6 +733,19 @@ mod ip_tests {
     }
 }
 
+/// Some GitHub URLs have no informational value to a picker even though
+/// they parse as valid URLs — blank template pages, not references to a
+/// specific PR/issue/commit. Drop them entirely instead of letting them
+/// fall through to `OtherLink` noise.
+pub(crate) fn is_github_noise_url(url: &str) -> bool {
+    // Normalize trailing slash so `.../pull/new` and `.../pull/new/` both match.
+    let base = url.trim_end_matches('/');
+    // Strip query string for the suffix check (templated new-issue pages
+    // like `.../issues/new?template=bug.md` must also be dropped).
+    let without_query = base.split('?').next().unwrap_or(base);
+    without_query.ends_with("/pull/new") || without_query.ends_with("/issues/new")
+}
+
 /// Scan one scrollback line and return all detected items in that line.
 /// A single line can contribute to multiple categories.
 pub(crate) fn scan_line(line: &str, line_index: usize) -> Vec<Item> {
@@ -707,6 +754,12 @@ pub(crate) fn scan_line(line: &str, line_index: usize) -> Vec<Item> {
     // URLs (cascade through GitHub → Blog/Other).
     for m in url_regex().find_iter(line) {
         let raw = strip_trailing_punct(m.as_str());
+        // Pre-filter noise URLs before the classify chain, otherwise GitHub
+        // URLs that classify_github rejects fall through to classify_other_url
+        // and pollute the OtherLink category.
+        if is_github_noise_url(raw) {
+            continue;
+        }
         if let Some(item) = classify_github(raw, line_index) {
             out.push(item);
         } else if let Some(item) = classify_other_url(raw, line_index) {
@@ -749,6 +802,36 @@ mod scan_line_tests {
         let items = scan_line("https://github.com/a/b/pull/1", 0);
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].category, Category::PullRequest);
+    }
+
+    #[test]
+    fn drops_pull_new_and_issues_new_entirely() {
+        // "end in new don't tell us anything" — `/pull/new` and `/issues/new`
+        // are blank template pages with zero information value. They must
+        // NOT appear in any category, not even as OtherLink fallthrough.
+        assert!(scan_line("see https://github.com/a/b/pull/new thanks", 0).is_empty());
+        assert!(scan_line("see https://github.com/a/b/issues/new thanks", 0).is_empty());
+    }
+
+    #[test]
+    fn drops_pull_new_with_query_string() {
+        // Templated new-issue / new-PR pages have `?template=...` or similar
+        // query strings. Still noise.
+        let items = scan_line(
+            "https://github.com/a/b/issues/new?template=bug.md&title=crash",
+            0,
+        );
+        assert!(items.is_empty(), "templated new-issue must be dropped");
+    }
+
+    #[test]
+    fn keeps_legit_numeric_pull_request() {
+        // Regression guard for the noise filter: real PRs with numeric ids
+        // must survive.
+        let items = scan_line("real PR https://github.com/a/b/pull/42", 0);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].category, Category::PullRequest);
+        assert_eq!(items[0].key, "#42");
     }
 }
 
