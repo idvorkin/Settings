@@ -5,6 +5,11 @@ use std::fmt;
 
 /// Categories in fixed display order. Numeric value doubles as the
 /// display position (1-indexed in the spec) and the 1-9 drill-down key.
+///
+/// NOTE: `Ip = 10` no longer gets a single-digit drill-down key — the tui
+/// only binds 1-9. When all 10 categories are present at once, Ip must be
+/// reached via arrow keys or `ip:` search filter. This is an accepted
+/// tradeoff for adding `Gist = 6` near the GitHub group.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Category {
@@ -13,10 +18,11 @@ pub enum Category {
     Commit = 3,
     File = 4,
     Repo = 5,
-    Blog = 6,
-    OtherLink = 7,
-    Server = 8,
-    Ip = 9,
+    Gist = 6,
+    Blog = 7,
+    OtherLink = 8,
+    Server = 9,
+    Ip = 10,
 }
 
 impl Category {
@@ -28,6 +34,7 @@ impl Category {
             Category::Commit => "commit",
             Category::File => "file",
             Category::Repo => "repo",
+            Category::Gist => "gist",
             Category::Blog => "blog",
             Category::OtherLink => "link",
             Category::Server => "server",
@@ -42,6 +49,7 @@ impl Category {
             Category::Commit => "Commits",
             Category::File => "Files",
             Category::Repo => "Repos",
+            Category::Gist => "Gists",
             Category::Blog => "Blog",
             Category::OtherLink => "Other links",
             Category::Server => "Servers",
@@ -57,6 +65,7 @@ impl Category {
             Category::Commit,
             Category::File,
             Category::Repo,
+            Category::Gist,
             Category::Blog,
             Category::OtherLink,
             Category::Server,
@@ -119,7 +128,7 @@ mod tests {
     #[test]
     fn category_all_is_in_display_order() {
         let nums: Vec<u8> = Category::all().iter().map(|c| *c as u8).collect();
-        assert_eq!(nums, vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        assert_eq!(nums, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     }
 
     #[test]
@@ -169,6 +178,111 @@ pub(crate) fn url_regex() -> &'static Regex {
 /// Strip trailing `.,;:!?)]}>'"` from a matched URL. Preserves trailing `/`.
 pub(crate) fn strip_trailing_punct(s: &str) -> &str {
     s.trim_end_matches(|c: char| ".,;:!?)]}>'\"".contains(c))
+}
+
+/// Re-join URLs that were hard-wrapped across line breaks in scrollback.
+///
+/// `tmux capture-pane -J` already joins soft wraps, but URLs can still arrive
+/// split when the upstream rendering pipeline (markdown, log replay, stdin)
+/// inserts a hard `\n` mid-token. Symptom: a long gist or commit URL gets
+/// classified as the prefix-only form (`gist.github.com/owner/41cc7d`) which
+/// 404s when clicked.
+///
+/// Heuristic — deliberately conservative to avoid joining prose:
+///   1. Line N ends with a URL match that reaches the end of the line
+///   2. URL has a path component (not just `https://host`)
+///   3. URL ends in ≥4 alphanumeric chars (looks like a token tail being cut)
+///   4. Line N+1 starts with a token of ≥8 hex chars (`[0-9a-fA-F]{8,}`)
+///      with no leading whitespace
+///
+/// The hex-tail rule catches gist hashes (32 hex), commit SHAs (≥7 hex), and
+/// other long opaque identifiers without false-joining English prose like
+/// `https://example.com\nabout my project` — `about` is too short and `bout`
+/// (after `a` is consumed) isn't pure hex anyway.
+pub(crate) fn join_wrapped_urls(raw: &str) -> String {
+    let lines: Vec<&str> = raw.lines().collect();
+    if lines.is_empty() {
+        return String::new();
+    }
+    // Check each line; if it qualifies, append the next line's hex tail
+    // and skip past it. The "rest" of the consumed line (if any) is
+    // appended after a space so context isn't lost.
+    let mut out: Vec<String> = Vec::with_capacity(lines.len());
+    let mut i = 0;
+    while i < lines.len() {
+        let mut current = lines[i].to_string();
+        while i + 1 < lines.len() && should_join_with_next(&current, lines[i + 1]) {
+            let next = lines[i + 1];
+            let token_end = next
+                .char_indices()
+                .find(|(_, c)| c.is_whitespace())
+                .map(|(idx, _)| idx)
+                .unwrap_or(next.len());
+            let (token, rest) = next.split_at(token_end);
+            current.push_str(token);
+            // Preserve any trailing context on the consumed line so the row's
+            // `context` field doesn't lose surrounding prose.
+            if !rest.is_empty() {
+                current.push_str(rest);
+            }
+            i += 1;
+        }
+        out.push(current);
+        i += 1;
+    }
+    let mut joined = out.join("\n");
+    // Preserve trailing newline if input had one (parse uses .lines() which
+    // is newline-agnostic, but downstream callers may care).
+    if raw.ends_with('\n') {
+        joined.push('\n');
+    }
+    joined
+}
+
+/// Decide whether `current` looks like a line whose URL was cut off and
+/// should absorb the first token of `next`. See `join_wrapped_urls` doc
+/// for the heuristic.
+fn should_join_with_next(current: &str, next: &str) -> bool {
+    // 1. Current line must end with a URL match
+    let Some(m) = url_regex().find(current) else {
+        return false;
+    };
+    if m.end() != current.len() {
+        return false;
+    }
+    let url = m.as_str();
+
+    // 2. URL must have a path (more than just `https://host`)
+    let Some(scheme_end) = url.find("://") else {
+        return false;
+    };
+    if !url[scheme_end + 3..].contains('/') {
+        return false;
+    }
+
+    // 3. URL must end in ≥4 alphanumeric chars (token-like tail)
+    let tail_len = url
+        .chars()
+        .rev()
+        .take_while(|c| c.is_ascii_alphanumeric())
+        .count();
+    if tail_len < 4 {
+        return false;
+    }
+
+    // 4. Next line's first token must be ≥8 hex chars with no leading space
+    if next.is_empty() {
+        return false;
+    }
+    let first_token: String = next.chars().take_while(|c| !c.is_whitespace()).collect();
+    if first_token.len() < 8 {
+        return false;
+    }
+    if !first_token.chars().all(|c| c.is_ascii_hexdigit()) {
+        return false;
+    }
+
+    true
 }
 
 #[cfg(test)]
@@ -467,6 +581,128 @@ mod github_tests {
         // legitimate multi-digit PR numbers.
         let item = classify_github("https://github.com/a/b/pull/12345", 0).unwrap();
         assert_eq!(item.key, "#12345");
+    }
+}
+
+/// Classify a gist.github.com URL into a Gist Item, or None.
+///
+/// Shape: `https://gist.github.com/<owner>/<hash>` with optional
+/// `#file-<name>` fragment, optional `/revisions`, `/raw`, etc. The hash
+/// is 32 hex chars for a full-length gist id; short forms (6-7 chars) are
+/// still accepted so we don't drop them silently, but they'll 404 at
+/// GitHub — that's a content problem, not a detection problem.
+pub(crate) fn classify_gist(url: &str, line_index: usize) -> Option<Item> {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    let re = RE.get_or_init(|| {
+        Regex::new(
+            r"^https?://gist\.github\.com/([\w.\-]+)/([A-Fa-f0-9]{6,})(?:/[^#?\s]*)?(#\S*)?$"
+        ).unwrap()
+    });
+    let caps = re.captures(url.trim_end_matches('/'))?;
+    let owner = caps.get(1)?.as_str();
+    let hash = caps.get(2)?.as_str();
+
+    // Canonical form: drop subpaths (/raw, /revisions) and fragments so
+    // `#file-foo-js` vs `#file-bar-rs` don't create dup rows for the same gist.
+    let canonical = format!("https://gist.github.com/{owner}/{hash}");
+
+    // Key column: short prefix of the hash (7 chars, like commits) so rows
+    // don't overflow the picker. For short hashes, use what we have.
+    let short = &hash[..7.min(hash.len())];
+
+    Some(Item {
+        category: Category::Gist,
+        canonical,
+        key: short.to_string(),
+        repo_or_host: owner.to_string(),
+        line_index,
+    })
+}
+
+#[cfg(test)]
+mod gist_tests {
+    use super::*;
+
+    #[test]
+    fn classifies_full_gist_url() {
+        let item = classify_gist(
+            "https://gist.github.com/idvorkin-ai-tools/41cc7d9f1df846dec1c413287141578f",
+            0,
+        )
+        .unwrap();
+        assert_eq!(item.category, Category::Gist);
+        assert_eq!(item.key, "41cc7d9");
+        assert_eq!(item.repo_or_host, "idvorkin-ai-tools");
+        assert_eq!(
+            item.canonical,
+            "https://gist.github.com/idvorkin-ai-tools/41cc7d9f1df846dec1c413287141578f"
+        );
+    }
+
+    #[test]
+    fn strips_file_fragment_from_canonical() {
+        // Two rows for the same gist with different #file anchors must dedupe.
+        let a = classify_gist(
+            "https://gist.github.com/owner/abcdef0123456789abcdef0123456789#file-foo-rs",
+            0,
+        )
+        .unwrap();
+        let b = classify_gist(
+            "https://gist.github.com/owner/abcdef0123456789abcdef0123456789#file-bar-md",
+            1,
+        )
+        .unwrap();
+        assert_eq!(a.canonical, b.canonical);
+    }
+
+    #[test]
+    fn strips_raw_subpath_from_canonical() {
+        let item = classify_gist(
+            "https://gist.github.com/owner/abcdef0123456789abcdef0123456789/raw",
+            0,
+        )
+        .unwrap();
+        assert_eq!(
+            item.canonical,
+            "https://gist.github.com/owner/abcdef0123456789abcdef0123456789"
+        );
+    }
+
+    #[test]
+    fn rejects_non_gist_host() {
+        assert!(classify_gist("https://github.com/owner/repo", 0).is_none());
+        assert!(classify_gist("https://idvorkin.github.io/posts/foo", 0).is_none());
+    }
+
+    #[test]
+    fn rejects_non_hex_hash() {
+        assert!(classify_gist("https://gist.github.com/owner/ZZZNOTHEX", 0).is_none());
+    }
+
+    #[test]
+    fn accepts_short_hash_form() {
+        // GitHub 404s on short hashes — detection still accepts them so
+        // the row shows up in the picker (where Igor can see what went
+        // wrong) rather than silently dropping it.
+        let item = classify_gist("https://gist.github.com/owner/41cc7d", 0).unwrap();
+        assert_eq!(item.key, "41cc7d");
+    }
+
+    #[test]
+    fn parse_routes_gist_host_to_gist_category() {
+        // End-to-end: a gist URL in raw scrollback produces a Gist row,
+        // not OtherLink.
+        let raw = "see https://gist.github.com/idvorkin-ai-tools/41cc7d9f1df846dec1c413287141578f\n";
+        let rows = parse(raw);
+        let gist = rows
+            .iter()
+            .find(|r| r.category == Category::Gist)
+            .expect("gist row");
+        assert_eq!(gist.repo_or_host, "idvorkin-ai-tools");
+        assert_eq!(gist.key, "41cc7d9");
+        // And it should NOT also appear in OtherLink.
+        let other = rows.iter().find(|r| r.category == Category::OtherLink);
+        assert!(other.is_none(), "gist leaked to OtherLink: {other:#?}");
     }
 }
 
@@ -771,6 +1007,8 @@ pub(crate) fn scan_line(line: &str, line_index: usize) -> Vec<Item> {
         }
         if let Some(item) = classify_github(raw, line_index) {
             out.push(item);
+        } else if let Some(item) = classify_gist(raw, line_index) {
+            out.push(item);
         } else if let Some(item) = classify_other_url(raw, line_index) {
             out.push(item);
         }
@@ -973,6 +1211,10 @@ pub(crate) fn truncate_to_width(s: &str, max: usize) -> String {
 /// Top-level detection: parse the whole scrollback and return deduped,
 /// recency-ordered rows.
 pub fn parse(raw: &str) -> Vec<Row> {
+    // Re-join URLs hard-wrapped across line breaks (gist hashes, commit SHAs)
+    // before line-by-line scanning. See `join_wrapped_urls` for the heuristic.
+    let raw_joined = join_wrapped_urls(raw);
+    let raw = raw_joined.as_str();
     // Collect items + keep a reference to the line for context extraction.
     let lines: Vec<&str> = raw.lines().collect();
     let mut items_by_key: HashMap<(Category, String), Vec<Item>> = HashMap::new();
@@ -1095,5 +1337,112 @@ mod parse_tests {
         let a = parse(raw);
         let b = parse(raw);
         assert_eq!(a, b);
+    }
+
+    // ─── Multi-line URL diagnostic tests ────────────────────────────────
+    // Tracking the case where Claude Code rendered a long gist URL that
+    // wrapped across terminal rows in scrollback. tmux capture-pane -J
+    // *should* join soft wraps, but if the wrap arrives as a hard `\n`
+    // (e.g. from an upstream renderer or when input doesn't come via -J),
+    // the URL gets split mid-hash and pick-links extracts only the prefix.
+    // Repro fixture is the literal cost-impact gist URL from session
+    // 2026-04-13 that broke.
+
+    const GIST_FULL: &str =
+        "https://gist.github.com/idvorkin-ai-tools/41cc7d9f1df846dec1c413287141578f";
+
+    #[test]
+    fn unbroken_gist_url_classifies() {
+        // Baseline: the full URL on one line should produce one row.
+        let raw = format!("see {GIST_FULL} for details\n");
+        let rows = parse(&raw);
+        assert_eq!(rows.len(), 1, "rows = {rows:#?}");
+        assert!(
+            rows[0].canonical.contains("41cc7d9f1df846dec1c413287141578f"),
+            "canonical = {}",
+            rows[0].canonical
+        );
+    }
+
+    #[test]
+    fn hard_wrapped_gist_url_is_rejoined() {
+        // Regression: URL split across lines mid-hash (hard `\n` in
+        // scrollback) used to be classified as the truncated prefix
+        // `https://gist.github.com/idvorkin-ai-tools/41cc7d` which 404s
+        // when clicked. join_wrapped_urls now re-stitches it before scan.
+        let raw = "see https://gist.github.com/idvorkin-ai-tools/41cc7d\n9f1df846dec1c413287141578f for details\n";
+        let rows = parse(raw);
+        let full = rows
+            .iter()
+            .any(|r| r.canonical.contains("41cc7d9f1df846dec1c413287141578f"));
+        let truncated = rows.iter().any(|r| r.canonical.ends_with("/41cc7d"));
+        assert!(full, "should produce row with full hash, got: {rows:#?}");
+        assert!(!truncated, "should NOT produce truncated row, got: {rows:#?}");
+    }
+
+    #[test]
+    fn markdown_bold_prefix_then_url_is_rejoined() {
+        // Variant from the actual cost-impact session: assistant output
+        // was `**Gist (updated):** <url>` and the URL wrapped at terminal
+        // edge with a hard break inside the hash. Joining must still work.
+        let line1 = "**Gist (updated):** https://gist.github.com/idvorkin-ai-tools/41cc7";
+        let line2 = "d9f1df846dec1c413287141578f";
+        let raw = format!("{line1}\n{line2}\n");
+        let rows = parse(&raw);
+        let full = rows
+            .iter()
+            .any(|r| r.canonical.contains("41cc7d9f1df846dec1c413287141578f"));
+        assert!(full, "should produce row with full hash, got: {rows:#?}");
+    }
+
+    #[test]
+    fn join_does_not_swallow_prose_continuation() {
+        // False-positive guard: a clean URL followed by prose must NOT be
+        // joined into the URL. The hex-tail rule (≥8 hex chars, no spaces)
+        // is what protects against this.
+        let raw = "visit https://idvorkin.github.io/posts/ai-agents/\nabout my project today\n";
+        let rows = parse(raw);
+        // The blog URL should be present, and "about" should NOT be appended.
+        let blog = rows
+            .iter()
+            .find(|r| r.category == Category::Blog)
+            .expect("blog row");
+        assert!(
+            blog.canonical.ends_with("/posts/ai-agents/"),
+            "canonical should not absorb prose: {}",
+            blog.canonical
+        );
+    }
+
+    #[test]
+    fn join_does_not_swallow_short_hex_word() {
+        // Edge case: a URL ending in alphanumeric followed by a short hex-ish
+        // word like "decade" or "face" must NOT be joined — the 8-char hex
+        // minimum guards this. Also "facade" is not pure hex (has `c` ✓ but
+        // is only 6 chars).
+        let raw = "https://example.com/path/abcd\nfacade ahead\n";
+        let rows = parse(raw);
+        let row = rows.iter().find(|r| r.category == Category::OtherLink).expect("row");
+        assert!(
+            !row.canonical.contains("facade"),
+            "canonical should not absorb 'facade': {}",
+            row.canonical
+        );
+    }
+
+    #[test]
+    fn join_handles_commit_sha_wrap() {
+        // Realistic case: a long commit SHA wraps mid-hash. Should rejoin.
+        let raw = "see https://github.com/a/b/commit/a22bc17deadbe\nef0123456789abcd next\n";
+        let rows = parse(raw);
+        let commit = rows
+            .iter()
+            .find(|r| r.category == Category::Commit)
+            .expect("commit row");
+        assert!(
+            commit.canonical.ends_with("a22bc17deadbeef0123456789abcd"),
+            "expected full SHA, got: {}",
+            commit.canonical
+        );
     }
 }
