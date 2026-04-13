@@ -40,7 +40,7 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
     match action {
         tui::Action::Quit => std::process::exit(130),
         tui::Action::Yank(row) => {
-            yank_osc52(&row.canonical)?;
+            yank_to_clipboard(&row.canonical)?;
             println!("{}", row.canonical);
         }
         tui::Action::Open(row) => open_url(&row.canonical)?,
@@ -56,26 +56,29 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
     Ok(())
 }
 
-/// Build the raw OSC 52 "copy to clipboard" escape sequence for `payload`.
-/// Pure function split out of `yank_osc52` so it's unit-testable — the
-/// writing-to-/dev/tty side is inherently integration-tested via tmux
-/// (`tmux show-buffer` after a yank), but the byte format itself should be
-/// pinned against accidental base64 flavor or prefix/suffix drift.
+/// Push `payload` onto the clipboard via `tmux set-buffer -w`.
 ///
-/// Format: `ESC ] 52 ; c ; <standard-base64> ESC \` — the xterm OSC 52
-/// "set clipboard" sequence, `c` selector for the CLIPBOARD selection.
-pub(crate) fn format_osc52(payload: &str) -> String {
-    use base64::Engine;
-    let b64 = base64::engine::general_purpose::STANDARD.encode(payload);
-    format!("\x1b]52;c;{b64}\x1b\\")
-}
-
-fn yank_osc52(payload: &str) -> Result<()> {
-    use std::fs::OpenOptions;
-    use std::io::Write;
-    let mut tty = OpenOptions::new().write(true).open("/dev/tty")?;
-    write!(tty, "{}", format_osc52(payload))?;
-    tty.flush()?;
+/// The `-w` flag tells tmux to also emit OSC 52 to each attached client's
+/// pty, which is the path verified end-to-end (devvm → tmux server →
+/// terminal emulator → OS clipboard). The earlier direct write to
+/// `/dev/tty` also worked but went through a different code path and was
+/// harder to diagnose when intermediate links broke; routing through tmux
+/// unifies yank with the rest of `rmux_helper`'s "everything goes through
+/// tmux" architecture (capture-pane, display-message, new-window).
+///
+/// Requires tmux to be running — but so does the whole picker (scrollback
+/// capture fails earlier without it), so this introduces no new dependency.
+fn yank_to_clipboard(payload: &str) -> Result<()> {
+    let status = Command::new("tmux")
+        .args(["set-buffer", "-w", payload])
+        .status()
+        .map_err(|e| anyhow!("tmux set-buffer failed to spawn: {e}"))?;
+    if !status.success() {
+        return Err(anyhow!(
+            "tmux set-buffer -w returned nonzero: {}",
+            status.code().unwrap_or(-1)
+        ));
+    }
     Ok(())
 }
 
@@ -213,47 +216,6 @@ mod orchestration_tests {
         let json = serde_json::to_string(&rows).unwrap();
         assert!(json.contains("\"category\":\"pull_request\""));
         assert!(json.contains("\"category\":\"server\""));
-    }
-
-    #[test]
-    fn osc52_format_matches_xterm_spec() {
-        // Spec: ESC ] 52 ; c ; <standard-base64(payload)> ESC \
-        let seq = format_osc52("https://github.com/a/b/pull/1");
-        assert!(seq.starts_with("\x1b]52;c;"), "missing OSC 52 prefix");
-        assert!(seq.ends_with("\x1b\\"), "missing ST suffix");
-
-        // Extract the base64 middle and confirm it decodes back to the payload.
-        let inner = seq
-            .strip_prefix("\x1b]52;c;")
-            .unwrap()
-            .strip_suffix("\x1b\\")
-            .unwrap();
-        use base64::Engine;
-        let decoded = base64::engine::general_purpose::STANDARD
-            .decode(inner)
-            .expect("payload must be valid standard base64");
-        assert_eq!(decoded, b"https://github.com/a/b/pull/1");
-    }
-
-    #[test]
-    fn osc52_handles_unicode_and_special_chars() {
-        // UTF-8 payloads must survive the round-trip — rows can contain
-        // non-ASCII in context columns (though canonicals are ASCII URLs,
-        // we want the primitive to not silently corrupt anything).
-        let seq = format_osc52("c-5001 — ssh host");
-        let inner = seq
-            .strip_prefix("\x1b]52;c;")
-            .unwrap()
-            .strip_suffix("\x1b\\")
-            .unwrap();
-        use base64::Engine;
-        let decoded = base64::engine::general_purpose::STANDARD
-            .decode(inner)
-            .unwrap();
-        assert_eq!(
-            String::from_utf8(decoded).unwrap(),
-            "c-5001 — ssh host"
-        );
     }
 
     #[test]
