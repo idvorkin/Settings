@@ -56,13 +56,25 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
     Ok(())
 }
 
-fn yank_osc52(payload: &str) -> Result<()> {
+/// Build the raw OSC 52 "copy to clipboard" escape sequence for `payload`.
+/// Pure function split out of `yank_osc52` so it's unit-testable — the
+/// writing-to-/dev/tty side is inherently integration-tested via tmux
+/// (`tmux show-buffer` after a yank), but the byte format itself should be
+/// pinned against accidental base64 flavor or prefix/suffix drift.
+///
+/// Format: `ESC ] 52 ; c ; <standard-base64> ESC \` — the xterm OSC 52
+/// "set clipboard" sequence, `c` selector for the CLIPBOARD selection.
+pub(crate) fn format_osc52(payload: &str) -> String {
     use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(payload);
+    format!("\x1b]52;c;{b64}\x1b\\")
+}
+
+fn yank_osc52(payload: &str) -> Result<()> {
     use std::fs::OpenOptions;
     use std::io::Write;
-    let b64 = base64::engine::general_purpose::STANDARD.encode(payload);
     let mut tty = OpenOptions::new().write(true).open("/dev/tty")?;
-    write!(tty, "\x1b]52;c;{b64}\x1b\\")?;
+    write!(tty, "{}", format_osc52(payload))?;
     tty.flush()?;
     Ok(())
 }
@@ -201,6 +213,47 @@ mod orchestration_tests {
         let json = serde_json::to_string(&rows).unwrap();
         assert!(json.contains("\"category\":\"pull_request\""));
         assert!(json.contains("\"category\":\"server\""));
+    }
+
+    #[test]
+    fn osc52_format_matches_xterm_spec() {
+        // Spec: ESC ] 52 ; c ; <standard-base64(payload)> ESC \
+        let seq = format_osc52("https://github.com/a/b/pull/1");
+        assert!(seq.starts_with("\x1b]52;c;"), "missing OSC 52 prefix");
+        assert!(seq.ends_with("\x1b\\"), "missing ST suffix");
+
+        // Extract the base64 middle and confirm it decodes back to the payload.
+        let inner = seq
+            .strip_prefix("\x1b]52;c;")
+            .unwrap()
+            .strip_suffix("\x1b\\")
+            .unwrap();
+        use base64::Engine;
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(inner)
+            .expect("payload must be valid standard base64");
+        assert_eq!(decoded, b"https://github.com/a/b/pull/1");
+    }
+
+    #[test]
+    fn osc52_handles_unicode_and_special_chars() {
+        // UTF-8 payloads must survive the round-trip — rows can contain
+        // non-ASCII in context columns (though canonicals are ASCII URLs,
+        // we want the primitive to not silently corrupt anything).
+        let seq = format_osc52("c-5001 — ssh host");
+        let inner = seq
+            .strip_prefix("\x1b]52;c;")
+            .unwrap()
+            .strip_suffix("\x1b\\")
+            .unwrap();
+        use base64::Engine;
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(inner)
+            .unwrap();
+        assert_eq!(
+            String::from_utf8(decoded).unwrap(),
+            "c-5001 — ssh host"
+        );
     }
 
     #[test]
