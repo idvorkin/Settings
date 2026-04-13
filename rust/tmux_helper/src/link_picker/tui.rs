@@ -331,15 +331,58 @@ mod help_overlay_tests {
     fn question_mark_does_not_leak_into_query() {
         // Regression guard: `?` must be intercepted before the generic
         // ascii_graphic char handler that types into the query field.
+        // Pre-populate the query so the assertion fails loudly if the
+        // `?` handler starts appending (rather than passing vacuously
+        // when the query is already empty).
         let mut app = app_with_one_row();
+        app.query = "abc".to_string();
         handle_key(&mut app, KeyModifiers::NONE, KeyCode::Char('?'));
-        assert_eq!(app.query, "", "? must not type into query");
+        assert_eq!(app.query, "abc", "? must not type into query");
+    }
+
+    #[test]
+    fn ctrl_c_while_help_shown_dismisses_help_not_quits() {
+        // Pins the airtightness-order claim in handle_key: the
+        // `if app.show_help { … return; }` branch MUST run before the
+        // Ctrl+C → Quit branch. Otherwise a future refactor that moves
+        // the Ctrl+C handler above the dismiss check would silently
+        // change Ctrl+C-while-help from "dismiss modal" to "quit picker"
+        // — a surprising behavior change reviewers would miss.
+        //
+        // Current decision: first Ctrl+C dismisses help; user can press
+        // Ctrl+C again from the flat view to quit. If we ever want
+        // "Ctrl+C always quits", flip this assertion and update
+        // handle_key.
+        let mut app = app_with_one_row();
+        app.show_help = true;
+        handle_key(&mut app, KeyModifiers::CONTROL, KeyCode::Char('c'));
+        assert!(!app.show_help, "Ctrl+C dismisses help modal");
+        assert!(app.action.is_none(), "Ctrl+C on help overlay does NOT quit");
+    }
+
+    #[test]
+    fn f2_while_help_shown_dismisses_help_not_swaps() {
+        // Same airtightness contract for F2: must dismiss help first,
+        // not punch through to the pick-tui swap. Otherwise pressing F2
+        // while help is shown would leak the swap action and tear down
+        // the TUI mid-help-display.
+        let mut app = app_with_one_row();
+        app.show_help = true;
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::F(2));
+        assert!(!app.show_help, "F2 dismisses help modal");
+        assert!(
+            app.action.is_none(),
+            "F2 on help overlay does NOT fire SwapToPickTui"
+        );
     }
 
     #[test]
     fn help_text_documents_every_actionable_key() {
-        // If someone adds a new handler in handle_key but forgets to update
-        // the help panel, this test fires — keep them in lockstep.
+        // If someone removes a documented key's mention from help_lines,
+        // this test fires. It does NOT enforce the inverse direction
+        // (adding a brand-new handler still requires updating the needle
+        // list below) — that's a harder coupling to automate without
+        // parsing handle_key's source.
         let body: String = help_lines()
             .iter()
             .flat_map(|l| l.spans.iter().map(|s| s.content.to_string()))
@@ -365,6 +408,56 @@ mod help_overlay_tests {
                 "help panel must document `{needle}` — got:\n{body}"
             );
         }
+    }
+
+    #[test]
+    fn help_overlay_actually_renders_title_when_show_help_is_true() {
+        // Guards against a refactor that removes the
+        // `if app.show_help { draw_help_overlay(...) }` branch in draw():
+        // state-machine tests would still pass (show_help toggles
+        // correctly) but the user would see an invisible modal. Drive
+        // draw() via TestBackend and assert the help title is painted.
+        use ratatui::backend::TestBackend;
+        let mut app = app_with_one_row();
+        app.show_help = true;
+        let backend = TestBackend::new(120, 40);
+        let mut terminal = Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        let rendered: String = terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .map(|cell| cell.symbol())
+            .collect();
+        assert!(
+            rendered.contains("Help") && rendered.contains("pick-links"),
+            "help overlay title must be visible when show_help=true; got buffer:\n{rendered}"
+        );
+    }
+
+    #[test]
+    fn help_overlay_does_not_render_when_show_help_is_false() {
+        // Inverse of the above: the title must NOT appear in the rendered
+        // buffer when show_help=false. Otherwise the if-branch could be
+        // deleted and the overlay would always show.
+        use ratatui::backend::TestBackend;
+        let mut app = app_with_one_row();
+        assert!(!app.show_help, "help starts hidden");
+        let backend = TestBackend::new(120, 40);
+        let mut terminal = Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        let rendered: String = terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .map(|cell| cell.symbol())
+            .collect();
+        assert!(
+            !rendered.contains("Help — pick-links"),
+            "help overlay title must NOT be visible when show_help=false"
+        );
     }
 }
 
