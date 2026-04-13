@@ -69,9 +69,9 @@ impl Category {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct Item {
     pub category: Category,
-    pub canonical: String,     // canonical URL, hostname, or IP
-    pub key: String,           // key column: "#68", "a22bc17", "picker.rs:L42", "c-5001"
-    pub repo_or_host: String,  // repo-or-host column: "settings", "idvorkin.github.io", "—"
+    pub canonical: String,    // canonical URL, hostname, or IP
+    pub key: String,          // key column: "#68", "a22bc17", "picker.rs:L42", "c-5001"
+    pub repo_or_host: String, // repo-or-host column: "settings", "idvorkin.github.io", "—"
     /// Line index in the captured scrollback where this occurrence was found.
     pub line_index: usize,
 }
@@ -83,7 +83,7 @@ pub struct Row {
     pub canonical: String,
     pub key: String,
     pub repo_or_host: String,
-    pub context: String,      // from scrollback line at most_recent_line
+    pub context: String, // from scrollback line at most_recent_line
     pub enriched: Option<EnrichedTitle>, // None in v1 detection output; filled by enrich.rs
     pub count: usize,
     pub most_recent_line: usize,
@@ -153,13 +153,17 @@ mod tests {
 use regex::Regex;
 use std::sync::OnceLock;
 
-/// Base URL regex — matches scheme + greedy body up to whitespace or URL-unsafe chars.
+/// Base URL regex — matches scheme + RFC-3986 unreserved/reserved ASCII chars.
+/// Deliberately positive (allowlist), not exclusion-based, so:
+///   - `\` (backslash) is excluded → escape sequences in scrollback source
+///     code like `"pull/1\nssh"` don't leak `\n` into canonicals.
+///   - Non-ASCII chars (e.g. `…` U+2026 from terminal truncation) are excluded.
+///   - `(`, `)`, `'`, `"`, `<`, `>`, brackets, braces are excluded so URLs
+///     embedded in prose (`(see https://.../)`) terminate cleanly.
 /// Trailing punctuation is stripped separately (see `strip_trailing_punct`).
 pub(crate) fn url_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(r#"https?://[^\s<>"'`()\[\]{}]+"#).unwrap()
-    })
+    RE.get_or_init(|| Regex::new(r"https?://[A-Za-z0-9\-._~:/?#@!$&*+,;=%]+").unwrap())
 }
 
 /// Strip trailing `.,;:!?)]}>'"` from a matched URL. Preserves trailing `/`.
@@ -218,6 +222,31 @@ mod url_tests {
             extract_url("https://github.com/a/b/pull/1#discussion_r123"),
             "https://github.com/a/b/pull/1#discussion_r123"
         );
+    }
+
+    #[test]
+    fn excludes_backslash_from_url() {
+        // Rust test source often embeds `\n` as two literal characters
+        // (backslash + n) in string literals that end up in scrollback.
+        // The URL regex must not treat `\` as a URL character, or canonicals
+        // leak escaped-newline fragments like `pull/1\nssh`.
+        let line = r#"let raw = "https://github.com/a/b/pull/1\nssh c-5001\n";"#;
+        let m = url_regex().find(line).expect("URL still present");
+        let extracted = strip_trailing_punct(m.as_str());
+        assert_eq!(extracted, "https://github.com/a/b/pull/1");
+        assert!(!extracted.contains('\\'));
+    }
+
+    #[test]
+    fn excludes_non_ascii_ellipsis_from_url() {
+        // Terminals sometimes truncate URLs with `…` (U+2026) when wrapping.
+        // The regex must not include non-ASCII characters, or the truncated
+        // `…` leaks into the canonical and duplicates rows.
+        let line = "see https://idvorkin.github.io/posts/pro… for more";
+        let m = url_regex().find(line).expect("URL still present");
+        let extracted = strip_trailing_punct(m.as_str());
+        assert_eq!(extracted, "https://idvorkin.github.io/posts/pro");
+        assert!(!extracted.contains('…'));
     }
 }
 
@@ -286,6 +315,12 @@ pub(crate) fn classify_github(url: &str, line_index: usize) -> Option<Item> {
         }
         Some("blob") | Some("tree") => {
             let tail = tail?; // "ref/path/to/file.rs"
+                              // Require a file path after the ref. `blob/main` alone is a
+                              // branch-tree view, not a file; line-wrapped scrollback produces
+                              // truncated `blob/m` cases which must also be rejected.
+            if !tail.contains('/') {
+                return None;
+            }
             let basename = tail.rsplit('/').next().unwrap_or(tail);
             // Line anchor: #L42 or #L42-L60 preserves only Lstart in key.
             let key = if let Some(l) = fragment.strip_prefix("#L") {
@@ -295,7 +330,11 @@ pub(crate) fn classify_github(url: &str, line_index: usize) -> Option<Item> {
                 basename.to_string()
             };
             let kind_str = kind.unwrap();
-            let frag_out = if fragment.starts_with("#L") { fragment } else { "" };
+            let frag_out = if fragment.starts_with("#L") {
+                fragment
+            } else {
+                ""
+            };
             Some(Item {
                 category: Category::File,
                 canonical: format!("{canonical_base}/{kind_str}/{tail}{frag_out}"),
@@ -314,18 +353,20 @@ mod github_tests {
 
     #[test]
     fn classifies_pull_request() {
-        let item = classify_github("https://github.com/idvorkin-ai-tools/settings/pull/68", 0).unwrap();
+        let item =
+            classify_github("https://github.com/idvorkin-ai-tools/settings/pull/68", 0).unwrap();
         assert_eq!(item.category, Category::PullRequest);
         assert_eq!(item.key, "#68");
         assert_eq!(item.repo_or_host, "settings");
-        assert_eq!(item.canonical, "https://github.com/idvorkin-ai-tools/settings/pull/68");
+        assert_eq!(
+            item.canonical,
+            "https://github.com/idvorkin-ai-tools/settings/pull/68"
+        );
     }
 
     #[test]
     fn strips_pr_discussion_fragment() {
-        let item = classify_github(
-            "https://github.com/a/b/pull/1#discussion_r123", 0,
-        ).unwrap();
+        let item = classify_github("https://github.com/a/b/pull/1#discussion_r123", 0).unwrap();
         assert_eq!(item.canonical, "https://github.com/a/b/pull/1");
     }
 
@@ -350,18 +391,16 @@ mod github_tests {
 
     #[test]
     fn classifies_file_with_line_anchor() {
-        let item = classify_github(
-            "https://github.com/a/b/blob/main/src/picker.rs#L42", 0,
-        ).unwrap();
+        let item =
+            classify_github("https://github.com/a/b/blob/main/src/picker.rs#L42", 0).unwrap();
         assert_eq!(item.category, Category::File);
         assert_eq!(item.key, "picker.rs:L42");
     }
 
     #[test]
     fn classifies_file_line_range_uses_start() {
-        let item = classify_github(
-            "https://github.com/a/b/blob/main/src/picker.rs#L42-L60", 0,
-        ).unwrap();
+        let item =
+            classify_github("https://github.com/a/b/blob/main/src/picker.rs#L42-L60", 0).unwrap();
         assert_eq!(item.key, "picker.rs:L42");
     }
 
@@ -382,6 +421,18 @@ mod github_tests {
     #[test]
     fn rejects_non_github_host() {
         assert!(classify_github("https://gitlab.com/a/b", 0).is_none());
+    }
+
+    #[test]
+    fn rejects_blob_without_path() {
+        // `blob/main` (or any truncated `blob/X` with no file path after the
+        // ref) is not a File URL — it's a branch/tree view. Line-wrapped
+        // scrollback produces cases like `blob/m` where the URL was cut off.
+        // classify_github must return None so these don't pollute the Files
+        // category; they fall through to OtherLink.
+        assert!(classify_github("https://github.com/a/b/blob/main", 0).is_none());
+        assert!(classify_github("https://github.com/a/b/blob/m", 0).is_none());
+        assert!(classify_github("https://github.com/a/b/tree/main", 0).is_none());
     }
 }
 
@@ -462,7 +513,16 @@ pub(crate) fn find_servers(line: &str, line_index: usize) -> Vec<Item> {
     let mut out = Vec::new();
     for cap in ssh.captures_iter(line) {
         if let Some(h) = cap.get(1) {
-            out.push(mk_server(h.as_str(), line_index));
+            let host = h.as_str();
+            // Suppress bare English words after the `ssh` verb ("URLs and
+            // ssh servers and IPs" → not a real host). Require the host to
+            // either contain a `.` (FQDN / dotted form) or match the
+            // Tailscale short form `c-NNNN`. Config-alias hosts without a
+            // dot are accepted only when they also appear in the separate
+            // Tailscale regexes below.
+            if host.contains('.') || ts_host.is_match(host) {
+                out.push(mk_server(host, line_index));
+            }
         }
     }
     for m in ts_host.find_iter(line) {
@@ -525,15 +585,33 @@ mod server_tests {
         let items = find_servers("ping mydev.ts.net", 0);
         assert!(items.iter().any(|i| i.canonical == "mydev.ts.net"));
     }
+
+    #[test]
+    fn rejects_bare_english_word_after_ssh_verb() {
+        // Prose like "URLs, ssh servers, IPs" or "scrapes ssh in the docs"
+        // must NOT produce servers named `servers`, `for`, `context`, etc.
+        // Require the host to look like a real hostname: contain `.` or
+        // match the Tailscale short form.
+        assert!(find_servers("URLs and ssh servers and IPs", 0).is_empty());
+        assert!(find_servers("- scrapes scrollback for ssh for context", 0).is_empty());
+        assert!(find_servers("when ssh lands in the pane", 0).is_empty());
+        assert!(find_servers("force ssh action on any row", 0).is_empty());
+    }
+
+    #[test]
+    fn still_extracts_dotted_host_after_ssh() {
+        // Regression guard for the fix above: dotted hostnames must still
+        // be picked up.
+        let items = find_servers("ssh dev.example.com", 0);
+        assert!(items.iter().any(|i| i.canonical == "dev.example.com"));
+    }
 }
 
 pub(crate) fn find_ips(line: &str, line_index: usize) -> Vec<Item> {
     static RE: OnceLock<Regex> = OnceLock::new();
     // Dotted-quad with bounded octets, no look-around (Rust regex limitation).
     // We do boundary + version-prefix checks in code.
-    let re = RE.get_or_init(|| {
-        Regex::new(r"(?:\d{1,3}\.){3}\d{1,3}").unwrap()
-    });
+    let re = RE.get_or_init(|| Regex::new(r"(?:\d{1,3}\.){3}\d{1,3}").unwrap());
 
     let bytes = line.as_bytes();
     let mut out = Vec::new();
@@ -561,7 +639,10 @@ pub(crate) fn find_ips(line: &str, line_index: usize) -> Vec<Item> {
         }
         // Validate octets
         let text = m.as_str();
-        let octets: Vec<u16> = text.split('.').map(|s| s.parse().unwrap_or(u16::MAX)).collect();
+        let octets: Vec<u16> = text
+            .split('.')
+            .map(|s| s.parse().unwrap_or(u16::MAX))
+            .collect();
         if octets.iter().any(|o| *o > 255) {
             continue;
         }
@@ -647,7 +728,10 @@ mod scan_line_tests {
 
     #[test]
     fn scans_pr_url_in_context() {
-        let items = scan_line("Merge pull request #68 https://github.com/a/b/pull/68 ok", 0);
+        let items = scan_line(
+            "Merge pull request #68 https://github.com/a/b/pull/68 ok",
+            0,
+        );
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].category, Category::PullRequest);
     }
@@ -739,8 +823,16 @@ pub fn parse(raw: &str) -> Vec<Row> {
     // Sort: category ASC (display order), then most_recent_line DESC,
     // ties broken by canonical ASC for determinism.
     rows.sort_by(|a, b| {
-        (a.category as u8, std::cmp::Reverse(a.most_recent_line), &a.canonical)
-            .cmp(&(b.category as u8, std::cmp::Reverse(b.most_recent_line), &b.canonical))
+        (
+            a.category as u8,
+            std::cmp::Reverse(a.most_recent_line),
+            &a.canonical,
+        )
+            .cmp(&(
+                b.category as u8,
+                std::cmp::Reverse(b.most_recent_line),
+                &b.canonical,
+            ))
     });
 
     rows
@@ -754,7 +846,10 @@ mod parse_tests {
     fn dedups_same_server_across_sources() {
         let raw = "ssh c-5001 \"pwd\"\nssh igor@c-5001 \"ls\"\npeer c-5001 up\n";
         let rows = parse(raw);
-        let servers: Vec<&Row> = rows.iter().filter(|r| r.category == Category::Server).collect();
+        let servers: Vec<&Row> = rows
+            .iter()
+            .filter(|r| r.category == Category::Server)
+            .collect();
         assert_eq!(servers.len(), 1);
         assert_eq!(servers[0].canonical, "c-5001");
         assert!(servers[0].count >= 3);
@@ -764,7 +859,10 @@ mod parse_tests {
     fn orders_by_recency_within_category() {
         let raw = "https://github.com/a/b/pull/1\nhttps://github.com/a/b/pull/2\n";
         let rows = parse(raw);
-        let prs: Vec<&Row> = rows.iter().filter(|r| r.category == Category::PullRequest).collect();
+        let prs: Vec<&Row> = rows
+            .iter()
+            .filter(|r| r.category == Category::PullRequest)
+            .collect();
         assert_eq!(prs.len(), 2);
         // Most recent (pull/2, line 1) comes first
         assert_eq!(prs[0].key, "#2");
@@ -783,7 +881,10 @@ mod parse_tests {
     fn context_strips_url_and_collapses_whitespace() {
         let raw = "Merge pull request   #68   https://github.com/a/b/pull/68   idvorkin\n";
         let rows = parse(raw);
-        let pr = rows.iter().find(|r| r.category == Category::PullRequest).unwrap();
+        let pr = rows
+            .iter()
+            .find(|r| r.category == Category::PullRequest)
+            .unwrap();
         assert!(!pr.context.contains("https://"));
         assert!(!pr.context.contains("   ")); // no runs of whitespace
         assert!(pr.context.contains("Merge pull request"));
@@ -794,7 +895,10 @@ mod parse_tests {
         let long = "a".repeat(200);
         let raw = format!("{long} https://example.com rest\n");
         let rows = parse(&raw);
-        let row = rows.iter().find(|r| r.category == Category::OtherLink).unwrap();
+        let row = rows
+            .iter()
+            .find(|r| r.category == Category::OtherLink)
+            .unwrap();
         assert!(row.context.ends_with('…'));
         assert!(UnicodeWidthStr::width(row.context.as_str()) <= 60);
     }
