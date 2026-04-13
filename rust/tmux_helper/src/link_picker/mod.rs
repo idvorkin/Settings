@@ -56,6 +56,20 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
     Ok(())
 }
 
+/// Build the argv for `tmux set-buffer -w <payload>`. Pulled out of
+/// `yank_to_clipboard` so a unit test can pin the flags across refactors —
+/// specifically, that `-w` stays (without it tmux would set only its own
+/// internal buffer and skip OSC 52 emission to clients, silently breaking
+/// the Mac-clipboard hop), and that `payload` is passed as a single
+/// argument so whitespace-containing URLs don't get split.
+pub(crate) fn yank_to_clipboard_args(payload: &str) -> Vec<String> {
+    vec![
+        "set-buffer".to_string(),
+        "-w".to_string(),
+        payload.to_string(),
+    ]
+}
+
 /// Push `payload` onto the clipboard via `tmux set-buffer -w`.
 ///
 /// The `-w` flag tells tmux to also emit OSC 52 to each attached client's
@@ -69,8 +83,9 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
 /// Requires tmux to be running — but so does the whole picker (scrollback
 /// capture fails earlier without it), so this introduces no new dependency.
 fn yank_to_clipboard(payload: &str) -> Result<()> {
+    let args = yank_to_clipboard_args(payload);
     let status = Command::new("tmux")
-        .args(["set-buffer", "-w", payload])
+        .args(&args)
         .status()
         .map_err(|e| anyhow!("tmux set-buffer failed to spawn: {e}"))?;
     if !status.success() {
@@ -216,6 +231,31 @@ mod orchestration_tests {
         let json = serde_json::to_string(&rows).unwrap();
         assert!(json.contains("\"category\":\"pull_request\""));
         assert!(json.contains("\"category\":\"server\""));
+    }
+
+    #[test]
+    fn yank_argv_passes_dash_w_and_single_payload_arg() {
+        // Regression guard: if someone drops `-w` the OSC 52 hop to clients
+        // silently stops working — tmux would only set its own buffer, no
+        // client ever gets the escape, Mac clipboard stays stale. And if
+        // payload gets split across multiple args, tmux treats it as a
+        // command-line-join which corrupts URLs containing spaces or
+        // special chars.
+        let args = yank_to_clipboard_args("https://github.com/a/b/pull/1");
+        assert_eq!(args[0], "set-buffer");
+        assert_eq!(args[1], "-w", "must keep -w for client OSC 52 emission");
+        assert_eq!(args[2], "https://github.com/a/b/pull/1");
+        assert_eq!(args.len(), 3, "no extra args or stray flags");
+    }
+
+    #[test]
+    fn yank_argv_passes_payload_with_spaces_as_one_arg() {
+        // Payloads can include spaces (context strings, enriched titles).
+        // Each must arrive at tmux as ONE argv slot — not split on
+        // whitespace.
+        let args = yank_to_clipboard_args("hello world with spaces");
+        assert_eq!(args.len(), 3);
+        assert_eq!(args[2], "hello world with spaces");
     }
 
     #[test]
