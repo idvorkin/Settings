@@ -2254,6 +2254,17 @@ struct ParentPidTreeArgs {
     tree: bool,
 }
 
+impl ParentPidTreeArgs {
+    /// True when the caller wants the rich per-pid chain details collected.
+    /// Both `--tree` (human text or structured JSON) and `--verbose` (JSON
+    /// payload inspection) trigger this; either flag makes `--json` emit the
+    /// full `chain[]` array. Without either, `--json` stays on the minimal
+    /// payload path for scriptability.
+    fn wants_rich_chain(&self) -> bool {
+        self.tree || self.verbose
+    }
+}
+
 /// One row of the `--tree` output: a PID in the ancestor chain plus any
 /// cheap `/proc/<pid>/` metadata we could harvest. All metadata fields are
 /// `Option` because any `/proc` read can fail for kernel threads, vanished
@@ -2384,13 +2395,14 @@ fn run_parent_pid_tree(
     }
 
     // 3. Walk the chain. The walker takes its own read_ppid closure, which we
-    //    adapt from the injected `ProcReader`. When --tree is set we also
-    //    capture the full walked chain even on no-match, so the tree view can
-    //    help the user debug why resolution failed.
+    //    adapt from the injected `ProcReader`. When --tree or --verbose is set
+    //    we also capture the full walked chain even on no-match, so the tree
+    //    view (and rich JSON) can help the user debug why resolution failed.
+    let wants_rich = args.wants_rich_chain();
     let mut walked_chain: Vec<u32> = Vec::new();
     let result = resolve_pane_by_parent_chain(start_pid, &pane_pids, |p| {
         let next = proc.read_ppid(p);
-        if args.tree {
+        if wants_rich {
             if let Some(n) = next {
                 walked_chain.push(n);
             }
@@ -2408,19 +2420,26 @@ fn run_parent_pid_tree(
                     m.pane_id
                 ));
             }
-            let tree_data = if args.tree {
+            // Collect rich chain metadata whenever the caller asked for it —
+            // either via --tree (text or JSON) or --verbose (JSON payload).
+            let tree_data = if wants_rich {
                 Some(collect_tree_entries(&m.ancestors_walked, proc))
             } else {
                 None
             };
-            let stdout = if args.tree {
+            let stdout = if args.tree && !args.json {
+                // Human-readable tree text only when --tree is explicit.
                 let entries = tree_data.as_deref().unwrap_or(&[]);
-                if args.json {
-                    format_tree_json(start_pid, Some(&m.pane_id), Some(m.pane_pid), entries)
-                } else {
-                    format_tree_text(entries, Some(&m.pane_id))
-                }
+                format_tree_text(entries, Some(&m.pane_id))
+            } else if args.json && wants_rich {
+                // Rich JSON: --tree --json OR --verbose --json produces the
+                // same payload shape. --verbose also leaves walk lines on
+                // stderr (above) for human inspection.
+                let entries = tree_data.as_deref().unwrap_or(&[]);
+                format_tree_json(start_pid, Some(&m.pane_id), Some(m.pane_pid), entries)
             } else if args.json {
+                // Minimal JSON — scriptable contract preserved when neither
+                // --tree nor --verbose is set.
                 let payload = serde_json::json!({
                     "pane_id": m.pane_id,
                     "pane_pid": m.pane_pid,
@@ -2429,6 +2448,8 @@ fn run_parent_pid_tree(
                 });
                 payload.to_string()
             } else {
+                // Plain text: just the pane id. --verbose alone does not
+                // change stdout; its effect lives entirely on stderr.
                 m.pane_id.clone()
             };
             ParentPidTreeOutcome {
@@ -2456,7 +2477,7 @@ fn run_parent_pid_tree(
             // On no-match, rebuild the chain walked: start_pid plus whatever
             // ancestors the walker consumed before stopping. We didn't have a
             // `PaneMatch` to harvest from, so synthesize from `walked_chain`.
-            let tree_data = if args.tree {
+            let tree_data = if wants_rich {
                 let mut chain: Vec<u32> = Vec::with_capacity(walked_chain.len() + 1);
                 chain.push(start_pid);
                 for p in &walked_chain {
@@ -2468,14 +2489,15 @@ fn run_parent_pid_tree(
             } else {
                 None
             };
-            let stdout = if args.tree {
+            let stdout = if args.tree && !args.json {
                 let entries = tree_data.as_deref().unwrap_or(&[]);
-                if args.json {
-                    format_tree_json(start_pid, None, None, entries)
-                } else {
-                    format_tree_text(entries, None)
-                }
+                format_tree_text(entries, None)
+            } else if args.json && wants_rich {
+                let entries = tree_data.as_deref().unwrap_or(&[]);
+                format_tree_json(start_pid, None, None, entries)
             } else {
+                // Minimal --json on no-match keeps the historical empty-stdout
+                // contract (exit 1 signals failure). Plain text is also empty.
                 String::new()
             };
             ParentPidTreeOutcome {
@@ -2528,6 +2550,7 @@ fn format_tree_text(entries: &[TreeEntry], pane_id: Option<&str>) -> String {
         .min(16);
     for (i, entry) in entries.iter().enumerate() {
         let is_leaf = i == n - 1;
+        let is_start = i == 0;
         let branch = if is_leaf { "└─" } else { "├─" };
         let cont = if is_leaf { "  " } else { "│ " };
         let comm = entry.comm.as_deref().unwrap_or("?");
@@ -2536,10 +2559,18 @@ fn format_tree_text(entries: &[TreeEntry], pane_id: Option<&str>) -> String {
             // No cmdline — convention for kernel threads is [comm].
             _ => format!("[{}]", comm),
         };
-        let pane_suffix = if is_leaf && pane_id.is_some() {
-            "  (pane shell)"
-        } else {
-            ""
+        // Annotate the start/leaf positions so users can see at a glance
+        // where the walk started and where it stopped. Single-entry chains
+        // collapse into a combined annotation. On no-match (`pane_id` is
+        // None) the leaf is labeled `(no pane found)` instead of
+        // `(pane shell)`.
+        let annotation = match (is_start, is_leaf, pane_id.is_some()) {
+            (true, true, true) => "  (start, pane shell)",
+            (true, true, false) => "  (start, no pane found)",
+            (true, false, _) => "  (start)",
+            (false, true, true) => "  (pane shell)",
+            (false, true, false) => "  (no pane found)",
+            _ => "",
         };
         out.push_str(&format!(
             "{} [pid {:<7}] {:<width$}  {}{}\n",
@@ -2547,7 +2578,7 @@ fn format_tree_text(entries: &[TreeEntry], pane_id: Option<&str>) -> String {
             entry.pid,
             comm,
             cmd_display,
-            pane_suffix,
+            annotation,
             width = comm_col,
         ));
         match entry.exe.as_ref() {
@@ -2569,20 +2600,32 @@ fn format_tree_text(entries: &[TreeEntry], pane_id: Option<&str>) -> String {
 
 /// Render the tree as JSON. `pane_id` / `pane_pid` are None when the walk
 /// didn't match a pane (useful for debugging why resolution failed).
+///
+/// Each chain entry carries a `role` string derived from its position and
+/// whether its pid matches `pane_pid`:
+///   - `"start"` — first entry of a multi-entry chain
+///   - `"ancestor"` — interior entries
+///   - `"pane_shell"` — leaf whose pid matches `pane_pid`
+///   - `"start_and_pane_shell"` — single-entry chain where start IS the pane
+///   - `"walked_past_root"` — leaf of a no-match chain (`pane_pid` is None)
 fn format_tree_json(
     start_pid: u32,
     pane_id: Option<&str>,
     pane_pid: Option<u32>,
     entries: &[TreeEntry],
 ) -> String {
+    let n = entries.len();
     let chain: Vec<serde_json::Value> = entries
         .iter()
-        .map(|e| {
+        .enumerate()
+        .map(|(i, e)| {
+            let role = chain_entry_role(i, n, e.pid, pane_pid);
             serde_json::json!({
                 "pid": e.pid,
                 "comm": e.comm,
                 "cmdline": e.cmdline,
                 "exe": e.exe.as_ref().map(|p| p.display().to_string()),
+                "role": role,
             })
         })
         .collect();
@@ -2593,6 +2636,27 @@ fn format_tree_json(
         "chain": chain,
     });
     payload.to_string()
+}
+
+/// Pure helper: derive the `role` string for chain entry at `index` given
+/// the chain length, the entry's pid, and the resolved `pane_pid` (if any).
+/// Extracted so tests can assert the role-assignment policy directly.
+fn chain_entry_role(index: usize, len: usize, pid: u32, pane_pid: Option<u32>) -> &'static str {
+    let is_first = index == 0;
+    let is_last = index + 1 == len;
+    let matches_pane = pane_pid.is_some_and(|pp| pp == pid);
+    match (is_first, is_last, matches_pane, pane_pid.is_some()) {
+        // Single-entry chain where start IS the pane shell.
+        (true, true, true, _) => "start_and_pane_shell",
+        // Any leaf without a pane match — walker stopped here empty-handed.
+        (_, true, false, false) => "walked_past_root",
+        // Multi-entry leaf that matches pane_pid is the pane shell.
+        (false, true, true, _) => "pane_shell",
+        // First entry of a multi-entry chain.
+        (true, false, _, _) => "start",
+        // Everything else — interior entries.
+        _ => "ancestor",
+    }
 }
 
 /// Truncate `s` to at most `max` display chars, appending `…` if cut. Uses
@@ -2741,7 +2805,11 @@ fn completion_install_path(shell: CompletionShell, env: &EnvSnapshot) -> Option<
                 let home = env.home.as_deref()?;
                 PathBuf::from(home).join(".config")
             };
-            Some(base.join("fish").join("completions").join("rmux_helper.fish"))
+            Some(
+                base.join("fish")
+                    .join("completions")
+                    .join("rmux_helper.fish"),
+            )
         }
         CompletionShell::Powershell | CompletionShell::Elvish => None,
     }
@@ -2776,7 +2844,12 @@ fn generate_completion_script(shell: CompletionShell) -> Result<String> {
     let output = Command::new(&exe)
         .env("COMPLETE", shell.as_str())
         .output()
-        .with_context(|| format!("failed to spawn {} for completion generation", exe.display()))?;
+        .with_context(|| {
+            format!(
+                "failed to spawn {} for completion generation",
+                exe.display()
+            )
+        })?;
     if !output.status.success() {
         anyhow::bail!(
             "rmux_helper exited {} while generating {} completions: {}",
@@ -2822,17 +2895,19 @@ fn install_completions_cmd(
     })?;
 
     if dry_run {
-        println!("would install {} completions to {}", resolved.as_str(), target.display());
+        println!(
+            "would install {} completions to {}",
+            resolved.as_str(),
+            target.display()
+        );
         return Ok(());
     }
 
     if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent).with_context(|| {
-            format!("failed to create completion dir {}", parent.display())
-        })?;
+        fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create completion dir {}", parent.display()))?;
     }
-    fs::write(&target, &script)
-        .with_context(|| format!("failed to write {}", target.display()))?;
+    fs::write(&target, &script).with_context(|| format!("failed to write {}", target.display()))?;
     println!(
         "installed {} completions to {}",
         resolved.as_str(),
@@ -4300,13 +4375,24 @@ mod tests {
     #[test]
     fn test_tree_formatter_shows_pane_id_at_leaf() {
         // When pane_id is Some, the final entry gets a "(pane shell)"
-        // annotation AND a "tmux pane: %35" line.
-        let entries = vec![TreeEntry {
-            pid: 1,
-            comm: Some("zsh".to_string()),
-            cmdline: Some("/bin/zsh".to_string()),
-            exe: Some(PathBuf::from("/bin/zsh")),
-        }];
+        // annotation AND a "tmux pane: %35" line. Use a 2-entry chain so the
+        // leaf's annotation is the plain "(pane shell)" — a single-entry
+        // chain collapses into "(start, pane shell)" which is covered
+        // separately in test_format_tree_text_single_entry_chain.
+        let entries = vec![
+            TreeEntry {
+                pid: 2,
+                comm: Some("bash".to_string()),
+                cmdline: Some("/bin/bash".to_string()),
+                exe: Some(PathBuf::from("/bin/bash")),
+            },
+            TreeEntry {
+                pid: 1,
+                comm: Some("zsh".to_string()),
+                cmdline: Some("/bin/zsh".to_string()),
+                exe: Some(PathBuf::from("/bin/zsh")),
+            },
+        ];
         let out = format_tree_text(&entries, Some("%35"));
         assert!(
             out.contains("(pane shell)"),
@@ -4353,11 +4439,26 @@ mod tests {
 
     #[test]
     fn test_detect_shell_from_env_basenames() {
-        assert_eq!(detect_shell_from_env(Some("/bin/zsh")), Some(CompletionShell::Zsh));
-        assert_eq!(detect_shell_from_env(Some("/usr/bin/bash")), Some(CompletionShell::Bash));
-        assert_eq!(detect_shell_from_env(Some("fish")), Some(CompletionShell::Fish));
-        assert_eq!(detect_shell_from_env(Some("/opt/homebrew/bin/pwsh")), Some(CompletionShell::Powershell));
-        assert_eq!(detect_shell_from_env(Some("elvish")), Some(CompletionShell::Elvish));
+        assert_eq!(
+            detect_shell_from_env(Some("/bin/zsh")),
+            Some(CompletionShell::Zsh)
+        );
+        assert_eq!(
+            detect_shell_from_env(Some("/usr/bin/bash")),
+            Some(CompletionShell::Bash)
+        );
+        assert_eq!(
+            detect_shell_from_env(Some("fish")),
+            Some(CompletionShell::Fish)
+        );
+        assert_eq!(
+            detect_shell_from_env(Some("/opt/homebrew/bin/pwsh")),
+            Some(CompletionShell::Powershell)
+        );
+        assert_eq!(
+            detect_shell_from_env(Some("elvish")),
+            Some(CompletionShell::Elvish)
+        );
     }
 
     #[test]
@@ -4375,7 +4476,10 @@ mod tests {
             ..Default::default()
         };
         let p = completion_install_path(CompletionShell::Zsh, &env).unwrap();
-        assert_eq!(p, PathBuf::from("/home/user/dotfiles/zsh/.zfunc/_rmux_helper"));
+        assert_eq!(
+            p,
+            PathBuf::from("/home/user/dotfiles/zsh/.zfunc/_rmux_helper")
+        );
     }
 
     #[test]
@@ -4448,7 +4552,10 @@ mod tests {
             home: Some("/home/user".into()),
             ..Default::default()
         };
-        assert_eq!(completion_install_path(CompletionShell::Powershell, &env), None);
+        assert_eq!(
+            completion_install_path(CompletionShell::Powershell, &env),
+            None
+        );
         assert_eq!(completion_install_path(CompletionShell::Elvish, &env), None);
     }
 
@@ -4464,10 +4571,8 @@ mod tests {
     #[test]
     fn test_enumerate_pid_candidates_sorted_desc_and_truncated() {
         // Build a tempdir `/proc`-like layout with numeric-named subdirs.
-        let tmp = std::env::temp_dir().join(format!(
-            "rmux_helper_pid_enum_test_{}",
-            std::process::id()
-        ));
+        let tmp =
+            std::env::temp_dir().join(format!("rmux_helper_pid_enum_test_{}", std::process::id()));
         let _ = fs::remove_dir_all(&tmp);
         fs::create_dir_all(&tmp).unwrap();
         for pid in [1u32, 5, 42, 100, 500, 9999] {
@@ -4533,5 +4638,354 @@ mod tests {
             "nosuchshell",
         ]);
         assert!(result.is_err(), "unknown shell should be rejected by clap");
+    }
+
+    // ---- --verbose + --json rich chain output ---------------------------
+    //
+    // Exercises the rule that either --tree OR --verbose triggers the full
+    // chain[] array in JSON, while --json alone keeps the minimal payload.
+    // Plain text mode with --verbose stays on the single-line pane-id output.
+
+    #[test]
+    fn test_run_parent_pid_tree_verbose_and_json_includes_rich_chain() {
+        // --verbose --json (no --tree): JSON stdout gets the full chain[]
+        // array AND stderr keeps its walk lines for human inspection.
+        let tmux = MockTmuxProvider::with_panes(&[("%35", 2500)]);
+        let proc = MockProcReader::from_chain(&[(999, 4000), (4000, 2500)])
+            .with_comm(999, "bash")
+            .with_cmdline(
+                999,
+                "/bin/bash -c rmux_helper parent-pid-tree --verbose --json",
+            )
+            .with_exe(999, "/usr/bin/bash")
+            .with_comm(4000, "claude")
+            .with_cmdline(4000, "claude /startup-larry")
+            .with_exe(4000, "/home/developer/.local/bin/claude")
+            .with_comm(2500, "zsh")
+            .with_cmdline(2500, "/bin/zsh")
+            .with_exe(2500, "/bin/zsh");
+        let mut a = args(true, Some(999), true);
+        a.tree = false;
+        let outcome = run_parent_pid_tree(a, 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        // stdout is valid JSON with chain[].
+        let payload: serde_json::Value =
+            serde_json::from_str(&outcome.stdout).expect("stdout must be valid JSON");
+        let chain = payload["chain"]
+            .as_array()
+            .expect("chain[] must be present on --verbose --json");
+        assert_eq!(chain.len(), 3);
+        assert_eq!(chain[0]["pid"], 999);
+        assert_eq!(chain[0]["comm"], "bash");
+        assert_eq!(chain[0]["role"], "start");
+        assert_eq!(chain[2]["pid"], 2500);
+        assert_eq!(chain[2]["role"], "pane_shell");
+        assert_eq!(payload["pane_id"], "%35");
+        assert_eq!(payload["pane_pid"], 2500);
+        assert_eq!(payload["start_pid"], 999);
+        // --verbose stderr walk lines still present — verbose's signature
+        // human-inspection stream is preserved even with rich JSON stdout.
+        assert!(
+            outcome
+                .stderr_lines
+                .iter()
+                .any(|l| l.contains("starting walk at pid 999")),
+            "stderr missing verbose start line: {:?}",
+            outcome.stderr_lines
+        );
+        assert!(
+            outcome
+                .stderr_lines
+                .iter()
+                .any(|l| l.contains("999 -> 4000 -> 2500")),
+            "stderr missing walk chain: {:?}",
+            outcome.stderr_lines
+        );
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_json_alone_stays_minimal() {
+        // --json alone (no --verbose, no --tree): minimal payload, NO
+        // chain[] field — preserves the scriptable contract.
+        let tmux = MockTmuxProvider::with_panes(&[("%35", 2500)]);
+        let proc = MockProcReader::from_chain(&[(999, 2500)])
+            .with_comm(999, "bash")
+            .with_cmdline(999, "/bin/bash")
+            .with_exe(999, "/usr/bin/bash")
+            .with_comm(2500, "zsh");
+        let outcome = run_parent_pid_tree(args(true, Some(999), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        let payload: serde_json::Value = serde_json::from_str(&outcome.stdout).unwrap();
+        assert!(
+            payload.get("chain").is_none(),
+            "minimal --json must NOT include chain[]: {}",
+            outcome.stdout
+        );
+        // Historical keys still present.
+        assert_eq!(payload["pane_id"], "%35");
+        assert_eq!(payload["pane_pid"], 2500);
+        assert_eq!(payload["walked_from_pid"], 999);
+        assert_eq!(payload["ancestors_walked"], serde_json::json!([999, 2500]));
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_verbose_text_mode_unchanged() {
+        // --verbose in plain text mode (no --json, no --tree) must still
+        // emit just the pane id on stdout. The stderr walk lines are the
+        // only visible effect of --verbose in text mode.
+        let tmux = MockTmuxProvider::with_panes(&[("%7", 400)]);
+        let proc = MockProcReader::from_chain(&[(500, 400)]);
+        let outcome = run_parent_pid_tree(args(false, Some(500), true), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        assert_eq!(outcome.stdout, "%7");
+        assert!(
+            outcome
+                .stderr_lines
+                .iter()
+                .any(|l| l.contains("starting walk at pid 500")),
+            "stderr missing verbose start line: {:?}",
+            outcome.stderr_lines
+        );
+    }
+
+    #[test]
+    fn test_format_tree_text_marks_root_with_start() {
+        // 3-entry chain — first entry's line must include "(start)".
+        let entries = vec![
+            TreeEntry {
+                pid: 10,
+                comm: Some("bash".to_string()),
+                cmdline: Some("bash".to_string()),
+                exe: Some(PathBuf::from("/bin/bash")),
+            },
+            TreeEntry {
+                pid: 20,
+                comm: Some("claude".to_string()),
+                cmdline: Some("claude".to_string()),
+                exe: Some(PathBuf::from("/bin/claude")),
+            },
+            TreeEntry {
+                pid: 30,
+                comm: Some("zsh".to_string()),
+                cmdline: Some("/bin/zsh".to_string()),
+                exe: Some(PathBuf::from("/bin/zsh")),
+            },
+        ];
+        let out = format_tree_text(&entries, Some("%35"));
+        // Find the line for pid 10 and assert it has (start).
+        let start_line = out
+            .lines()
+            .find(|l| l.contains("[pid 10 "))
+            .unwrap_or_else(|| panic!("no line for pid 10 in:\n{}", out));
+        assert!(
+            start_line.contains("(start)"),
+            "start line missing (start): {}",
+            start_line,
+        );
+        // Intermediate entry (pid 20) must NOT be annotated.
+        let mid_line = out
+            .lines()
+            .find(|l| l.contains("[pid 20 "))
+            .unwrap_or_else(|| panic!("no line for pid 20 in:\n{}", out));
+        assert!(
+            !mid_line.contains("(start)") && !mid_line.contains("(pane shell)"),
+            "intermediate line should be unannotated: {}",
+            mid_line,
+        );
+    }
+
+    #[test]
+    fn test_format_tree_text_single_entry_chain() {
+        // Single-entry chain where start IS the pane shell: the one
+        // annotation combines both roles into "(start, pane shell)".
+        let entries = vec![TreeEntry {
+            pid: 7,
+            comm: Some("zsh".to_string()),
+            cmdline: Some("/bin/zsh".to_string()),
+            exe: Some(PathBuf::from("/bin/zsh")),
+        }];
+        let out = format_tree_text(&entries, Some("%9"));
+        assert!(
+            out.contains("(start, pane shell)"),
+            "single-entry chain missing combined annotation: {}",
+            out,
+        );
+    }
+
+    #[test]
+    fn test_format_tree_text_no_match_marks_leaf() {
+        // 2-entry chain with pane_id=None: last line has "(no pane found)",
+        // first line has "(start)".
+        let entries = vec![
+            TreeEntry {
+                pid: 1,
+                comm: Some("bash".to_string()),
+                cmdline: Some("bash".to_string()),
+                exe: Some(PathBuf::from("/bin/bash")),
+            },
+            TreeEntry {
+                pid: 2,
+                comm: Some("init".to_string()),
+                cmdline: Some("init".to_string()),
+                exe: Some(PathBuf::from("/sbin/init")),
+            },
+        ];
+        let out = format_tree_text(&entries, None);
+        assert!(out.contains("(start)"), "missing (start): {}", out);
+        assert!(
+            out.contains("(no pane found)"),
+            "missing (no pane found): {}",
+            out,
+        );
+        // Single-entry variant collapses into "(start, no pane found)".
+        let solo = vec![TreeEntry {
+            pid: 1,
+            comm: Some("bash".to_string()),
+            cmdline: Some("bash".to_string()),
+            exe: Some(PathBuf::from("/bin/bash")),
+        }];
+        let solo_out = format_tree_text(&solo, None);
+        assert!(
+            solo_out.contains("(start, no pane found)"),
+            "single-entry no-match missing combined annotation: {}",
+            solo_out,
+        );
+    }
+
+    #[test]
+    fn test_format_tree_json_roles() {
+        // 4-entry chain where last pid matches pane_pid: roles are
+        // start / ancestor / ancestor / pane_shell.
+        let entries = vec![
+            TreeEntry {
+                pid: 10,
+                comm: Some("bash".to_string()),
+                cmdline: Some("bash".to_string()),
+                exe: Some(PathBuf::from("/bin/bash")),
+            },
+            TreeEntry {
+                pid: 20,
+                comm: Some("claude".to_string()),
+                cmdline: Some("claude".to_string()),
+                exe: Some(PathBuf::from("/bin/claude")),
+            },
+            TreeEntry {
+                pid: 30,
+                comm: Some("larry".to_string()),
+                cmdline: Some("larry".to_string()),
+                exe: Some(PathBuf::from("/bin/larry")),
+            },
+            TreeEntry {
+                pid: 40,
+                comm: Some("zsh".to_string()),
+                cmdline: Some("/bin/zsh".to_string()),
+                exe: Some(PathBuf::from("/bin/zsh")),
+            },
+        ];
+        let json = format_tree_json(10, Some("%35"), Some(40), &entries);
+        let payload: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let chain = payload["chain"].as_array().unwrap();
+        assert_eq!(chain[0]["role"], "start");
+        assert_eq!(chain[1]["role"], "ancestor");
+        assert_eq!(chain[2]["role"], "ancestor");
+        assert_eq!(chain[3]["role"], "pane_shell");
+    }
+
+    #[test]
+    fn test_format_tree_json_no_match_case() {
+        // pane_id/pane_pid both None: last entry gets "walked_past_root".
+        let entries = vec![
+            TreeEntry {
+                pid: 10,
+                comm: Some("bash".to_string()),
+                cmdline: Some("bash".to_string()),
+                exe: Some(PathBuf::from("/bin/bash")),
+            },
+            TreeEntry {
+                pid: 1,
+                comm: Some("init".to_string()),
+                cmdline: Some("init".to_string()),
+                exe: Some(PathBuf::from("/sbin/init")),
+            },
+        ];
+        let json = format_tree_json(10, None, None, &entries);
+        let payload: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(payload["pane_id"].is_null());
+        assert!(payload["pane_pid"].is_null());
+        let chain = payload["chain"].as_array().unwrap();
+        assert_eq!(chain[0]["role"], "start");
+        assert_eq!(chain[1]["role"], "walked_past_root");
+    }
+
+    #[test]
+    fn test_format_tree_json_single_entry_start_is_pane() {
+        // 1-entry chain where start pid IS the pane_pid.
+        let entries = vec![TreeEntry {
+            pid: 42,
+            comm: Some("zsh".to_string()),
+            cmdline: Some("/bin/zsh".to_string()),
+            exe: Some(PathBuf::from("/bin/zsh")),
+        }];
+        let json = format_tree_json(42, Some("%9"), Some(42), &entries);
+        let payload: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let chain = payload["chain"].as_array().unwrap();
+        assert_eq!(chain.len(), 1);
+        assert_eq!(chain[0]["role"], "start_and_pane_shell");
+    }
+
+    #[test]
+    fn test_format_tree_json_single_entry_no_match() {
+        // 1-entry no-match: role collapses into "walked_past_root".
+        let entries = vec![TreeEntry {
+            pid: 42,
+            comm: Some("init".to_string()),
+            cmdline: Some("init".to_string()),
+            exe: Some(PathBuf::from("/sbin/init")),
+        }];
+        let json = format_tree_json(42, None, None, &entries);
+        let payload: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let chain = payload["chain"].as_array().unwrap();
+        assert_eq!(chain[0]["role"], "walked_past_root");
+    }
+
+    #[test]
+    fn test_chain_entry_role_pure_helper() {
+        // Direct coverage of the pure role-assignment policy.
+        // Multi-entry, leaf matches pane_pid.
+        assert_eq!(chain_entry_role(0, 3, 10, Some(30)), "start");
+        assert_eq!(chain_entry_role(1, 3, 20, Some(30)), "ancestor");
+        assert_eq!(chain_entry_role(2, 3, 30, Some(30)), "pane_shell");
+        // Single-entry, start is pane.
+        assert_eq!(chain_entry_role(0, 1, 5, Some(5)), "start_and_pane_shell");
+        // Single-entry, no match.
+        assert_eq!(chain_entry_role(0, 1, 5, None), "walked_past_root");
+        // Multi-entry, no match: first is start, middle is ancestor, last is
+        // walked_past_root.
+        assert_eq!(chain_entry_role(0, 3, 10, None), "start");
+        assert_eq!(chain_entry_role(1, 3, 20, None), "ancestor");
+        assert_eq!(chain_entry_role(2, 3, 30, None), "walked_past_root");
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_tree_and_json_adds_roles() {
+        // --tree --json end-to-end: chain[0].role == "start",
+        // chain[-1].role == "pane_shell".
+        let tmux = MockTmuxProvider::with_panes(&[("%42", 420)]);
+        let proc = MockProcReader::from_chain(&[(100, 200), (200, 420)])
+            .with_comm(100, "bash")
+            .with_cmdline(100, "/bin/bash")
+            .with_exe(100, "/bin/bash")
+            .with_comm(200, "claude")
+            .with_cmdline(200, "claude /startup")
+            .with_exe(200, "/bin/claude")
+            .with_comm(420, "zsh")
+            .with_cmdline(420, "/bin/zsh")
+            .with_exe(420, "/bin/zsh");
+        let outcome = run_parent_pid_tree(tree_args(true, Some(100), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        let payload: serde_json::Value = serde_json::from_str(&outcome.stdout).unwrap();
+        let chain = payload["chain"].as_array().unwrap();
+        assert_eq!(chain[0]["role"], "start");
+        assert_eq!(chain[2]["role"], "pane_shell");
     }
 }
