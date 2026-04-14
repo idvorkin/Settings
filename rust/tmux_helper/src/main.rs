@@ -27,6 +27,7 @@ Features:
   - Fuzzy session/window/pane picker with tree view (pick-tui)
   - Auto-rename windows based on running processes (rename-all)
   - Layout rotation and 1/3-2/3 split management (rotate, third)
+  - Resolve caller's owning tmux pane via parent-PID walk (parent-pid-tree)
 
 Keybindings (configured in .tmux.conf):
   C-a w     Launch picker popup
@@ -79,6 +80,21 @@ enum Commands {
         /// Enrichment deadline in milliseconds (0 disables gh enrichment)
         #[arg(long, default_value_t = 3000)]
         enrich_deadline_ms: u64,
+    },
+    /// Resolve the calling process's owning tmux pane by walking the parent-PID chain.
+    /// Use this instead of `tmux display-message -p '#{pane_id}'`, which returns the
+    /// tmux-active pane (focused pane) rather than the caller's pane.
+    ParentPidTree {
+        /// Emit structured JSON with pane_id, pane_pid, walked_from_pid, and ancestors_walked
+        #[arg(long)]
+        json: bool,
+        /// Start the walk from this pid instead of the caller's pid.
+        /// When omitted, starts from the parent of rmux_helper (i.e. the caller).
+        #[arg(long)]
+        pid: Option<u32>,
+        /// Log the walk (ancestor chain, pane match) to stderr for debugging
+        #[arg(long)]
+        verbose: bool,
     },
 }
 
@@ -1818,6 +1834,230 @@ fn debug_keys() -> Result<()> {
     Ok(())
 }
 
+// ============================================================================
+// parent-pid-tree: resolve the caller's owning tmux pane by walking ppid chain
+// ============================================================================
+//
+// Why this exists: `tmux display-message -p '#{pane_id}'` returns the tmux-active
+// pane (the one focused in the attached client), not the pane the caller is
+// running inside. With multiple Claude sessions in different panes, that primitive
+// silently targets the wrong session. The correct primitive is to walk from the
+// caller's pid up through ppid (via /proc/<pid>/stat field 4) until we hit a pid
+// that matches a `pane_pid` reported by `tmux list-panes`. The first ancestor
+// match is deterministically the caller's pane, regardless of focus state.
+
+/// Result of a successful parent-pid walk.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct PaneMatch {
+    pane_id: String,
+    pane_pid: u32,
+    ancestors_walked: Vec<u32>,
+}
+
+/// Read field 4 (ppid) of /proc/<pid>/stat.
+///
+/// The stat file is space-separated, but field 2 (`comm`) is wrapped in parens
+/// and CAN contain spaces or closing-parens inside. Find the LAST `)` to locate
+/// the end of comm, then split the rest — field 4 becomes index 1 after the
+/// state char.
+fn read_ppid_from_proc(pid: u32) -> Option<u32> {
+    if pid == 0 {
+        return None;
+    }
+    let path = format!("/proc/{}/stat", pid);
+    let bytes = fs::read(&path).ok()?;
+    let content = String::from_utf8_lossy(&bytes);
+    let last_paren = content.rfind(')')?;
+    let after = content.get(last_paren + 1..)?.trim_start();
+    // after = "<state> <ppid> <pgrp> ..."
+    let mut fields = after.split_ascii_whitespace();
+    let _state = fields.next()?;
+    let ppid_str = fields.next()?;
+    ppid_str.parse().ok()
+}
+
+/// Parse `tmux list-panes -a -F '#{pane_id} #{pane_pid}'` output into a map
+/// from pane_pid -> pane_id.
+fn parse_pane_pids(output: &str) -> HashMap<u32, String> {
+    let mut map = HashMap::new();
+    for line in output.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let mut parts = line.split_ascii_whitespace();
+        let Some(pane_id) = parts.next() else {
+            continue;
+        };
+        let Some(pid_str) = parts.next() else {
+            continue;
+        };
+        if let Ok(pid) = pid_str.parse::<u32>() {
+            map.insert(pid, pane_id.to_string());
+        }
+    }
+    map
+}
+
+/// Fetch `tmux list-panes -a -F '#{pane_id} #{pane_pid}'` and parse it.
+/// Returns an error if tmux is not running or the command fails.
+fn list_tmux_pane_pids() -> Result<HashMap<u32, String>> {
+    let output = Command::new("tmux")
+        .args(["list-panes", "-a", "-F", "#{pane_id} #{pane_pid}"])
+        .output()
+        .context("failed to spawn tmux")?;
+    if !output.status.success() {
+        anyhow::bail!("tmux list-panes failed (is tmux running?)");
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let map = parse_pane_pids(&stdout);
+    Ok(map)
+}
+
+/// Safety cap on walk depth — normal process trees on Linux are well under this.
+const PPID_WALK_MAX_DEPTH: usize = 64;
+
+/// Walk from `start_pid` up through parent PIDs until we find one whose pid
+/// appears in `pane_pids`. Returns the first match, or None if we reach pid 1/0,
+/// hit max depth, fail to read a ppid before matching, or detect a cycle.
+///
+/// `read_ppid` is injected so tests can provide a fake ancestor chain without
+/// touching /proc. The first entry in `ancestors_walked` is always `start_pid`.
+///
+/// Behavior notes:
+/// - If `start_pid` itself is in `pane_pids`, it matches immediately.
+/// - If `read_ppid` returns None for a specific pid (vanished process, unreadable
+///   stat file), we stop walking — this is graceful, not a panic.
+fn resolve_pane_by_parent_chain<F>(
+    start_pid: u32,
+    pane_pids: &HashMap<u32, String>,
+    mut read_ppid: F,
+) -> Option<PaneMatch>
+where
+    F: FnMut(u32) -> Option<u32>,
+{
+    let mut current = start_pid;
+    let mut ancestors: Vec<u32> = Vec::new();
+    let mut seen: HashSet<u32> = HashSet::new();
+
+    for _ in 0..PPID_WALK_MAX_DEPTH {
+        if current == 0 || current == 1 {
+            // Reached init / sentinel — no pane match.
+            if !ancestors.contains(&current) {
+                ancestors.push(current);
+            }
+            return None;
+        }
+        if !seen.insert(current) {
+            // Cycle detection — shouldn't happen with real ppid but be safe.
+            return None;
+        }
+        ancestors.push(current);
+        if let Some(pane_id) = pane_pids.get(&current) {
+            return Some(PaneMatch {
+                pane_id: pane_id.clone(),
+                pane_pid: current,
+                ancestors_walked: ancestors,
+            });
+        }
+        // Read the next ancestor. If the read fails we stop walking — the
+        // process probably exited mid-walk. We don't treat that as a hard error;
+        // first-match-wins semantics have already been applied above.
+        match read_ppid(current) {
+            Some(next) => current = next,
+            None => return None,
+        }
+    }
+    None
+}
+
+/// Run the parent-pid-tree command end to end: default start-pid resolution,
+/// tmux list-panes, walk, output formatting, exit code.
+///
+/// Returns a concrete exit code (0/1/2/3) rather than anyhow::Error so that the
+/// error contract documented in CLAUDE.md is preserved — we want deterministic
+/// codes regardless of what fails underneath.
+fn parent_pid_tree_cmd(json: bool, pid: Option<u32>, verbose: bool) -> i32 {
+    // 1. Fetch pane_pid map from tmux.
+    let pane_pids = match list_tmux_pane_pids() {
+        Ok(map) if map.is_empty() => {
+            eprintln!("tmux not running or no panes");
+            return 2;
+        }
+        Ok(map) => map,
+        Err(e) => {
+            eprintln!("tmux not running or no panes: {}", e);
+            return 2;
+        }
+    };
+
+    // 2. Determine start pid. When the user passed --pid we trust it verbatim.
+    // Otherwise we walk from the PARENT of rmux_helper itself: rmux_helper is
+    // a child of whoever invoked it, and that caller is what we want to resolve.
+    let start_pid = match pid {
+        Some(p) => p,
+        None => {
+            let self_pid = std::process::id();
+            match read_ppid_from_proc(self_pid) {
+                Some(p) => p,
+                None => {
+                    eprintln!(
+                        "could not read /proc/{}/stat to find caller pid",
+                        self_pid
+                    );
+                    return 3;
+                }
+            }
+        }
+    };
+
+    if verbose {
+        eprintln!("parent-pid-tree: starting walk at pid {}", start_pid);
+    }
+
+    // 3. Walk the chain.
+    let result = resolve_pane_by_parent_chain(start_pid, &pane_pids, read_ppid_from_proc);
+
+    match result {
+        Some(m) => {
+            if verbose {
+                let chain: Vec<String> = m
+                    .ancestors_walked
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect();
+                eprintln!(
+                    "parent-pid-tree: walked {} (pane_pid) -> pane {}",
+                    chain.join(" -> "),
+                    m.pane_id
+                );
+            }
+            if json {
+                let payload = serde_json::json!({
+                    "pane_id": m.pane_id,
+                    "pane_pid": m.pane_pid,
+                    "walked_from_pid": start_pid,
+                    "ancestors_walked": m.ancestors_walked,
+                });
+                println!("{}", payload);
+            } else {
+                println!("{}", m.pane_id);
+            }
+            0
+        }
+        None => {
+            if verbose {
+                eprintln!(
+                    "parent-pid-tree: no pane match for pid {} (walked until init/unreadable/max-depth)",
+                    start_pid
+                );
+            }
+            eprintln!("no tmux pane found for pid {}", start_pid);
+            1
+        }
+    }
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
@@ -1832,6 +2072,10 @@ fn main() -> Result<()> {
         Some(Commands::DebugKeys) => debug_keys(),
         Some(Commands::PickLinks { json, enrich_deadline_ms }) => {
             link_picker::pick_links(json, enrich_deadline_ms)
+        }
+        Some(Commands::ParentPidTree { json, pid, verbose }) => {
+            let code = parent_pid_tree_cmd(json, pid, verbose);
+            std::process::exit(code);
         }
         None => {
             // Show help when no command given
@@ -2453,5 +2697,112 @@ mod tests {
             format_pane_status(&s),
             "pane_id: ambiguous\nnvim: true\nfile: "
         );
+    }
+
+    // ---- parent-pid-tree ----
+
+    #[test]
+    fn test_parse_pane_pids_basic() {
+        let input = "%35 2594534\n%65 331460\n";
+        let map = parse_pane_pids(input);
+        assert_eq!(map.len(), 2);
+        assert_eq!(map.get(&2594534).map(String::as_str), Some("%35"));
+        assert_eq!(map.get(&331460).map(String::as_str), Some("%65"));
+    }
+
+    #[test]
+    fn test_parse_pane_pids_handles_blank_and_malformed_lines() {
+        let input = "\n%1 100\n   \ngarbage\n%2 notapid\n%3 300\n";
+        let map = parse_pane_pids(input);
+        // Only well-formed lines survive; malformed ones are skipped, not errored.
+        assert_eq!(map.len(), 2);
+        assert_eq!(map.get(&100).map(String::as_str), Some("%1"));
+        assert_eq!(map.get(&300).map(String::as_str), Some("%3"));
+    }
+
+    /// Build a fake ppid reader from (child -> parent) pairs.
+    fn fake_ppid(chain: &[(u32, u32)]) -> impl FnMut(u32) -> Option<u32> + '_ {
+        move |pid: u32| chain.iter().find_map(|(c, p)| if *c == pid { Some(*p) } else { None })
+    }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_larry_scenario() {
+        // Larry scenario: caller pid is 400284. Its ancestor chain is
+        // 400284 -> 398200 -> 2594534. The pane_pid map has %35 -> 2594534
+        // and %65 -> 331460. We expect %35.
+        let mut pane_pids = HashMap::new();
+        pane_pids.insert(2594534, "%35".to_string());
+        pane_pids.insert(331460, "%65".to_string());
+        let chain = [(400284u32, 398200u32), (398200, 2594534)];
+        let result = resolve_pane_by_parent_chain(400284, &pane_pids, fake_ppid(&chain))
+            .expect("expected a match");
+        assert_eq!(result.pane_id, "%35");
+        assert_eq!(result.pane_pid, 2594534);
+        assert_eq!(result.ancestors_walked, vec![400284, 398200, 2594534]);
+    }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_start_pid_already_matches() {
+        // Edge case: start_pid itself is a pane_pid.
+        let mut pane_pids = HashMap::new();
+        pane_pids.insert(2594534, "%35".to_string());
+        let chain: [(u32, u32); 0] = [];
+        let result = resolve_pane_by_parent_chain(2594534, &pane_pids, fake_ppid(&chain))
+            .expect("expected a match");
+        assert_eq!(result.pane_id, "%35");
+        assert_eq!(result.pane_pid, 2594534);
+        assert_eq!(result.ancestors_walked, vec![2594534]);
+    }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_no_match() {
+        // Walker whose chain never hits any pane_pid — walk terminates at init.
+        let mut pane_pids = HashMap::new();
+        pane_pids.insert(9999, "%99".to_string());
+        let chain = [(500u32, 400u32), (400, 300), (300, 1)];
+        let result = resolve_pane_by_parent_chain(500, &pane_pids, fake_ppid(&chain));
+        assert!(result.is_none(), "expected None, got {:?}", result);
+    }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_vanished_parent_graceful() {
+        // Walker whose parent disappears mid-walk (read_ppid returns None).
+        // Should return None gracefully, not panic.
+        let pane_pids = HashMap::new();
+        let chain = [(500u32, 400u32)]; // 400 has no entry, so read_ppid(400) = None
+        let result = resolve_pane_by_parent_chain(500, &pane_pids, fake_ppid(&chain));
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_vanished_parent_but_prior_match() {
+        // Walker's first ancestor matches, so the match wins even though the
+        // next read would fail. Verifies "first match wins" semantics.
+        let mut pane_pids = HashMap::new();
+        pane_pids.insert(400, "%7".to_string());
+        let chain = [(500u32, 400u32)]; // read_ppid(400) would be None, but we match first
+        let result = resolve_pane_by_parent_chain(500, &pane_pids, fake_ppid(&chain))
+            .expect("expected a match");
+        assert_eq!(result.pane_id, "%7");
+        assert_eq!(result.pane_pid, 400);
+    }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_depth_cap() {
+        // Ensure a degenerate chain doesn't loop forever — capped at 64.
+        let pane_pids = HashMap::new();
+        // Every pid's parent is pid+1000, so we never hit 1. Walker must stop.
+        let reader = |pid: u32| Some(pid + 1000);
+        let result = resolve_pane_by_parent_chain(100, &pane_pids, reader);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_cycle_safe() {
+        // Pathological cycle: 500 -> 400 -> 500. Walker must not infinite-loop.
+        let pane_pids = HashMap::new();
+        let chain = [(500u32, 400u32), (400, 500)];
+        let result = resolve_pane_by_parent_chain(500, &pane_pids, fake_ppid(&chain));
+        assert!(result.is_none());
     }
 }
