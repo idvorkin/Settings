@@ -3071,4 +3071,300 @@ mod tests {
             "own ppid must be > 0 (actual pid tree should have a real parent)"
         );
     }
+
+    // ---- CLI-level tests for parent-pid-tree via DI ---------------------------
+    //
+    // These drive `run_parent_pid_tree` — the humble-object testable core — with
+    // in-memory mocks for `TmuxProvider` and `ProcReader`, so every exit code
+    // (0/1/2/3) and flag combination (--json/--verbose/--pid) is reachable
+    // without touching tmux or /proc. The previous test-coverage pass had to
+    // reject these because the command function wrote to stdout via println!
+    // and called tmux directly; Phase 1 (trait extraction) put the seam in
+    // place.
+
+    /// In-memory `TmuxProvider` mock. Constructed with a pre-built result —
+    /// either a list of (pane_id, pane_pid) pairs, or an explicit `TmuxError`
+    /// for testing the exit-2 paths.
+    enum MockTmuxResult {
+        Ok(Vec<(String, u32)>),
+        NotRunning,
+        ListFailed,
+    }
+
+    struct MockTmuxProvider {
+        result: MockTmuxResult,
+    }
+
+    impl MockTmuxProvider {
+        fn with_panes(pairs: &[(&str, u32)]) -> Self {
+            let pairs = pairs
+                .iter()
+                .map(|(id, pid)| ((*id).to_string(), *pid))
+                .collect();
+            Self {
+                result: MockTmuxResult::Ok(pairs),
+            }
+        }
+
+        fn not_running() -> Self {
+            Self {
+                result: MockTmuxResult::NotRunning,
+            }
+        }
+
+        fn list_failed() -> Self {
+            Self {
+                result: MockTmuxResult::ListFailed,
+            }
+        }
+    }
+
+    impl TmuxProvider for MockTmuxProvider {
+        fn list_pane_pids(&self) -> Result<Vec<(String, u32)>, TmuxError> {
+            match &self.result {
+                MockTmuxResult::Ok(pairs) => Ok(pairs.clone()),
+                MockTmuxResult::NotRunning => Err(TmuxError::NotRunning),
+                MockTmuxResult::ListFailed => Err(TmuxError::ListFailed(
+                    std::io::Error::new(std::io::ErrorKind::NotFound, "no such binary"),
+                )),
+            }
+        }
+
+        fn active_pane(&self) -> Result<Option<String>, TmuxError> {
+            Ok(None)
+        }
+    }
+
+    /// In-memory `ProcReader` mock. Takes a list of `(child, parent)` pairs
+    /// plus an optional set of pids that "fail" — these return `None` from
+    /// `read_ppid` even if they have an entry in the chain. A pid with no
+    /// chain entry and no failure marker falls off (returns None), matching
+    /// real-world "process vanished" semantics.
+    struct MockProcReader {
+        chain: Vec<(u32, u32)>,
+        fail_on: HashSet<u32>,
+    }
+
+    impl MockProcReader {
+        fn from_chain(chain: &[(u32, u32)]) -> Self {
+            Self {
+                chain: chain.to_vec(),
+                fail_on: HashSet::new(),
+            }
+        }
+
+        fn failing_on(mut self, pid: u32) -> Self {
+            self.fail_on.insert(pid);
+            self
+        }
+    }
+
+    impl ProcReader for MockProcReader {
+        fn read_ppid(&self, pid: u32) -> Option<u32> {
+            if self.fail_on.contains(&pid) {
+                return None;
+            }
+            self.chain
+                .iter()
+                .find_map(|(c, p)| if *c == pid { Some(*p) } else { None })
+        }
+    }
+
+    fn args(json: bool, pid: Option<u32>, verbose: bool) -> ParentPidTreeArgs {
+        ParentPidTreeArgs { json, pid, verbose }
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_default_json_output() {
+        // Larry scenario shaped for the CLI: self_pid=999, its ppid is 2594534
+        // (the pane_pid of %35). --json should emit the documented payload.
+        let tmux = MockTmuxProvider::with_panes(&[("%35", 2594534), ("%65", 331460)]);
+        let proc = MockProcReader::from_chain(&[(999, 2594534)]);
+        let outcome = run_parent_pid_tree(args(true, None, false), 999, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        assert_eq!(outcome.stderr_lines, Vec::<String>::new());
+        // Parse the emitted JSON to assert on each field.
+        let payload: serde_json::Value =
+            serde_json::from_str(&outcome.stdout).expect("stdout must be valid JSON");
+        assert_eq!(payload["pane_id"], "%35");
+        assert_eq!(payload["pane_pid"], 2594534);
+        assert_eq!(payload["walked_from_pid"], 2594534);
+        assert_eq!(payload["ancestors_walked"], serde_json::json!([2594534]));
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_explicit_pid_override_walks_from_that_pid() {
+        // --pid 999 must start the walk from 999, not from self_pid/ppid-of-self.
+        // The self_pid we pass is deliberately unrelated — it must not be
+        // consulted because args.pid is Some.
+        let tmux = MockTmuxProvider::with_panes(&[("%42", 12345)]);
+        // Chain: 999 -> 12345, which matches %42.
+        let proc = MockProcReader::from_chain(&[(999, 12345)]);
+        let outcome =
+            run_parent_pid_tree(args(true, Some(999), false), 9_999_999, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        let payload: serde_json::Value = serde_json::from_str(&outcome.stdout).unwrap();
+        assert_eq!(payload["pane_id"], "%42");
+        assert_eq!(payload["walked_from_pid"], 999);
+        assert_eq!(payload["ancestors_walked"], serde_json::json!([999, 12345]));
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_explicit_pid_does_not_read_self_ppid() {
+        // If self_pid's ppid reader would fail, we'd get exit 3 via the
+        // default path. Passing --pid must skip that read entirely. We assert
+        // by setting self_pid to something that would fail AND passing an
+        // explicit pid — result must be exit 0, not 3.
+        let tmux = MockTmuxProvider::with_panes(&[("%7", 400)]);
+        // Reader has a chain for 100 -> 400 but fails on pid 42. If the code
+        // read_ppid(42) we'd take the "None" branch → exit 3.
+        let proc = MockProcReader::from_chain(&[(100, 400)]).failing_on(42);
+        let outcome = run_parent_pid_tree(args(false, Some(100), false), 42, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        assert_eq!(outcome.stdout, "%7");
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_plain_output_is_just_pane_id() {
+        // Default (no --json) stdout must be just the pane id — callers rely on
+        // `pane=$(rmux_helper parent-pid-tree)` returning something assignable.
+        let tmux = MockTmuxProvider::with_panes(&[("%7", 400)]);
+        let proc = MockProcReader::from_chain(&[(500, 400)]);
+        let outcome = run_parent_pid_tree(args(false, Some(500), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        assert_eq!(outcome.stdout, "%7");
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_verbose_emits_walk_chain_to_stderr() {
+        // --verbose must log both the starting pid and the walk chain with the
+        // documented arrow format.
+        let tmux = MockTmuxProvider::with_panes(&[("%35", 2594534)]);
+        let proc = MockProcReader::from_chain(&[(999, 398200), (398200, 2594534)]);
+        let outcome = run_parent_pid_tree(args(false, Some(999), true), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        assert_eq!(outcome.stdout, "%35");
+        // First verbose line is the start announcement, second is the chain.
+        assert!(
+            outcome.stderr_lines.iter().any(|l| l.contains("starting walk at pid 999")),
+            "stderr missing start line: {:?}",
+            outcome.stderr_lines
+        );
+        assert!(
+            outcome
+                .stderr_lines
+                .iter()
+                .any(|l| l.contains("999 -> 398200 -> 2594534") && l.contains("pane %35")),
+            "stderr missing walk chain: {:?}",
+            outcome.stderr_lines
+        );
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_exit_1_no_match() {
+        // Walker walks from 999 -> 1 (init) and never hits a pane_pid. Exit 1,
+        // empty stdout, human-readable stderr.
+        let tmux = MockTmuxProvider::with_panes(&[("%99", 9999)]);
+        let proc = MockProcReader::from_chain(&[(999, 500), (500, 1)]);
+        let outcome = run_parent_pid_tree(args(false, Some(999), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 1);
+        assert_eq!(outcome.stdout, "");
+        assert!(
+            outcome
+                .stderr_lines
+                .iter()
+                .any(|l| l.contains("no tmux pane found for pid 999")),
+            "stderr missing no-match message: {:?}",
+            outcome.stderr_lines
+        );
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_exit_2_not_running() {
+        // TmuxProvider returns NotRunning → exit 2 with the canonical stderr
+        // message. Must not print anything to stdout.
+        let tmux = MockTmuxProvider::not_running();
+        let proc = MockProcReader::from_chain(&[]);
+        let outcome = run_parent_pid_tree(args(false, Some(1), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 2);
+        assert_eq!(outcome.stdout, "");
+        assert_eq!(
+            outcome.stderr_lines,
+            vec!["tmux not running or no panes".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_exit_2_list_failed_has_different_stderr() {
+        // ListFailed is a distinct flavor of exit 2 — the stderr carries the
+        // underlying io::Error rather than the plain "not running" message.
+        let tmux = MockTmuxProvider::list_failed();
+        let proc = MockProcReader::from_chain(&[]);
+        let outcome = run_parent_pid_tree(args(false, Some(1), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 2);
+        assert_eq!(outcome.stdout, "");
+        let joined = outcome.stderr_lines.join("\n");
+        assert!(
+            joined.contains("tmux list-panes failed"),
+            "stderr missing list-failed detail: {}",
+            joined
+        );
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_exit_3_cannot_read_self_ppid() {
+        // No --pid passed and ProcReader.read_ppid(self_pid) returns None → exit 3.
+        let tmux = MockTmuxProvider::with_panes(&[("%1", 100)]);
+        let proc = MockProcReader::from_chain(&[]); // any read returns None
+        let outcome = run_parent_pid_tree(args(false, None, false), 42, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 3);
+        assert_eq!(outcome.stdout, "");
+        assert!(
+            outcome
+                .stderr_lines
+                .iter()
+                .any(|l| l.contains("could not read /proc/42/stat")),
+            "stderr missing exit-3 message: {:?}",
+            outcome.stderr_lines
+        );
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_json_and_pid_flags_combine() {
+        // --json + --pid should emit JSON from the explicit pid's walk.
+        let tmux = MockTmuxProvider::with_panes(&[("%8", 800)]);
+        let proc = MockProcReader::from_chain(&[(700, 800)]);
+        let outcome = run_parent_pid_tree(args(true, Some(700), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        let payload: serde_json::Value = serde_json::from_str(&outcome.stdout).unwrap();
+        assert_eq!(payload["pane_id"], "%8");
+        assert_eq!(payload["walked_from_pid"], 700);
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_json_and_verbose_both_emit() {
+        // --json + --verbose: stdout gets the JSON payload, stderr still gets
+        // the walk chain. The two streams must not pollute each other.
+        let tmux = MockTmuxProvider::with_panes(&[("%9", 900)]);
+        let proc = MockProcReader::from_chain(&[(800, 900)]);
+        let outcome = run_parent_pid_tree(args(true, Some(800), true), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        // stdout is JSON.
+        let payload: serde_json::Value = serde_json::from_str(&outcome.stdout).unwrap();
+        assert_eq!(payload["pane_id"], "%9");
+        // stderr has the walk chain — JSON must not leak into stderr lines.
+        assert!(
+            outcome
+                .stderr_lines
+                .iter()
+                .any(|l| l.contains("800 -> 900") && l.contains("pane %9"))
+        );
+        for line in &outcome.stderr_lines {
+            assert!(
+                !line.contains("\"pane_id\""),
+                "stderr leaked JSON payload: {}",
+                line
+            );
+        }
+    }
 }
