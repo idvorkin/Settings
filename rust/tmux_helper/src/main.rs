@@ -1,5 +1,5 @@
-mod picker;
 mod link_picker;
+mod picker;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
@@ -10,12 +10,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use sysinfo::{Pid, ProcessRefreshKind, System};
 
-pub const VERSION: &str = concat!(
-    env!("CARGO_PKG_VERSION"),
-    " (",
-    env!("GIT_HASH"),
-    ")"
-);
+pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (", env!("GIT_HASH"), ")");
 
 #[derive(Parser)]
 #[command(name = "rmux_helper")]
@@ -95,6 +90,10 @@ enum Commands {
         /// Log the walk (ancestor chain, pane match) to stderr for debugging
         #[arg(long)]
         verbose: bool,
+        /// Print the full ancestor chain as a visual tree with cmdline / exe
+        /// metadata per PID. Combine with --json for structured output.
+        #[arg(long)]
+        tree: bool,
     },
 }
 
@@ -157,13 +156,12 @@ fn get_original_pane_title(
         .unwrap_or_default();
 
     // Normalize: treat hostname and empty as "no title"
-    let normalized_current = if current_title.eq_ignore_ascii_case(&hostname)
-        || current_title.is_empty()
-    {
-        String::new()
-    } else {
-        current_title.to_string()
-    };
+    let normalized_current =
+        if current_title.eq_ignore_ascii_case(&hostname) || current_title.is_empty() {
+            String::new()
+        } else {
+            current_title.to_string()
+        };
 
     // Check if we have a cached value
     if let Some(cached) = cache.get(pane_id) {
@@ -489,10 +487,9 @@ pub fn get_git_repo_name(cwd: &str, cache: &mut HashMap<String, Option<String>>)
 }
 
 pub fn get_short_path(cwd: &str, git_repo: Option<&str>) -> String {
-    let path_mappings: HashMap<&str, &str> =
-        [("idvorkin.github.io", "blog"), ("idvorkin", "me")]
-            .into_iter()
-            .collect();
+    let path_mappings: HashMap<&str, &str> = [("idvorkin.github.io", "blog"), ("idvorkin", "me")]
+        .into_iter()
+        .collect();
 
     if let Some(repo) = git_repo {
         let base_name = path_mappings.get(repo).copied().unwrap_or(repo);
@@ -586,7 +583,7 @@ fn compact_path(path: &str) -> String {
     }
 
     let first: String = chars[..2].iter().collect();
-    let last: String = chars[chars.len()-2..].iter().collect();
+    let last: String = chars[chars.len() - 2..].iter().collect();
     format!("{}..{}", first, last)
 }
 
@@ -786,8 +783,9 @@ fn rename_all() -> Result<()> {
                 window_width: pane.window_width,
             };
 
-            generate_title_with_context(&process_info, &ctx)
-                .unwrap_or_else(|| generate_title_from_tmux(&pane.pane_current_command, &short_path))
+            generate_title_with_context(&process_info, &ctx).unwrap_or_else(|| {
+                generate_title_from_tmux(&pane.pane_current_command, &short_path)
+            })
         } else {
             // Fallback: use tmux's pane info (works for remote/container processes)
             let cwd = &pane.pane_current_path;
@@ -1063,13 +1061,25 @@ fn third(command: &str) -> Result<()> {
         if is_horizontal {
             let target_width = (window_width as f32 * 0.33) as i32;
             let _ = Command::new("tmux")
-                .args(["resize-pane", "-t", &panes[0], "-x", &target_width.to_string()])
+                .args([
+                    "resize-pane",
+                    "-t",
+                    &panes[0],
+                    "-x",
+                    &target_width.to_string(),
+                ])
                 .output();
             set_tmux_option(THIRD_STATE_OPTION, STATE_THIRD_HORIZONTAL);
         } else {
             let target_height = (window_height as f32 * 0.33) as i32;
             let _ = Command::new("tmux")
-                .args(["resize-pane", "-t", &panes[0], "-y", &target_height.to_string()])
+                .args([
+                    "resize-pane",
+                    "-t",
+                    &panes[0],
+                    "-y",
+                    &target_height.to_string(),
+                ])
                 .output();
             set_tmux_option(THIRD_STATE_OPTION, STATE_THIRD_VERTICAL);
         }
@@ -1132,8 +1142,8 @@ fn get_pane_cwd(pane_id: &str) -> String {
 /// Uses the same broad matching as `process_tree_has_pattern` (name + cmdline + exe substring),
 /// so it catches wrappers like `nvim.appimage`, `nvim-qt`, embedded under shells, etc.
 fn inspect_pane_for_vim(pane_id: &str, system: &System) -> Option<bool> {
-    let pid_str = run_tmux_command(&["display-message", "-t", pane_id, "-p", "#{pane_pid}"])
-        .ok()?;
+    let pid_str =
+        run_tmux_command(&["display-message", "-t", pane_id, "-p", "#{pane_pid}"]).ok()?;
     let pid: u32 = pid_str.trim().parse().ok().filter(|p| *p > 0)?;
     let info = get_process_info(system, pid)?;
     Some(process_tree_has_pattern(&info, &["vim", "nvim"]))
@@ -1335,9 +1345,8 @@ where
     F: FnMut(&str) -> Option<bool>,
 {
     // Step 1: stored option, if still valid for this window.
-    let stored_valid = !stored.is_empty()
-        && window_panes.iter().any(|p| p == stored)
-        && stored != caller_pane_id;
+    let stored_valid =
+        !stored.is_empty() && window_panes.iter().any(|p| p == stored) && stored != caller_pane_id;
     if stored_valid {
         let nvim_running = inspect(stored);
         return ResolvedStatus {
@@ -1412,7 +1421,11 @@ where
 fn get_side_pane_status(caller_pane_id: &str) -> SidePaneStatus {
     // Query the window-local option scoped to the caller's window (not tmux's "current" window)
     let stored = run_tmux_command(&[
-        "show-option", "-wqv", "-t", caller_pane_id, SIDE_EDIT_PANE_OPTION,
+        "show-option",
+        "-wqv",
+        "-t",
+        caller_pane_id,
+        SIDE_EDIT_PANE_OPTION,
     ])
     .unwrap_or_default();
     let window_panes = get_panes_in_window(caller_pane_id);
@@ -1482,7 +1495,6 @@ fn shell_quote(path: &str) -> String {
     format!("'{}'", path.replace('\'', "'\\''"))
 }
 
-
 /// Open a file in an existing pane, reusing nvim if running.
 fn open_file_in_pane(
     pane_id: &str,
@@ -1534,7 +1546,11 @@ fn resolve_side_pane(caller_pane_id: &str) -> Result<String> {
 
     // Query window-local option scoped to caller's window
     let stored_pane_id = run_tmux_command(&[
-        "show-option", "-wqv", "-t", caller_pane_id, SIDE_EDIT_PANE_OPTION,
+        "show-option",
+        "-wqv",
+        "-t",
+        caller_pane_id,
+        SIDE_EDIT_PANE_OPTION,
     ])
     .unwrap_or_default();
 
@@ -1553,10 +1569,17 @@ fn resolve_side_pane(caller_pane_id: &str) -> Result<String> {
     match other_panes.len() {
         0 => {
             // Only caller pane — create a shell split
-            let new_id = create_side_pane_shell(caller_pane_id)
-                .context("Failed to create side pane.")?;
+            let new_id =
+                create_side_pane_shell(caller_pane_id).context("Failed to create side pane.")?;
             let _ = Command::new("tmux")
-                .args(["set-option", "-w", "-t", caller_pane_id, SIDE_EDIT_PANE_OPTION, &new_id])
+                .args([
+                    "set-option",
+                    "-w",
+                    "-t",
+                    caller_pane_id,
+                    SIDE_EDIT_PANE_OPTION,
+                    &new_id,
+                ])
                 .output();
             Ok(new_id)
         }
@@ -1576,7 +1599,14 @@ fn resolve_side_pane(caller_pane_id: &str) -> Result<String> {
             }
             let adopted = candidate.clone();
             let _ = Command::new("tmux")
-                .args(["set-option", "-w", "-t", caller_pane_id, SIDE_EDIT_PANE_OPTION, &adopted])
+                .args([
+                    "set-option",
+                    "-w",
+                    "-t",
+                    caller_pane_id,
+                    SIDE_EDIT_PANE_OPTION,
+                    &adopted,
+                ])
                 .output();
             Ok(adopted)
         }
@@ -1630,7 +1660,13 @@ fn create_side_pane_shell(caller_pane_id: &str) -> Option<String> {
             if let Ok(width) = width_str.trim().parse::<i32>() {
                 let target = (width as f32 * 0.33) as i32;
                 let _ = Command::new("tmux")
-                    .args(["resize-pane", "-t", caller_pane_id, "-x", &target.to_string()])
+                    .args([
+                        "resize-pane",
+                        "-t",
+                        caller_pane_id,
+                        "-x",
+                        &target.to_string(),
+                    ])
                     .output();
             }
         }
@@ -1639,9 +1675,15 @@ fn create_side_pane_shell(caller_pane_id: &str) -> Option<String> {
     // Poll up to 500ms for the new pane's shell to be ready
     let deadline = std::time::Instant::now() + std::time::Duration::from_millis(500);
     loop {
-        let pid_str = run_tmux_command(&["display-message", "-t", &new_pane_id, "-p", "#{pane_pid}"])
-            .unwrap_or_default();
-        if pid_str.trim().parse::<u32>().map(|p| p > 0).unwrap_or(false) {
+        let pid_str =
+            run_tmux_command(&["display-message", "-t", &new_pane_id, "-p", "#{pane_pid}"])
+                .unwrap_or_default();
+        if pid_str
+            .trim()
+            .parse::<u32>()
+            .map(|p| p > 0)
+            .unwrap_or(false)
+        {
             break;
         }
         if std::time::Instant::now() >= deadline {
@@ -1926,6 +1968,22 @@ trait ProcReader {
     /// `None` for pid 0, a vanished process, or an unreadable/unparseable stat
     /// file. `None` is non-fatal to the walker — it just means "stop here".
     fn read_ppid(&self, pid: u32) -> Option<u32>;
+
+    /// Return the full command line (argv joined by spaces) from
+    /// `/proc/<pid>/cmdline`. Null bytes in the file are argv separators and
+    /// are replaced with spaces; a trailing null is stripped. Returns `None`
+    /// when the file is missing, unreadable, or empty (kernel threads).
+    fn read_cmdline(&self, pid: u32) -> Option<String>;
+
+    /// Return the short process name from `/proc/<pid>/comm`, trimmed of the
+    /// trailing newline. Useful fallback for kernel threads whose
+    /// `/proc/<pid>/cmdline` is empty. Returns `None` on read/parse failure.
+    fn read_comm(&self, pid: u32) -> Option<String>;
+
+    /// Return the executable path via `readlink /proc/<pid>/exe`. Returns
+    /// `None` when the symlink can't be read (process gone, permission denied,
+    /// kernel thread).
+    fn read_exe(&self, pid: u32) -> Option<PathBuf>;
 }
 
 /// Production implementation of `TmuxProvider` — shells out to the `tmux`
@@ -1958,7 +2016,11 @@ impl TmuxProvider for RealTmuxProvider {
             return Err(TmuxError::NotRunning);
         }
         let s = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        if s.is_empty() { Ok(None) } else { Ok(Some(s)) }
+        if s.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(s))
+        }
     }
 }
 
@@ -1971,6 +2033,72 @@ impl ProcReader for RealProcReader {
     fn read_ppid(&self, pid: u32) -> Option<u32> {
         read_ppid_from_proc(pid)
     }
+
+    fn read_cmdline(&self, pid: u32) -> Option<String> {
+        read_cmdline_from_proc(pid)
+    }
+
+    fn read_comm(&self, pid: u32) -> Option<String> {
+        read_comm_from_proc(pid)
+    }
+
+    fn read_exe(&self, pid: u32) -> Option<PathBuf> {
+        read_exe_from_proc(pid)
+    }
+}
+
+/// Read `/proc/<pid>/cmdline` — argv joined by null bytes, with a possible
+/// trailing null. Convert null separators to spaces. Returns `None` when the
+/// file is absent, unreadable, or entirely empty (kernel threads).
+fn read_cmdline_from_proc(pid: u32) -> Option<String> {
+    if pid == 0 {
+        return None;
+    }
+    let path = format!("/proc/{}/cmdline", pid);
+    let bytes = fs::read(&path).ok()?;
+    if bytes.is_empty() {
+        return None;
+    }
+    // Strip trailing NUL if present.
+    let trimmed = if bytes.last() == Some(&0) {
+        &bytes[..bytes.len() - 1]
+    } else {
+        &bytes[..]
+    };
+    if trimmed.is_empty() {
+        return None;
+    }
+    // Replace remaining NULs with spaces, lossy UTF-8.
+    let with_spaces: Vec<u8> = trimmed
+        .iter()
+        .map(|b| if *b == 0 { b' ' } else { *b })
+        .collect();
+    Some(String::from_utf8_lossy(&with_spaces).into_owned())
+}
+
+/// Read `/proc/<pid>/comm` — short process name, trailing newline trimmed.
+fn read_comm_from_proc(pid: u32) -> Option<String> {
+    if pid == 0 {
+        return None;
+    }
+    let path = format!("/proc/{}/comm", pid);
+    let content = fs::read_to_string(&path).ok()?;
+    let trimmed = content.trim_end_matches('\n').trim_end_matches('\r');
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
+}
+
+/// Read the executable path via `readlink /proc/<pid>/exe`. Returns `None` for
+/// kernel threads, vanished processes, or permission-denied symlinks.
+fn read_exe_from_proc(pid: u32) -> Option<PathBuf> {
+    if pid == 0 {
+        return None;
+    }
+    let path = format!("/proc/{}/exe", pid);
+    fs::read_link(&path).ok()
 }
 
 /// Result of a successful parent-pid walk.
@@ -2103,6 +2231,19 @@ struct ParentPidTreeArgs {
     json: bool,
     pid: Option<u32>,
     verbose: bool,
+    tree: bool,
+}
+
+/// One row of the `--tree` output: a PID in the ancestor chain plus any
+/// cheap `/proc/<pid>/` metadata we could harvest. All metadata fields are
+/// `Option` because any `/proc` read can fail for kernel threads, vanished
+/// processes, or permission-gated targets.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TreeEntry {
+    pid: u32,
+    comm: Option<String>,
+    cmdline: Option<String>,
+    exe: Option<PathBuf>,
 }
 
 /// Structured result of running `parent-pid-tree`.
@@ -2121,6 +2262,21 @@ struct ParentPidTreeOutcome {
     stderr_lines: Vec<String>,
     /// Concrete exit code. See `run_parent_pid_tree` for the contract.
     exit_code: i32,
+    /// Populated only when `--tree` is set. Ordered from the start pid at
+    /// index 0 down to the pane-matching pid (or the last pid walked if no
+    /// match). `None` when `--tree` was not requested.
+    tree: Option<Vec<TreeEntry>>,
+    /// When `--tree` is set and the walk matched a pane, this is the matched
+    /// pane id. Lets the formatter annotate the leaf without re-walking.
+    /// `None` when tree was not requested or no pane was matched.
+    tree_pane_id: Option<String>,
+    /// When `--tree` is set and the walk matched a pane, this is the matched
+    /// pane_pid. `None` when tree was not requested or no match.
+    tree_pane_pid: Option<u32>,
+    /// The start pid of the walk, captured so the JSON tree payload can
+    /// report it. `None` when tree was not requested or the walk never
+    /// started (e.g. exit 2/3 paths).
+    tree_start_pid: Option<u32>,
 }
 
 /// Testable core of `parent-pid-tree`. Takes humble-shell dependencies so
@@ -2155,6 +2311,10 @@ fn run_parent_pid_tree(
                 stdout: String::new(),
                 stderr_lines,
                 exit_code: 2,
+                tree: None,
+                tree_pane_id: None,
+                tree_pane_pid: None,
+                tree_start_pid: None,
             };
         }
         Err(e) => {
@@ -2163,6 +2323,10 @@ fn run_parent_pid_tree(
                 stdout: String::new(),
                 stderr_lines,
                 exit_code: 2,
+                tree: None,
+                tree_pane_id: None,
+                tree_pane_pid: None,
+                tree_start_pid: None,
             };
         }
     };
@@ -2183,34 +2347,60 @@ fn run_parent_pid_tree(
                     stdout: String::new(),
                     stderr_lines,
                     exit_code: 3,
+                    tree: None,
+                    tree_pane_id: None,
+                    tree_pane_pid: None,
+                    tree_start_pid: None,
                 };
             }
         },
     };
 
     if args.verbose {
-        stderr_lines.push(format!("parent-pid-tree: starting walk at pid {}", start_pid));
+        stderr_lines.push(format!(
+            "parent-pid-tree: starting walk at pid {}",
+            start_pid
+        ));
     }
 
     // 3. Walk the chain. The walker takes its own read_ppid closure, which we
-    //    adapt from the injected `ProcReader`.
-    let result = resolve_pane_by_parent_chain(start_pid, &pane_pids, |p| proc.read_ppid(p));
+    //    adapt from the injected `ProcReader`. When --tree is set we also
+    //    capture the full walked chain even on no-match, so the tree view can
+    //    help the user debug why resolution failed.
+    let mut walked_chain: Vec<u32> = Vec::new();
+    let result = resolve_pane_by_parent_chain(start_pid, &pane_pids, |p| {
+        let next = proc.read_ppid(p);
+        if args.tree {
+            if let Some(n) = next {
+                walked_chain.push(n);
+            }
+        }
+        next
+    });
 
     match result {
         Some(m) => {
             if args.verbose {
-                let chain: Vec<String> = m
-                    .ancestors_walked
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect();
+                let chain: Vec<String> = m.ancestors_walked.iter().map(|p| p.to_string()).collect();
                 stderr_lines.push(format!(
                     "parent-pid-tree: walked {} (pane_pid) -> pane {}",
                     chain.join(" -> "),
                     m.pane_id
                 ));
             }
-            let stdout = if args.json {
+            let tree_data = if args.tree {
+                Some(collect_tree_entries(&m.ancestors_walked, proc))
+            } else {
+                None
+            };
+            let stdout = if args.tree {
+                let entries = tree_data.as_deref().unwrap_or(&[]);
+                if args.json {
+                    format_tree_json(start_pid, Some(&m.pane_id), Some(m.pane_pid), entries)
+                } else {
+                    format_tree_text(entries, Some(&m.pane_id))
+                }
+            } else if args.json {
                 let payload = serde_json::json!({
                     "pane_id": m.pane_id,
                     "pane_pid": m.pane_pid,
@@ -2225,6 +2415,14 @@ fn run_parent_pid_tree(
                 stdout,
                 stderr_lines,
                 exit_code: 0,
+                tree: tree_data,
+                tree_pane_id: if args.tree {
+                    Some(m.pane_id.clone())
+                } else {
+                    None
+                },
+                tree_pane_pid: if args.tree { Some(m.pane_pid) } else { None },
+                tree_start_pid: if args.tree { Some(start_pid) } else { None },
             }
         }
         None => {
@@ -2235,20 +2433,172 @@ fn run_parent_pid_tree(
                 ));
             }
             stderr_lines.push(format!("no tmux pane found for pid {}", start_pid));
+            // On no-match, rebuild the chain walked: start_pid plus whatever
+            // ancestors the walker consumed before stopping. We didn't have a
+            // `PaneMatch` to harvest from, so synthesize from `walked_chain`.
+            let tree_data = if args.tree {
+                let mut chain: Vec<u32> = Vec::with_capacity(walked_chain.len() + 1);
+                chain.push(start_pid);
+                for p in &walked_chain {
+                    if !chain.contains(p) {
+                        chain.push(*p);
+                    }
+                }
+                Some(collect_tree_entries(&chain, proc))
+            } else {
+                None
+            };
+            let stdout = if args.tree {
+                let entries = tree_data.as_deref().unwrap_or(&[]);
+                if args.json {
+                    format_tree_json(start_pid, None, None, entries)
+                } else {
+                    format_tree_text(entries, None)
+                }
+            } else {
+                String::new()
+            };
             ParentPidTreeOutcome {
-                stdout: String::new(),
+                stdout,
                 stderr_lines,
                 exit_code: 1,
+                tree: tree_data,
+                tree_pane_id: None,
+                tree_pane_pid: None,
+                tree_start_pid: if args.tree { Some(start_pid) } else { None },
             }
         }
     }
 }
 
+/// Harvest `/proc/<pid>/` metadata for each pid in the chain. Pure data
+/// transform — all external reads go through the injected `ProcReader`.
+fn collect_tree_entries(chain: &[u32], proc: &dyn ProcReader) -> Vec<TreeEntry> {
+    chain
+        .iter()
+        .map(|&pid| TreeEntry {
+            pid,
+            comm: proc.read_comm(pid),
+            cmdline: proc.read_cmdline(pid),
+            exe: proc.read_exe(pid),
+        })
+        .collect()
+}
+
+/// Max width (chars) we truncate cmdline output to in the text tree view.
+/// Users who need the full cmdline should use `--tree --json`.
+const TREE_CMDLINE_MAX_WIDTH: usize = 120;
+
+/// Render an ASCII tree for the chain. `pane_id` is `Some` when the walk
+/// matched a tmux pane — the leaf entry is annotated with `(pane shell)` and
+/// a `tmux pane:` line. When `None`, no annotations are added.
+fn format_tree_text(entries: &[TreeEntry], pane_id: Option<&str>) -> String {
+    let mut out = String::from("parent-pid-tree\n");
+    let n = entries.len();
+    if n == 0 {
+        return out;
+    }
+    // Compute the longest comm for column alignment (bounded to a reasonable
+    // width so absurd comms don't blow out the layout).
+    let comm_col = entries
+        .iter()
+        .map(|e| e.comm.as_deref().unwrap_or("?").len())
+        .max()
+        .unwrap_or(1)
+        .min(16);
+    for (i, entry) in entries.iter().enumerate() {
+        let is_leaf = i == n - 1;
+        let branch = if is_leaf { "└─" } else { "├─" };
+        let cont = if is_leaf { "  " } else { "│ " };
+        let comm = entry.comm.as_deref().unwrap_or("?");
+        let cmd_display = match entry.cmdline.as_deref() {
+            Some(c) if !c.is_empty() => truncate_display(c, TREE_CMDLINE_MAX_WIDTH),
+            // No cmdline — convention for kernel threads is [comm].
+            _ => format!("[{}]", comm),
+        };
+        let pane_suffix = if is_leaf && pane_id.is_some() {
+            "  (pane shell)"
+        } else {
+            ""
+        };
+        out.push_str(&format!(
+            "{} [pid {:<7}] {:<width$}  {}{}\n",
+            branch,
+            entry.pid,
+            comm,
+            cmd_display,
+            pane_suffix,
+            width = comm_col,
+        ));
+        match entry.exe.as_ref() {
+            Some(path) => {
+                out.push_str(&format!("{}    exe: {}\n", cont, path.display()));
+            }
+            None => {
+                out.push_str(&format!("{}    exe: (unreadable)\n", cont));
+            }
+        }
+        if is_leaf {
+            if let Some(pid) = pane_id {
+                out.push_str(&format!("{}    tmux pane: {}\n", cont, pid));
+            }
+        }
+    }
+    out
+}
+
+/// Render the tree as JSON. `pane_id` / `pane_pid` are None when the walk
+/// didn't match a pane (useful for debugging why resolution failed).
+fn format_tree_json(
+    start_pid: u32,
+    pane_id: Option<&str>,
+    pane_pid: Option<u32>,
+    entries: &[TreeEntry],
+) -> String {
+    let chain: Vec<serde_json::Value> = entries
+        .iter()
+        .map(|e| {
+            serde_json::json!({
+                "pid": e.pid,
+                "comm": e.comm,
+                "cmdline": e.cmdline,
+                "exe": e.exe.as_ref().map(|p| p.display().to_string()),
+            })
+        })
+        .collect();
+    let payload = serde_json::json!({
+        "start_pid": start_pid,
+        "pane_id": pane_id,
+        "pane_pid": pane_pid,
+        "chain": chain,
+    });
+    payload.to_string()
+}
+
+/// Truncate `s` to at most `max` display chars, appending `…` if cut. Uses
+/// char count, not byte count — this is `/proc/<pid>/cmdline` so worst-case
+/// we have multi-byte UTF-8 (rare in practice for binary paths/argv).
+fn truncate_display(s: &str, max: usize) -> String {
+    if s.chars().count() <= max {
+        return s.to_string();
+    }
+    // Reserve one char for the ellipsis marker.
+    let keep = max.saturating_sub(1);
+    let mut out: String = s.chars().take(keep).collect();
+    out.push('…');
+    out
+}
+
 /// Thin wrapper that wires the real humble-shell impls into the testable core
 /// and performs the actual stdout/stderr writes. `main()` calls this; tests
 /// call `run_parent_pid_tree` directly with mocks.
-fn parent_pid_tree_cmd(json: bool, pid: Option<u32>, verbose: bool) -> i32 {
-    let args = ParentPidTreeArgs { json, pid, verbose };
+fn parent_pid_tree_cmd(json: bool, pid: Option<u32>, verbose: bool, tree: bool) -> i32 {
+    let args = ParentPidTreeArgs {
+        json,
+        pid,
+        verbose,
+        tree,
+    };
     let tmux = RealTmuxProvider;
     let proc = RealProcReader;
     let outcome = run_parent_pid_tree(args, std::process::id(), &tmux, &proc);
@@ -2256,7 +2606,15 @@ fn parent_pid_tree_cmd(json: bool, pid: Option<u32>, verbose: bool) -> i32 {
         eprintln!("{}", line);
     }
     if !outcome.stdout.is_empty() {
-        println!("{}", outcome.stdout);
+        // Tree text output already contains trailing newlines per row; avoid
+        // adding an extra blank line for the multi-line tree view. For the
+        // single-line (non-tree) output path we keep the historical newline
+        // behavior.
+        if outcome.stdout.ends_with('\n') {
+            print!("{}", outcome.stdout);
+        } else {
+            println!("{}", outcome.stdout);
+        }
     }
     outcome.exit_code
 }
@@ -2273,11 +2631,17 @@ fn main() -> Result<()> {
         Some(Commands::SideEdit { file }) => side_edit(file.as_deref()),
         Some(Commands::SideRun { command, force }) => side_run(command.as_deref(), force),
         Some(Commands::DebugKeys) => debug_keys(),
-        Some(Commands::PickLinks { json, enrich_deadline_ms }) => {
-            link_picker::pick_links(json, enrich_deadline_ms)
-        }
-        Some(Commands::ParentPidTree { json, pid, verbose }) => {
-            let code = parent_pid_tree_cmd(json, pid, verbose);
+        Some(Commands::PickLinks {
+            json,
+            enrich_deadline_ms,
+        }) => link_picker::pick_links(json, enrich_deadline_ms),
+        Some(Commands::ParentPidTree {
+            json,
+            pid,
+            verbose,
+            tree,
+        }) => {
+            let code = parent_pid_tree_cmd(json, pid, verbose, tree);
             std::process::exit(code);
         }
         None => {
@@ -2354,20 +2718,29 @@ mod tests {
     fn test_generate_title_vim() {
         let child = make_process_info("nvim", "nvim file.rs", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "myproject"), Some("vi myproject".to_string()));
+        assert_eq!(
+            generate_title(&info, "myproject"),
+            Some("vi myproject".to_string())
+        );
     }
 
     #[test]
     fn test_generate_title_plain_shell() {
         let info = make_process_info("zsh", "/bin/zsh", vec![]);
-        assert_eq!(generate_title(&info, "myproject"), Some("z myproject".to_string()));
+        assert_eq!(
+            generate_title(&info, "myproject"),
+            Some("z myproject".to_string())
+        );
     }
 
     #[test]
     fn test_generate_title_docker() {
         let child = make_process_info("docker", "docker run nginx", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "myproject"), Some("docker myproject".to_string()));
+        assert_eq!(
+            generate_title(&info, "myproject"),
+            Some("docker myproject".to_string())
+        );
     }
 
     #[test]
@@ -2383,7 +2756,10 @@ mod tests {
         // just with subcommand should show "j <subcommand> <path>"
         let child = make_process_info("just", "just dev", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "blog"), Some("j dev blog".to_string()));
+        assert_eq!(
+            generate_title(&info, "blog"),
+            Some("j dev blog".to_string())
+        );
     }
 
     #[test]
@@ -2399,7 +2775,10 @@ mod tests {
         // jekyll should show "jekyll <path>"
         let child = make_process_info("jekyll", "jekyll serve", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "blog"), Some("jekyll blog".to_string()));
+        assert_eq!(
+            generate_title(&info, "blog"),
+            Some("jekyll blog".to_string())
+        );
     }
 
     #[test]
@@ -2407,7 +2786,10 @@ mod tests {
         // "just jekyll-serve" should shorten to "j jekyll <path>"
         let child = make_process_info("just", "just jekyll-serve", vec![]);
         let info = make_process_info("zsh", "/bin/zsh", vec![child]);
-        assert_eq!(generate_title(&info, "blog"), Some("j jekyll blog".to_string()));
+        assert_eq!(
+            generate_title(&info, "blog"),
+            Some("j jekyll blog".to_string())
+        );
     }
 
     #[test]
@@ -2495,15 +2877,15 @@ mod tests {
             shorten_path_middle("repo/subdir/leaf", 30),
             "repo/subdir/leaf"
         );
-        assert_eq!(
-            shorten_path_middle("repo/subdir/leaf", 12),
-            "repo/…/leaf"
-        );
+        assert_eq!(shorten_path_middle("repo/subdir/leaf", 12), "repo/…/leaf");
     }
 
     #[test]
     fn test_shorten_path_middle_home_path() {
-        assert_eq!(shorten_path_middle("~/deep/path/leaf", 20), "~/deep/path/leaf");
+        assert_eq!(
+            shorten_path_middle("~/deep/path/leaf", 20),
+            "~/deep/path/leaf"
+        );
         assert_eq!(shorten_path_middle("~/deep/path/leaf", 10), "~/…/leaf");
     }
 
@@ -2564,10 +2946,7 @@ mod tests {
     #[test]
     fn test_parse_file_line_zero() {
         // Line 0 is invalid, treat as no line
-        assert_eq!(
-            parse_file_line("foo.py:0"),
-            ("foo.py:0".to_string(), None)
-        );
+        assert_eq!(parse_file_line("foo.py:0"), ("foo.py:0".to_string(), None));
     }
 
     #[test]
@@ -2640,13 +3019,7 @@ mod tests {
     fn test_find_nvim_in_tree_no_match_does_not_pick_shell() {
         // A shell whose cmdline accidentally contains "vim" must NOT be picked
         // as the nvim pid — that would yield a wrong /proc/<pid>/cmdline.
-        let parent = make_process_info_full(
-            10,
-            "zsh",
-            "/bin/zsh -c 'edit vimrc'",
-            None,
-            vec![],
-        );
+        let parent = make_process_info_full(10, "zsh", "/bin/zsh -c 'edit vimrc'", None, vec![]);
         assert_eq!(find_nvim_in_tree(&parent), None);
     }
 
@@ -2883,10 +3256,7 @@ mod tests {
             nvim_running: Some(false),
             file: None,
         };
-        assert_eq!(
-            format_pane_status(&s),
-            "pane_id: none\nnvim: false\nfile: "
-        );
+        assert_eq!(format_pane_status(&s), "pane_id: none\nnvim: false\nfile: ");
     }
 
     #[test]
@@ -2925,7 +3295,11 @@ mod tests {
 
     /// Build a fake ppid reader from (child -> parent) pairs.
     fn fake_ppid(chain: &[(u32, u32)]) -> impl FnMut(u32) -> Option<u32> + '_ {
-        move |pid: u32| chain.iter().find_map(|(c, p)| if *c == pid { Some(*p) } else { None })
+        move |pid: u32| {
+            chain
+                .iter()
+                .find_map(|(c, p)| if *c == pid { Some(*p) } else { None })
+        }
     }
 
     #[test]
@@ -3134,9 +3508,10 @@ mod tests {
             match &self.result {
                 MockTmuxResult::Ok(pairs) => Ok(pairs.clone()),
                 MockTmuxResult::NotRunning => Err(TmuxError::NotRunning),
-                MockTmuxResult::ListFailed => Err(TmuxError::ListFailed(
-                    std::io::Error::new(std::io::ErrorKind::NotFound, "no such binary"),
-                )),
+                MockTmuxResult::ListFailed => Err(TmuxError::ListFailed(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "no such binary",
+                ))),
             }
         }
 
@@ -3153,6 +3528,9 @@ mod tests {
     struct MockProcReader {
         chain: Vec<(u32, u32)>,
         fail_on: HashSet<u32>,
+        cmdlines: HashMap<u32, String>,
+        comms: HashMap<u32, String>,
+        exes: HashMap<u32, PathBuf>,
     }
 
     impl MockProcReader {
@@ -3160,11 +3538,29 @@ mod tests {
             Self {
                 chain: chain.to_vec(),
                 fail_on: HashSet::new(),
+                cmdlines: HashMap::new(),
+                comms: HashMap::new(),
+                exes: HashMap::new(),
             }
         }
 
         fn failing_on(mut self, pid: u32) -> Self {
             self.fail_on.insert(pid);
+            self
+        }
+
+        fn with_cmdline(mut self, pid: u32, cmdline: &str) -> Self {
+            self.cmdlines.insert(pid, cmdline.to_string());
+            self
+        }
+
+        fn with_comm(mut self, pid: u32, comm: &str) -> Self {
+            self.comms.insert(pid, comm.to_string());
+            self
+        }
+
+        fn with_exe(mut self, pid: u32, exe: &str) -> Self {
+            self.exes.insert(pid, PathBuf::from(exe));
             self
         }
     }
@@ -3178,10 +3574,36 @@ mod tests {
                 .iter()
                 .find_map(|(c, p)| if *c == pid { Some(*p) } else { None })
         }
+
+        fn read_cmdline(&self, pid: u32) -> Option<String> {
+            self.cmdlines.get(&pid).cloned()
+        }
+
+        fn read_comm(&self, pid: u32) -> Option<String> {
+            self.comms.get(&pid).cloned()
+        }
+
+        fn read_exe(&self, pid: u32) -> Option<PathBuf> {
+            self.exes.get(&pid).cloned()
+        }
     }
 
     fn args(json: bool, pid: Option<u32>, verbose: bool) -> ParentPidTreeArgs {
-        ParentPidTreeArgs { json, pid, verbose }
+        ParentPidTreeArgs {
+            json,
+            pid,
+            verbose,
+            tree: false,
+        }
+    }
+
+    fn tree_args(json: bool, pid: Option<u32>, verbose: bool) -> ParentPidTreeArgs {
+        ParentPidTreeArgs {
+            json,
+            pid,
+            verbose,
+            tree: true,
+        }
     }
 
     #[test]
@@ -3210,8 +3632,7 @@ mod tests {
         let tmux = MockTmuxProvider::with_panes(&[("%42", 12345)]);
         // Chain: 999 -> 12345, which matches %42.
         let proc = MockProcReader::from_chain(&[(999, 12345)]);
-        let outcome =
-            run_parent_pid_tree(args(true, Some(999), false), 9_999_999, &tmux, &proc);
+        let outcome = run_parent_pid_tree(args(true, Some(999), false), 9_999_999, &tmux, &proc);
         assert_eq!(outcome.exit_code, 0);
         let payload: serde_json::Value = serde_json::from_str(&outcome.stdout).unwrap();
         assert_eq!(payload["pane_id"], "%42");
@@ -3256,7 +3677,10 @@ mod tests {
         assert_eq!(outcome.stdout, "%35");
         // First verbose line is the start announcement, second is the chain.
         assert!(
-            outcome.stderr_lines.iter().any(|l| l.contains("starting walk at pid 999")),
+            outcome
+                .stderr_lines
+                .iter()
+                .any(|l| l.contains("starting walk at pid 999")),
             "stderr missing start line: {:?}",
             outcome.stderr_lines
         );
@@ -3363,12 +3787,10 @@ mod tests {
         let payload: serde_json::Value = serde_json::from_str(&outcome.stdout).unwrap();
         assert_eq!(payload["pane_id"], "%9");
         // stderr has the walk chain — JSON must not leak into stderr lines.
-        assert!(
-            outcome
-                .stderr_lines
-                .iter()
-                .any(|l| l.contains("800 -> 900") && l.contains("pane %9"))
-        );
+        assert!(outcome
+            .stderr_lines
+            .iter()
+            .any(|l| l.contains("800 -> 900") && l.contains("pane %9")));
         for line in &outcome.stderr_lines {
             assert!(
                 !line.contains("\"pane_id\""),
@@ -3376,5 +3798,264 @@ mod tests {
                 line
             );
         }
+    }
+
+    // ---- --tree flag tests -----------------------------------------------
+    //
+    // These exercise the humble-object core with populated cmdline/comm/exe
+    // data and verify both the TreeEntry collection and the pure formatters.
+
+    #[test]
+    fn test_run_parent_pid_tree_tree_mode_collects_chain_metadata() {
+        // Three-pid chain: 999 -> 4000 -> 2500 (pane_pid of %35). Each pid
+        // has distinct cmdline/comm/exe, so we can verify the entries come
+        // back in walk order with the per-pid metadata attached.
+        let tmux = MockTmuxProvider::with_panes(&[("%35", 2500)]);
+        let proc = MockProcReader::from_chain(&[(999, 4000), (4000, 2500)])
+            .with_comm(999, "bash")
+            .with_cmdline(999, "/usr/bin/bash -c rmux_helper parent-pid-tree --tree")
+            .with_exe(999, "/usr/bin/bash")
+            .with_comm(4000, "claude")
+            .with_cmdline(4000, "claude /startup-larry")
+            .with_exe(4000, "/home/developer/.local/bin/claude")
+            .with_comm(2500, "zsh")
+            .with_cmdline(2500, "/home/linuxbrew/.linuxbrew/bin/zsh")
+            .with_exe(2500, "/home/linuxbrew/.linuxbrew/bin/zsh");
+        let outcome = run_parent_pid_tree(tree_args(false, Some(999), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        let tree = outcome.tree.as_ref().expect("tree should be populated");
+        assert_eq!(tree.len(), 3, "expected 3 entries, got {}", tree.len());
+        assert_eq!(tree[0].pid, 999);
+        assert_eq!(tree[0].comm.as_deref(), Some("bash"));
+        assert_eq!(
+            tree[0].cmdline.as_deref(),
+            Some("/usr/bin/bash -c rmux_helper parent-pid-tree --tree")
+        );
+        assert_eq!(
+            tree[0].exe.as_deref(),
+            Some(std::path::Path::new("/usr/bin/bash"))
+        );
+        assert_eq!(tree[1].pid, 4000);
+        assert_eq!(tree[1].comm.as_deref(), Some("claude"));
+        assert_eq!(tree[2].pid, 2500);
+        assert_eq!(tree[2].comm.as_deref(), Some("zsh"));
+        assert_eq!(outcome.tree_pane_id.as_deref(), Some("%35"));
+        assert_eq!(outcome.tree_pane_pid, Some(2500));
+        assert_eq!(outcome.tree_start_pid, Some(999));
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_tree_mode_handles_missing_cmdline() {
+        // A kernel-thread-like entry in the chain: comm populated, cmdline
+        // empty. The TreeEntry must capture comm = Some("kthreadd") and
+        // cmdline = None. The formatter will render this as [kthreadd].
+        let tmux = MockTmuxProvider::with_panes(&[("%1", 100)]);
+        let proc = MockProcReader::from_chain(&[(50, 100)])
+            .with_comm(50, "kthreadd")
+            // Intentionally NO cmdline for pid 50.
+            .with_exe(50, "/usr/sbin/init")
+            .with_comm(100, "zsh")
+            .with_cmdline(100, "/bin/zsh")
+            .with_exe(100, "/bin/zsh");
+        let outcome = run_parent_pid_tree(tree_args(false, Some(50), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        let tree = outcome.tree.as_ref().unwrap();
+        assert_eq!(tree[0].pid, 50);
+        assert_eq!(tree[0].comm.as_deref(), Some("kthreadd"));
+        assert_eq!(tree[0].cmdline, None);
+        // Text formatter should fall back to [kthreadd].
+        assert!(
+            outcome.stdout.contains("[kthreadd]"),
+            "stdout missing kthreadd fallback: {}",
+            outcome.stdout
+        );
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_tree_mode_handles_missing_exe() {
+        // Middle pid has no exe readlink (permission denied / race). We must
+        // not panic — TreeEntry.exe stays None and the text formatter prints
+        // "exe: (unreadable)".
+        let tmux = MockTmuxProvider::with_panes(&[("%2", 200)]);
+        let proc = MockProcReader::from_chain(&[(100, 150), (150, 200)])
+            .with_comm(100, "bash")
+            .with_cmdline(100, "bash -l")
+            .with_exe(100, "/bin/bash")
+            .with_comm(150, "mystery")
+            .with_cmdline(150, "/opt/mystery --flag")
+            // Intentionally NO exe for pid 150.
+            .with_comm(200, "zsh")
+            .with_cmdline(200, "/bin/zsh")
+            .with_exe(200, "/bin/zsh");
+        let outcome = run_parent_pid_tree(tree_args(false, Some(100), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        let tree = outcome.tree.as_ref().unwrap();
+        assert_eq!(tree[1].pid, 150);
+        assert_eq!(tree[1].exe, None);
+        assert!(
+            outcome.stdout.contains("exe: (unreadable)"),
+            "stdout missing (unreadable) marker: {}",
+            outcome.stdout
+        );
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_tree_and_json_combined() {
+        // --tree + --json: stdout is structured JSON with start_pid, pane_id,
+        // pane_pid, and a chain array where each entry has pid/comm/cmdline/exe.
+        let tmux = MockTmuxProvider::with_panes(&[("%42", 420)]);
+        let proc = MockProcReader::from_chain(&[(100, 420)])
+            .with_comm(100, "bash")
+            .with_cmdline(100, "/bin/bash -c foo")
+            .with_exe(100, "/bin/bash")
+            .with_comm(420, "zsh")
+            .with_cmdline(420, "/bin/zsh")
+            .with_exe(420, "/bin/zsh");
+        let outcome = run_parent_pid_tree(tree_args(true, Some(100), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 0);
+        let payload: serde_json::Value =
+            serde_json::from_str(&outcome.stdout).expect("stdout must be valid JSON");
+        assert_eq!(payload["start_pid"], 100);
+        assert_eq!(payload["pane_id"], "%42");
+        assert_eq!(payload["pane_pid"], 420);
+        let chain = payload["chain"].as_array().expect("chain must be an array");
+        assert_eq!(chain.len(), 2);
+        assert_eq!(chain[0]["pid"], 100);
+        assert_eq!(chain[0]["comm"], "bash");
+        assert_eq!(chain[0]["cmdline"], "/bin/bash -c foo");
+        assert_eq!(chain[0]["exe"], "/bin/bash");
+        assert_eq!(chain[1]["pid"], 420);
+        assert_eq!(chain[1]["exe"], "/bin/zsh");
+    }
+
+    #[test]
+    fn test_run_parent_pid_tree_tree_on_no_match() {
+        // Walker never hits a pane_pid (walks from 999 -> 500 -> 1). Exit 1,
+        // but tree data is still populated so the user can see the chain they
+        // walked (useful when debugging why resolution failed).
+        let tmux = MockTmuxProvider::with_panes(&[("%99", 9999)]);
+        let proc = MockProcReader::from_chain(&[(999, 500), (500, 1)])
+            .with_comm(999, "bash")
+            .with_cmdline(999, "bash")
+            .with_comm(500, "sshd")
+            .with_cmdline(500, "sshd");
+        let outcome = run_parent_pid_tree(tree_args(false, Some(999), false), 1, &tmux, &proc);
+        assert_eq!(outcome.exit_code, 1);
+        let tree = outcome
+            .tree
+            .as_ref()
+            .expect("tree populated even on no-match");
+        // Chain includes start_pid plus whatever ancestors the walker reached
+        // before the walker gave up at init (pid 1).
+        let pids: Vec<u32> = tree.iter().map(|e| e.pid).collect();
+        assert!(pids.contains(&999));
+        assert!(pids.contains(&500));
+        assert_eq!(outcome.tree_pane_id, None);
+        assert_eq!(outcome.tree_pane_pid, None);
+    }
+
+    #[test]
+    fn test_tree_formatter_truncates_long_cmdline() {
+        // Cmdline >120 chars should be truncated with a `…` suffix in the
+        // text view. The full value is still available via --json.
+        let long_arg = "a".repeat(300);
+        let entry = TreeEntry {
+            pid: 42,
+            comm: Some("bash".to_string()),
+            cmdline: Some(format!("/bin/bash -c '{}'", long_arg)),
+            exe: Some(PathBuf::from("/bin/bash")),
+        };
+        let out = format_tree_text(&[entry], None);
+        assert!(out.contains("…"), "missing ellipsis: {}", out);
+        // No line in the tree body should exceed ~200 chars (a generous
+        // upper bound allowing for prefix + truncated cmdline).
+        for line in out.lines() {
+            assert!(
+                line.chars().count() < 200,
+                "line too long ({} chars): {}",
+                line.chars().count(),
+                line,
+            );
+        }
+    }
+
+    #[test]
+    fn test_tree_formatter_ascii_box_drawing() {
+        // Two-entry tree: first row uses `├─`, last row uses `└─`. The
+        // continuation prefix on the non-leaf entry's exe line uses `│`.
+        let entries = vec![
+            TreeEntry {
+                pid: 1,
+                comm: Some("a".to_string()),
+                cmdline: Some("a".to_string()),
+                exe: Some(PathBuf::from("/a")),
+            },
+            TreeEntry {
+                pid: 2,
+                comm: Some("b".to_string()),
+                cmdline: Some("b".to_string()),
+                exe: Some(PathBuf::from("/b")),
+            },
+        ];
+        let out = format_tree_text(&entries, None);
+        assert!(out.contains("├─"), "missing ├─ branch marker: {}", out);
+        assert!(out.contains("└─"), "missing └─ leaf marker: {}", out);
+        assert!(out.contains("│"), "missing │ continuation marker: {}", out);
+        // Ordering sanity: the ├─ line appears before the └─ line.
+        let branch_idx = out.find("├─").unwrap();
+        let leaf_idx = out.find("└─").unwrap();
+        assert!(branch_idx < leaf_idx);
+    }
+
+    #[test]
+    fn test_tree_formatter_shows_pane_id_at_leaf() {
+        // When pane_id is Some, the final entry gets a "(pane shell)"
+        // annotation AND a "tmux pane: %35" line.
+        let entries = vec![TreeEntry {
+            pid: 1,
+            comm: Some("zsh".to_string()),
+            cmdline: Some("/bin/zsh".to_string()),
+            exe: Some(PathBuf::from("/bin/zsh")),
+        }];
+        let out = format_tree_text(&entries, Some("%35"));
+        assert!(
+            out.contains("(pane shell)"),
+            "missing (pane shell): {}",
+            out
+        );
+        assert!(
+            out.contains("tmux pane: %35"),
+            "missing tmux pane line: {}",
+            out
+        );
+    }
+
+    #[test]
+    fn test_tree_formatter_omits_pane_id_when_none() {
+        // When pane_id is None (no-match case), neither annotation appears.
+        let entries = vec![TreeEntry {
+            pid: 1,
+            comm: Some("zsh".to_string()),
+            cmdline: Some("/bin/zsh".to_string()),
+            exe: Some(PathBuf::from("/bin/zsh")),
+        }];
+        let out = format_tree_text(&entries, None);
+        assert!(!out.contains("(pane shell)"));
+        assert!(!out.contains("tmux pane:"));
+    }
+
+    #[test]
+    fn test_real_proc_reader_cmdline_for_self() {
+        // Real-proc read for our own pid: cmdline should be non-empty and
+        // include something binary-ish. Loosely asserted — this is just a
+        // smoke test to make sure the RealProcReader wiring works.
+        let reader = RealProcReader;
+        let pid = std::process::id();
+        let cmdline = reader.read_cmdline(pid);
+        assert!(cmdline.is_some(), "own cmdline must be readable");
+        let comm = reader.read_comm(pid);
+        assert!(comm.is_some(), "own comm must be readable");
+        let exe = reader.read_exe(pid);
+        assert!(exe.is_some(), "own exe must be readable");
     }
 }
