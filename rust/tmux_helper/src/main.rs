@@ -1845,6 +1845,123 @@ fn debug_keys() -> Result<()> {
 // caller's pid up through ppid (via /proc/<pid>/stat field 4) until we hit a pid
 // that matches a `pane_pid` reported by `tmux list-panes`. The first ancestor
 // match is deterministically the caller's pane, regardless of focus state.
+//
+// Architecture: Humble Object pattern. The "shell" that shells out to `tmux`
+// or reads `/proc` lives behind the `TmuxProvider` + `ProcReader` traits. All
+// walk logic, flag handling, exit-code selection, and output formatting lives
+// in `run_parent_pid_tree`, which takes the traits as dependencies. The
+// command wrapper (and in turn `main()`) is the only place that constructs
+// the `Real*` impls and writes to real stdout/stderr. Tests drive
+// `run_parent_pid_tree` with in-memory mocks so every exit code and flag
+// combination is reachable without touching tmux or `/proc`.
+//
+// Scope note: `TmuxProvider` only exposes the primitives `parent-pid-tree`
+// needs today. Other tmux call sites in this binary (`side_edit`, `side_run`,
+// `rename_all`, `rotate`, `third`) still shell out directly via
+// `run_tmux_command` and scattered `Command::new("tmux")` calls. Migrating
+// those requires characterization tests that don't exist yet. New tmux code
+// should use this trait; old sites can migrate incrementally.
+
+/// Errors surfaced by the `TmuxProvider` humble shell.
+///
+/// The walker + command layer translate these to concrete exit codes; the
+/// shell itself doesn't know about the 0/1/2/3 scheme.
+#[derive(Debug)]
+enum TmuxError {
+    /// tmux is not installed, no server is running, or `list-panes` returned
+    /// empty output (e.g. no sessions). Maps to exit code 2.
+    NotRunning,
+    /// Spawning `tmux` failed or the child exited non-zero with an io-level
+    /// error. Preserves the underlying `io::Error` for context. Also exit 2,
+    /// with a more specific stderr message.
+    ListFailed(std::io::Error),
+    /// `tmux` output could not be parsed as expected. Present for
+    /// forward-compat — the current line-based parser skips malformed lines
+    /// rather than erroring. Also exit 2.
+    #[allow(dead_code)]
+    ParseFailed(String),
+}
+
+impl std::fmt::Display for TmuxError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TmuxError::NotRunning => write!(f, "tmux not running or no panes"),
+            TmuxError::ListFailed(e) => write!(f, "tmux list-panes failed: {}", e),
+            TmuxError::ParseFailed(msg) => write!(f, "tmux output parse failed: {}", msg),
+        }
+    }
+}
+
+/// Humble shell over `tmux` for `parent-pid-tree`. Only primitives this PR
+/// needs are defined; add more methods here (and to `RealTmuxProvider`) when
+/// migrating other call sites.
+trait TmuxProvider {
+    /// List every tmux pane's `(pane_id, pane_pid)` across all sessions
+    /// (`tmux list-panes -a`). Returns `NotRunning` if tmux is unreachable or
+    /// the server has no panes. Order is not guaranteed.
+    fn list_pane_pids(&self) -> Result<Vec<(String, u32)>, TmuxError>;
+
+    /// Return the currently tmux-active pane id (focused in the attached
+    /// client). This is intentionally NOT what `parent-pid-tree` uses to
+    /// answer "which pane am I in" — it exists for explicit active-pane
+    /// lookups and future migrations.
+    #[allow(dead_code)]
+    fn active_pane(&self) -> Result<Option<String>, TmuxError>;
+}
+
+/// Humble shell over `/proc/<pid>/stat`. Tests inject a mock that returns a
+/// pre-built chain without touching the filesystem.
+trait ProcReader {
+    /// Return the parent pid of `pid` (field 4 of `/proc/<pid>/stat`). Returns
+    /// `None` for pid 0, a vanished process, or an unreadable/unparseable stat
+    /// file. `None` is non-fatal to the walker — it just means "stop here".
+    fn read_ppid(&self, pid: u32) -> Option<u32>;
+}
+
+/// Production implementation of `TmuxProvider` — shells out to the `tmux`
+/// binary via `std::process::Command`.
+struct RealTmuxProvider;
+
+impl TmuxProvider for RealTmuxProvider {
+    fn list_pane_pids(&self) -> Result<Vec<(String, u32)>, TmuxError> {
+        let output = Command::new("tmux")
+            .args(["list-panes", "-a", "-F", "#{pane_id} #{pane_pid}"])
+            .output()
+            .map_err(TmuxError::ListFailed)?;
+        if !output.status.success() {
+            return Err(TmuxError::NotRunning);
+        }
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let pairs = parse_pane_pid_pairs(&stdout);
+        if pairs.is_empty() {
+            return Err(TmuxError::NotRunning);
+        }
+        Ok(pairs)
+    }
+
+    fn active_pane(&self) -> Result<Option<String>, TmuxError> {
+        let output = Command::new("tmux")
+            .args(["display-message", "-p", "#{pane_id}"])
+            .output()
+            .map_err(TmuxError::ListFailed)?;
+        if !output.status.success() {
+            return Err(TmuxError::NotRunning);
+        }
+        let s = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if s.is_empty() { Ok(None) } else { Ok(Some(s)) }
+    }
+}
+
+/// Production implementation of `ProcReader`. Delegates to
+/// `read_ppid_from_proc`, whose `rfind(')')`-based parser is load-bearing for
+/// `comm` fields containing parens or spaces — do NOT reimplement it inline.
+struct RealProcReader;
+
+impl ProcReader for RealProcReader {
+    fn read_ppid(&self, pid: u32) -> Option<u32> {
+        read_ppid_from_proc(pid)
+    }
+}
 
 /// Result of a successful parent-pid walk.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1876,10 +1993,11 @@ fn read_ppid_from_proc(pid: u32) -> Option<u32> {
     ppid_str.parse().ok()
 }
 
-/// Parse `tmux list-panes -a -F '#{pane_id} #{pane_pid}'` output into a map
-/// from pane_pid -> pane_id.
-fn parse_pane_pids(output: &str) -> HashMap<u32, String> {
-    let mut map = HashMap::new();
+/// Parse `tmux list-panes -a -F '#{pane_id} #{pane_pid}'` output into a list
+/// of `(pane_id, pane_pid)` tuples. Malformed lines are silently skipped so
+/// a single garbage line from tmux doesn't blow up the whole walk.
+fn parse_pane_pid_pairs(output: &str) -> Vec<(String, u32)> {
+    let mut pairs = Vec::new();
     for line in output.lines() {
         let line = line.trim();
         if line.is_empty() {
@@ -1893,25 +2011,22 @@ fn parse_pane_pids(output: &str) -> HashMap<u32, String> {
             continue;
         };
         if let Ok(pid) = pid_str.parse::<u32>() {
-            map.insert(pid, pane_id.to_string());
+            pairs.push((pane_id.to_string(), pid));
         }
     }
-    map
+    pairs
 }
 
-/// Fetch `tmux list-panes -a -F '#{pane_id} #{pane_pid}'` and parse it.
-/// Returns an error if tmux is not running or the command fails.
-fn list_tmux_pane_pids() -> Result<HashMap<u32, String>> {
-    let output = Command::new("tmux")
-        .args(["list-panes", "-a", "-F", "#{pane_id} #{pane_pid}"])
-        .output()
-        .context("failed to spawn tmux")?;
-    if !output.status.success() {
-        anyhow::bail!("tmux list-panes failed (is tmux running?)");
-    }
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let map = parse_pane_pids(&stdout);
-    Ok(map)
+/// Parse `tmux list-panes -a -F '#{pane_id} #{pane_pid}'` output into a map
+/// from pane_pid -> pane_id. Kept for test-level coverage of the parser;
+/// production code goes through `parse_pane_pid_pairs` inside
+/// `RealTmuxProvider::list_pane_pids`.
+#[cfg(test)]
+fn parse_pane_pids(output: &str) -> HashMap<u32, String> {
+    parse_pane_pid_pairs(output)
+        .into_iter()
+        .map(|(pane_id, pid)| (pid, pane_id))
+        .collect()
 }
 
 /// Safety cap on walk depth — normal process trees on Linux are well under this.
@@ -1971,91 +2086,169 @@ where
     None
 }
 
-/// Run the parent-pid-tree command end to end: default start-pid resolution,
-/// tmux list-panes, walk, output formatting, exit code.
+/// CLI-level flags for `parent-pid-tree`. Extracted into a struct so the
+/// testable core can be driven with plain values without re-parsing clap.
+#[derive(Debug, Clone, Copy)]
+struct ParentPidTreeArgs {
+    json: bool,
+    pid: Option<u32>,
+    verbose: bool,
+}
+
+/// Structured result of running `parent-pid-tree`.
 ///
-/// Returns a concrete exit code (0/1/2/3) rather than anyhow::Error so that the
-/// error contract documented in CLAUDE.md is preserved — we want deterministic
-/// codes regardless of what fails underneath.
-fn parent_pid_tree_cmd(json: bool, pid: Option<u32>, verbose: bool) -> i32 {
+/// `main()` is the only place that actually writes to real stdout/stderr —
+/// this type makes the command function a pure data transform that tests can
+/// assert against. Any non-empty `stdout` is printed as-is with a trailing
+/// newline, and every `stderr_lines` entry is printed on its own line.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ParentPidTreeOutcome {
+    /// Line to print to stdout (matched pane id or JSON blob). Empty on the
+    /// failure exit codes 1/2/3.
+    stdout: String,
+    /// Lines to print to stderr. `--verbose` adds walk-chain entries; error
+    /// paths add a human-readable message.
+    stderr_lines: Vec<String>,
+    /// Concrete exit code. See `run_parent_pid_tree` for the contract.
+    exit_code: i32,
+}
+
+/// Testable core of `parent-pid-tree`. Takes humble-shell dependencies so
+/// every branch is reachable without touching tmux or `/proc`.
+///
+/// Exit code contract (mirrored in CLAUDE.md — keep in sync):
+/// - `0` — pane found, `stdout` holds the pane id or JSON payload
+/// - `1` — no match (walker exhausted chain without finding a pane_pid)
+/// - `2` — tmux not running / list-panes failed / empty pane set
+/// - `3` — could not read self's ppid (default-start-pid path only)
+///
+/// `self_pid` is passed explicitly instead of calling `std::process::id()`
+/// internally so tests can control the "read my own ppid" branch. Production
+/// callers pass `std::process::id()`.
+fn run_parent_pid_tree(
+    args: ParentPidTreeArgs,
+    self_pid: u32,
+    tmux: &dyn TmuxProvider,
+    proc: &dyn ProcReader,
+) -> ParentPidTreeOutcome {
+    let mut stderr_lines: Vec<String> = Vec::new();
+
     // 1. Fetch pane_pid map from tmux.
-    let pane_pids = match list_tmux_pane_pids() {
-        Ok(map) if map.is_empty() => {
-            eprintln!("tmux not running or no panes");
-            return 2;
+    let pane_pids: HashMap<u32, String> = match tmux.list_pane_pids() {
+        Ok(pairs) => pairs
+            .into_iter()
+            .map(|(pane_id, pid)| (pid, pane_id))
+            .collect(),
+        Err(TmuxError::NotRunning) => {
+            stderr_lines.push("tmux not running or no panes".to_string());
+            return ParentPidTreeOutcome {
+                stdout: String::new(),
+                stderr_lines,
+                exit_code: 2,
+            };
         }
-        Ok(map) => map,
         Err(e) => {
-            eprintln!("tmux not running or no panes: {}", e);
-            return 2;
+            stderr_lines.push(format!("tmux not running or no panes: {}", e));
+            return ParentPidTreeOutcome {
+                stdout: String::new(),
+                stderr_lines,
+                exit_code: 2,
+            };
         }
     };
 
     // 2. Determine start pid. When the user passed --pid we trust it verbatim.
     // Otherwise we walk from the PARENT of rmux_helper itself: rmux_helper is
     // a child of whoever invoked it, and that caller is what we want to resolve.
-    let start_pid = match pid {
+    let start_pid = match args.pid {
         Some(p) => p,
-        None => {
-            let self_pid = std::process::id();
-            match read_ppid_from_proc(self_pid) {
-                Some(p) => p,
-                None => {
-                    eprintln!(
-                        "could not read /proc/{}/stat to find caller pid",
-                        self_pid
-                    );
-                    return 3;
-                }
+        None => match proc.read_ppid(self_pid) {
+            Some(p) => p,
+            None => {
+                stderr_lines.push(format!(
+                    "could not read /proc/{}/stat to find caller pid",
+                    self_pid
+                ));
+                return ParentPidTreeOutcome {
+                    stdout: String::new(),
+                    stderr_lines,
+                    exit_code: 3,
+                };
             }
-        }
+        },
     };
 
-    if verbose {
-        eprintln!("parent-pid-tree: starting walk at pid {}", start_pid);
+    if args.verbose {
+        stderr_lines.push(format!("parent-pid-tree: starting walk at pid {}", start_pid));
     }
 
-    // 3. Walk the chain.
-    let result = resolve_pane_by_parent_chain(start_pid, &pane_pids, read_ppid_from_proc);
+    // 3. Walk the chain. The walker takes its own read_ppid closure, which we
+    //    adapt from the injected `ProcReader`.
+    let result = resolve_pane_by_parent_chain(start_pid, &pane_pids, |p| proc.read_ppid(p));
 
     match result {
         Some(m) => {
-            if verbose {
+            if args.verbose {
                 let chain: Vec<String> = m
                     .ancestors_walked
                     .iter()
                     .map(|p| p.to_string())
                     .collect();
-                eprintln!(
+                stderr_lines.push(format!(
                     "parent-pid-tree: walked {} (pane_pid) -> pane {}",
                     chain.join(" -> "),
                     m.pane_id
-                );
+                ));
             }
-            if json {
+            let stdout = if args.json {
                 let payload = serde_json::json!({
                     "pane_id": m.pane_id,
                     "pane_pid": m.pane_pid,
                     "walked_from_pid": start_pid,
                     "ancestors_walked": m.ancestors_walked,
                 });
-                println!("{}", payload);
+                payload.to_string()
             } else {
-                println!("{}", m.pane_id);
+                m.pane_id.clone()
+            };
+            ParentPidTreeOutcome {
+                stdout,
+                stderr_lines,
+                exit_code: 0,
             }
-            0
         }
         None => {
-            if verbose {
-                eprintln!(
+            if args.verbose {
+                stderr_lines.push(format!(
                     "parent-pid-tree: no pane match for pid {} (walked until init/unreadable/max-depth)",
                     start_pid
-                );
+                ));
             }
-            eprintln!("no tmux pane found for pid {}", start_pid);
-            1
+            stderr_lines.push(format!("no tmux pane found for pid {}", start_pid));
+            ParentPidTreeOutcome {
+                stdout: String::new(),
+                stderr_lines,
+                exit_code: 1,
+            }
         }
     }
+}
+
+/// Thin wrapper that wires the real humble-shell impls into the testable core
+/// and performs the actual stdout/stderr writes. `main()` calls this; tests
+/// call `run_parent_pid_tree` directly with mocks.
+fn parent_pid_tree_cmd(json: bool, pid: Option<u32>, verbose: bool) -> i32 {
+    let args = ParentPidTreeArgs { json, pid, verbose };
+    let tmux = RealTmuxProvider;
+    let proc = RealProcReader;
+    let outcome = run_parent_pid_tree(args, std::process::id(), &tmux, &proc);
+    for line in &outcome.stderr_lines {
+        eprintln!("{}", line);
+    }
+    if !outcome.stdout.is_empty() {
+        println!("{}", outcome.stdout);
+    }
+    outcome.exit_code
 }
 
 fn main() -> Result<()> {
