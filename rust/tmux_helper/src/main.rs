@@ -2805,4 +2805,77 @@ mod tests {
         let result = resolve_pane_by_parent_chain(500, &pane_pids, fake_ppid(&chain));
         assert!(result.is_none());
     }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_start_from_pid_zero() {
+        // Sentinel guard: starting at pid 0 must return None immediately without
+        // consulting the reader. Protects against bogus input blowing up the walk.
+        let pane_pids = HashMap::new();
+        let mut calls = 0u32;
+        let reader = |_pid: u32| {
+            calls += 1;
+            Some(42u32)
+        };
+        let result = resolve_pane_by_parent_chain(0, &pane_pids, reader);
+        assert!(result.is_none());
+        assert_eq!(calls, 0, "reader must not be called when start_pid is 0");
+    }
+
+    #[test]
+    fn test_resolve_pane_by_parent_chain_start_from_pid_one() {
+        // Same sentinel guard for init (pid 1). Walker must stop, not query reader.
+        let pane_pids = HashMap::new();
+        let mut calls = 0u32;
+        let reader = |_pid: u32| {
+            calls += 1;
+            Some(42u32)
+        };
+        let result = resolve_pane_by_parent_chain(1, &pane_pids, reader);
+        assert!(result.is_none());
+        assert_eq!(calls, 0, "reader must not be called when start_pid is 1");
+    }
+
+    #[test]
+    fn test_read_ppid_from_proc_pid_zero_guard() {
+        // pid 0 is a sentinel — must return None without touching /proc.
+        assert_eq!(read_ppid_from_proc(0), None);
+    }
+
+    #[test]
+    fn test_read_ppid_from_proc_nonexistent_pid() {
+        // A pid that (almost) certainly does not exist on any real system must
+        // return None gracefully (fs::read fails → .ok()? short-circuits). Any
+        // panic here would indicate the error path is broken.
+        assert_eq!(read_ppid_from_proc(u32::MAX), None);
+    }
+
+    // --- Integration-ish tests against real /proc -------------------------------
+    //
+    // These exercise the live /proc stat parser (rfind(')')-based comm handling)
+    // against real kernel data so the `comm` field with spaces or close-parens
+    // doesn't silently break parsing. They're Linux-only; guarded with cfg.
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_read_ppid_from_proc_init_is_zero() {
+        // init (pid 1) always exists on Linux and its ppid is 0 by kernel
+        // convention. Verifies the parser works end-to-end on a real stat line.
+        let ppid = read_ppid_from_proc(1).expect("/proc/1/stat must be readable on Linux");
+        assert_eq!(ppid, 0, "init's ppid should be 0");
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_read_ppid_from_proc_self_matches_process_parent() {
+        // The current process's ppid from /proc must be Some(non-zero). This
+        // catches regressions in field-offset math after the comm section — the
+        // very bug the rfind(')') logic exists to prevent.
+        let my_pid = std::process::id();
+        let ppid =
+            read_ppid_from_proc(my_pid).expect("/proc/<self>/stat must be readable and parseable");
+        assert!(
+            ppid > 0,
+            "own ppid must be > 0 (actual pid tree should have a real parent)"
+        );
+    }
 }
