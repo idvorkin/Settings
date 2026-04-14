@@ -63,6 +63,43 @@ Typical invocations:
 
 When adding new tmux-integration code, prefer this pattern: put shell-outs behind `TmuxProvider` (extend the trait as needed), keep all logic in a pure function that takes the trait object, and make the command wrapper thin. The other tmux call sites in this binary (`side_edit`, `side_run`, `rename_all`, `rotate`, `third`, etc.) still shell out directly — see the TODO above `run_tmux_command` in `src/main.rs`. They should be migrated once characterization tests exist for their current behavior.
 
+## Shell completions
+
+### Install
+
+```bash
+rmux_helper install-completions              # auto-detects from $SHELL
+rmux_helper install-completions --shell zsh  # explicit
+rmux_helper install-completions --print-only # dump to stdout for custom install
+rmux_helper install-completions --dry-run    # report target path, skip the write
+```
+
+`--print-only` and `--dry-run` are mutually exclusive (enforced by clap).
+Re-running `install-completions` overwrites the existing file — idempotent.
+
+Installation paths (default):
+
+| Shell | Path |
+|---|---|
+| zsh | `$ZDOTDIR/.zfunc/_rmux_helper` or `$HOME/.zfunc/_rmux_helper` |
+| bash | `$XDG_DATA_HOME/bash-completion/completions/rmux_helper` or `$HOME/.local/share/bash-completion/completions/rmux_helper` |
+| fish | `$XDG_CONFIG_HOME/fish/completions/rmux_helper.fish` or `$HOME/.config/fish/completions/rmux_helper.fish` |
+| powershell / elvish | no default — use `--print-only` and pipe to your profile |
+
+On first zsh install, make sure `~/.zfunc` is in `$fpath` and `autoload -Uz compinit && compinit` has run.
+
+### Dynamic completion
+
+- `parent-pid-tree --pid <TAB>` — completes to running pids with `comm` as the help text. Read live from `/proc` at tab-time, sorted newest-first, capped at 500.
+- Subcommand names, flag names, and static enum values (e.g. `--shell <TAB>`) complete via clap's built-in generation — free.
+- File-accepting args (`side-edit <file>`) complete via the shell's default file completion (`ValueHint::FilePath`).
+
+The tab-time hook is `clap_complete::CompleteEnv::with_factory(Cli::command).complete()` at the top of `main()`. When the binary is invoked with `COMPLETE=<shell>` in its environment, clap_complete intercepts, writes the shell-specific completion output to stdout, and exits before regular arg parsing. The installed shell script re-invokes the binary with `COMPLETE` set on every tab press, so completion values are always live — no static snapshot to regenerate on upgrade.
+
+### Dep footprint
+
+Adds `clap_complete = { version = "4", features = ["unstable-dynamic"] }`. Feature flag is required for `CompleteEnv`, `ArgValueCompleter`, and `CompletionCandidate`. The API is marked unstable — if it churns, expect a compile error that points directly at `pid_completer` / the `#[arg(add = ...)]` attribute.
+
 ## side-edit / side-run stdout contract
 
 `side-edit` and `side-run` (with no args, status-only) print three lines that shell scripts consume:
