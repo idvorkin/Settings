@@ -2,11 +2,13 @@ mod link_picker;
 mod picker;
 
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum, ValueHint};
+use clap_complete::engine::{ArgValueCompleter, CompletionCandidate};
 use std::collections::{HashMap, HashSet};
+use std::ffi::OsStr;
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use sysinfo::{Pid, ProcessRefreshKind, System};
 
@@ -54,6 +56,7 @@ enum Commands {
     /// Supports file:line syntax (e.g. foo.py:42). No args = print status only.
     SideEdit {
         /// File path to open (supports file:line syntax)
+        #[arg(value_hint = ValueHint::FilePath)]
         file: Option<String>,
     },
     /// Run a shell command in the side pane (reuses same pane as side-edit).
@@ -85,7 +88,7 @@ enum Commands {
         json: bool,
         /// Start the walk from this pid instead of the caller's pid.
         /// When omitted, starts from the parent of rmux_helper (i.e. the caller).
-        #[arg(long)]
+        #[arg(long, add = ArgValueCompleter::new(pid_completer))]
         pid: Option<u32>,
         /// Log the walk (ancestor chain, pane match) to stderr for debugging
         #[arg(long)]
@@ -94,6 +97,23 @@ enum Commands {
         /// metadata per PID. Combine with --json for structured output.
         #[arg(long)]
         tree: bool,
+    },
+    /// Install shell completions for rmux_helper.
+    ///
+    /// Writes a shell-specific completion script to the conventional location for
+    /// the target shell and prints a one-line confirmation. Completions are
+    /// dynamic — e.g. `parent-pid-tree --pid <TAB>` resolves live pids from
+    /// `/proc` at tab-time.
+    InstallCompletions {
+        /// Target shell. Defaults to auto-detection from `$SHELL`.
+        #[arg(long, value_enum)]
+        shell: Option<CompletionShell>,
+        /// Print the completion script to stdout instead of writing a file.
+        #[arg(long, conflicts_with = "dry_run")]
+        print_only: bool,
+        /// Report the target path and skip the write. Useful for scripting.
+        #[arg(long)]
+        dry_run: bool,
     },
 }
 
@@ -2619,7 +2639,272 @@ fn parent_pid_tree_cmd(json: bool, pid: Option<u32>, verbose: bool, tree: bool) 
     outcome.exit_code
 }
 
+// ---------------------------------------------------------------------------
+// Shell completions
+// ---------------------------------------------------------------------------
+
+/// Shells for which `install-completions` knows a conventional install path
+/// and writes a completion script. `Powershell` and `Elvish` are accepted for
+/// `--print-only` use but do not have a default install path (noted in docs).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum CompletionShell {
+    Zsh,
+    Bash,
+    Fish,
+    Powershell,
+    Elvish,
+}
+
+impl CompletionShell {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Zsh => "zsh",
+            Self::Bash => "bash",
+            Self::Fish => "fish",
+            Self::Powershell => "powershell",
+            Self::Elvish => "elvish",
+        }
+    }
+}
+
+/// Pure function: map a `$SHELL`-style string (e.g. `/bin/zsh`, `fish`) to
+/// a `CompletionShell`. Returns `None` on unknown/empty input so the caller
+/// can emit a helpful `--shell` suggestion.
+fn detect_shell_from_env(shell: Option<&str>) -> Option<CompletionShell> {
+    let s = shell?;
+    let basename = s.rsplit('/').next().unwrap_or(s).trim();
+    if basename.is_empty() {
+        return None;
+    }
+    match basename {
+        "zsh" => Some(CompletionShell::Zsh),
+        "bash" => Some(CompletionShell::Bash),
+        "fish" => Some(CompletionShell::Fish),
+        "pwsh" | "powershell" => Some(CompletionShell::Powershell),
+        "elvish" => Some(CompletionShell::Elvish),
+        _ => None,
+    }
+}
+
+/// Environment snapshot used by `completion_install_path`. Extracted to a
+/// struct so tests can inject values without mutating the real process env.
+#[derive(Debug, Default, Clone)]
+struct EnvSnapshot {
+    pub home: Option<String>,
+    pub zdotdir: Option<String>,
+    pub xdg_data_home: Option<String>,
+    pub xdg_config_home: Option<String>,
+}
+
+impl EnvSnapshot {
+    fn from_env() -> Self {
+        Self {
+            home: std::env::var("HOME").ok(),
+            zdotdir: std::env::var("ZDOTDIR").ok(),
+            xdg_data_home: std::env::var("XDG_DATA_HOME").ok(),
+            xdg_config_home: std::env::var("XDG_CONFIG_HOME").ok(),
+        }
+    }
+}
+
+/// Resolve the conventional install path for a shell's `rmux_helper`
+/// completion file. Returns `None` for shells without a default location
+/// (powershell / elvish) or when `$HOME` is unset and no XDG override is
+/// available.
+fn completion_install_path(shell: CompletionShell, env: &EnvSnapshot) -> Option<PathBuf> {
+    match shell {
+        CompletionShell::Zsh => {
+            let base = env
+                .zdotdir
+                .as_deref()
+                .or(env.home.as_deref())
+                .map(PathBuf::from)?;
+            Some(base.join(".zfunc").join("_rmux_helper"))
+        }
+        CompletionShell::Bash => {
+            let base = if let Some(x) = env.xdg_data_home.as_deref() {
+                PathBuf::from(x)
+            } else {
+                let home = env.home.as_deref()?;
+                PathBuf::from(home).join(".local").join("share")
+            };
+            Some(
+                base.join("bash-completion")
+                    .join("completions")
+                    .join("rmux_helper"),
+            )
+        }
+        CompletionShell::Fish => {
+            let base = if let Some(x) = env.xdg_config_home.as_deref() {
+                PathBuf::from(x)
+            } else {
+                let home = env.home.as_deref()?;
+                PathBuf::from(home).join(".config")
+            };
+            Some(base.join("fish").join("completions").join("rmux_helper.fish"))
+        }
+        CompletionShell::Powershell | CompletionShell::Elvish => None,
+    }
+}
+
+/// Friendly post-install note per shell — printed on successful write so the
+/// user knows what (if anything) they need to do to activate completions.
+fn completion_friendly_note(shell: CompletionShell) -> &'static str {
+    match shell {
+        CompletionShell::Zsh => {
+            "Make sure ~/.zfunc is in your $fpath and `autoload -Uz compinit && compinit` has run. Typically added to ~/.zshrc."
+        }
+        CompletionShell::Bash => {
+            "Sourced automatically if bash-completion is installed (apt install bash-completion on Debian/Ubuntu, brew install bash-completion@2 on macOS)."
+        }
+        CompletionShell::Fish => "Loaded automatically on next fish shell start.",
+        CompletionShell::Powershell | CompletionShell::Elvish => {
+            "Pipe the output to your shell's profile; no default install path."
+        }
+    }
+}
+
+/// Generate the dynamic-completion registration script for a shell. Invokes
+/// the current binary with `COMPLETE=<shell>` which `clap_complete`'s
+/// `CompleteEnv` intercepts and emits the script on stdout.
+///
+/// The script is a small wrapper that calls back into this binary at tab-time
+/// with `COMPLETE=<shell> <args>`, so all completion values — including the
+/// live pid list for `parent-pid-tree --pid` — are resolved dynamically.
+fn generate_completion_script(shell: CompletionShell) -> Result<String> {
+    let exe = std::env::current_exe().context("failed to locate rmux_helper binary")?;
+    let output = Command::new(&exe)
+        .env("COMPLETE", shell.as_str())
+        .output()
+        .with_context(|| format!("failed to spawn {} for completion generation", exe.display()))?;
+    if !output.status.success() {
+        anyhow::bail!(
+            "rmux_helper exited {} while generating {} completions: {}",
+            output.status,
+            shell.as_str(),
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+fn install_completions_cmd(
+    shell: Option<CompletionShell>,
+    print_only: bool,
+    dry_run: bool,
+) -> Result<()> {
+    let resolved = match shell {
+        Some(s) => s,
+        None => {
+            let env_shell = std::env::var("SHELL").ok();
+            detect_shell_from_env(env_shell.as_deref()).ok_or_else(|| {
+                anyhow::anyhow!(
+                    "could not detect shell from $SHELL (got {:?}); pass --shell zsh|bash|fish|powershell|elvish",
+                    env_shell
+                )
+            })?
+        }
+    };
+
+    let script = generate_completion_script(resolved)?;
+
+    if print_only {
+        print!("{}", script);
+        return Ok(());
+    }
+
+    let env = EnvSnapshot::from_env();
+    let target = completion_install_path(resolved, &env).ok_or_else(|| {
+        anyhow::anyhow!(
+            "no default install path for {}; re-run with --print-only and pipe to your shell's profile",
+            resolved.as_str()
+        )
+    })?;
+
+    if dry_run {
+        println!("would install {} completions to {}", resolved.as_str(), target.display());
+        return Ok(());
+    }
+
+    if let Some(parent) = target.parent() {
+        fs::create_dir_all(parent).with_context(|| {
+            format!("failed to create completion dir {}", parent.display())
+        })?;
+    }
+    fs::write(&target, &script)
+        .with_context(|| format!("failed to write {}", target.display()))?;
+    println!(
+        "installed {} completions to {}",
+        resolved.as_str(),
+        target.display()
+    );
+    println!("note: {}", completion_friendly_note(resolved));
+    Ok(())
+}
+
+/// Dynamic completion callback for `parent-pid-tree --pid`.
+///
+/// Enumerates running pids from `/proc`, filters by the user's partial input,
+/// and annotates each candidate with the process's `comm` for a readable
+/// tab-complete menu. Capped at 500 candidates to avoid flooding the terminal
+/// on a busy box.
+///
+/// Intentionally tolerant: `/proc` missing (macOS, BSD) or unreadable returns
+/// an empty list — never panic during completion.
+fn pid_completer(current: &OsStr) -> Vec<CompletionCandidate> {
+    let current = current.to_string_lossy();
+    let entries = enumerate_pid_candidates(&RealProcReader, Path::new("/proc"), 500);
+    entries
+        .into_iter()
+        .filter(|(pid, _)| current.is_empty() || pid.to_string().starts_with(current.as_ref()))
+        .map(|(pid, comm)| {
+            let mut c = CompletionCandidate::new(pid.to_string());
+            if let Some(name) = comm {
+                c = c.help(Some(name.into()));
+            }
+            c
+        })
+        .collect()
+}
+
+/// Pure-ish helper that enumerates `(pid, comm)` pairs from a `/proc`-shaped
+/// directory. Dependency-injected over `ProcReader` + a root path so tests
+/// can feed a tempdir layout without touching the real filesystem.
+///
+/// Sort order: pid descending (newest first) so the most recently spawned
+/// processes appear at the top of the completion menu. Truncated at `cap`.
+fn enumerate_pid_candidates(
+    proc: &dyn ProcReader,
+    proc_root: &Path,
+    cap: usize,
+) -> Vec<(u32, Option<String>)> {
+    let Ok(entries) = fs::read_dir(proc_root) else {
+        return Vec::new();
+    };
+    let mut pids: Vec<u32> = entries
+        .filter_map(|e| e.ok())
+        .filter_map(|e| e.file_name().to_str().and_then(|s| s.parse::<u32>().ok()))
+        .collect();
+    pids.sort_unstable_by(|a, b| b.cmp(a));
+    pids.truncate(cap);
+    pids.into_iter()
+        .map(|pid| {
+            let comm = proc.read_comm(pid);
+            (pid, comm)
+        })
+        .collect()
+}
+
 fn main() -> Result<()> {
+    // Intercept completion requests (COMPLETE=<shell> rmux_helper ...). When
+    // the env var is set clap_complete handles the request and exits; when
+    // unset this is a no-op and we proceed to regular arg parsing.
+    clap_complete::CompleteEnv::with_factory(|| {
+        use clap::CommandFactory;
+        Cli::command()
+    })
+    .complete();
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -2644,6 +2929,11 @@ fn main() -> Result<()> {
             let code = parent_pid_tree_cmd(json, pid, verbose, tree);
             std::process::exit(code);
         }
+        Some(Commands::InstallCompletions {
+            shell,
+            print_only,
+            dry_run,
+        }) => install_completions_cmd(shell, print_only, dry_run),
         None => {
             // Show help when no command given
             use clap::CommandFactory;
@@ -4057,5 +4347,191 @@ mod tests {
         assert!(comm.is_some(), "own comm must be readable");
         let exe = reader.read_exe(pid);
         assert!(exe.is_some(), "own exe must be readable");
+    }
+
+    // ---- install-completions ----
+
+    #[test]
+    fn test_detect_shell_from_env_basenames() {
+        assert_eq!(detect_shell_from_env(Some("/bin/zsh")), Some(CompletionShell::Zsh));
+        assert_eq!(detect_shell_from_env(Some("/usr/bin/bash")), Some(CompletionShell::Bash));
+        assert_eq!(detect_shell_from_env(Some("fish")), Some(CompletionShell::Fish));
+        assert_eq!(detect_shell_from_env(Some("/opt/homebrew/bin/pwsh")), Some(CompletionShell::Powershell));
+        assert_eq!(detect_shell_from_env(Some("elvish")), Some(CompletionShell::Elvish));
+    }
+
+    #[test]
+    fn test_detect_shell_from_env_rejects_unknown_and_empty() {
+        assert_eq!(detect_shell_from_env(Some("/weird/custom")), None);
+        assert_eq!(detect_shell_from_env(Some("")), None);
+        assert_eq!(detect_shell_from_env(None), None);
+    }
+
+    #[test]
+    fn test_completion_install_path_zsh_uses_zdotdir_when_set() {
+        let env = EnvSnapshot {
+            home: Some("/home/user".into()),
+            zdotdir: Some("/home/user/dotfiles/zsh".into()),
+            ..Default::default()
+        };
+        let p = completion_install_path(CompletionShell::Zsh, &env).unwrap();
+        assert_eq!(p, PathBuf::from("/home/user/dotfiles/zsh/.zfunc/_rmux_helper"));
+    }
+
+    #[test]
+    fn test_completion_install_path_zsh_falls_back_to_home() {
+        let env = EnvSnapshot {
+            home: Some("/home/user".into()),
+            ..Default::default()
+        };
+        let p = completion_install_path(CompletionShell::Zsh, &env).unwrap();
+        assert_eq!(p, PathBuf::from("/home/user/.zfunc/_rmux_helper"));
+    }
+
+    #[test]
+    fn test_completion_install_path_bash_respects_xdg_data_home() {
+        let env = EnvSnapshot {
+            home: Some("/home/user".into()),
+            xdg_data_home: Some("/custom/data".into()),
+            ..Default::default()
+        };
+        let p = completion_install_path(CompletionShell::Bash, &env).unwrap();
+        assert_eq!(
+            p,
+            PathBuf::from("/custom/data/bash-completion/completions/rmux_helper")
+        );
+    }
+
+    #[test]
+    fn test_completion_install_path_bash_default_xdg() {
+        let env = EnvSnapshot {
+            home: Some("/home/user".into()),
+            ..Default::default()
+        };
+        let p = completion_install_path(CompletionShell::Bash, &env).unwrap();
+        assert_eq!(
+            p,
+            PathBuf::from("/home/user/.local/share/bash-completion/completions/rmux_helper")
+        );
+    }
+
+    #[test]
+    fn test_completion_install_path_fish_respects_xdg_config_home() {
+        let env = EnvSnapshot {
+            home: Some("/home/user".into()),
+            xdg_config_home: Some("/custom/cfg".into()),
+            ..Default::default()
+        };
+        let p = completion_install_path(CompletionShell::Fish, &env).unwrap();
+        assert_eq!(
+            p,
+            PathBuf::from("/custom/cfg/fish/completions/rmux_helper.fish")
+        );
+    }
+
+    #[test]
+    fn test_completion_install_path_fish_default() {
+        let env = EnvSnapshot {
+            home: Some("/home/user".into()),
+            ..Default::default()
+        };
+        let p = completion_install_path(CompletionShell::Fish, &env).unwrap();
+        assert_eq!(
+            p,
+            PathBuf::from("/home/user/.config/fish/completions/rmux_helper.fish")
+        );
+    }
+
+    #[test]
+    fn test_completion_install_path_powershell_none() {
+        let env = EnvSnapshot {
+            home: Some("/home/user".into()),
+            ..Default::default()
+        };
+        assert_eq!(completion_install_path(CompletionShell::Powershell, &env), None);
+        assert_eq!(completion_install_path(CompletionShell::Elvish, &env), None);
+    }
+
+    #[test]
+    fn test_completion_install_path_no_home_no_xdg_returns_none() {
+        // $HOME unset with no XDG override -> can't resolve zsh/bash/fish path.
+        let env = EnvSnapshot::default();
+        assert_eq!(completion_install_path(CompletionShell::Zsh, &env), None);
+        assert_eq!(completion_install_path(CompletionShell::Bash, &env), None);
+        assert_eq!(completion_install_path(CompletionShell::Fish, &env), None);
+    }
+
+    #[test]
+    fn test_enumerate_pid_candidates_sorted_desc_and_truncated() {
+        // Build a tempdir `/proc`-like layout with numeric-named subdirs.
+        let tmp = std::env::temp_dir().join(format!(
+            "rmux_helper_pid_enum_test_{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(&tmp).unwrap();
+        for pid in [1u32, 5, 42, 100, 500, 9999] {
+            fs::create_dir(tmp.join(pid.to_string())).unwrap();
+        }
+        // Also create a non-numeric dir — should be ignored.
+        fs::create_dir(tmp.join("self")).unwrap();
+
+        // Mock reader that returns a fixed comm for known pids.
+        let proc = MockProcReader::from_chain(&[])
+            .with_comm(42, "claude")
+            .with_comm(100, "zsh");
+
+        let out = enumerate_pid_candidates(&proc, &tmp, 3);
+        // Descending order, capped at 3.
+        assert_eq!(out.len(), 3);
+        assert_eq!(out[0].0, 9999);
+        assert_eq!(out[1].0, 500);
+        assert_eq!(out[2].0, 100);
+        assert_eq!(out[2].1.as_deref(), Some("zsh"));
+
+        // Uncapped path: all six pids, comms attached where known.
+        let full = enumerate_pid_candidates(&proc, &tmp, 100);
+        assert_eq!(full.len(), 6);
+        let pids: Vec<u32> = full.iter().map(|(p, _)| *p).collect();
+        assert_eq!(pids, vec![9999, 500, 100, 42, 5, 1]);
+        assert_eq!(full[3].1.as_deref(), Some("claude"));
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_enumerate_pid_candidates_missing_proc_returns_empty() {
+        // /proc-equivalent path doesn't exist — return empty, never panic.
+        let proc = MockProcReader::from_chain(&[]);
+        let missing = PathBuf::from("/nonexistent/proc/path/xyz_rmux_test");
+        let out = enumerate_pid_candidates(&proc, &missing, 100);
+        assert!(out.is_empty());
+    }
+
+    #[test]
+    fn test_install_completions_cli_parses_conflicting_flags() {
+        // --print-only and --dry-run are mutually exclusive; clap should reject.
+        use clap::Parser;
+        let result = Cli::try_parse_from([
+            "rmux_helper",
+            "install-completions",
+            "--shell",
+            "zsh",
+            "--print-only",
+            "--dry-run",
+        ]);
+        assert!(result.is_err(), "expected conflicts_with to reject this");
+    }
+
+    #[test]
+    fn test_install_completions_cli_rejects_unknown_shell() {
+        use clap::Parser;
+        let result = Cli::try_parse_from([
+            "rmux_helper",
+            "install-completions",
+            "--shell",
+            "nosuchshell",
+        ]);
+        assert!(result.is_err(), "unknown shell should be rejected by clap");
     }
 }
