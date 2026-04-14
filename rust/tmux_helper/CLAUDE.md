@@ -55,6 +55,14 @@ Typical invocations:
 
 **Implementation**: see `fn resolve_pane_by_parent_chain` in `src/main.rs`. The walker is dependency-injected over `read_ppid: FnMut(u32) -> Option<u32>` so unit tests can verify the multi-session, no-match, vanished-parent, and cycle cases without touching `/proc`.
 
+**Humble Object layout**: the command is split into a thin shell and a testable core.
+
+- **Humble shell** — the `TmuxProvider` and `ProcReader` traits in `src/main.rs`. Production uses `RealTmuxProvider` (shells out to `tmux list-panes`) and `RealProcReader` (reads `/proc/<pid>/stat`). These are the only places that touch external state for the command.
+- **Testable core** — `fn run_parent_pid_tree(args, self_pid, tmux, proc) -> ParentPidTreeOutcome`. Accepts the traits as `&dyn`, returns `{ stdout, stderr_lines, exit_code }`. Every flag combination and exit code is reachable through in-memory `MockTmuxProvider` / `MockProcReader` without tmux or `/proc` being present.
+- **Command wrapper** — `fn parent_pid_tree_cmd` is the only place that constructs `Real*` impls and writes to real stdout/stderr. `main()` calls it and forwards the exit code.
+
+When adding new tmux-integration code, prefer this pattern: put shell-outs behind `TmuxProvider` (extend the trait as needed), keep all logic in a pure function that takes the trait object, and make the command wrapper thin. The other tmux call sites in this binary (`side_edit`, `side_run`, `rename_all`, `rotate`, `third`, etc.) still shell out directly — see the TODO above `run_tmux_command` in `src/main.rs`. They should be migrated once characterization tests exist for their current behavior.
+
 ## side-edit / side-run stdout contract
 
 `side-edit` and `side-run` (with no args, status-only) print three lines that shell scripts consume:

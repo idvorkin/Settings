@@ -359,6 +359,16 @@ struct ProcessInfo {
     children: Vec<ProcessInfo>,
 }
 
+// TODO: migrate callers of `run_tmux_command` (and the scattered
+// `Command::new("tmux")` fire-and-forget sites in `side_edit`, `side_run`,
+// `rename_all`, `rotate`, `third`, `info`, `resolve_side_pane`,
+// `ensure_two_panes`, `create_side_pane_shell`, `open_file_in_pane`, etc.)
+// to the `TmuxProvider` trait introduced for `parent-pid-tree`. None of
+// those functions have characterization tests today, so migrating them
+// blind would lose the "tests pass" safety net and could silently break
+// live tmux behavior. The pure helpers (`pick_side_pane`, `format_pane_status`,
+// `parse_file_line`, `resolve_pane_by_parent_chain`) are already DI-friendly
+// and tested; the shelling helpers need tests first, then trait migration.
 pub fn run_tmux_command(args: &[&str]) -> Result<String> {
     let output = Command::new("tmux")
         .args(args)
