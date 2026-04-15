@@ -4,8 +4,9 @@ local mini_path = vim.fn.stdpath("data") .. "/site/pack/deps/start/mini.nvim"
 if not vim.uv.fs_stat(mini_path) then
 	vim.notify("Cloning mini.nvim...", vim.log.levels.INFO)
 	vim.fn.system({ "git", "clone", "--filter=blob:none", "https://github.com/echasnovski/mini.nvim", mini_path })
-	vim.cmd("packadd mini.nvim")
 end
+-- packadd must run every headless invocation — start/ is not auto-loaded by `nvim -l`
+vim.cmd("packadd mini.nvim")
 
 -- Add repo root to rtp so require("nvim.foo") works
 vim.opt.rtp:prepend(vim.uv.cwd())
