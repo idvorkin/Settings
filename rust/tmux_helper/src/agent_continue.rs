@@ -102,6 +102,27 @@ pub(crate) fn find_resume_target(buffer: &str, agents: &[AgentDef]) -> FindOutco
     }
 }
 
+/// Pure argv builder for `execvp($SHELL, ...)`. Produces:
+/// `[shell, "-ic", "<launcher> <resume_args...> <id>"]`.
+///
+/// The `$SHELL -ic` indirection is required because `yolo-claude` is a zsh
+/// function, not a binary on PATH — `execvp("yolo-claude", ...)` would ENOENT.
+pub(crate) fn build_exec_argv(
+    shell: &str,
+    launcher: &str,
+    resume_args: &[&str],
+    id: &str,
+) -> Vec<String> {
+    let mut cmd = String::from(launcher);
+    for a in resume_args {
+        cmd.push(' ');
+        cmd.push_str(a);
+    }
+    cmd.push(' ');
+    cmd.push_str(id);
+    vec![shell.to_string(), "-ic".to_string(), cmd]
+}
+
 /// Entry point for `agent-continue` / `agent-yolo-continue`. Returns a process
 /// exit code. Callers should `std::process::exit(rv)` with it.
 pub(crate) fn cmd(_yolo: bool, _window: usize, _dry_run: bool) -> i32 {
@@ -192,5 +213,30 @@ mod tests {
             }
             other => panic!("expected Ambiguous, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn argv_non_yolo_is_shell_ic_claude_resume_id() {
+        let argv = build_exec_argv("/bin/zsh", "claude", &["--resume"], UUID_A);
+        assert_eq!(
+            argv,
+            vec![
+                "/bin/zsh".to_string(),
+                "-ic".to_string(),
+                format!("claude --resume {UUID_A}"),
+            ]
+        );
+    }
+
+    #[test]
+    fn argv_yolo_uses_yolo_launcher() {
+        let argv = build_exec_argv("/bin/zsh", "yolo-claude", &["--resume"], UUID_A);
+        assert_eq!(argv[2], format!("yolo-claude --resume {UUID_A}"));
+    }
+
+    #[test]
+    fn argv_supports_multi_arg_resume_args() {
+        let argv = build_exec_argv("/bin/zsh", "foo", &["resume", "--id"], UUID_A);
+        assert_eq!(argv[2], format!("foo resume --id {UUID_A}"));
     }
 }
