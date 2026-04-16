@@ -2,7 +2,11 @@
 //! command (`claude --resume <UUID>`) and exec it in place. See
 //! docs/superpowers/specs/2026-04-16-rmux-helper-agent-continue-design.md.
 
+use std::ffi::CString;
+
 use regex::Regex;
+
+use crate::{ProcReader, RealProcReader, RealTmuxProvider, TmuxError, TmuxProvider};
 
 /// A registered agent whose resume syntax we can recognize and re-launch.
 #[derive(Debug)]
@@ -212,11 +216,108 @@ pub(crate) fn run_agent_continue(input: AgentContinueInput) -> CmdOutcome {
     out
 }
 
-/// Entry point for `agent-continue` / `agent-yolo-continue`. Returns a process
-/// exit code. Callers should `std::process::exit(rv)` with it.
-pub(crate) fn cmd(_yolo: bool, _window: usize, _dry_run: bool) -> i32 {
-    eprintln!("agent-continue: not yet implemented");
-    3
+/// Resolve the caller's owning tmux pane id. Returns `Err((exit_code, stderr_msg))`
+/// mirroring `parent-pid-tree`'s failure modes: 2 for "tmux not running",
+/// 1 for "no pane matches the caller", 3 for "cannot read /proc/self".
+fn resolve_caller_pane_id(
+    self_pid: u32,
+    tmux: &dyn TmuxProvider,
+    proc: &dyn ProcReader,
+) -> Result<String, (i32, String)> {
+    use std::collections::HashMap;
+
+    use crate::resolve_pane_by_parent_chain;
+    let pane_pids: HashMap<u32, String> = match tmux.list_pane_pids() {
+        Ok(pairs) => pairs.into_iter().map(|(pane_id, pid)| (pid, pane_id)).collect(),
+        Err(TmuxError::NotRunning) => {
+            return Err((2, "rmux_helper agent-continue: tmux not running or no panes.".to_string()));
+        }
+        Err(TmuxError::ListFailed(e)) => {
+            return Err((3, format!("rmux_helper agent-continue: tmux list-panes failed: {e}")));
+        }
+        Err(TmuxError::ParseFailed(e)) => {
+            return Err((3, format!("rmux_helper agent-continue: tmux list-panes parse failed: {e}")));
+        }
+    };
+    let start_pid = match proc.read_ppid(self_pid) {
+        Some(p) => p,
+        None => {
+            return Err((3, "rmux_helper agent-continue: cannot read /proc/self/stat".to_string()));
+        }
+    };
+    let mut read = |pid: u32| proc.read_ppid(pid);
+    match resolve_pane_by_parent_chain(start_pid, &pane_pids, &mut read) {
+        Some(pane_match) => Ok(pane_match.pane_id),
+        None => Err((
+            1,
+            format!("rmux_helper agent-continue: no tmux pane found for caller pid {start_pid}"),
+        )),
+    }
+}
+
+/// Real entry point called from `main.rs`. Returns an exit code; on the Found
+/// + non-dry-run path, this function calls `execvp` and does not return
+/// (barring an exec failure, which produces exit 3).
+pub(crate) fn cmd(yolo: bool, window: usize, dry_run: bool) -> i32 {
+    let tmux = RealTmuxProvider;
+    let proc = RealProcReader;
+    let self_pid = std::process::id();
+
+    let pane_id = match resolve_caller_pane_id(self_pid, &tmux, &proc) {
+        Ok(id) => id,
+        Err((code, msg)) => {
+            eprintln!("{msg}");
+            return code;
+        }
+    };
+
+    let buffer = match tmux.capture_pane(&pane_id, window) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("rmux_helper agent-continue: tmux capture-pane failed: {e:?}");
+            return 3;
+        }
+    };
+
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
+
+    let outcome = run_agent_continue(AgentContinueInput {
+        buffer,
+        yolo,
+        window,
+        dry_run,
+        shell,
+    });
+
+    if !outcome.stdout.is_empty() {
+        println!("{}", outcome.stdout);
+    }
+    if !outcome.stderr.is_empty() {
+        eprintln!("{}", outcome.stderr);
+    }
+
+    if let Some(argv) = outcome.exec_argv {
+        let prog = CString::new(argv[0].as_bytes())
+            .expect("shell path must not contain NUL");
+        let c_args: Vec<CString> = argv
+            .iter()
+            .map(|a| CString::new(a.as_bytes()).expect("argv element must not contain NUL"))
+            .collect();
+        let mut ptrs: Vec<*const libc::c_char> = c_args.iter().map(|c| c.as_ptr()).collect();
+        ptrs.push(std::ptr::null());
+        // Safety: execvp takes a C-string-ptr + argv-array-ptr; CStrings outlive the call.
+        unsafe {
+            libc::execvp(prog.as_ptr(), ptrs.as_ptr());
+        }
+        let err = std::io::Error::last_os_error();
+        eprintln!(
+            "rmux_helper agent-continue: execvp({}) failed: {err}",
+            argv[0]
+        );
+        return 3;
+    }
+
+    outcome.exit_code
 }
 
 #[cfg(test)]

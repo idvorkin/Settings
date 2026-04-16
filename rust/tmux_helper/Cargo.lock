@@ -732,6 +732,7 @@ dependencies = [
  "crossterm 0.29.0",
  "dirs",
  "hostname",
+ "libc",
  "ratatui",
  "regex",
  "serde",

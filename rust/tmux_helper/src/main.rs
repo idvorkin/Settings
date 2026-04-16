@@ -2181,10 +2181,10 @@ fn read_exe_from_proc(pid: u32) -> Option<PathBuf> {
 
 /// Result of a successful parent-pid walk.
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct PaneMatch {
-    pane_id: String,
-    pane_pid: u32,
-    ancestors_walked: Vec<u32>,
+pub(crate) struct PaneMatch {
+    pub(crate) pane_id: String,
+    pub(crate) pane_pid: u32,
+    pub(crate) ancestors_walked: Vec<u32>,
 }
 
 /// Read field 4 (ppid) of /proc/<pid>/stat.
