@@ -1,3 +1,4 @@
+mod agent_continue;
 mod link_picker;
 mod picker;
 
@@ -112,6 +113,29 @@ enum Commands {
         #[arg(long, conflicts_with = "dry_run")]
         print_only: bool,
         /// Report the target path and skip the write. Useful for scripting.
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Resume the most recent agent session found in the caller's pane scrollback.
+    ///
+    /// Scans the last N lines of the owning tmux pane for `claude --resume <UUID>`
+    /// (extensible to other agents via the registry in `agent_continue.rs`).
+    /// Exactly one match → exec `<launcher> --resume <id>` through `$SHELL -ic`.
+    /// Zero matches → exit 1. Multiple distinct matches → exit 2 (refuses to guess).
+    AgentContinue {
+        /// How many lines of scrollback to scan (default 50).
+        #[arg(long, default_value_t = 50)]
+        window: usize,
+        /// Print the command that would run and exit 0 instead of exec'ing.
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Same as `agent-continue`, but launches through the permissive wrapper
+    /// (`yolo-claude` for claude). Requires a container — the wrapper enforces
+    /// this via `_require_container`.
+    AgentYoloContinue {
+        #[arg(long, default_value_t = 50)]
+        window: usize,
         #[arg(long)]
         dry_run: bool,
     },
@@ -3009,6 +3033,12 @@ fn main() -> Result<()> {
             print_only,
             dry_run,
         }) => install_completions_cmd(shell, print_only, dry_run),
+        Some(Commands::AgentContinue { window, dry_run }) => {
+            std::process::exit(agent_continue::cmd(false, window, dry_run));
+        }
+        Some(Commands::AgentYoloContinue { window, dry_run }) => {
+            std::process::exit(agent_continue::cmd(true, window, dry_run));
+        }
         None => {
             // Show help when no command given
             use clap::CommandFactory;
