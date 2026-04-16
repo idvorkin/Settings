@@ -6,7 +6,7 @@ Fast Rust-based tmux helper for session/window/pane management.
 
 **When modifying the picker (`pick-tui` / `pick-list`), update `PICKER_SPEC.md` to reflect any rule changes.**
 
-The spec documents the *what* (behavior rules), not the *how* (implementation). It only covers the picker — `side-edit`, `side-run`, `rename-all`, `rotate`, `third`, etc. do not have specs and don't need PICKER_SPEC updates.
+The spec documents the _what_ (behavior rules), not the _how_ (implementation). It only covers the picker — `side-edit`, `side-run`, `rename-all`, `rotate`, `third`, etc. do not have specs and don't need PICKER_SPEC updates.
 
 ## Commands
 
@@ -15,6 +15,8 @@ The spec documents the *what* (behavior rules), not the *how* (implementation). 
 - `rotate` - Toggle between horizontal/vertical layouts
 - `third` - Toggle between even and 1/3-2/3 split
 - `parent-pid-tree` - Resolve caller's owning tmux pane by walking the parent-PID chain (see below)
+- `agent-continue` - Scan the caller's pane for `claude --resume <UUID>` and exec it in place. See below.
+- `agent-yolo-continue` - Same, but launches through `yolo-claude` (container only).
 
 ## Building
 
@@ -35,7 +37,7 @@ cargo test
 
 ## `parent-pid-tree`
 
-Resolves the calling process's owning tmux pane by walking the parent-PID chain from `/proc/<pid>/stat` against `tmux list-panes -a -F '#{pane_id} #{pane_pid}'`. Use this whenever a script needs to answer "which tmux pane am I running inside?" — **never** use `tmux display-message -p '#{pane_id}'` for this, which returns the tmux-*active* pane (the one focused in the attached client), not the caller's pane.
+Resolves the calling process's owning tmux pane by walking the parent-PID chain from `/proc/<pid>/stat` against `tmux list-panes -a -F '#{pane_id} #{pane_pid}'`. Use this whenever a script needs to answer "which tmux pane am I running inside?" — **never** use `tmux display-message -p '#{pane_id}'` for this, which returns the tmux-_active_ pane (the one focused in the attached client), not the caller's pane.
 
 Typical invocations:
 
@@ -63,6 +65,36 @@ Typical invocations:
 
 When adding new tmux-integration code, prefer this pattern: put shell-outs behind `TmuxProvider` (extend the trait as needed), keep all logic in a pure function that takes the trait object, and make the command wrapper thin. The other tmux call sites in this binary (`side_edit`, `side_run`, `rename_all`, `rotate`, `third`, etc.) still shell out directly — see the TODO above `run_tmux_command` in `src/main.rs`. They should be migrated once characterization tests exist for their current behavior.
 
+## `agent-continue` / `agent-yolo-continue`
+
+Resume the most recent AI-agent session found in the caller's tmux pane
+scrollback. Scans the last 50 lines (default, override with `--window <N>`)
+for any registered agent's resume syntax (today: `claude --resume <UUID>`).
+
+Typical invocations:
+
+- `rmux_helper agent-continue` — execs `claude --resume <id>` in the current pane via `$SHELL -ic`. Process is replaced; never returns on success.
+- `rmux_helper agent-yolo-continue` — same, but launches through `yolo-claude` (the zsh wrapper that sets `--dangerously-skip-permissions`; container-only via `_require_container`).
+- `rmux_helper agent-continue --window 120` — widen the scan if the resume line is further back.
+- `rmux_helper agent-continue --dry-run` — print `would exec: <shell> -ic '<cmd>'` and exit 0 without exec'ing. Useful for sanity checks.
+
+**Exit codes**:
+
+- `0` — success on the `--dry-run` happy path (on the real path, `execvp` replaces the process so this code is not observed)
+- `1` — no resume command found in the window
+- `2` — 2+ distinct `(agent, id)` matches in the window; stderr lists them with line offsets
+- `3` — infrastructure failure (no tmux, `/proc/self` unreadable, `execvp` returned)
+
+**Why this exists**: reduces the resume-flow to zero arguments — after a Claude session exits, the user types `rmux_helper agent-continue` (or a shell alias) and is back inside the session, without hand-copying the UUID. The command refuses to guess when the scan finds multiple distinct sessions, so a stale scrollback cannot silently reconnect to the wrong session.
+
+**Extending to other agents**: add a struct literal to `const AGENTS` in `src/agent_continue.rs`. Fields are `name`, `resume_regex` (first capture = session id), `launcher`, `yolo_launcher`, and `resume_args`. Nothing else needs to change.
+
+**Implementation**: see `src/agent_continue.rs`. Humble-object split, following the same pattern as `parent-pid-tree`:
+
+- **Humble shell** — `TmuxProvider::capture_pane` (in `main.rs`) + `resolve_caller_pane_id` + the real `execvp` call.
+- **Testable core** — `find_resume_target(buffer, agents)` → `FindOutcome`, `build_exec_argv(shell, launcher, args, id)`, `format_ambiguous_stderr(matches, window)`, and `run_agent_continue(input)` → `CmdOutcome` — all pure, all unit-tested without tmux or `/proc`.
+- **Command wrapper** — `cmd(yolo, window, dry_run)` in the same file.
+
 ## Shell completions
 
 ### Install
@@ -79,12 +111,12 @@ Re-running `install-completions` overwrites the existing file — idempotent.
 
 Installation paths (default):
 
-| Shell | Path |
-|---|---|
-| zsh | `$ZDOTDIR/.zfunc/_rmux_helper` or `$HOME/.zfunc/_rmux_helper` |
-| bash | `$XDG_DATA_HOME/bash-completion/completions/rmux_helper` or `$HOME/.local/share/bash-completion/completions/rmux_helper` |
-| fish | `$XDG_CONFIG_HOME/fish/completions/rmux_helper.fish` or `$HOME/.config/fish/completions/rmux_helper.fish` |
-| powershell / elvish | no default — use `--print-only` and pipe to your profile |
+| Shell               | Path                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| zsh                 | `$ZDOTDIR/.zfunc/_rmux_helper` or `$HOME/.zfunc/_rmux_helper`                                                            |
+| bash                | `$XDG_DATA_HOME/bash-completion/completions/rmux_helper` or `$HOME/.local/share/bash-completion/completions/rmux_helper` |
+| fish                | `$XDG_CONFIG_HOME/fish/completions/rmux_helper.fish` or `$HOME/.config/fish/completions/rmux_helper.fish`                |
+| powershell / elvish | no default — use `--print-only` and pipe to your profile                                                                 |
 
 On first zsh install, make sure `~/.zfunc` is in `$fpath` and `autoload -Uz compinit && compinit` has run.
 
@@ -110,7 +142,7 @@ nvim: <true | false | unknown>
 file: <path or empty>
 ```
 
-- `pane_id: none` = no candidate side pane in the window (we *did* look)
+- `pane_id: none` = no candidate side pane in the window (we _did_ look)
 - `pane_id: ambiguous` = multiple plausible candidates, refuse to route
 - `nvim: unknown` = inspection failed (pid query, sysinfo race) — must NOT be collapsed to `false`
 
