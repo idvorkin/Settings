@@ -1963,7 +1963,7 @@ fn debug_keys() -> Result<()> {
 /// The walker + command layer translate these to concrete exit codes; the
 /// shell itself doesn't know about the 0/1/2/3 scheme.
 #[derive(Debug)]
-enum TmuxError {
+pub(crate) enum TmuxError {
     /// tmux is not installed, no server is running, or `list-panes` returned
     /// empty output (e.g. no sessions). Maps to exit code 2.
     NotRunning,
@@ -1991,7 +1991,7 @@ impl std::fmt::Display for TmuxError {
 /// Humble shell over `tmux` for `parent-pid-tree`. Only primitives this PR
 /// needs are defined; add more methods here (and to `RealTmuxProvider`) when
 /// migrating other call sites.
-trait TmuxProvider {
+pub(crate) trait TmuxProvider {
     /// List every tmux pane's `(pane_id, pane_pid)` across all sessions
     /// (`tmux list-panes -a`). Returns `NotRunning` if tmux is unreachable or
     /// the server has no panes. Order is not guaranteed.
@@ -2003,11 +2003,17 @@ trait TmuxProvider {
     /// lookups and future migrations.
     #[allow(dead_code)]
     fn active_pane(&self) -> Result<Option<String>, TmuxError>;
+
+    /// Capture the recent scrollback of `pane_id` via
+    /// `tmux capture-pane -p -J -S -<window> -E -`. Returns the captured text.
+    /// Errors propagate as `TmuxError::ListFailed` for spawn/read problems,
+    /// `TmuxError::NotRunning` if tmux returns non-zero.
+    fn capture_pane(&self, pane_id: &str, window: usize) -> Result<String, TmuxError>;
 }
 
 /// Humble shell over `/proc/<pid>/stat`. Tests inject a mock that returns a
 /// pre-built chain without touching the filesystem.
-trait ProcReader {
+pub(crate) trait ProcReader {
     /// Return the parent pid of `pid` (field 4 of `/proc/<pid>/stat`). Returns
     /// `None` for pid 0, a vanished process, or an unreadable/unparseable stat
     /// file. `None` is non-fatal to the walker — it just means "stop here".
@@ -2030,9 +2036,25 @@ trait ProcReader {
     fn read_exe(&self, pid: u32) -> Option<PathBuf>;
 }
 
+/// Build the argv for `tmux capture-pane -p -J -S -<window> -E - -t <pane_id>`.
+/// Pulled out so unit tests can assert the shape without spawning tmux.
+pub(crate) fn capture_pane_args(pane_id: &str, window: usize) -> Vec<String> {
+    vec![
+        "capture-pane".to_string(),
+        "-p".to_string(),
+        "-J".to_string(),
+        "-S".to_string(),
+        format!("-{}", window),
+        "-E".to_string(),
+        "-".to_string(),
+        "-t".to_string(),
+        pane_id.to_string(),
+    ]
+}
+
 /// Production implementation of `TmuxProvider` — shells out to the `tmux`
 /// binary via `std::process::Command`.
-struct RealTmuxProvider;
+pub(crate) struct RealTmuxProvider;
 
 impl TmuxProvider for RealTmuxProvider {
     fn list_pane_pids(&self) -> Result<Vec<(String, u32)>, TmuxError> {
@@ -2066,12 +2088,24 @@ impl TmuxProvider for RealTmuxProvider {
             Ok(Some(s))
         }
     }
+
+    fn capture_pane(&self, pane_id: &str, window: usize) -> Result<String, TmuxError> {
+        let args = capture_pane_args(pane_id, window);
+        let output = Command::new("tmux")
+            .args(args.iter().map(String::as_str))
+            .output()
+            .map_err(TmuxError::ListFailed)?;
+        if !output.status.success() {
+            return Err(TmuxError::NotRunning);
+        }
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    }
 }
 
 /// Production implementation of `ProcReader`. Delegates to
 /// `read_ppid_from_proc`, whose `rfind(')')`-based parser is load-bearing for
 /// `comm` fields containing parens or spaces — do NOT reimplement it inline.
-struct RealProcReader;
+pub(crate) struct RealProcReader;
 
 impl ProcReader for RealProcReader {
     fn read_ppid(&self, pid: u32) -> Option<u32> {
@@ -2225,7 +2259,7 @@ const PPID_WALK_MAX_DEPTH: usize = 64;
 /// - If `start_pid` itself is in `pane_pids`, it matches immediately.
 /// - If `read_ppid` returns None for a specific pid (vanished process, unreadable
 ///   stat file), we stop walking — this is graceful, not a panic.
-fn resolve_pane_by_parent_chain<F>(
+pub(crate) fn resolve_pane_by_parent_chain<F>(
     start_pid: u32,
     pane_pids: &HashMap<u32, String>,
     mut read_ppid: F,
@@ -3913,6 +3947,10 @@ mod tests {
         fn active_pane(&self) -> Result<Option<String>, TmuxError> {
             Ok(None)
         }
+
+        fn capture_pane(&self, _pane_id: &str, _window: usize) -> Result<String, TmuxError> {
+            Ok(String::new())
+        }
     }
 
     /// In-memory `ProcReader` mock. Takes a list of `(child, parent)` pairs
@@ -5017,5 +5055,24 @@ mod tests {
         let chain = payload["chain"].as_array().unwrap();
         assert_eq!(chain[0]["role"], "start");
         assert_eq!(chain[2]["role"], "pane_shell");
+    }
+
+    #[test]
+    fn test_capture_pane_args_shape() {
+        let args = capture_pane_args("%12", 75);
+        assert_eq!(
+            args,
+            vec![
+                "capture-pane".to_string(),
+                "-p".to_string(),
+                "-J".to_string(),
+                "-S".to_string(),
+                "-75".to_string(),
+                "-E".to_string(),
+                "-".to_string(),
+                "-t".to_string(),
+                "%12".to_string(),
+            ]
+        );
     }
 }
