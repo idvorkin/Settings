@@ -134,8 +134,10 @@ enum Commands {
     /// (`yolo-claude` for claude). Requires a container — the wrapper enforces
     /// this via `_require_container`.
     AgentYoloContinue {
+        /// How many lines of scrollback to scan (default 50).
         #[arg(long, default_value_t = 50)]
         window: usize,
+        /// Print the command that would run and exit 0 instead of exec'ing.
         #[arg(long)]
         dry_run: bool,
     },

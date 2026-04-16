@@ -255,32 +255,39 @@ fn resolve_caller_pane_id(
     }
 }
 
-/// Real entry point called from `main.rs`. Returns an exit code; on the Found
-/// + non-dry-run path, this function calls `execvp` and does not return
-/// (barring an exec failure, which produces exit 3).
-pub(crate) fn cmd(yolo: bool, window: usize, dry_run: bool) -> i32 {
-    let tmux = RealTmuxProvider;
-    let proc = RealProcReader;
-    let self_pid = std::process::id();
-
-    let pane_id = match resolve_caller_pane_id(self_pid, &tmux, &proc) {
+/// Testable core of the real `cmd` — takes trait objects so tests can inject
+/// mocks. Returns (exit_code, optional exec_argv). The wrapper `cmd` adapts
+/// this into a `-> i32` that either `execvp`s or returns the code.
+fn run_cmd_with_providers(
+    yolo: bool,
+    window: usize,
+    dry_run: bool,
+    self_pid: u32,
+    tmux: &dyn TmuxProvider,
+    proc: &dyn ProcReader,
+    shell_env: Option<String>,
+) -> (i32, Option<Vec<String>>) {
+    let pane_id = match resolve_caller_pane_id(self_pid, tmux, proc) {
         Ok(id) => id,
         Err((code, msg)) => {
             eprintln!("{msg}");
-            return code;
+            return (code, None);
         }
     };
-
     let buffer = match tmux.capture_pane(&pane_id, window) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("rmux_helper agent-continue: tmux capture-pane failed: {e:?}");
-            return 3;
+            return (3, None);
         }
     };
-
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
-
+    let shell = match shell_env {
+        Some(s) if !s.is_empty() => s,
+        _ => {
+            eprintln!("rmux_helper agent-continue: $SHELL is not set; required to launch the agent.");
+            return (3, None);
+        }
+    };
     let outcome = run_agent_continue(AgentContinueInput {
         buffer,
         yolo,
@@ -288,36 +295,46 @@ pub(crate) fn cmd(yolo: bool, window: usize, dry_run: bool) -> i32 {
         dry_run,
         shell,
     });
-
     if !outcome.stdout.is_empty() {
         println!("{}", outcome.stdout);
     }
     if !outcome.stderr.is_empty() {
         eprintln!("{}", outcome.stderr);
     }
+    (outcome.exit_code, outcome.exec_argv)
+}
 
-    if let Some(argv) = outcome.exec_argv {
-        let prog = CString::new(argv[0].as_bytes())
-            .expect("shell path must not contain NUL");
+/// Real entry point called from `main.rs`. Returns an exit code; on the Found
+/// + non-dry-run path, this function calls `execvp` and does not return
+/// (barring an exec failure, which produces exit 3).
+pub(crate) fn cmd(yolo: bool, window: usize, dry_run: bool) -> i32 {
+    let tmux = RealTmuxProvider;
+    let proc = RealProcReader;
+    let self_pid = std::process::id();
+    let shell_env = std::env::var("SHELL").ok();
+    let (exit_code, exec_argv) =
+        run_cmd_with_providers(yolo, window, dry_run, self_pid, &tmux, &proc, shell_env);
+    if let Some(argv) = exec_argv {
+        let prog =
+            CString::new(argv[0].as_bytes()).expect("shell path must not contain NUL");
         let c_args: Vec<CString> = argv
             .iter()
             .map(|a| CString::new(a.as_bytes()).expect("argv element must not contain NUL"))
             .collect();
         let mut ptrs: Vec<*const libc::c_char> = c_args.iter().map(|c| c.as_ptr()).collect();
         ptrs.push(std::ptr::null());
-        // Safety: execvp takes a C-string-ptr + argv-array-ptr; CStrings outlive the call.
+        // Safety: execvp needs the argv pointers to remain valid for the duration of
+        // the call. Both `c_args` (owning the CStrings) and `ptrs` are live on this
+        // stack frame through the call; on success execvp never returns, so liveness
+        // is trivially maintained. On failure we fall through to the error path below.
         unsafe {
             libc::execvp(prog.as_ptr(), ptrs.as_ptr());
         }
         let err = std::io::Error::last_os_error();
-        eprintln!(
-            "rmux_helper agent-continue: execvp({}) failed: {err}",
-            argv[0]
-        );
+        eprintln!("rmux_helper agent-continue: execvp({}) failed: {err}", argv[0]);
         return 3;
     }
-
-    outcome.exit_code
+    exit_code
 }
 
 #[cfg(test)]
@@ -564,5 +581,119 @@ mod tests {
                 format!("claude --resume {UUID_A}"),
             ]
         );
+    }
+
+    // ---- run_cmd_with_providers integration tests ----
+
+    struct RecordingTmux {
+        pane_pids: Vec<(String, u32)>,
+        capture_returns: String,
+        capture_calls: std::cell::RefCell<Vec<(String, usize)>>,
+    }
+
+    impl TmuxProvider for RecordingTmux {
+        fn list_pane_pids(&self) -> Result<Vec<(String, u32)>, TmuxError> {
+            Ok(self.pane_pids.clone())
+        }
+        fn active_pane(&self) -> Result<Option<String>, TmuxError> {
+            Ok(None)
+        }
+        fn capture_pane(&self, pane_id: &str, window: usize) -> Result<String, TmuxError> {
+            self.capture_calls
+                .borrow_mut()
+                .push((pane_id.to_string(), window));
+            Ok(self.capture_returns.clone())
+        }
+    }
+
+    struct ChainProc {
+        /// pid -> ppid
+        chain: std::collections::HashMap<u32, u32>,
+    }
+
+    impl ProcReader for ChainProc {
+        fn read_ppid(&self, pid: u32) -> Option<u32> {
+            self.chain.get(&pid).copied()
+        }
+        fn read_cmdline(&self, _pid: u32) -> Option<String> {
+            None
+        }
+        fn read_comm(&self, _pid: u32) -> Option<String> {
+            None
+        }
+        fn read_exe(&self, _pid: u32) -> Option<std::path::PathBuf> {
+            None
+        }
+    }
+
+    #[test]
+    fn window_flag_reaches_capture_pane() {
+        // Build a trivial ancestor chain: self_pid=100 -> parent=200 -> pane_pid=300
+        let mut chain = std::collections::HashMap::new();
+        chain.insert(100u32, 200u32);
+        chain.insert(200u32, 300u32);
+        let tmux = RecordingTmux {
+            pane_pids: vec![("%7".to_string(), 300)],
+            capture_returns: format!("claude --resume {UUID_A}\n$ _"),
+            capture_calls: std::cell::RefCell::new(Vec::new()),
+        };
+        let proc = ChainProc { chain };
+        let (code, argv) =
+            run_cmd_with_providers(false, 123, true, 100, &tmux, &proc, Some("/bin/zsh".to_string()));
+        assert_eq!(code, 0);
+        assert!(argv.is_none(), "dry-run must not request exec");
+        let calls = tmux.capture_calls.borrow();
+        assert_eq!(calls.len(), 1);
+        assert_eq!(calls[0].0, "%7");
+        assert_eq!(calls[0].1, 123, "window=123 must reach capture_pane");
+    }
+
+    #[test]
+    fn shell_unset_returns_exit_3() {
+        let mut chain = std::collections::HashMap::new();
+        chain.insert(100u32, 200u32);
+        chain.insert(200u32, 300u32);
+        let tmux = RecordingTmux {
+            pane_pids: vec![("%7".to_string(), 300)],
+            capture_returns: format!("claude --resume {UUID_A}\n"),
+            capture_calls: std::cell::RefCell::new(Vec::new()),
+        };
+        let proc = ChainProc { chain };
+        let (code, argv) =
+            run_cmd_with_providers(false, 50, true, 100, &tmux, &proc, None);
+        assert_eq!(code, 3);
+        assert!(argv.is_none());
+    }
+
+    #[test]
+    fn multi_agent_ambiguity_across_registry() {
+        const CODEX_UUID: &str = "deadbeef-1111-2222-3333-444455556666";
+        let agents = &[
+            AgentDef {
+                name: "claude",
+                resume_regex: r"\bclaude\s+--resume\s+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b",
+                launcher: "claude",
+                yolo_launcher: "yolo-claude",
+                resume_args: &["--resume"],
+            },
+            AgentDef {
+                name: "codex",
+                resume_regex: r"\bcodex\s+resume\s+([0-9a-f-]{36})\b",
+                launcher: "codex",
+                yolo_launcher: "yolo-codex",
+                resume_args: &["resume"],
+            },
+        ];
+        // Claude line is older (earlier in buffer), codex is newer (later).
+        let buf = format!("claude --resume {UUID_A}\nnoise\ncodex resume {CODEX_UUID}\n$");
+        match find_resume_target(&buf, agents) {
+            FindOutcome::Ambiguous(ms) => {
+                assert_eq!(ms.len(), 2);
+                assert_eq!(ms[0].agent_name, "codex", "newest (codex) should be first");
+                assert_eq!(ms[0].id, CODEX_UUID);
+                assert_eq!(ms[1].agent_name, "claude");
+            }
+            other => panic!("expected Ambiguous, got {other:?}"),
+        }
     }
 }
