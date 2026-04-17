@@ -133,20 +133,38 @@ def normalize_name(name: str) -> str:
     return name.split("/")[-1] if "/" in name else name
 
 
+def is_formula_installed(name: str, installed_norm: set[str]) -> bool:
+    """Check if a formula is installed, handling aliases and versioned kegs.
+
+    First checks the fast set lookup; falls back to `brew list --formula <name>`
+    which resolves aliases (python3 → python@3.13), versioned kegs
+    (openssl → openssl@3), and provided-by relationships (npm → node).
+    """
+    if normalize_name(name) in installed_norm:
+        return True
+    # Second-chance: let brew resolve the name
+    result = subprocess.run(
+        ["brew", "list", "--formula", name],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
 def get_missing_by_category(
     installed_formulae_norm: set[str], installed_casks_norm: set[str]
 ) -> tuple[list[tuple[str, list[str]]], list[tuple[str, list[str]]]]:
     """Get missing packages organized by category."""
     missing_formula_cats = []
     for cat, pkgs in FORMULA_CATEGORIES:
-        missing = [p for p in pkgs if normalize_name(p) not in installed_formulae_norm]
+        missing = [p for p in pkgs if not is_formula_installed(p, installed_formulae_norm)]
         if missing:
             missing_formula_cats.append((cat, missing))
 
     if IS_MACOS:
         for cat, pkgs in MAC_FORMULA_CATEGORIES:
             missing = [
-                p for p in pkgs if normalize_name(p) not in installed_formulae_norm
+                p for p in pkgs if not is_formula_installed(p, installed_formulae_norm)
             ]
             if missing:
                 missing_formula_cats.append((cat, missing))
