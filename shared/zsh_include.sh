@@ -1,4 +1,6 @@
 #!/bin/zsh
+autoload -Uz compinit && compinit
+
 
 function source_if_exists() {
     [ -f "$1" ] && source "$1"
@@ -572,6 +574,7 @@ function safe_init()
     alias nbdiffcode="nbdiff --ignore-metadata --ignore-details --ignore-output"
 
     echo "++eval"
+
     # TODO: consider doing this in a loop as it's really annoying to have 3 configurations
     eval_w_param_if_exists ~/homebrew/bin/brew shellenv
     eval_w_param_if_exists /opt/homebrew/bin/brew shellenv
@@ -588,6 +591,8 @@ function safe_init()
     eval_w_param_if_exists thefuck --alias
     eval_w_param_if_exists rbenv init -
     eval_w_param_if_exists dasel completion zsh
+    eval_w_param_if_exists gh completion -s zsh
+
     echo "--eval"
 
     echo --safe_init
