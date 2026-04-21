@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["typer", "rich"]
 # ///
-"""Walk up to find .beads/, export fresh JSONL, launch bv in tree mode."""
+"""Walk up to find .beads/, export fresh JSONL, launch bvr in tree mode."""
 
 import os
 import subprocess
@@ -33,7 +33,7 @@ def find_beads_root() -> str | None:
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
 def main(ctx: typer.Context) -> None:
-    """Export beads JSONL and launch bv from the nearest .beads/ workspace."""
+    """Export beads JSONL and launch bvr from the nearest .beads/ workspace."""
     root = find_beads_root()
     if not root:
         console.print("[red]No .beads/ found in any parent directory[/red]")
@@ -55,18 +55,19 @@ def main(ctx: typer.Context) -> None:
     if r.returncode != 0:
         raise typer.Exit(r.returncode)
 
-    # Launch bv with any extra args, from the beads root
-    bv_args = ["bv"] + ctx.args
+    # Launch bvr with any extra args, from the beads root
+    bvr_args = ["bvr"] + ctx.args
     os.chdir(root)
     try:
-        os.execvp("bv", bv_args)
+        os.execvp("bvr", bvr_args)
     except FileNotFoundError:
-        console.print("[red]'bv' command not found on PATH[/red]")
+        console.print("[red]'bvr' command not found on PATH[/red]")
         console.print(
-            "Install with: [cyan]brew install dicklesworthstone/tap/bv[/cyan]"
+            "Install with: [cyan]cargo install --git "
+            "https://github.com/Dicklesworthstone/beads_viewer_rust.git bvr[/cyan]"
         )
         console.print(
-            "See: [blue]https://github.com/Dicklesworthstone/beads_viewer[/blue]"
+            "See: [blue]https://github.com/Dicklesworthstone/beads_viewer_rust[/blue]"
         )
         raise typer.Exit(127)
 
