@@ -55,8 +55,8 @@ def main(ctx: typer.Context) -> None:
     if r.returncode != 0:
         raise typer.Exit(r.returncode)
 
-    # Launch bvr with any extra args, from the beads root
-    bvr_args = ["bvr"] + ctx.args
+    # Launch bvr in tree view, filtered to open issues; forward any extra args
+    bvr_args = ["bvr", "--view", "tree", "--list-filter", "open"] + ctx.args
     os.chdir(root)
     try:
         os.execvp("bvr", bvr_args)
