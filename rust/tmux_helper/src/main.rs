@@ -2195,6 +2195,7 @@ pub(crate) struct PaneMatch {
 /// and CAN contain spaces or closing-parens inside. Find the LAST `)` to locate
 /// the end of comm, then split the rest — field 4 becomes index 1 after the
 /// state char.
+#[cfg(not(target_os = "macos"))]
 fn read_ppid_from_proc(pid: u32) -> Option<u32> {
     if pid == 0 {
         return None;
@@ -2209,6 +2210,24 @@ fn read_ppid_from_proc(pid: u32) -> Option<u32> {
     let _state = fields.next()?;
     let ppid_str = fields.next()?;
     ppid_str.parse().ok()
+}
+
+/// macOS has no `/proc`. Shell out to `ps -o ppid= -p <pid>` — exits non-zero
+/// for nonexistent pids, prints the ppid as a single integer for live ones.
+/// Per-call fork+exec is fine for the parent-chain walks here (≤10 calls).
+#[cfg(target_os = "macos")]
+fn read_ppid_from_proc(pid: u32) -> Option<u32> {
+    if pid == 0 {
+        return None;
+    }
+    let output = std::process::Command::new("/bin/ps")
+        .args(["-o", "ppid=", "-p", &pid.to_string()])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    String::from_utf8_lossy(&output.stdout).trim().parse().ok()
 }
 
 /// Parse `tmux list-panes -a -F '#{pane_id} #{pane_pid}'` output into a list
@@ -4490,11 +4509,13 @@ mod tests {
         assert!(!out.contains("tmux pane:"));
     }
 
+    #[cfg(target_os = "linux")]
     #[test]
     fn test_real_proc_reader_cmdline_for_self() {
         // Real-proc read for our own pid: cmdline should be non-empty and
         // include something binary-ish. Loosely asserted — this is just a
         // smoke test to make sure the RealProcReader wiring works.
+        // Linux-only: macOS has no /proc, so cmdline/comm/exe return None.
         let reader = RealProcReader;
         let pid = std::process::id();
         let cmdline = reader.read_cmdline(pid);

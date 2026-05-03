@@ -242,7 +242,7 @@ fn resolve_caller_pane_id(
     let start_pid = match proc.read_ppid(self_pid) {
         Some(p) => p,
         None => {
-            return Err((3, "rmux_helper agent-continue: cannot read /proc/self/stat".to_string()));
+            return Err((3, "rmux_helper agent-continue: cannot read parent pid for self".to_string()));
         }
     };
     let mut read = |pid: u32| proc.read_ppid(pid);
