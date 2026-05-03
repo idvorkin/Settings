@@ -606,9 +606,37 @@ def fright():
     call_yabai("-m window --focus east")
 
 
+# yabai 7.1.18's --start/--stop/--restart-service look for a plist label
+# (com.asmvik.yabai) that doesn't match the installed com.koekeishiya.yabai,
+# so drive launchctl directly against the real label instead.
+YABAI_SERVICE_LABEL = "com.koekeishiya.yabai"
+
+
+def _launchctl_yabai(action: str) -> CompletedProcess:
+    uid = os.getuid()
+    target = f"gui/{uid}/{YABAI_SERVICE_LABEL}"
+    if action == "kickstart":
+        cmd = ["launchctl", "kickstart", "-k", target]
+    elif action == "bootstrap":
+        plist = str(
+            Path.home() / "Library" / "LaunchAgents" / f"{YABAI_SERVICE_LABEL}.plist"
+        )
+        cmd = ["launchctl", "bootstrap", f"gui/{uid}", plist]
+    elif action == "bootout":
+        cmd = ["launchctl", "bootout", target]
+    else:
+        raise ValueError(f"unknown launchctl action: {action}")
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
 @app.command()
 def restart():
-    call_yabai("--restart-service")
+    """Restart the yabai window manager service"""
+    result = _launchctl_yabai("kickstart")
+    if result.returncode != 0:
+        print(f"[red]Failed to restart yabai: {result.stderr.strip()}[/red]")
+        raise typer.Exit(code=1)
+    print("[green]yabai restarted[/green]")
 
 
 @app.command()
@@ -620,13 +648,21 @@ def reset():
 @app.command()
 def start():
     """Start the yabai window manager service"""
-    call_yabai("--start-service")
+    result = _launchctl_yabai("bootstrap")
+    if result.returncode != 0:
+        print(f"[red]Failed to start yabai: {result.stderr.strip()}[/red]")
+        raise typer.Exit(code=1)
+    print("[green]yabai started[/green]")
 
 
 @app.command()
 def stop():
     """Stop the yabai window manager service"""
-    call_yabai("--stop-service")
+    result = _launchctl_yabai("bootout")
+    if result.returncode != 0:
+        print(f"[red]Failed to stop yabai: {result.stderr.strip()}[/red]")
+        raise typer.Exit(code=1)
+    print("[green]yabai stopped[/green]")
 
 
 @app.command()
