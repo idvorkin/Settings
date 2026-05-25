@@ -11,6 +11,7 @@ Handles installation of Python tools via UV with optional force/upgrade flags.
 
 import subprocess
 import sys
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -99,11 +100,22 @@ def install(
             failed_tools.append((tool_name, description))
             console.print(f"  [red]✗[/red] {tool_name} - Failed to install")
 
-    # Summary
-    console.print("\n[bold green]Installation complete![/bold green]")
+    # Install local idvorkin_scripts package editably (provides rbv, y, a, tmux_helper, etc.)
+    py_dir = Path(__file__).resolve().parent
     console.print(
-        f"Successfully installed: {len(PYTHON_TOOLS) - len(failed_tools)}/{len(PYTHON_TOOLS)}"
+        f"\n[yellow]Installing local idvorkin_scripts (editable) from {py_dir}...[/yellow]"
     )
+    try:
+        run_command(["uv", "tool", "install", install_flag, "--editable", str(py_dir)])
+        console.print("  [green]✓[/green] idvorkin_scripts - local CLI scripts")
+    except subprocess.CalledProcessError:
+        failed_tools.append(("idvorkin_scripts", "local CLI scripts"))
+        console.print("  [red]✗[/red] idvorkin_scripts - Failed to install")
+
+    # Summary
+    total = len(PYTHON_TOOLS) + 1
+    console.print("\n[bold green]Installation complete![/bold green]")
+    console.print(f"Successfully installed: {total - len(failed_tools)}/{total}")
 
     if failed_tools:
         console.print("\n[bold red]Failed to install:[/bold red]")
