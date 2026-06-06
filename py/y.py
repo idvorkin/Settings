@@ -648,10 +648,15 @@ def reset():
 @app.command()
 def start():
     """Start the yabai window manager service"""
-    result = _launchctl_yabai("bootstrap")
+    # macOS auto-bootstraps user LaunchAgents at login, so the service is
+    # usually already loaded — just stopped. Kickstart starts the existing
+    # service; bootstrap is only needed when no definition is loaded yet.
+    result = _launchctl_yabai("kickstart")
     if result.returncode != 0:
-        print(f"[red]Failed to start yabai: {result.stderr.strip()}[/red]")
-        raise typer.Exit(code=1)
+        result = _launchctl_yabai("bootstrap")
+        if result.returncode != 0:
+            print(f"[red]Failed to start yabai: {result.stderr.strip()}[/red]")
+            raise typer.Exit(code=1)
     print("[green]yabai started[/green]")
 
 
