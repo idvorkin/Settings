@@ -449,6 +449,11 @@ function safe_init()
     # On mac, gpt is in sbin, use the installed from idvorkin_nlp version instead
     alias_if_exists gpt ~/.local/bin/gpt
 
+    # oh-my-zsh's git plugin aliases `gc` to `git commit --verbose`, which
+    # shadows the Gas City `gc` binary. Free the name so `gc` resolves to the
+    # gascity CLI on PATH. Use `gcmsg` / `git commit -v` for commits instead.
+    unalias gc 2>/dev/null
+
     # Igor setups use Soed and Sodot as useful aliases
     alias Soed='nvim ~/settings/shared/zsh_include.sh'
     alias Sodot='.  ~/settings/shared/zsh_include.sh'
