@@ -20,12 +20,18 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+# Bump when adding a capability a caller may need to gate on. 0.2.0 introduced
+# the `run` subcommand (port-conflict-aware launching); the blog's jekyll-serve
+# recipe requires `running-servers version` >= 0.2.0.
+__version__ = "0.2.0"
+
 app = typer.Typer(
     no_args_is_help=True,
     pretty_exceptions_enable=False,
     add_completion=False,
 )
 console = Console()
+err_console = Console(stderr=True)
 
 
 # --- Platform Adapter (Humble Object) ---
@@ -301,13 +307,93 @@ class ServerFinder:
                 return server
         return None
 
-    def find_available_port(self, start: int = 4000, end: int = 4010) -> int | None:
-        """Find an available port in the given range."""
+    def find_available_port(
+        self,
+        start: int = 4000,
+        end: int = 4010,
+        exclude: set[int] | None = None,
+    ) -> int | None:
+        """Find an available port in the given range.
+
+        `exclude` lets callers reserve ports they have already chosen in the
+        same pass (e.g. an HTTP port picked just before the livereload port)
+        even though nothing is listening on them yet.
+        """
         ports_in_use = set(self.adapter.get_listening_ports().keys())
+        if exclude:
+            ports_in_use |= exclude
         for port in range(start, end + 1):
             if port not in ports_in_use:
                 return port
         return None
+
+    def plan_run(
+        self,
+        directory: Path,
+        process: str | None = None,
+        http: int = 4000,
+        livereload: int | None = None,
+        span: int = 20,
+    ) -> dict:
+        """Decide whether a server may be launched in `directory`.
+
+        This is the pure decision behind the `run` command, kept separate so it
+        can be unit-tested with a mock adapter. It never starts anything.
+
+        Returns either:
+          {"conflict": [server, ...]}   -- a matching server already serves the
+                                           directory; do NOT start a second one.
+          {"conflict": [], "http": int, "livereload": int | None,
+           "http_requested": int, "http_owner": str | None,
+           "livereload_requested": int | None, "livereload_owner": str | None}
+        """
+        directory = Path(directory).resolve()
+        existing = self.find_for_directory(directory)
+        if process:
+            needle = process.lower()
+            existing = [
+                s
+                for s in existing
+                if needle in s["process"].lower() or needle in s["cmdline"].lower()
+            ]
+
+        # One server can hold several ports (jekyll: http + livereload); dedupe
+        # by pid so the conflict message names one process, not two rows.
+        seen: set[int] = set()
+        conflict: list[dict] = []
+        for s in existing:
+            if s["pid"] not in seen:
+                seen.add(s["pid"])
+                conflict.append(s)
+        if conflict:
+            return {"conflict": conflict}
+
+        chosen_http = self.find_available_port(http, http + span)
+        http_owner = None
+        if chosen_http != http:
+            owner = self.find_by_port(http)
+            http_owner = owner["directory"] if owner else None
+
+        chosen_lr = None
+        lr_owner = None
+        if livereload is not None:
+            reserve = {chosen_http} if chosen_http is not None else None
+            chosen_lr = self.find_available_port(
+                livereload, livereload + span, exclude=reserve
+            )
+            if chosen_lr != livereload:
+                owner = self.find_by_port(livereload)
+                lr_owner = owner["directory"] if owner else None
+
+        return {
+            "conflict": [],
+            "http": chosen_http,
+            "livereload": chosen_lr,
+            "http_requested": http,
+            "http_owner": http_owner,
+            "livereload_requested": livereload,
+            "livereload_owner": lr_owner,
+        }
 
 
 # --- Utilities ---
@@ -335,6 +421,17 @@ def get_url(port: int, hostname: str | None = None) -> str:
     """Build URL for a port, using Tailscale hostname if available."""
     host = hostname or "localhost"
     return f"http://{host}:{port}"
+
+
+def substitute_ports(tokens: list[str], http: int, livereload: int | None) -> list[str]:
+    """Replace {http}/{port}/{livereload} placeholders in a command's argv."""
+    out = []
+    for t in tokens:
+        t = t.replace("{http}", str(http)).replace("{port}", str(http))
+        if livereload is not None:
+            t = t.replace("{livereload}", str(livereload))
+        out.append(t)
+    return out
 
 
 # --- CLI Commands ---
@@ -533,6 +630,111 @@ def suggest(
         console.print(f"[dim]URL: {url}[/dim]")
     else:
         console.print(f"[red]No available ports in range {start}-{end}[/red]")
+
+
+@app.command()
+def version():
+    """Print the running-servers version (for capability gating in scripts)."""
+    # Plain print (not console) so callers can parse it without rich markup.
+    print(__version__)
+
+
+@app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def run(
+    command: list[str] = typer.Argument(
+        None,
+        help="Command to launch, after `--`. {http}/{livereload} are substituted.",
+    ),
+    directory: Path = typer.Option(
+        None, "--dir", "-d", help="Directory to guard on (default: cwd)"
+    ),
+    process: str = typer.Option(
+        None,
+        "--process",
+        "-p",
+        help="Only a server whose process/cmdline matches counts as 'already here'",
+    ),
+    http: int = typer.Option(4000, "--http", help="Preferred HTTP port"),
+    livereload: int = typer.Option(
+        None, "--livereload", "-l", help="Preferred livereload port (optional)"
+    ),
+    span: int = typer.Option(
+        20, "--span", help="How many ports above the preferred to search for a free one"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Print the resolved command instead of executing it"
+    ),
+):
+    """Launch a dev server, but only if one isn't already serving this directory.
+
+    Fails (exit 1) if a --process-matching server already serves the directory.
+    Otherwise picks a free HTTP port (preferring --http) plus a free livereload
+    port, substitutes {http}/{livereload} into the command, and execs it so the
+    server's stdout, Ctrl+C, and exit code pass straight through.
+    """
+    directory = (directory or Path.cwd()).resolve()
+    hostname = get_tailscale_hostname()
+    finder = get_finder()
+    plan = finder.plan_run(
+        directory, process=process, http=http, livereload=livereload, span=span
+    )
+
+    if plan["conflict"]:
+        s = plan["conflict"][0]
+        url = get_url(s["port"], hostname)
+        label = process or s["process"]
+        err_console.print(
+            f"[red]✗[/red] {label} already running here on [cyan]:{s['port']}[/cyan] "
+            f"(pid {s['pid']}) [dim]→[/dim] [blue]{url}[/blue]"
+        )
+        err_console.print(f"[dim]  {directory}[/dim]")
+        raise typer.Exit(code=1)
+
+    chosen_http = plan["http"]
+    chosen_lr = plan["livereload"]
+    if chosen_http is None:
+        err_console.print(f"[red]✗[/red] No free port in {http}-{http + span}")
+        raise typer.Exit(code=1)
+    if livereload is not None and chosen_lr is None:
+        err_console.print(
+            f"[red]✗[/red] No free livereload port in {livereload}-{livereload + span}"
+        )
+        raise typer.Exit(code=1)
+
+    # Drift notes go to stderr so stdout stays the server's (or, in --dry-run,
+    # the resolved command line only).
+    if chosen_http != http:
+        owner = plan["http_owner"] or "another process"
+        err_console.print(
+            f"[dim]ℹ port {http} held by {owner} — using :{chosen_http}[/dim]"
+        )
+    if livereload is not None and chosen_lr != livereload:
+        owner = plan["livereload_owner"] or "another process"
+        err_console.print(
+            f"[dim]ℹ livereload {livereload} held by {owner} — using :{chosen_lr}[/dim]"
+        )
+
+    resolved = substitute_ports(list(command or []), chosen_http, chosen_lr)
+    if not resolved:
+        err_console.print("[red]✗[/red] No command given (expected: run … -- CMD)")
+        raise typer.Exit(code=2)
+    leftovers = [t for t in resolved if "{livereload}" in t]
+    if leftovers:
+        err_console.print(
+            "[red]✗[/red] Command uses {livereload} but no --livereload port was given"
+        )
+        raise typer.Exit(code=2)
+
+    url = get_url(chosen_http, hostname)
+    err_console.print(f"🔨 serving [cyan]{directory}[/cyan] on :{chosen_http} → {url}")
+
+    if dry_run:
+        print(" ".join(resolved))
+        raise typer.Exit(code=0)
+
+    os.execvp(resolved[0], resolved)
 
 
 if __name__ == "__main__":
