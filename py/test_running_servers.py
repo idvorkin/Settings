@@ -406,5 +406,60 @@ def test_version_prints_bare_semver(runner):
     assert out.count(".") == 2  # X.Y.Z, no rich markup
 
 
+def test_check_port_conflict_in_other_directory_is_reported(
+    runner, monkeypatch, tmp_path
+):
+    """When --port is held by a server in a DIFFERENT directory, `check` must
+    surface that cross-directory conflict — the actual reason a new server
+    can't bind and stale content keeps being served. Regression for the
+    stale-jekyll-on-:4000 confusion where the failure message said only
+    "no server here" and gave no hint the port was occupied elsewhere.
+    """
+    target = tmp_path / "target"
+    target.mkdir()
+    other = tmp_path / "other"
+    other.mkdir()
+    _patch_adapter(
+        monkeypatch,
+        [
+            {
+                "port": 4000,
+                "pid": 100,
+                "cwd": str(other),
+                "name": "bundle",
+                "cmdline": "jekyll serve --port 4000",
+            }
+        ],
+    )
+    result = runner.invoke(app, ["check", str(target), "--port", "4000"])
+    assert result.exit_code != 0, result.output
+    # The conflicting holder's directory must appear so the caller understands
+    # why their server won't start on this port.
+    assert str(other) in result.output, result.output
+    assert "4000" in result.output, result.output
+
+
+def test_check_port_match_in_target_dir_does_not_warn_conflict(
+    runner, monkeypatch, tmp_path
+):
+    """A matching server in the SAME directory is success, not a conflict —
+    the cross-directory warning must not fire."""
+    _patch_adapter(
+        monkeypatch,
+        [
+            {
+                "port": 4000,
+                "pid": 100,
+                "cwd": str(tmp_path),
+                "name": "bundle",
+                "cmdline": "jekyll serve --port 4000",
+            }
+        ],
+    )
+    result = runner.invoke(app, ["check", str(tmp_path), "--port", "4000"])
+    assert result.exit_code == 0, result.output
+    assert "conflict" not in result.output.lower(), result.output
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
