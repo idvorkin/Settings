@@ -434,6 +434,20 @@ def substitute_ports(tokens: list[str], http: int, livereload: int | None) -> li
     return out
 
 
+def _same_directory(dir_str: str, directory: Path) -> bool:
+    """True if a server's directory string refers to the same path as `directory`.
+
+    "unknown" counts as NOT the same: a port held by a process whose cwd we
+    can't read is still worth surfacing as a conflict rather than hiding.
+    """
+    if not dir_str or dir_str == "unknown":
+        return False
+    try:
+        return Path(dir_str).resolve() == directory.resolve()
+    except (OSError, ValueError):
+        return False
+
+
 # --- CLI Commands ---
 
 
@@ -577,6 +591,26 @@ def check(
         console.print(
             f"[yellow]✗[/yellow] No server with {criteria} in [cyan]{directory}[/cyan]"
         )
+        # The most useful diagnostic: the requested port may be held by a
+        # server in a DIFFERENT directory. That's why a new server can't bind
+        # and why curl on the port returns another checkout's stale content.
+        # Directory-scoped output alone hides this, so report it explicitly.
+        if expected_port is not None:
+            holder = finder.find_by_port(expected_port)
+            if holder and not _same_directory(holder["directory"], directory):
+                where = (
+                    f"a server in [cyan]{holder['directory']}[/cyan]"
+                    if holder["directory"] != "unknown"
+                    else "another process (directory unknown)"
+                )
+                console.print(
+                    f"[red]  ⚠ Port conflict:[/red] port {expected_port} is already "
+                    f"in use by {where} (pid {holder['pid']}): [dim]{holder['cmdline']}[/dim]"
+                )
+                console.print(
+                    "[dim]    A new server can't bind here — stop that one or "
+                    "use a different port.[/dim]"
+                )
         # Still show what is running in the dir so the caller can see the
         # stray processes that confused them.
         other = finder.find_for_directory(directory)
