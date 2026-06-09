@@ -9,8 +9,8 @@ export default {
 	// Rewrite all http URLs to https
 	rewrite: [
 		{
-			match: ({ url }) => url.protocol === "http:",
-			url: ({ url }) => url.href.replace(/^http:/, "https:"),
+			match: (url) => url.protocol === "http:",
+			url: (url) => url.href.replace(/^http:/, "https:"),
 		},
 	],
 
