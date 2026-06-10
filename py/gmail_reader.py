@@ -124,26 +124,26 @@ def authenticate():
         try:
             with open(token_path, "rb") as token:
                 creds = pickle.load(token)
-
-            # Try to refresh token if expired
-            if creds and creds.expired and creds.refresh_token:
-                try:
-                    creds.refresh(Request())
-                except RefreshError as e:
-                    if "invalid_grant" in str(e):
-                        console.print(
-                            "[yellow]Token expired. Need to reauthenticate.[/yellow]"
-                        )
-                        # Delete the invalid token file
-                        token_path.unlink()
-                        creds = None
-                    else:
-                        raise
         except Exception as e:
             console.print(
                 f"[yellow]Error reading token: {e}. Will create new token.[/yellow]"
             )
             creds = None
+
+        # Try to refresh token if expired
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+            except RefreshError as e:
+                if "invalid_grant" in str(e):
+                    console.print(
+                        "[yellow]Token expired. Need to reauthenticate.[/yellow]"
+                    )
+                    # Delete the invalid token file
+                    token_path.unlink()
+                    creds = None
+                else:
+                    raise
 
     # If no valid credentials available, let the user log in
     if not creds or not creds.valid:
@@ -383,8 +383,11 @@ def setup():
             console.print(
                 f"[green]Authentication successful! Connected as: {email_address}[/green]"
             )
+        except typer.Exit:
+            raise
         except Exception as e:
             console.print(f"[red]Authentication failed: {str(e)}[/red]")
+            raise typer.Exit(1)
     else:
         console.print(
             "[red]Credentials file not found. Please download and save it to the correct location.[/red]"
@@ -459,8 +462,11 @@ def list(
         console.print(table)
         console.print(f"\n[bold]Total:[/bold] {len(messages)} emails")
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
 
 
 def get_kindle_notebook_emails(service, max_results=100, days=None):
@@ -839,8 +845,11 @@ def kindle(
             "\n[italic]To read a specific email, use:[/italic] gmail read EMAIL_ID"
         )
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -973,11 +982,14 @@ def read(
                 else:
                     console.print("[yellow]No content available.[/yellow]")
 
+    except typer.Exit:
+        raise
     except Exception as e:
         if regular_print:
             print(f"Error: {str(e)}")
         else:
             console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -1037,8 +1049,11 @@ def search(
         console.print(table)
         console.print(f"\n[bold]Total:[/bold] {len(messages)} results")
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -1066,8 +1081,11 @@ def labels():
 
         console.print(table)
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -1105,8 +1123,11 @@ def stats():
 
         console.print(table)
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -1371,8 +1392,11 @@ def notebook(
                     for _, selected_url in selected_urls:
                         console.print(selected_url)
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -1473,8 +1497,11 @@ def dexie():
         else:
             console.print("[yellow]⚠ Could not copy to clipboard[/yellow]")
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
 
 
 @app.command()
