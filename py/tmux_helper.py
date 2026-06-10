@@ -670,7 +670,7 @@ def session_exists(session: str) -> bool:
 def get_session_pane_pids(session: str) -> list[int]:
     """Get all pane PIDs in a session"""
     result = run_tmux_command(
-        ["tmux", "list-panes", "-t", session, "-a", "-F", "#{pane_pid}"],
+        ["tmux", "list-panes", "-s", "-t", session, "-F", "#{pane_pid}"],
         capture_output=True,
     )
     if not result:
