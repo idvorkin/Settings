@@ -95,6 +95,7 @@ def convert(
     amazon_transactions = 0
     whole_foods_transactions = 0
     zero_cost_transactions = 0
+    unparsable_transactions = 0
 
     csv_reader = read_csv_with_bom_handling(inputfile.name)
     ic(csv_reader.fieldnames)
@@ -107,6 +108,7 @@ def convert(
         "Original Statement",
         "Notes",
         "Amount",
+        "Tags",
     ]
     csv_writer = csv.DictWriter(outputfile, output_field_names)
     csv_writer.writeheader()
@@ -116,19 +118,27 @@ def convert(
             whole_foods_transactions += 1
         elif row[key_website] == amazon_com_value:
             transaction_date = strptime(row[key_order_date])
-            if row[key_total_cost] == "0":
+            try:
+                total_cost = float(row[key_total_cost].replace(",", ""))
+            except ValueError:
+                # Amazon exports non-numeric values like "Not Available" for
+                # some order states; skip the row instead of aborting the run.
+                unparsable_transactions += 1
+                continue
+            if total_cost == 0:
                 zero_cost_transactions += 1
             elif since_date.date() <= transaction_date.date():
                 amazon_transactions += 1
                 csv_writer.writerow(
                     {
-                        "Date": str(strptime(row[key_order_date]).date()),
+                        "Date": str(transaction_date.date()),
                         "Merchant": row[key_name][0:31] + "-AMZN",
                         "Category": output_category,
                         "Account": output_account,
                         "Original Statement": row[key_name],
                         "Notes": output_notes_prefix + row[key_payment_type],
-                        "Amount": "-" + row[key_total_cost],
+                        "Amount": f"{-total_cost:.2f}",
+                        "Tags": output_tags,
                     }
                 )
 
@@ -138,6 +148,10 @@ def convert(
     )
     print(f"Ignored {whole_foods_transactions} Whole Foods transactions.")
     print(f"Ignored {zero_cost_transactions} transactions with $0 order amounts.")
+    if unparsable_transactions:
+        print(
+            f"Skipped {unparsable_transactions} transactions with non-numeric order amounts."
+        )
 
 
 def strptime(str):
@@ -203,6 +217,7 @@ def main(
         input_csv.close()
         output_csv.close()
         os.remove(output_csv.name)
+        raise typer.Exit(1)
     finally:
         input_csv.close()
         output_csv.close()
