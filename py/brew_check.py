@@ -143,11 +143,14 @@ def is_formula_installed(name: str, installed_norm: set[str]) -> bool:
     if normalize_name(name) in installed_norm:
         return True
     # Second-chance: let brew resolve the name
-    result = subprocess.run(
-        ["brew", "list", "--formula", name],
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            ["brew", "list", "--formula", name],
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return False
     return result.returncode == 0
 
 
@@ -157,7 +160,9 @@ def get_missing_by_category(
     """Get missing packages organized by category."""
     missing_formula_cats = []
     for cat, pkgs in FORMULA_CATEGORIES:
-        missing = [p for p in pkgs if not is_formula_installed(p, installed_formulae_norm)]
+        missing = [
+            p for p in pkgs if not is_formula_installed(p, installed_formulae_norm)
+        ]
         if missing:
             missing_formula_cats.append((cat, missing))
 
