@@ -510,7 +510,7 @@ class Displays(BaseModel):
     displays: List[Display]
 
 
-def call_yabai(prompt) -> CompletedProcess:
+def call_yabai(prompt, check: bool = True) -> CompletedProcess:
     yabi_root = Path("~/homebrew/bin/yabai/").expanduser()
 
     # Split the prompt to run the path
@@ -519,7 +519,7 @@ def call_yabai(prompt) -> CompletedProcess:
 
     # Run the command in the remote shell
     try:
-        out = subprocess.run(command, check=True, capture_output=True, text=True)
+        out = subprocess.run(command, check=check, capture_output=True, text=True)
         return out
     except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e.stderr}")
@@ -668,7 +668,7 @@ def close():
 @app.command()
 def cycle():
     """Cycle through windows by repeatedly swapping with the previous window"""
-    win_result = call_yabai("-m query --windows --window last")
+    win_result = call_yabai("-m query --windows --window last", check=False)
     if win_result.returncode != 0:
         typer.echo("Failed to query yabai windows")
         raise typer.Exit(code=1)
@@ -680,8 +680,10 @@ def cycle():
         typer.echo(f"Failed to parse window data: {e}")
         raise typer.Exit(code=1)
 
-    while True:
-        swap_result = call_yabai(f"-m window {win_id} --swap prev")
+    # The loop ends when yabai rejects the boundary swap (non-zero exit);
+    # cap iterations so a permissive yabai can't spin forever.
+    for _ in range(100):
+        swap_result = call_yabai(f"-m window {win_id} --swap prev", check=False)
         if swap_result.returncode != 0:
             break
 
@@ -1180,9 +1182,11 @@ def save_commands_cache(commands):
 def alfred():
     """Generate JSON output of all commands for Alfred workflow integration"""
     # Try to load from cache first
+    import builtins  # Use standard print, not Rich's print (which interprets [...] as markup and wraps long lines)
+
     cached_commands = load_cached_commands()
     if cached_commands:
-        print(cached_commands)
+        builtins.print(cached_commands)
         return
 
     print("Cache Status: Miss", file=sys.stderr)
@@ -1200,7 +1204,7 @@ def alfred():
     # Save to cache for future use
     save_commands_cache(json_output)
 
-    print(json_output)
+    builtins.print(json_output)
 
 
 @app.command()
@@ -2540,6 +2544,8 @@ def alfred_complete(
     2. Partial command: filter commands
     3. Command with space: show parameter completions
     """
+    import builtins  # Use standard print, not Rich's print (which interprets [...] as markup and wraps long lines)
+
     # Don't strip - we need to detect trailing space for parameter completion
     has_trailing_space = query.endswith(" ")
     query_stripped = query.strip()
@@ -2647,7 +2653,7 @@ def alfred_complete(
             )
 
     alfred_items = AlfredItems(items=items)
-    print(alfred_items.model_dump_json(indent=2, exclude_none=True))
+    builtins.print(alfred_items.model_dump_json(indent=2, exclude_none=True))
 
 
 if __name__ == "__main__":
