@@ -335,7 +335,7 @@ def w3():
 
 @app.command()
 def w4():
-    call_aerospace("workspace 3")
+    call_aerospace("workspace 4")
 
 
 @app.command()
@@ -460,7 +460,7 @@ def alfred():
     #  Build a json of commands to be called from an alfred plugin workflow
     # start by reflecting to find all commands in app.
     # all_commands = app.
-    commands = [c.callback.__name__.replace("-", "_") for c in app.registered_commands]  # type:ignore
+    commands = [c.callback.__name__.replace("_", "-") for c in app.registered_commands]  # type:ignore
     items = [AlfredItems.Item(title=c, subtitle=c, arg=c) for c in commands]
     alfred_items = AlfredItems(items=items)
     print(alfred_items.model_dump_json(indent=4))
