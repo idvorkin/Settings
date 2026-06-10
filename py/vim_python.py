@@ -144,7 +144,7 @@ def RandomBlogPost():
     files = []
     files.extend(list(blog_path.glob("_posts/*md")))
     files.extend(list(blog_path.glob("_d/*md")))
-    list(blog_path.glob("_td/*md"))
+    files.extend(list(blog_path.glob("_td/*md")))
     random_post = random.choice(files)
     print(random_post)
 
