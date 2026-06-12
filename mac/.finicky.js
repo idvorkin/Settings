@@ -1,7 +1,7 @@
 // ~/.finicky.js
 
 export default {
-	defaultBrowser: "Microsoft Edge",
+	defaultBrowser: "Google Chrome",
 
 	// Optional: Disable logging requests to disk
 	logRequests: false,
