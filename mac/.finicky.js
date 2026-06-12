@@ -48,6 +48,7 @@ export default {
 			match: [
 				/fburl\.com/i,
 				/internalfb\.com/i,
+				/internalmeta\.com/i,
 				/fb\.facebook\.com/i,
 				/fb\.workplace\.com/i,
 				/docs\.google\.com/i,
@@ -55,6 +56,8 @@ export default {
 				/fb\.okta\.com/i,
 				/drive\.google\.com\/drive\/folders/i,
 				/fb\.quip\.com/i,
+				/ghe\.oculus-rep\.com/i,
+				/github\.com/i,
 			],
 			browser: "Google Chrome",
 		},
