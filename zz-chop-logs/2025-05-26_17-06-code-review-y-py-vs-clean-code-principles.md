@@ -117,10 +117,10 @@ That's fine. Uhm ... Something is wrong when I do tab completion -- ➜  ~ y flo
 │ ╭──────────────────────────────────────────────────────── locals ────────────────────────────────────────────────────────╮                                  │
 │ │  key = 'COMP_WORDS'                                                                                                    │                                  │
 │ │ self = environ({                                                                                                       │                                  │
-│ │        │   'ANTHROPIC_API_KEY': 'sk-ant-api03-sdHW4WeUfa0VcxWYvfLEXMI7rSMqr6ALR_s1Gbdje7I84nftE7VHU_QsmQS81B3S7ZJ'+28, │                                  │
-│ │        │   'ASSEMBLYAI_API_KEY': '95a59ff20a1349499422d4b0e5e59e42',                                                   │                                  │
+│ │        │   'ANTHROPIC_API_KEY': '<REDACTED — rotated>',                                                              │                                  │
+│ │        │   'ASSEMBLYAI_API_KEY': '<REDACTED — rotated>',                                                             │                                  │
 │ │        │   'ATUIN_HISTORY_ID': '',                                                                                     │                                  │
-│ │        │   'ATUIN_SESSION': '01970e6ca9b077e1b80e8e0505f47e55',                                                        │                                  │
+│ │        │   'ATUIN_SESSION': '<REDACTED>',                                                                            │                                  │
 │ │        │   'BING_SEARCH_URL': 'https://api.bing.microsoft.com/v7.0/search',                                            │                                  │
 │ │        │   'CARAPACE_BRIDGES': 'zsh',                                                                                  │                                  │
 │ │        │   'COLORFGBG': '15;0',                                                                                        │                                  │
