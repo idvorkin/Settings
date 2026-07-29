@@ -71,6 +71,10 @@ ln -s -f ~/settings/config/mcphub ~/.config/mcphub
 ln -s -f ~/settings/config/mpv ~/.config/mpv
 ln -s -f ~/settings/config/ghostty ~/.config/ghostty
 
+# herdr keeps logs/sockets in ~/.config/herdr, so link only the config file
+mkdir -p ~/.config/herdr
+ln -s -f ~/settings/config/herdr/config.toml ~/.config/herdr/config.toml
+
 # Cursor config (official location is ~/.cursor but also link to ~/.config/cursor for consistency)
 ln -s -f ~/settings/config/cursor ~/.config/cursor
 ln -s -f ~/settings/config/cursor ~/.cursor
