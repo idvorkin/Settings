@@ -1,0 +1,122 @@
+# herdr configuration — tmux-parity keybindings
+#
+# Symlinked from ~/.config/herdr/config.toml (see bootstrap.sh).
+# Herdr writes logs/sockets into ~/.config/herdr, so only this file is
+# symlinked, not the whole directory.
+#
+# Goal: reuse the muscle memory from ~/settings/shared/.tmux.conf.
+# Concept mapping:  tmux session -> herdr workspace
+#                   tmux window  -> herdr tab
+#                   tmux pane    -> herdr pane
+#
+# Reload after editing:  prefix+r  (or `herdr server reload-config`)
+# Validate:              herdr config check
+
+onboarding = false
+
+[keys]
+# ---------------------------------------------------------------------------
+# Prefix — C-a, same as tmux (default herdr is ctrl+b, which vi uses).
+# ---------------------------------------------------------------------------
+prefix = "ctrl+a"
+
+# --- session-level -----------------------------------------------------------
+help = "prefix+?"                     # tmux: ? list-keys
+detach = "prefix+d"                   # tmux: d detach                 (herdr default: prefix+q)
+reload_config = "prefix+r"            # tmux: r source-file ~/.tmux.conf (herdr default: prefix+shift+r)
+resize_mode = "prefix+shift+r"        # displaced by reload_config above
+settings = "prefix+s"
+toggle_sidebar = "prefix+b"
+
+# --- workspaces (tmux sessions) ---------------------------------------------
+workspace_picker = "prefix+w"         # tmux: C-a w -> rmux_helper pick-tui
+previous_workspace = "prefix+("       # tmux: ( switch-client -p
+next_workspace = "prefix+)"           # tmux: ) switch-client -n
+rename_workspace = "prefix+$"         # tmux: $ rename-session        (herdr default: prefix+shift+w)
+new_workspace = "prefix+shift+n"
+close_workspace = "prefix+shift+d"    # prompts (ui.confirm_close = true)
+new_worktree = "prefix+shift+g"
+goto = "prefix+g"
+# switch_workspace = "prefix+shift+1..9"   # optional direct workspace jump
+
+# --- tabs (tmux windows) -----------------------------------------------------
+new_tab = "prefix+c"                  # tmux: c new-window
+next_tab = "prefix+n"                 # tmux: n next-window
+previous_tab = "prefix+p"             # tmux: p previous-window
+switch_tab = "prefix+1..9"            # tmux: 1-9 select-window (base-index 1)
+rename_tab = "prefix+comma"           # tmux: , rename-window         (herdr default: prefix+shift+t)
+close_tab = "prefix+&"                # tmux: & kill-window           (herdr default: prefix+shift+x)
+
+# --- panes -------------------------------------------------------------------
+# Verified against `herdr pane layout`: split_vertical -> "right" (side by
+# side, tmux %), split_horizontal -> "down" (stacked, tmux ").
+split_vertical = "prefix+%"           # tmux: % split-window -h       (herdr default: prefix+v)
+split_horizontal = 'prefix+"'         # tmux: " split-window -v       (herdr default: prefix+minus)
+close_pane = "prefix+x"               # tmux: x kill-pane
+zoom = "prefix+z"                     # tmux: z resize-pane -Z
+rename_pane = "prefix+shift+p"
+
+focus_pane_left = "prefix+h"
+focus_pane_down = "prefix+j"
+focus_pane_up = "prefix+k"
+focus_pane_right = "prefix+l"
+
+cycle_pane_next = "prefix+o"          # tmux: o select-pane -t :.+    (herdr default: prefix+tab)
+cycle_pane_previous = "prefix+ctrl+o" # tmux: C-o rotate-window
+last_pane = "prefix+;"                # tmux: ; last-pane             (herdr default: unbound)
+
+swap_pane_left = "prefix+{"           # tmux: { swap-pane -U
+swap_pane_right = "prefix+}"          # tmux: } swap-pane -D
+swap_pane_up = "prefix+shift+k"
+swap_pane_down = "prefix+shift+j"
+
+# --- scrollback / copy -------------------------------------------------------
+copy_mode = "prefix+v"                # tmux: C-a v / V copy-mode (mode-keys vi)
+edit_scrollback = "prefix+e"          # herdr-only: dump scrollback into $EDITOR
+
+# --- notifications -----------------------------------------------------------
+open_notification_target = "prefix+shift+o"  # displaced by cycle_pane_next
+
+# Navigate-mode movement (local shortcuts while the navigator is open).
+navigate_workspace_up = "up"
+navigate_workspace_down = "down"
+navigate_pane_left = "h"
+navigate_pane_down = "j"
+navigate_pane_up = "k"
+navigate_pane_right = "l"
+
+# --- popups (mirrors the :tig / :gdiff tmux command aliases) ------------------
+[[keys.command]]
+key = "prefix+ctrl+g"
+type = "popup"
+command = "lazygit"
+width = "90%"
+height = "90%"
+
+[[keys.command]]
+key = "prefix+ctrl+t"
+type = "popup"
+command = "tig status"
+width = "90%"
+height = "90%"
+
+[ui]
+# tmux `c` creates a window immediately; don't prompt for a name.
+prompt_new_tab_name = false
+# tmux: set -g mouse on
+mouse_capture = true
+confirm_close = true
+agent_panel_sort = "spaces"
+
+# Show what each agent is working on. Claude Code keeps its terminal title set
+# to the current task, so terminal_title_stripped is a live "what am I doing"
+# field. Not on by default -- rows_by_agent is opt-in, the built-in default is
+# just [["state_icon", "workspace", "tab"], ["agent"]].
+[ui.sidebar.agents.rows_by_agent]
+# No "agent" row -- every agent here is claude, so the label is pure noise.
+# No cwd token exists, but with one workspace per repo the workspace label is
+# effectively the directory.
+claude = [
+  ["state_icon", "workspace", "tab"],
+  ["terminal_title_stripped"],
+]
