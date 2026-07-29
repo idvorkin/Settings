@@ -113,8 +113,10 @@ agent_panel_sort = "spaces"
 # field. Not on by default -- rows_by_agent is opt-in, the built-in default is
 # just [["state_icon", "workspace", "tab"], ["agent"]].
 [ui.sidebar.agents.rows_by_agent]
+# No "agent" row -- every agent here is claude, so the label is pure noise.
+# No cwd token exists, but with one workspace per repo the workspace label is
+# effectively the directory.
 claude = [
   ["state_icon", "workspace", "tab"],
   ["terminal_title_stripped"],
-  ["agent"],
 ]
