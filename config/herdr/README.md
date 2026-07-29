@@ -63,14 +63,17 @@ Ways to fix it, best first:
 
 - **One workspace per repo** (`prefix+shift+n`). This is what the agent panel is
   designed around, and it makes the workspace column meaningful again.
-  Note `herdr tab` has **no move command** — a tab cannot be relocated to another
-  workspace after the fact, so start the agent in the right workspace.
+  Note `herdr tab` has **no move command**, so a tab cannot be relocated wholesale.
+  Individual panes can move, though — `herdr pane move <PANE_ID> --tab <TAB_ID>`,
+  and tab ids are workspace-scoped (`w2:t3`), so it should reach another
+  workspace's tab.
 - **Surface the task instead of the location** — show the agent's terminal title,
-  which Claude Code sets to the current task:
-  ```toml
-  [ui.sidebar.agents.rows_by_agent]
-  claude = [["state_icon", "workspace", "tab"], ["terminal_title_stripped"], ["agent"]]
-  ```
+  which Claude Code keeps set to the current task. This is configured in
+  [`config.toml`](config.toml). Note it is **opt-in**: `rows_by_agent` appears in
+  `herdr --default-config` only as a commented example, and the real built-in
+  default is `rows = [["state_icon", "workspace", "tab"], ["agent"]]` — two lines
+  per agent, with no title. Without setting it explicitly the panel shows only
+  workspace, tab, and agent name.
 - **Sort by attention instead of grouping** — `agent_panel_sort = "priority"` turns
   the panel into a queue of who needs you, making the workspace grouping moot.
 

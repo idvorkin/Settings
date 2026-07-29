@@ -107,3 +107,14 @@ prompt_new_tab_name = false
 mouse_capture = true
 confirm_close = true
 agent_panel_sort = "spaces"
+
+# Show what each agent is working on. Claude Code keeps its terminal title set
+# to the current task, so terminal_title_stripped is a live "what am I doing"
+# field. Not on by default -- rows_by_agent is opt-in, the built-in default is
+# just [["state_icon", "workspace", "tab"], ["agent"]].
+[ui.sidebar.agents.rows_by_agent]
+claude = [
+  ["state_icon", "workspace", "tab"],
+  ["terminal_title_stripped"],
+  ["agent"],
+]
