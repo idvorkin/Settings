@@ -3,28 +3,35 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Repository Overview
+
 This is Igor Dvorkin's personal settings/dotfiles repository - a comprehensive configuration management system for multiple platforms (macOS, Linux/Alpine, Windows/WSL) and development tools. It includes Python CLI utilities, editor configurations, and workflow automation patterns.
 
 ## Setup Instructions
 
 ### macOS Setup
+
 Run the bootstrap script to install all dependencies:
+
 ```bash
 ./bootstrap.sh
 ```
 
 Key installation files:
+
 - **Brew packages**: `shared/brew_packages.sh` - Contains all Homebrew packages including development tools, LSPs, and utilities
 - **Mac-specific setup**: `mac/install.sh` - macOS-specific configurations and cask applications
 - **Shared setup**: `shared/shared_install.sh` - Cross-platform configurations
 
 ### Homebrew Package Management
+
 - **Non-cask packages**: Add to `shared/brew_packages.sh` using format `brew_packages="$brew_packages package_name"`
 - **Cask applications**: Add to `mac/install.sh` using format `brew install --cask app-name`
 - See `.cursor/rules/104-brew-packages.mdc` for detailed package management guidelines
 
 ### Required Packages
+
 Essential packages are installed via Homebrew from `shared/brew_packages.sh`:
+
 - Development tools: `git`, `tmux`, `zsh`, `neovim`
 - Language servers: `lua-language-server`, `typos-lsp`
 - Python tools: `uv`, `pipx`, `ruff`
@@ -32,13 +39,17 @@ Essential packages are installed via Homebrew from `shared/brew_packages.sh`:
 - Git enhancements: `gh`, `lazygit`, `git-delta`
 
 ### CocoaPods / Ruby gems PATH
+
 `pod` installed via `gem` lives at `/opt/homebrew/lib/ruby/gems/<ver>/bin/pod`, not in default PATH. Without it, `npx expo prebuild` and `pod install` fail with `spawn pod ENOENT`. Export before running iOS native commands:
+
 ```bash
 export PATH="/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH"
 ```
 
 ### Python Environment Setup
+
 Python tools are managed via UV for speed and consistency:
+
 ```bash
 # Install UV and pipx
 brew install uv pipx
@@ -52,7 +63,9 @@ uv tool install --force mypy
 ## Python Development Conventions
 
 ### UV Shebang Usage
+
 All Python scripts in `py/` use PEP 723 inline script dependencies — no venv setup required, run directly:
+
 ```python
 #!/usr/bin/env -S uv run --script
 # /// script
@@ -60,10 +73,13 @@ All Python scripts in `py/` use PEP 723 inline script dependencies — no venv s
 # dependencies = ["typer", "rich", "pydantic"]
 # ///
 ```
+
 The `-S` in `env -S` is required so `env` splits `uv run --script` into multiple args — without it, the kernel passes the whole string as a single argument to `env` and the shebang fails on both macOS and Linux.
 
 ### CLI Framework
+
 Use Typer for all command-line interfaces:
+
 ```python
 import typer
 app = typer.Typer(
@@ -74,14 +90,18 @@ app = typer.Typer(
 ```
 
 ### Type Annotations
+
 Always use type annotations with Python 3.13+ style:
+
 ```python
 def process_items(items: list[str]) -> dict[str, int]:
     return {item: len(item) for item in items}
 ```
 
 ### Data Validation
+
 Use Pydantic for configuration and data validation:
+
 ```python
 from pydantic import BaseModel, Field
 
@@ -91,7 +111,9 @@ class Config(BaseModel):
 ```
 
 ### Terminal Output
+
 Use Rich for enhanced terminal output:
+
 ```python
 from rich.console import Console
 from rich.progress import track
@@ -101,6 +123,7 @@ console.print("[green]Success![/green] Operation completed")
 ```
 
 ### Testing Organization
+
 - Test files mirror source structure: `py/foo.py` → `py/test_foo.py`
 - Test files are standalone PEP 723 scripts — pytest is declared in the inline `# /// script` block so you can run them directly: `./py/test_foo.py`. No `py/.venv/` setup needed.
 - `if __name__ == "__main__": sys.exit(pytest.main([__file__, "-v"]))` at the bottom lets direct execution invoke pytest on the file.
@@ -121,6 +144,7 @@ This repo follows the conventions in [chop-conventions/dev-inner-loop](https://g
 - [running-commands.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/running-commands.md) — command-line conventions
 
 Superseded by skills — use the skill, not a convention doc:
+
 - **Before implementing** → `superpowers:brainstorming` skill
 - **Bug investigation** → `superpowers:systematic-debugging` skill
 
@@ -132,6 +156,7 @@ Superseded by skills — use the skill, not a convention doc:
 ## Guardrails
 
 See [chop-conventions/dev-inner-loop/guardrails.md](https://github.com/idvorkin/chop-conventions/blob/main/dev-inner-loop/guardrails.md).
+
 - Never remove failing tests without explicit "YES" approval
 - Never push to main directly - use feature branches and PRs
 - Never force push - can destroy history
@@ -140,6 +165,7 @@ See [chop-conventions/dev-inner-loop/guardrails.md](https://github.com/idvorkin/
 ## Code Quality Standards
 
 ### Clean Code Principles
+
 - **DRY (Don't Repeat Yourself)**: Extract common logic into functions
 - **Early Returns**: Exit functions early to reduce nesting
 - **Minimize Nesting**: Keep nesting under 3 levels
@@ -147,7 +173,9 @@ See [chop-conventions/dev-inner-loop/guardrails.md](https://github.com/idvorkin/
 - **Humble Objects**: Keep objects simple with single responsibilities
 
 ### Pre-commit Hooks
+
 The repository uses these linters (configured in .pre-commit-config.yaml):
+
 - **Python**: Ruff (linting and formatting)
 - **JavaScript/TypeScript**: Biome
 - **Markdown**: Prettier
@@ -157,6 +185,7 @@ The repository uses these linters (configured in .pre-commit-config.yaml):
 ## Git Workflow
 
 ### Commit Practices
+
 - **Clean Commits**: Each commit should be atomic and complete
 - **Logical Separation**: Separate functional changes from formatting
 - **Descriptive Messages**: Use conventional commit format when applicable
@@ -164,6 +193,7 @@ The repository uses these linters (configured in .pre-commit-config.yaml):
 - **Explicit Staging**: NEVER use `git add -A` or `git add .` - always add files explicitly by name
 
 ### Pull Request Workflow
+
 1. Create issue first using `gh issue create`
 2. Create branch from issue
 3. Make changes following conventions
@@ -171,7 +201,9 @@ The repository uses these linters (configured in .pre-commit-config.yaml):
 5. Link PR to issue
 
 ### Push Access
+
 The AI tools account (`idvorkin-ai-tools`) may not have push access to all repos. If a direct push is denied, push from a fork instead:
+
 ```bash
 gh repo fork --remote-name fork
 git push fork <branch-name>
@@ -198,6 +230,7 @@ If the check prints `devvm`, the following non-obvious constraints apply. If it 
 ## Terminal Command Conventions
 
 ### Important Usage Notes
+
 - Use `/bin/cat` when encountering pager issues with commands
 - Run Python scripts directly via shebang: `./script.py` (not `python script.py`)
 - For UV-managed scripts: `uv run script.py`
@@ -206,6 +239,7 @@ If the check prints `devvm`, the following non-obvious constraints apply. If it 
 ## Development Commands
 
 ### Common Tasks
+
 ```bash
 # Run tests
 just test
@@ -221,9 +255,11 @@ pre-commit run --all-files
 ```
 
 ### Adding Tmux Commands
+
 To add new tmux commands via `py/tmux_helper.py`:
 
 1. **Add command function to `py/tmux_helper.py`**:
+
    ```python
    @app.command()
    def command_name():
@@ -248,6 +284,7 @@ To add new tmux commands via `py/tmux_helper.py`:
 3. **Add to `shared/.tmux.conf`**:
 
    a. **Add to help section** (top of file, around lines 7-22):
+
    ```tmux
    # Keybindings:
    #   C-a <key>            - Description of what it does
@@ -257,19 +294,23 @@ To add new tmux commands via `py/tmux_helper.py`:
    ```
 
    b. **Add keybinding** (optional, for quick access):
+
    ```tmux
    bind-key <key> run-shell "tmux_helper command_name"
    ```
 
    c. **Add command alias** (in the command aliases section, around line 214-217):
+
    ```tmux
    set -s command-alias[10X] command_name='run-shell "tmux_helper command_name"'
    ```
+
    (Increment the number to avoid conflicts)
 
 4. **Reload tmux config**: Press `Prefix + r` or run `tmux source-file ~/.tmux.conf`
 
 **Example**: The `third` command toggles between even and 1/3-2/3 layouts:
+
 - Function at `py/tmux_helper.py:413`
 - Keybinding at `shared/.tmux.conf:207` (`C-a /`)
 - Command alias at `shared/.tmux.conf:217` (`:third`)
@@ -282,15 +323,18 @@ To add new tmux commands via `py/tmux_helper.py`:
 **Purpose**: Fuzzy session/window/pane picker with tree view, replacing tmux-sessionx plugin.
 
 **Commands**:
+
 - `rmux_helper pick-tui` - Native skim-based TUI picker (recommended)
 - `rmux_helper pick` - Uses external fzf-tmux (fallback)
 - `rmux_helper pick-list` - Outputs formatted list (for fzf reload actions)
 
 **Tmux Keybindings** (in `shared/.tmux.conf`):
+
 - `C-a w` - Launch picker popup (`display-popup -E -w 95% -h 95% "rmux_helper pick-tui"`)
 - `C-a C-w` - Built-in tmux tree picker (fallback)
 
 **Picker Keybindings**:
+
 - `C-n/C-p` - Navigate down/up
 - `C-r` - Rename (session if on session line, window otherwise)
 - `C-m` - Move window to different session (shows session picker)
@@ -298,6 +342,7 @@ To add new tmux commands via `py/tmux_helper.py`:
 - `Esc` - Cancel
 
 **Display Format** (tree view):
+
 ```
 ⊟ session_name                              (cyan)
   ⊡ session:window window_name pane_title │ short_path
@@ -306,16 +351,19 @@ To add new tmux commands via `py/tmux_helper.py`:
 ```
 
 **Features**:
+
 - Fuzzy search on all fields (session, window name, pane title, path)
 - Preview pane shows `tmux capture-pane` output (right 50%)
 - ANSI colors via skim 0.20+ with `.ansi(true)`
 - 95% popup overlay via `tmux display-popup`
 
 **Dependencies**:
+
 - `skim = "0.20"` crate (embedded, no external fzf needed for pick-tui)
 - `fzf-tmux` only needed for legacy `pick` command and C-m move action
 
 **Building**:
+
 ```bash
 cd rust/tmux_helper
 cargo install --path . --force
@@ -329,25 +377,90 @@ cargo install --path . --force
 ## File Organization
 
 ### Python Utilities
+
 Located in `py/` directory, each with UV shebang and Typer CLI:
+
 - `ai_clip.py` - AI clipboard processing
 - `gmail_to_todoist.py` - Gmail integration
 - `tmux_helper.py` - Tmux utilities
 - `gpt.py` - OpenAI API wrapper
 
 ### Conventions Directory
+
 The `zz-chop-conventions/` directory contains shared conventions that should be followed across all projects.
 
 ## Important Warnings
+
 - NEVER create files unless absolutely necessary
 - ALWAYS prefer editing existing files
 - NEVER proactively create documentation files (*.md) unless explicitly requested
 - Follow existing patterns in the codebase rather than introducing new ones
 
 ## Architecture Overview
+
 This repository implements infrastructure-as-code principles with:
+
 - Platform-specific configurations in dedicated directories (`/mac`, `/windows`, `/alpine`)
 - Shared configurations in `/shared` (git, zsh, tmux, ssh)
 - Application configs in `/config` (cursor, bat, yazi, mpv, etc.)
 - Neovim configuration in `/nvim` with Lua-based plugin management
 - Workflow templates and AI rules in `/xnotes`
+
+<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
+
+## Beads Issue Tracker
+
+This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
+
+### Quick Reference
+
+```bash
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --claim  # Claim work
+bd close <id>         # Complete work
+```
+
+### Rules
+
+- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- Run `bd prime` for detailed command reference and session close protocol
+- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+
+**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
+
+## Agent Context Profiles
+
+The managed Beads block is task-tracking guidance, not permission to override repository, user, or orchestrator instructions.
+
+- **Conservative (default)**: Use `bd` for task tracking. Do not run git commits, git pushes, or Dolt remote sync unless explicitly asked. At handoff, report changed files, validation, and suggested next commands.
+- **Minimal**: Keep tool instruction files as pointers to `bd prime`; use the same conservative git policy unless active instructions say otherwise.
+- **Team-maintainer**: Only when the repository explicitly opts in, agents may close beads, run quality gates, commit, and push as part of session close. A current "do not commit" or "do not push" instruction still wins.
+
+## Session Completion
+
+This protocol applies when ending a Beads implementation workflow. It is subordinate to explicit user, repository, and orchestrator instructions.
+
+1. **File issues for remaining work** - Create beads for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **Handle git/sync by active profile**:
+   ```bash
+   # Conservative/minimal/default: report status and proposed commands; wait for approval.
+   git status
+
+   # Team-maintainer opt-in only, unless current instructions forbid it:
+   git pull --rebase
+   bd dolt push
+   git push
+   git status
+   ```
+5. **Hand off** - Summarize changes, validation, issue status, and any blocked sync/commit/push step
+
+**Critical rules:**
+
+- Explicit user or orchestrator instructions override this Beads block.
+- Do not commit or push without clear authority from the active profile or the current user request.
+- If a required sync or push is blocked, stop and report the exact command and error.
+
+<!-- END BEADS INTEGRATION -->
