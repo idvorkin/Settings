@@ -1,6 +1,7 @@
 //! Ratatui TUI for the link picker. See spec §Layout & Display and §Navigation.
 
 use crate::link_picker::detect::{Category, GhState, Row};
+use crate::mux::Multiplexer;
 use ansi_to_tui::IntoText;
 use anyhow::Result;
 use crossterm::{
@@ -39,10 +40,11 @@ struct App {
     horizontal: bool,
     show_help: bool,
     action: Option<Action>,
+    mux: Multiplexer,
 }
 
 impl App {
-    fn new(rows: Vec<Row>) -> Self {
+    fn new(rows: Vec<Row>, mux: Multiplexer) -> Self {
         let mut app = Self {
             rows,
             filtered: Vec::new(),
@@ -53,6 +55,7 @@ impl App {
             horizontal: true,
             show_help: false,
             action: None,
+            mux,
         };
         app.rebuild_filter();
         app
@@ -261,6 +264,10 @@ mod help_overlay_tests {
     use super::*;
 
     fn app_with_one_row() -> App {
+        app_with_mux(Multiplexer::Tmux)
+    }
+
+    fn app_with_mux(mux: Multiplexer) -> App {
         let row = Row {
             category: Category::Server,
             canonical: "c-5001".into(),
@@ -271,7 +278,7 @@ mod help_overlay_tests {
             count: 1,
             most_recent_line: 0,
         };
-        App::new(vec![row])
+        App::new(vec![row], mux)
     }
 
     #[test]
@@ -378,13 +385,13 @@ mod help_overlay_tests {
     }
 
     #[test]
-    fn help_text_documents_every_actionable_key() {
+    fn help_text_documents_every_actionable_key_under_tmux() {
         // If someone removes a documented key's mention from help_lines,
         // this test fires. It does NOT enforce the inverse direction
         // (adding a brand-new handler still requires updating the needle
         // list below) — that's a harder coupling to automate without
         // parsing handle_key's source.
-        let body: String = help_lines()
+        let body: String = help_lines(Multiplexer::Tmux)
             .iter()
             .flat_map(|l| l.spans.iter().map(|s| s.content.to_string()))
             .collect::<Vec<_>>()
@@ -407,6 +414,49 @@ mod help_overlay_tests {
             assert!(
                 body.contains(needle),
                 "help panel must document `{needle}` — got:\n{body}"
+            );
+        }
+    }
+
+    #[test]
+    fn help_text_omits_tmux_only_keys_under_herdr() {
+        // Inverse of the above: under herdr, `s` types into the query and
+        // `F2` is inert, so the overlay must not tell the user those keys
+        // fire an action. The Enter line must also stop claiming ssh
+        // behavior, since Server/Ip rows default to Yank under herdr.
+        let body: String = help_lines(Multiplexer::Herdr)
+            .iter()
+            .flat_map(|l| l.spans.iter().map(|s| s.content.to_string()))
+            .collect::<Vec<_>>()
+            .join(" ");
+        assert!(
+            !body.contains("F2"),
+            "herdr help must not mention F2 (inert there) — got:\n{body}"
+        );
+        assert!(
+            !body.contains("force ssh"),
+            "herdr help must not tell the user `s` forces ssh — got:\n{body}"
+        );
+        assert!(
+            !body.contains("ssh server or IP"),
+            "herdr help Enter line must not claim ssh-on-Enter behavior — got:\n{body}"
+        );
+        // Still documents everything that DOES work under herdr.
+        for needle in [
+            "Enter",
+            "Esc",
+            "C-c",
+            "C-l",
+            "y",
+            "o",
+            "g",
+            "Backspace",
+            "drill",
+            "yank",
+        ] {
+            assert!(
+                body.contains(needle),
+                "herdr help panel must still document `{needle}` — got:\n{body}"
             );
         }
     }
@@ -460,11 +510,109 @@ mod help_overlay_tests {
             "help overlay title must NOT be visible when show_help=false"
         );
     }
+
+    #[test]
+    fn hint_bar_shows_f2_sess_under_tmux() {
+        use ratatui::backend::TestBackend;
+        let mut app = app_with_mux(Multiplexer::Tmux);
+        let backend = TestBackend::new(120, 40);
+        let mut terminal = Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        let rendered: String = terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .map(|cell| cell.symbol())
+            .collect();
+        assert!(
+            rendered.contains("F2:sess"),
+            "tmux hint bar must advertise F2:sess; got buffer:\n{rendered}"
+        );
+    }
+
+    #[test]
+    fn hint_bar_omits_f2_sess_under_herdr() {
+        use ratatui::backend::TestBackend;
+        let mut app = app_with_mux(Multiplexer::Herdr);
+        let backend = TestBackend::new(120, 40);
+        let mut terminal = Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw(f, &mut app)).unwrap();
+        let rendered: String = terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .map(|cell| cell.symbol())
+            .collect();
+        assert!(
+            !rendered.contains("F2:sess"),
+            "herdr hint bar must NOT advertise F2:sess (F2 is inert there); got buffer:\n{rendered}"
+        );
+    }
+
+    fn server_row() -> Row {
+        Row {
+            category: Category::Server,
+            canonical: "c-5001".into(),
+            key: "c-5001".into(),
+            repo_or_host: "—".into(),
+            context: "ssh c-5001".into(),
+            enriched: None,
+            count: 1,
+            most_recent_line: 0,
+        }
+    }
+
+    #[test]
+    fn server_row_defaults_to_ssh_under_tmux() {
+        assert!(matches!(
+            default_action(&server_row(), Multiplexer::Tmux),
+            Action::Ssh(_)
+        ));
+    }
+
+    #[test]
+    fn server_row_defaults_to_yank_under_herdr() {
+        // Ssh is not offered under herdr, so Enter on a host must copy it
+        // rather than silently doing nothing.
+        assert!(matches!(
+            default_action(&server_row(), Multiplexer::Herdr),
+            Action::Yank(_)
+        ));
+    }
+
+    #[test]
+    fn s_key_types_into_the_query_under_herdr() {
+        // Under tmux `s` fires Ssh; under herdr it must fall through to the
+        // generic character arm so `s` is usable as a search character.
+        let mut app = App::new(vec![server_row()], Multiplexer::Herdr);
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Char('s'));
+        assert!(app.action.is_none(), "must not fire an action under herdr");
+        assert_eq!(app.query, "s", "must type into the search query instead");
+    }
+
+    #[test]
+    fn s_key_fires_ssh_under_tmux() {
+        let mut app = App::new(vec![server_row()], Multiplexer::Tmux);
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Char('s'));
+        assert!(matches!(app.action, Some(Action::Ssh(_))));
+        assert!(app.query.is_empty(), "must not also type into the query");
+    }
+
+    #[test]
+    fn f2_is_inert_under_herdr() {
+        // herdr's own prefix+w is the session picker; swapping to pick-tui
+        // would exec a tmux-only TUI.
+        let mut app = App::new(vec![server_row()], Multiplexer::Herdr);
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::F(2));
+        assert!(app.action.is_none());
+    }
 }
 
 // ----- Run loop + rendering -----
 
-pub fn run(rows: Vec<Row>) -> Result<Action> {
+pub fn run(rows: Vec<Row>, mux: Multiplexer) -> Result<Action> {
     if rows.is_empty() {
         return Ok(Action::Quit);
     }
@@ -474,7 +622,7 @@ pub fn run(rows: Vec<Row>) -> Result<Action> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new(rows);
+    let mut app = App::new(rows, mux);
 
     // First draw so the terminal is in its intended state, then drain any
     // queued events. Tmux popups inject terminal-state responses (cursor
@@ -520,16 +668,22 @@ fn draw(f: &mut Frame, app: &mut App) {
         .split(area);
 
     // Top bar with breadcrumb or flat hints.
+    let sess_hint = if app.mux == Multiplexer::Tmux {
+        " F2:sess"
+    } else {
+        ""
+    };
     let top = if let Some(cat) = app.drilled_in {
         format!(
-            "pick> {}_  │ Links › {}  │ ↑↓ Enter:act ←:back ?:help F2:sess",
+            "pick> {}_  │ Links › {}  │ ↑↓ Enter:act ←:back ?:help{}",
             app.query,
-            cat.display()
+            cat.display(),
+            sess_hint
         )
     } else {
         format!(
-            "pick> {}_  │ ↑↓ Enter:act →:drill y:yank o:open g:gh ?:help F2:sess",
-            app.query
+            "pick> {}_  │ ↑↓ Enter:act →:drill y:yank o:open g:gh ?:help{}",
+            app.query, sess_hint
         )
     };
     f.render_widget(
@@ -575,13 +729,19 @@ fn draw(f: &mut Frame, app: &mut App) {
 
     // Help overlay (modal): render last so it paints on top of the list/preview.
     if app.show_help {
-        draw_help_overlay(f, area);
+        draw_help_overlay(f, area, app.mux);
     }
 }
 
 /// Build the help overlay content. Pulled out so the exact key list is easy
 /// to eyeball and keep in sync with `handle_key`.
-fn help_lines() -> Vec<Line<'static>> {
+///
+/// `mux`-aware: `s` (force ssh) and `F2` (swap to pick-tui) are tmux-only —
+/// under herdr `s` falls through to the query filter and `F2` is inert, so
+/// documenting them there would tell the user to press a key that either
+/// types into the search box or does nothing. The `Enter` line likewise
+/// describes tmux's ssh-on-Server/Ip default vs. herdr's yank-only default.
+fn help_lines(mux: Multiplexer) -> Vec<Line<'static>> {
     let hdr = Style::default()
         .fg(Color::LightCyan)
         .add_modifier(Modifier::BOLD);
@@ -597,7 +757,9 @@ fn help_lines() -> Vec<Line<'static>> {
         ])
     };
 
-    vec![
+    let is_tmux = mux == Multiplexer::Tmux;
+
+    let mut lines = vec![
         Line::from(Span::styled("Navigation", hdr)),
         kv("↑ ↓ / C-p C-n", "move selection (headers selectable)"),
         kv("→ / Enter", "drill into category header"),
@@ -605,27 +767,37 @@ fn help_lines() -> Vec<Line<'static>> {
         kv("1 – 9", "jump into Nth non-empty category (empty query)"),
         Line::from(""),
         Line::from(Span::styled("Actions (empty query)", hdr)),
-        kv("Enter", "default: yank URL / ssh server or IP"),
-        kv("y", "yank canonical via OSC 52"),
-        kv("o", "open / xdg-open in browser"),
-        kv("g", "gh view --web (GitHub rows only)"),
-        kv("s", "force ssh in new tmux window"),
-        Line::from(""),
-        Line::from(Span::styled("Filter", hdr)),
-        kv("a – z 0 – 9", "type into filter query"),
-        kv("Backspace", "delete last character"),
-        kv("C-c", "clear query (or quit if empty)"),
-        Line::from(""),
-        Line::from(Span::styled("Display & picker swap", hdr)),
-        kv("C-l", "toggle horizontal/vertical split"),
-        kv("F2", "swap to rmux_helper pick-tui (session picker)"),
-        kv("? / F1", "toggle this help overlay"),
-        Line::from(""),
-        Line::from(Span::styled("  Press any key to dismiss.", dim)),
-    ]
+    ];
+    if is_tmux {
+        lines.push(kv("Enter", "default: yank URL / ssh server or IP"));
+    } else {
+        lines.push(kv("Enter", "default: yank URL / server / IP via OSC 52"));
+    }
+    lines.push(kv("y", "yank canonical via OSC 52"));
+    lines.push(kv("o", "open / xdg-open in browser"));
+    lines.push(kv("g", "gh view --web (GitHub rows only)"));
+    if is_tmux {
+        lines.push(kv("s", "force ssh in new tmux window"));
+    }
+    lines.push(Line::from(""));
+    lines.push(Line::from(Span::styled("Filter", hdr)));
+    lines.push(kv("a – z 0 – 9", "type into filter query"));
+    lines.push(kv("Backspace", "delete last character"));
+    lines.push(kv("C-c", "clear query (or quit if empty)"));
+    lines.push(Line::from(""));
+    lines.push(Line::from(Span::styled("Display & picker swap", hdr)));
+    lines.push(kv("C-l", "toggle horizontal/vertical split"));
+    if is_tmux {
+        lines.push(kv("F2", "swap to rmux_helper pick-tui (session picker)"));
+    }
+    lines.push(kv("? / F1", "toggle this help overlay"));
+    lines.push(Line::from(""));
+    lines.push(Line::from(Span::styled("  Press any key to dismiss.", dim)));
+
+    lines
 }
 
-fn draw_help_overlay(f: &mut Frame, area: Rect) {
+fn draw_help_overlay(f: &mut Frame, area: Rect, mux: Multiplexer) {
     let popup = centered_rect(70, 80, area);
     // Clear under the popup so the list/preview don't bleed through.
     f.render_widget(Clear, popup);
@@ -633,7 +805,7 @@ fn draw_help_overlay(f: &mut Frame, area: Rect) {
         .borders(Borders::ALL)
         .title(" Help — pick-links ")
         .style(Style::default().fg(Color::LightYellow));
-    let para = Paragraph::new(help_lines())
+    let para = Paragraph::new(help_lines(mux))
         .block(block)
         .wrap(Wrap { trim: false });
     f.render_widget(para, popup);
@@ -801,7 +973,9 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
             }
         }
         KeyCode::Enter => app.on_enter(),
-        KeyCode::F(2) => app.action = Some(Action::SwapToPickTui),
+        KeyCode::F(2) if app.mux == Multiplexer::Tmux => {
+            app.action = Some(Action::SwapToPickTui)
+        }
         KeyCode::Backspace => {
             app.query.pop();
             app.rebuild_filter();
@@ -846,7 +1020,9 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
                 }
             }
         }
-        KeyCode::Char('s') if mods.is_empty() && app.query.is_empty() => {
+        KeyCode::Char('s')
+            if mods.is_empty() && app.query.is_empty() && app.mux == Multiplexer::Tmux =>
+        {
             if let Some(row) = app.selected_leaf() {
                 app.action = Some(Action::Ssh(row));
             }
@@ -917,14 +1093,16 @@ impl App {
         }
         // Leaf: default action
         let row = self.rows[idx].clone();
-        self.action = Some(default_action(&row));
+        self.action = Some(default_action(&row, self.mux));
     }
 }
 
 /// Default Enter action per category (see spec §Actions → Default).
-pub(crate) fn default_action(row: &Row) -> Action {
+/// Under herdr, Server/Ip rows fall back to Yank — the Ssh action is
+/// tmux-only, and a dead Enter key would be worse than copying the host.
+pub(crate) fn default_action(row: &Row, mux: Multiplexer) -> Action {
     match row.category {
-        Category::Server | Category::Ip => Action::Ssh(row.clone()),
+        Category::Server | Category::Ip if mux == Multiplexer::Tmux => Action::Ssh(row.clone()),
         _ => Action::Yank(row.clone()),
     }
 }

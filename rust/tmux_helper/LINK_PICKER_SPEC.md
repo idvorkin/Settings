@@ -43,7 +43,7 @@ Categories: fixed order above. Within a category: most-recent line first (closes
 - `←`: drill out (in drilled-in mode)
 - `Esc`: drill out (first press) or quit (if already flat)
 - `Tab` / `S-Tab`: reserved, no-op
-- `F2`: swap to `pick-tui` (bidirectional)
+- `F2`: swap to `pick-tui` (bidirectional). **tmux only** — under herdr the key is inert (no-op), since `pick-tui` execs a tmux-only picker and herdr already has its own session picker (prefix+w).
 - `?` or `F1`: toggle the modal help overlay. Any key dismisses it (the
   dismissing key is consumed, so it cannot double as a navigation or action
   key). `?` is intercepted before the generic filter-query char handler, so
@@ -56,14 +56,16 @@ Categories: fixed order above. Within a category: most-recent line first (closes
 Default `Enter` (on leaf):
 
 - URL categories → OSC 52 yank + print URL to stdout
-- Servers / IPs → `tmux new-window -t "$pane_id" -c '#{pane_current_path}' "ssh <host>"`
+- Servers / IPs → **under tmux**: `tmux new-window -t "$pane_id" -c '#{pane_current_path}' "ssh <host>"`. **Under herdr**: `Ssh` is not offered (opening a tmux window isn't meaningful there), so these rows default to the same OSC 52 yank as URL categories — a dead `Enter` key would be worse than copying the host.
 
 Override keys (query must be empty — lowercase letters otherwise type into search):
 
 - `y` — yank (OSC 52)
 - `o` — `open`/`xdg-open`
 - `g` — `gh <kind> view --web -R OWNER/REPO <id>` (GitHub rows only)
-- `s` — force ssh
+- `s` — force ssh. **tmux only** — under herdr the key guard requires tmux, so `s` falls through to the generic filter-query handler and types into the search field instead.
+
+The OSC 52 yank mechanism itself differs by backend: under tmux the payload goes out via `tmux set-buffer -w` (tmux forwards OSC 52 to attached clients); under herdr `pick-links` writes the OSC 52 escape directly to `/dev/tty` for herdr to parse out of the pane's pty and forward to the client's clipboard.
 
 ## Filtering
 
@@ -81,11 +83,16 @@ Digit-only tokens match the `key` column only.
 
 ## Cross-picker shortcut
 
-`F2` cleanly tears down the TUI (`disable_raw_mode` + `LeaveAlternateScreen` + drop terminal + flush) then `execvp`s the sibling binary with `TMUX_PANE` forwarded. OSC 52 is NOT written on `F2` — it's a swap, not an action.
+**tmux only.** `F2` cleanly tears down the TUI (`disable_raw_mode` + `LeaveAlternateScreen` + drop terminal + flush) then `execvp`s the sibling binary with `TMUX_PANE` forwarded. OSC 52 is NOT written on `F2` — it's a swap, not an action. Under herdr, `F2` is gated on the detected multiplexer and never reaches this code path at all.
 
 ## OSC 52 timing
 
-Write sequence, in order: TUI exits → `disable_raw_mode` → `LeaveAlternateScreen` → drop `Terminal` → flush stdout/stderr → open `/dev/tty` → write `\e]52;c;<base64>\e\\` → flush tty → `exit(0)`.
+Common to both backends: TUI exits → `disable_raw_mode` → `LeaveAlternateScreen` → drop `Terminal` → flush stdout/stderr (all inside `tui::run`, before the action is dispatched).
+
+Backend-specific dispatch after that:
+
+- **tmux**: spawn `tmux set-buffer -w <payload>` (the raw payload, not a pre-built OSC 52 escape — tmux constructs and forwards the OSC 52 sequence to attached clients itself) → `exit(0)`.
+- **herdr**: open `/dev/tty` → write `\e]52;c;<base64>` terminated with **BEL** (`\x07`), not ST (`\e\\`) → flush tty → `exit(0)`.
 
 ## Empty state
 
@@ -93,8 +100,11 @@ When scrollback contains no detectable items, the TUI is not entered. `pick_link
 
 ## Scrollback capture
 
-`pick-links` scans the current tmux pane's scrollback only — no cross-pane, no cross-session, no external sources. The pane is resolved from `$TMUX_PANE`, falling back to `tmux display-message -p '#{client_active_pane}'`.
+`pick-links` scans the current pane's scrollback only — no cross-pane, no cross-session, no external sources. The multiplexer is auto-detected and capture takes one of two paths:
 
-History depth is **capped at 300 lines above the visible pane top** (`tmux capture-pane -J -S -300 -E -`). The visible pane content is always included in full; the cap only limits how deep into scrollback we go. This keeps results relevant to recent work — a 50 000-line `history-limit` buffer produces stale context from days-old sessions that drowns real results in noise. 300 lines is roughly several screens of recent scrollback.
+- **tmux**: the pane is resolved from `$TMUX_PANE`, falling back to `tmux display-message -p '#{client_active_pane}'`. Scrollback comes from `tmux capture-pane -J -S -300 -E -`.
+- **herdr**: the pane is resolved from `$HERDR_PANE_ID`, falling back to the layout's focused pane. Scrollback comes from `herdr pane read <id> --source recent-unwrapped --lines 300`.
 
-The `-J` flag joins soft-wrapped lines so URLs that wrapped across terminal rows read back whole. ANSI escape bytes are NOT captured (`-e` is deliberately omitted) because raw `\x1b` sequences leak through ratatui's cell rendering into the popup pty and corrupt the display.
+History depth is **capped at 300 lines above the visible pane top** on both backends. The visible pane content is always included in full; the cap only limits how deep into scrollback we go. This keeps results relevant to recent work — a 50 000-line `history-limit` buffer produces stale context from days-old sessions that drowns real results in noise. 300 lines is roughly several screens of recent scrollback.
+
+Both backends join soft-wrapped lines so URLs that wrapped across terminal rows read back whole (tmux's `-J`; herdr's `recent-unwrapped` source). ANSI escape bytes are NOT captured on either path — for tmux, `-e` is deliberately omitted because raw `\x1b` sequences leak through ratatui's cell rendering into the popup pty and corrupt the display.

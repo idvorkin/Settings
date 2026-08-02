@@ -94,9 +94,10 @@ navigate_pane_right = "l"
 
 # --- layout ------------------------------------------------------------------
 # tmux: C-a / -> rmux_helper third (toggle even <-> 1/3-2/3, split if 1 pane).
-# Detection checks TMUX_PANE first, then HERDR_PANE_ID/HERDR_ENV: `-u TMUX_PANE`
-# clears any TMUX_PANE this binding would otherwise inherit (e.g. if the herdr
-# server itself was launched from inside tmux), so detection falls through to
+# Detection checks TMUX/TMUX_PANE first, then HERDR_PANE_ID/HERDR_ENV: `-u TMUX
+# -u TMUX_PANE` clears both variables this binding would otherwise inherit
+# (e.g. if the herdr server itself was launched from inside tmux, where bare
+# TMUX alone is now enough to mean tmux), so detection falls through to
 # HERDR_ENV=1, which forces the herdr path -- rmux_helper then targets the
 # focused tab, the pane the keypress came from, instead of wrongly taking the
 # tmux path.
@@ -107,7 +108,19 @@ navigate_pane_right = "l"
 [[keys.command]]
 key = "prefix+/"
 type = "shell"
-command = "env -u TMUX_PANE HERDR_ENV=1 rmux_helper third"
+command = "env -u TMUX -u TMUX_PANE HERDR_ENV=1 rmux_helper third"
+
+# tmux: C-a L -> rmux_helper pick-links (scrollback link/PR/host picker).
+# Popup at 95%x95% matches the tmux display-popup binding. `env -u TMUX
+# -u TMUX_PANE` forces herdr detection: if the herdr server was launched
+# from inside tmux it would leak those vars into this command, and tmux
+# wins the detection precedence.
+[[keys.command]]
+key = "prefix+shift+l"
+type = "popup"
+command = "env -u TMUX -u TMUX_PANE HERDR_ENV=1 rmux_helper pick-links"
+width = "95%"
+height = "95%"
 
 # --- popups (mirrors the :tig / :gdiff tmux command aliases) ------------------
 [[keys.command]]
