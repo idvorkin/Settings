@@ -1,6 +1,7 @@
 //! Ratatui TUI for the link picker. See spec §Layout & Display and §Navigation.
 
 use crate::link_picker::detect::{Category, GhState, Row};
+use crate::mux::Multiplexer;
 use ansi_to_tui::IntoText;
 use anyhow::Result;
 use crossterm::{
@@ -39,10 +40,11 @@ struct App {
     horizontal: bool,
     show_help: bool,
     action: Option<Action>,
+    mux: Multiplexer,
 }
 
 impl App {
-    fn new(rows: Vec<Row>) -> Self {
+    fn new(rows: Vec<Row>, mux: Multiplexer) -> Self {
         let mut app = Self {
             rows,
             filtered: Vec::new(),
@@ -53,6 +55,7 @@ impl App {
             horizontal: true,
             show_help: false,
             action: None,
+            mux,
         };
         app.rebuild_filter();
         app
@@ -271,7 +274,7 @@ mod help_overlay_tests {
             count: 1,
             most_recent_line: 0,
         };
-        App::new(vec![row])
+        App::new(vec![row], Multiplexer::Tmux)
     }
 
     #[test]
@@ -460,11 +463,69 @@ mod help_overlay_tests {
             "help overlay title must NOT be visible when show_help=false"
         );
     }
+
+    fn server_row() -> Row {
+        Row {
+            category: Category::Server,
+            canonical: "c-5001".into(),
+            key: "c-5001".into(),
+            repo_or_host: "—".into(),
+            context: "ssh c-5001".into(),
+            enriched: None,
+            count: 1,
+            most_recent_line: 0,
+        }
+    }
+
+    #[test]
+    fn server_row_defaults_to_ssh_under_tmux() {
+        assert!(matches!(
+            default_action(&server_row(), Multiplexer::Tmux),
+            Action::Ssh(_)
+        ));
+    }
+
+    #[test]
+    fn server_row_defaults_to_yank_under_herdr() {
+        // Ssh is not offered under herdr, so Enter on a host must copy it
+        // rather than silently doing nothing.
+        assert!(matches!(
+            default_action(&server_row(), Multiplexer::Herdr),
+            Action::Yank(_)
+        ));
+    }
+
+    #[test]
+    fn s_key_types_into_the_query_under_herdr() {
+        // Under tmux `s` fires Ssh; under herdr it must fall through to the
+        // generic character arm so `s` is usable as a search character.
+        let mut app = App::new(vec![server_row()], Multiplexer::Herdr);
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Char('s'));
+        assert!(app.action.is_none(), "must not fire an action under herdr");
+        assert_eq!(app.query, "s", "must type into the search query instead");
+    }
+
+    #[test]
+    fn s_key_fires_ssh_under_tmux() {
+        let mut app = App::new(vec![server_row()], Multiplexer::Tmux);
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Char('s'));
+        assert!(matches!(app.action, Some(Action::Ssh(_))));
+        assert!(app.query.is_empty(), "must not also type into the query");
+    }
+
+    #[test]
+    fn f2_is_inert_under_herdr() {
+        // herdr's own prefix+w is the session picker; swapping to pick-tui
+        // would exec a tmux-only TUI.
+        let mut app = App::new(vec![server_row()], Multiplexer::Herdr);
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::F(2));
+        assert!(app.action.is_none());
+    }
 }
 
 // ----- Run loop + rendering -----
 
-pub fn run(rows: Vec<Row>) -> Result<Action> {
+pub fn run(rows: Vec<Row>, mux: Multiplexer) -> Result<Action> {
     if rows.is_empty() {
         return Ok(Action::Quit);
     }
@@ -474,7 +535,7 @@ pub fn run(rows: Vec<Row>) -> Result<Action> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new(rows);
+    let mut app = App::new(rows, mux);
 
     // First draw so the terminal is in its intended state, then drain any
     // queued events. Tmux popups inject terminal-state responses (cursor
@@ -520,16 +581,22 @@ fn draw(f: &mut Frame, app: &mut App) {
         .split(area);
 
     // Top bar with breadcrumb or flat hints.
+    let sess_hint = if app.mux == Multiplexer::Tmux {
+        " F2:sess"
+    } else {
+        ""
+    };
     let top = if let Some(cat) = app.drilled_in {
         format!(
-            "pick> {}_  │ Links › {}  │ ↑↓ Enter:act ←:back ?:help F2:sess",
+            "pick> {}_  │ Links › {}  │ ↑↓ Enter:act ←:back ?:help{}",
             app.query,
-            cat.display()
+            cat.display(),
+            sess_hint
         )
     } else {
         format!(
-            "pick> {}_  │ ↑↓ Enter:act →:drill y:yank o:open g:gh ?:help F2:sess",
-            app.query
+            "pick> {}_  │ ↑↓ Enter:act →:drill y:yank o:open g:gh ?:help{}",
+            app.query, sess_hint
         )
     };
     f.render_widget(
@@ -801,7 +868,9 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
             }
         }
         KeyCode::Enter => app.on_enter(),
-        KeyCode::F(2) => app.action = Some(Action::SwapToPickTui),
+        KeyCode::F(2) if app.mux == Multiplexer::Tmux => {
+            app.action = Some(Action::SwapToPickTui)
+        }
         KeyCode::Backspace => {
             app.query.pop();
             app.rebuild_filter();
@@ -846,7 +915,9 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
                 }
             }
         }
-        KeyCode::Char('s') if mods.is_empty() && app.query.is_empty() => {
+        KeyCode::Char('s')
+            if mods.is_empty() && app.query.is_empty() && app.mux == Multiplexer::Tmux =>
+        {
             if let Some(row) = app.selected_leaf() {
                 app.action = Some(Action::Ssh(row));
             }
@@ -917,14 +988,16 @@ impl App {
         }
         // Leaf: default action
         let row = self.rows[idx].clone();
-        self.action = Some(default_action(&row));
+        self.action = Some(default_action(&row, self.mux));
     }
 }
 
 /// Default Enter action per category (see spec §Actions → Default).
-pub(crate) fn default_action(row: &Row) -> Action {
+/// Under herdr, Server/Ip rows fall back to Yank — the Ssh action is
+/// tmux-only, and a dead Enter key would be worse than copying the host.
+pub(crate) fn default_action(row: &Row, mux: Multiplexer) -> Action {
     match row.category {
-        Category::Server | Category::Ip => Action::Ssh(row.clone()),
+        Category::Server | Category::Ip if mux == Multiplexer::Tmux => Action::Ssh(row.clone()),
         _ => Action::Yank(row.clone()),
     }
 }

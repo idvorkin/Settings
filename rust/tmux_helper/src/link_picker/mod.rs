@@ -49,7 +49,7 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
         eprintln!("pick-links: no links, servers, or IPs in scrollback");
         return Ok(());
     }
-    let action = tui::run(rows)?;
+    let action = tui::run(rows, mux)?;
 
     // 6-7. Dispatch post-TUI (terminal already restored by tui::run).
     match action {
