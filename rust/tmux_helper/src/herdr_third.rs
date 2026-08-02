@@ -41,8 +41,6 @@ pub struct SplitEntry {
 pub struct Rect {
     pub x: i64,
     pub y: i64,
-    pub width: i64,
-    pub height: i64,
 }
 
 pub const THIRD_RATIO: f64 = 1.0 / 3.0;
@@ -181,11 +179,11 @@ mod tests {
             panes: vec![
                 PaneEntry {
                     pane_id: "w9:p1".into(),
-                    rect: Rect { x: 0, y: 0, width: 100, height: 50 },
+                    rect: Rect { x: 0, y: 0 },
                 },
                 PaneEntry {
                     pane_id: "w9:p2".into(),
-                    rect: Rect { x: x2, y: y2, width: 100, height: 50 },
+                    rect: Rect { x: x2, y: y2 },
                 },
             ],
             splits: vec![SplitEntry {
@@ -253,7 +251,7 @@ mod tests {
         let mut layout = two_pane("right", 0.5);
         layout.panes.push(PaneEntry {
             pane_id: "w9:p3".into(),
-            rect: Rect { x: 200, y: 0, width: 50, height: 50 },
+            rect: Rect { x: 200, y: 0 },
         });
         assert!(matches!(plan_third(&layout), ThirdAction::Noop { .. }));
     }
