@@ -264,3 +264,8 @@ lazy-lock.json
 config/cursor/extensions/
 
 # zz-chop-conventions
+
+# Gas City
+.beads/*
+!.beads/config.yaml
+!.beads/metadata.json
