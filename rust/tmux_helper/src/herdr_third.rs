@@ -130,6 +130,44 @@ fn fetch_layout(pane: Option<&str>) -> Result<TabLayout> {
     Ok(resp.result.layout)
 }
 
+/// Map a planned action to the exact `herdr` CLI argument vector, or `None`
+/// for `Noop`. Pure and unit-tested independent of any I/O — mirrors
+/// `build_exec_argv` in `agent_continue.rs`.
+fn action_args(action: &ThirdAction) -> Option<Vec<String>> {
+    match action {
+        ThirdAction::Split { source_pane } => Some(
+            [
+                "pane",
+                "split",
+                "--pane",
+                source_pane.as_str(),
+                "--direction",
+                "right",
+                "--ratio",
+                "0.33",
+                "--focus",
+            ]
+            .map(String::from)
+            .to_vec(),
+        ),
+        ThirdAction::Resize { pane, direction, amount } => Some(
+            [
+                "pane",
+                "resize",
+                "--pane",
+                pane.as_str(),
+                "--direction",
+                direction,
+                "--amount",
+                &format!("{amount:.4}"),
+            ]
+            .map(String::from)
+            .to_vec(),
+        ),
+        ThirdAction::Noop { .. } => None,
+    }
+}
+
 pub fn cmd(command: &str) -> Result<()> {
     if !command.is_empty() {
         bail!(
@@ -139,20 +177,10 @@ pub fn cmd(command: &str) -> Result<()> {
     }
     let caller = std::env::var("HERDR_PANE_ID").ok().filter(|s| !s.is_empty());
     let layout = fetch_layout(caller.as_deref())?;
-    match plan_third(&layout) {
-        ThirdAction::Split { source_pane } => {
-            herdr_cli(&[
-                "pane", "split", "--pane", &source_pane, "--direction", "right",
-                "--ratio", "0.33", "--focus",
-            ])?;
-        }
-        ThirdAction::Resize { pane, direction, amount } => {
-            herdr_cli(&[
-                "pane", "resize", "--pane", &pane, "--direction", direction,
-                "--amount", &format!("{amount:.4}"),
-            ])?;
-        }
-        ThirdAction::Noop { .. } => {}
+    let action = plan_third(&layout);
+    if let Some(args) = action_args(&action) {
+        let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+        herdr_cli(&arg_refs)?;
     }
     Ok(())
 }
@@ -267,5 +295,41 @@ mod tests {
     fn command_arg_is_refused_under_herdr() {
         let err = cmd("tig status").expect_err("command form must be rejected");
         assert!(err.to_string().contains("not supported under herdr"));
+    }
+
+    #[test]
+    fn split_action_maps_to_exact_argv() {
+        let action = ThirdAction::Split { source_pane: "w9:p1".into() };
+        assert_eq!(
+            action_args(&action),
+            Some(
+                [
+                    "pane", "split", "--pane", "w9:p1", "--direction", "right", "--ratio",
+                    "0.33", "--focus",
+                ]
+                .map(String::from)
+                .to_vec()
+            )
+        );
+    }
+
+    #[test]
+    fn resize_action_maps_to_exact_argv_and_rounds_amount() {
+        let action = ThirdAction::Resize {
+            pane: "w9:p1".into(),
+            direction: "left",
+            amount: 1.0 / 6.0, // 0.1666666... -> locks the {:.4} formatting to "0.1667"
+        };
+        assert_eq!(
+            action_args(&action),
+            Some(
+                [
+                    "pane", "resize", "--pane", "w9:p1", "--direction", "left", "--amount",
+                    "0.1667",
+                ]
+                .map(String::from)
+                .to_vec()
+            )
+        );
     }
 }
