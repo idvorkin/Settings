@@ -133,6 +133,7 @@ entries marked ✱ override a herdr default to restore tmux muscle memory.
 | `prefix+{` / `}` | swap pane up/down     | `{` / `}` swap-pane     |
 | `prefix+shift+k` / `shift+j` | swap pane up/down | —           |
 | `prefix+shift+p` | rename pane           | —                       |
+| `prefix+/`       | toggle 1/3–2/3 layout | `/` → `rmux_helper third` |
 
 Verified against `herdr pane layout`: `split_vertical` produces a pane to the
 **right** (tmux `%`), `split_horizontal` produces one **below** (tmux `"`). The
