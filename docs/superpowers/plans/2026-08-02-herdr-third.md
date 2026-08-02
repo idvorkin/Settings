@@ -27,11 +27,13 @@
 ### Task 1: Build-speed fixes
 
 **Files:**
+
 - Modify: `rust/tmux_helper/Cargo.toml` (bottom, `[profile.release]`)
 - Modify: `shared/zsh_include.sh` (near line 773, alongside `export HOMEBREW_NO_AUTO_UPDATE=1`)
 - Modify: `rust/tmux_helper/CLAUDE.md` (Building + Smoke testing sections)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: fast builds for Tasks 2–5. Later tasks should prefix cargo commands with `CARGO_TARGET_DIR=$HOME/.cache/cargo-target` (their shells predate the zsh export).
 
@@ -62,11 +64,13 @@ export CARGO_TARGET_DIR="$HOME/.cache/cargo-target"
 - [ ] **Step 3: Verify the build works and warms the shared cache**
 
 Run (from `rust/tmux_helper/`):
+
 ```bash
 mkdir -p "$HOME/.cache/cargo-target"
 CARGO_TARGET_DIR=$HOME/.cache/cargo-target cargo build 2>&1 | tail -3
 CARGO_TARGET_DIR=$HOME/.cache/cargo-target cargo build --release 2>&1 | tail -3
 ```
+
 Expected: both finish successfully (`Finished` line). The second `--release` build also proves thin-LTO compiles. Binaries land in `~/.cache/cargo-target/{debug,release}/rmux_helper`.
 
 - [ ] **Step 4: Document the dev loop in `rust/tmux_helper/CLAUDE.md`**
@@ -101,10 +105,12 @@ git commit -m "build(rmux_helper): thin LTO + shared cargo target dir for fast w
 ### Task 2: `herdr_third` pure core (layout types + `plan_third`)
 
 **Files:**
+
 - Create: `rust/tmux_helper/src/herdr_third.rs`
 - Modify: `rust/tmux_helper/src/main.rs:1-3` (add `mod herdr_third;` beside `mod agent_continue;`)
 
 **Interfaces:**
+
 - Consumes: nothing (pure; serde/serde_json/anyhow are existing deps).
 - Produces (Task 3 relies on these exact names):
   - `pub struct LayoutResponse` (serde) with `.result.layout: TabLayout`
@@ -358,10 +364,12 @@ git commit -m "feat(rmux_helper): pure layout planner for third under herdr"
 ### Task 3: Detection, herdr CLI shell, and `third()` wiring
 
 **Files:**
+
 - Modify: `rust/tmux_helper/src/herdr_third.rs` (append shell functions + `cmd`)
 - Modify: `rust/tmux_helper/src/main.rs:1047` (`fn third`) and add `detect_multiplexer` near `get_caller_pane_id` (~line 1153)
 
 **Interfaces:**
+
 - Consumes: Task 2's `plan_third`, `ThirdAction`, `LayoutResponse`, `TabLayout`.
 - Produces: `pub fn cmd(command: &str) -> anyhow::Result<()>` in `herdr_third`; `fn detect_multiplexer() -> Multiplexer` + `enum Multiplexer { Tmux, Herdr, Unknown }` in `main.rs`.
 
@@ -486,10 +494,12 @@ fn third(command: &str) -> Result<()> {
 - [ ] **Step 4: Run tests and clippy**
 
 Run (from `rust/tmux_helper/`):
+
 ```bash
 CARGO_TARGET_DIR=$HOME/.cache/cargo-target cargo test
 CARGO_TARGET_DIR=$HOME/.cache/cargo-target cargo clippy 2>&1 | tail -5
 ```
+
 Expected: all tests pass (8 herdr_third tests + existing suite); no new clippy warnings in `herdr_third.rs` or `third`/`detect_multiplexer`.
 
 - [ ] **Step 5: Commit**
@@ -504,11 +514,13 @@ git commit -m "feat(rmux_helper): third auto-detects tmux vs herdr"
 ### Task 4: herdr keybinding + docs
 
 **Files:**
+
 - Modify: `config/herdr/config.toml` (before the existing `[[keys.command]]` popup entries, ~line 95)
 - Modify: `config/herdr/README.md` (Panes keybinding table, ~line 123)
 - Modify: `rust/tmux_helper/CLAUDE.md` (Commands list, `third` entry)
 
 **Interfaces:**
+
 - Consumes: the installed `rmux_helper` binary (Task 5 installs it; the binding is inert until then).
 - Produces: `prefix+/` in herdr.
 
@@ -531,10 +543,12 @@ command = "env HERDR_ENV=1 rmux_helper third"
 - [ ] **Step 2: Validate and reload**
 
 Run:
+
 ```bash
 herdr config check
 herdr server reload-config
 ```
+
 Expected: check passes (proves `prefix+/` syntax parses); reload returns ok. If `prefix+/` is rejected, try `key = "prefix+slash"` and record which form worked in the README.
 
 - [ ] **Step 3: Document**
@@ -542,7 +556,7 @@ Expected: check passes (proves `prefix+/` syntax parses); reload returns ok. If 
 `config/herdr/README.md` — add to the Panes table (after the swap rows):
 
 ```markdown
-| `prefix+/`       | toggle 1/3–2/3 layout | `/` → `rmux_helper third` |
+| `prefix+/` | toggle 1/3–2/3 layout | `/` → `rmux_helper third` |
 ```
 
 `rust/tmux_helper/CLAUDE.md` — change the Commands bullet to:
@@ -563,19 +577,23 @@ git commit -m "config(herdr): bind prefix+/ to rmux_helper third"
 ### Task 5: Install, live smoke, tmux regression, PR
 
 **Files:**
+
 - No source changes (fix-forward if smoke fails — new commits, reference the failing step).
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: installed binary, PR.
 
 - [ ] **Step 1: Install the binary**
 
 Run (from `rust/tmux_helper/`):
+
 ```bash
 CARGO_TARGET_DIR=$HOME/.cache/cargo-target cargo install --path . --force
 rmux_helper --help | head -3
 ```
+
 Expected: installs to `~/.cargo/bin/rmux_helper` in well under a minute (thin LTO + warm cache); help prints.
 
 - [ ] **Step 2: Herdr smoke — full toggle cycle on this session's own pane**
@@ -593,6 +611,7 @@ herdr pane layout --pane "$HERDR_PANE_ID" | python3 -c "import json,sys; ps=[p['
 herdr pane close <that-pane-id>
 ratio                      # expect: none
 ```
+
 Expected ratios in sequence: `none`, `~0.33`, `~0.5`, `~0.33`, then `none` after cleanup. Also verify fallback targeting once: `env -u HERDR_PANE_ID HERDR_ENV=1 rmux_helper third` must not error (it acts on the focused tab — run it only if the focused tab is safe to touch, otherwise note it as user-verified via keypress).
 
 - [ ] **Step 3: Tmux regression — bare toggle unchanged**
@@ -605,15 +624,18 @@ tmux send-keys -t third-smoke.1 'rmux_helper third' Enter && sleep 1
 tmux list-panes -t third-smoke -F '#{pane_width}'   # expect ~100 and ~100 (even restored)
 tmux kill-session -t third-smoke
 ```
+
 Expected: widths as annotated (1/3–2/3 then even). This exercises `ensure_two_panes`, orientation detection, and `@third_state` — the untouched tmux path.
 
 - [ ] **Step 4: Full test suite + pre-commit**
 
 Run (from repo root):
+
 ```bash
 (cd rust/tmux_helper && CARGO_TARGET_DIR=$HOME/.cache/cargo-target cargo test)
 pre-commit run --all-files
 ```
+
 Expected: cargo tests all pass; pre-commit green (or auto-fixes that get re-staged and committed).
 
 - [ ] **Step 5: Ask Igor to verify the keybinding live**
@@ -645,4 +667,5 @@ Plan: docs/superpowers/plans/2026-08-02-herdr-third.md
 EOF
 )"
 ```
+
 If push is denied for the AI-tools account, fork per CLAUDE.md: `gh repo fork --remote-name fork && git push fork fix-rmux-helper && gh pr create --head idvorkin-ai-tools:fix-rmux-helper ...`.

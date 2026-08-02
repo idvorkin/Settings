@@ -13,12 +13,12 @@ also tracks which panes are running an agent and what state each one is in.
 
 The container hierarchy is three levels deep and maps cleanly onto tmux:
 
-| herdr     | tmux    | notes                                   |
-| --------- | ------- | --------------------------------------- |
-| session   | server  | named, persistent; usually just one     |
-| workspace | session | **also called a "space"** — see below   |
-| tab       | window  |                                         |
-| pane      | pane    |                                         |
+| herdr     | tmux    | notes                                 |
+| --------- | ------- | ------------------------------------- |
+| session   | server  | named, persistent; usually just one   |
+| workspace | session | **also called a "space"** — see below |
+| tab       | window  |                                       |
+| pane      | pane    |                                       |
 
 **"Space" and "workspace" are the same thing.** herdr's docs use "space" only in
 the sidebar/agent-panel settings (`agent_panel_sort`, `[ui.sidebar.spaces]`);
@@ -56,7 +56,7 @@ Two things combine to cause it:
    pane metadata over the socket API.
 
 A workspace label is just a name; it does not constrain what a pane inside it can
-`cd` to. So opening extra tabs in an existing workspace for *other* repos is what
+`cd` to. So opening extra tabs in an existing workspace for _other_ repos is what
 produces the confusing panel.
 
 Ways to fix it, best first:
@@ -85,55 +85,55 @@ entries marked ✱ override a herdr default to restore tmux muscle memory.
 
 ### Session
 
-| Keys             | Action        | tmux                    |
-| ---------------- | ------------- | ----------------------- |
-| `prefix+?`       | help          | `?` list-keys           |
-| `prefix+d`       | detach ✱      | `d` detach              |
-| `prefix+r`       | reload config ✱ | `r` source-file        |
-| `prefix+shift+r` | resize mode   | —                       |
-| `prefix+s`       | settings      | —                       |
-| `prefix+b`       | toggle sidebar | —                      |
+| Keys             | Action          | tmux            |
+| ---------------- | --------------- | --------------- |
+| `prefix+?`       | help            | `?` list-keys   |
+| `prefix+d`       | detach ✱        | `d` detach      |
+| `prefix+r`       | reload config ✱ | `r` source-file |
+| `prefix+shift+r` | resize mode     | —               |
+| `prefix+s`       | settings        | —               |
+| `prefix+b`       | toggle sidebar  | —               |
 
 ### Workspaces (tmux sessions)
 
-| Keys             | Action              | tmux                    |
-| ---------------- | ------------------- | ----------------------- |
-| `prefix+w`       | workspace picker    | `w` → `rmux_helper pick-tui` |
-| `prefix+(`       | previous workspace  | `(` switch-client -p    |
-| `prefix+)`       | next workspace      | `)` switch-client -n    |
-| `prefix+$`       | rename workspace ✱  | `$` rename-session      |
-| `prefix+shift+n` | new workspace       | —                       |
-| `prefix+shift+d` | close workspace     | prompts, `confirm_close = true` |
-| `prefix+shift+g` | new git worktree    | herdr-only              |
-| `prefix+g`       | goto                | herdr-only              |
+| Keys             | Action             | tmux                            |
+| ---------------- | ------------------ | ------------------------------- |
+| `prefix+w`       | workspace picker   | `w` → `rmux_helper pick-tui`    |
+| `prefix+(`       | previous workspace | `(` switch-client -p            |
+| `prefix+)`       | next workspace     | `)` switch-client -n            |
+| `prefix+$`       | rename workspace ✱ | `$` rename-session              |
+| `prefix+shift+n` | new workspace      | —                               |
+| `prefix+shift+d` | close workspace    | prompts, `confirm_close = true` |
+| `prefix+shift+g` | new git worktree   | herdr-only                      |
+| `prefix+g`       | goto               | herdr-only                      |
 
 ### Tabs (tmux windows)
 
-| Keys           | Action        | tmux                 |
-| -------------- | ------------- | -------------------- |
-| `prefix+c`     | new tab       | `c` new-window       |
-| `prefix+n`     | next tab      | `n` next-window      |
-| `prefix+p`     | previous tab  | `p` previous-window  |
-| `prefix+1..9`  | switch tab    | `1-9` select-window  |
-| `prefix+,`     | rename tab ✱  | `,` rename-window    |
-| `prefix+&`     | close tab ✱   | `&` kill-window      |
+| Keys          | Action       | tmux                |
+| ------------- | ------------ | ------------------- |
+| `prefix+c`    | new tab      | `c` new-window      |
+| `prefix+n`    | next tab     | `n` next-window     |
+| `prefix+p`    | previous tab | `p` previous-window |
+| `prefix+1..9` | switch tab   | `1-9` select-window |
+| `prefix+,`    | rename tab ✱ | `,` rename-window   |
+| `prefix+&`    | close tab ✱  | `&` kill-window     |
 
 ### Panes
 
-| Keys             | Action                | tmux                    |
-| ---------------- | --------------------- | ----------------------- |
-| `prefix+%`       | split side-by-side ✱  | `%` split-window -h     |
-| `prefix+"`       | split stacked ✱       | `"` split-window -v     |
-| `prefix+x`       | close pane            | `x` kill-pane           |
-| `prefix+z`       | zoom                  | `z` resize-pane -Z      |
-| `prefix+h/j/k/l` | focus left/down/up/right | vim-style            |
-| `prefix+o`       | cycle next pane ✱     | `o` select-pane -t :.+  |
-| `prefix+ctrl+o`  | cycle previous pane   | `C-o` rotate-window     |
-| `prefix+;`       | last pane ✱           | `;` last-pane           |
-| `prefix+{` / `}` | swap pane up/down     | `{` / `}` swap-pane     |
-| `prefix+shift+k` / `shift+j` | swap pane up/down | —           |
-| `prefix+shift+p` | rename pane           | —                       |
-| `prefix+/`       | toggle 1/3–2/3 layout | `/` → `rmux_helper third` |
+| Keys                         | Action                   | tmux                      |
+| ---------------------------- | ------------------------ | ------------------------- |
+| `prefix+%`                   | split side-by-side ✱     | `%` split-window -h       |
+| `prefix+"`                   | split stacked ✱          | `"` split-window -v       |
+| `prefix+x`                   | close pane               | `x` kill-pane             |
+| `prefix+z`                   | zoom                     | `z` resize-pane -Z        |
+| `prefix+h/j/k/l`             | focus left/down/up/right | vim-style                 |
+| `prefix+o`                   | cycle next pane ✱        | `o` select-pane -t :.+    |
+| `prefix+ctrl+o`              | cycle previous pane      | `C-o` rotate-window       |
+| `prefix+;`                   | last pane ✱              | `;` last-pane             |
+| `prefix+{` / `}`             | swap pane up/down        | `{` / `}` swap-pane       |
+| `prefix+shift+k` / `shift+j` | swap pane up/down        | —                         |
+| `prefix+shift+p`             | rename pane              | —                         |
+| `prefix+/`                   | toggle 1/3–2/3 layout    | `/` → `rmux_helper third` |
 
 Verified against `herdr pane layout`: `split_vertical` produces a pane to the
 **right** (tmux `%`), `split_horizontal` produces one **below** (tmux `"`). The
@@ -142,12 +142,12 @@ call it out.
 
 ### Scrollback and popups
 
-| Keys            | Action                                  |
-| --------------- | --------------------------------------- |
-| `prefix+v`      | copy mode (tmux `C-a v`, mode-keys vi)  |
+| Keys            | Action                                      |
+| --------------- | ------------------------------------------- |
+| `prefix+v`      | copy mode (tmux `C-a v`, mode-keys vi)      |
 | `prefix+e`      | dump scrollback into `$EDITOR` — herdr-only |
-| `prefix+ctrl+g` | lazygit popup, 90% × 90%                |
-| `prefix+ctrl+t` | `tig status` popup, 90% × 90%           |
+| `prefix+ctrl+g` | lazygit popup, 90% × 90%                    |
+| `prefix+ctrl+t` | `tig status` popup, 90% × 90%               |
 
 Popups mirror the `:tig` / `:gdiff` command aliases in `shared/.tmux.conf`.
 
