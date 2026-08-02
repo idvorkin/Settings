@@ -14,6 +14,13 @@
 
 onboarding = false
 
+[terminal]
+# Prefer zsh over herdr's fallback chain ($SHELL, then /bin/sh) — on the dev
+# VMs the login shell is bash, so the fallback picks the wrong shell. A bare
+# name resolves via the server's PATH, which covers /bin/zsh on macOS and
+# linuxbrew zsh on the VMs alike.
+default_shell = "zsh"
+
 [keys]
 # ---------------------------------------------------------------------------
 # Prefix — C-a, same as tmux (default herdr is ctrl+b, which vi uses).
