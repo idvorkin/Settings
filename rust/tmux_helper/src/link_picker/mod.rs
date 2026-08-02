@@ -11,11 +11,26 @@ use std::process::Command;
 
 /// Entry point for `rmux_helper pick-links`. See spec §Execution Flow.
 pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
-    // 1. Resolve pane
-    let pane_id = resolve_pane_id()?;
+    let mux = crate::mux::detect();
 
-    // 2. Capture (sync, fallible)
-    let raw = capture_pane(&pane_id)?;
+    // 1. Resolve pane + 2. capture (sync, fallible)
+    let (pane_id, raw) = match mux {
+        crate::mux::Multiplexer::Tmux => {
+            let pane_id = resolve_pane_id()?;
+            let raw = capture_pane(&pane_id)?;
+            (pane_id, raw)
+        }
+        crate::mux::Multiplexer::Herdr => {
+            let pane_id = resolve_herdr_pane_id()?;
+            let raw = herdr_capture_pane(&pane_id)?;
+            (pane_id, raw)
+        }
+        crate::mux::Multiplexer::Unknown => {
+            return Err(anyhow!(
+                "pick-links: not inside tmux or herdr; nothing to capture"
+            ))
+        }
+    };
 
     // 3. Detect
     let rows = detect::parse(&raw);
@@ -40,7 +55,10 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
     match action {
         tui::Action::Quit => std::process::exit(130),
         tui::Action::Yank(row) => {
-            yank_to_clipboard(&row.canonical)?;
+            match mux {
+                crate::mux::Multiplexer::Herdr => yank_osc52(&row.canonical)?,
+                _ => yank_to_clipboard(&row.canonical)?,
+            }
             println!("{}", row.canonical);
         }
         tui::Action::Open(row) => open_url(&row.canonical)?,
@@ -163,10 +181,8 @@ fn resolve_pane_id() -> Result<String> {
             return Ok(p);
         }
     }
-    if env::var("TMUX").is_err() {
-        return Err(anyhow!("pick-links: not inside tmux; nothing to capture"));
-    }
-    // Fallback: ask tmux directly.
+    // Fallback: ask tmux directly. Reached from display-popup, which sets
+    // TMUX but not TMUX_PANE.
     let out = Command::new("tmux")
         .args(["display-message", "-p", "-t", "#{client_active_pane}", "#{pane_id}"])
         .output()
@@ -206,6 +222,81 @@ pub(crate) fn capture_pane_args(pane_id: &str) -> Vec<String> {
         "-t".to_string(),
         pane_id.to_string(),
     ]
+}
+
+/// Build the argv for `herdr pane read`. The pane id is POSITIONAL and must
+/// come first — herdr rejects `pane read --source recent <id>` with
+/// "unknown option: <id>". `recent-unwrapped` is herdr's equivalent of
+/// tmux's `capture-pane -J`: it joins soft-wrapped lines so a URL that
+/// wrapped across terminal rows reads back whole.
+pub(crate) fn herdr_capture_args(pane_id: &str) -> Vec<String> {
+    vec![
+        "pane".to_string(),
+        "read".to_string(),
+        pane_id.to_string(),
+        "--source".to_string(),
+        "recent-unwrapped".to_string(),
+        "--lines".to_string(),
+        SCROLLBACK_HISTORY_LINES.to_string(),
+    ]
+}
+
+/// Build the OSC 52 clipboard escape for `text`.
+///
+/// `ESC ] 52 ; c ; <base64> BEL` — `c` is the clipboard selection. herdr
+/// parses this out of the pane's pty and forwards it to the client's OS
+/// clipboard, so under herdr this replaces tmux's `set-buffer -w` entirely.
+/// No tmux passthrough wrapping: that is a tmux-only concern and this path
+/// only runs under herdr.
+pub(crate) fn osc52_payload(text: &str) -> Vec<u8> {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    let mut out = b"\x1b]52;c;".to_vec();
+    out.extend_from_slice(STANDARD.encode(text).as_bytes());
+    out.push(0x07);
+    out
+}
+
+/// Write the OSC 52 escape to the controlling terminal.
+///
+/// `/dev/tty` rather than stdout: stdout may be piped (`pick-links --json`,
+/// shell capture), and the escape has to reach the pty herdr is parsing.
+fn yank_osc52(payload: &str) -> Result<()> {
+    use std::io::Write;
+    let mut tty = std::fs::OpenOptions::new()
+        .write(true)
+        .open("/dev/tty")
+        .map_err(|e| anyhow!("cannot open /dev/tty for clipboard write: {e}"))?;
+    tty.write_all(&osc52_payload(payload))
+        .map_err(|e| anyhow!("failed writing OSC 52 to /dev/tty: {e}"))?;
+    tty.flush()
+        .map_err(|e| anyhow!("failed flushing OSC 52 to /dev/tty: {e}"))?;
+    Ok(())
+}
+
+/// Capture the recent scrollback of `pane_id` via `herdr pane read`.
+fn herdr_capture_pane(pane_id: &str) -> Result<String> {
+    let args = herdr_capture_args(pane_id);
+    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+    crate::mux::herdr_cli(&arg_refs)
+}
+
+/// Resolve the herdr pane to capture: the launching pane when herdr set it,
+/// otherwise the focused pane. Popups get `HERDR_ENV` but not
+/// `HERDR_PANE_ID`, and `C-a L` is bound as a popup — so the fallback is
+/// the common path, not the edge case.
+fn resolve_herdr_pane_id() -> Result<String> {
+    if let Ok(p) = env::var("HERDR_PANE_ID") {
+        if !p.is_empty() {
+            return Ok(p);
+        }
+    }
+    let layout = crate::mux::fetch_layout(None)?;
+    if layout.focused_pane_id.is_empty() {
+        return Err(anyhow!(
+            "pick-links: herdr reported no focused pane to capture"
+        ));
+    }
+    Ok(layout.focused_pane_id)
 }
 
 /// Capture the recent scrollback of `pane_id` via `tmux capture-pane`.
@@ -297,5 +388,49 @@ mod orchestration_tests {
             !args.iter().any(|a| a == "-e"),
             "must NOT include ANSI escapes (they corrupt popup rendering)"
         );
+    }
+
+    #[test]
+    fn herdr_capture_args_put_pane_id_first_and_cap_history() {
+        // herdr's CLI takes the pane id POSITIONALLY, before any flags —
+        // `herdr pane read --source recent w9:p1` fails with
+        // "unknown option: w9:p1". Regression guard for that arg order.
+        let args = herdr_capture_args("w9:p1");
+        assert_eq!(args[0], "pane");
+        assert_eq!(args[1], "read");
+        assert_eq!(args[2], "w9:p1", "pane id must be the first positional");
+        let src = args.iter().position(|a| a == "--source").expect("needs --source");
+        assert_eq!(
+            args[src + 1],
+            "recent-unwrapped",
+            "must join soft-wrapped lines so wrapped URLs read back whole"
+        );
+        let lines = args.iter().position(|a| a == "--lines").expect("needs --lines");
+        assert_eq!(
+            args[lines + 1],
+            SCROLLBACK_HISTORY_LINES.to_string(),
+            "history depth must come from the shared constant"
+        );
+    }
+
+    #[test]
+    fn osc52_payload_wraps_base64_in_the_clipboard_escape() {
+        let bytes = osc52_payload("hi");
+        assert_eq!(bytes, b"\x1b]52;c;aGk=\x07".to_vec());
+    }
+
+    #[test]
+    fn osc52_payload_encodes_spaces_and_non_ascii() {
+        // URLs with spaces or unicode must survive the base64 hop intact.
+        let text = "https://example.com/a b/\u{e9}";
+        let bytes = osc52_payload(text);
+        let s = String::from_utf8(bytes).expect("escape is valid utf8");
+        let b64 = s
+            .strip_prefix("\x1b]52;c;")
+            .and_then(|s| s.strip_suffix('\x07'))
+            .expect("must be wrapped in the OSC 52 prefix and BEL terminator");
+        use base64::{engine::general_purpose::STANDARD, Engine as _};
+        let decoded = STANDARD.decode(b64).expect("payload must be valid base64");
+        assert_eq!(String::from_utf8(decoded).unwrap(), text);
     }
 }
