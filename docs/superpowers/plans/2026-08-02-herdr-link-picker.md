@@ -844,7 +844,7 @@ Expected: `TOML scoping OK: 4 command blocks`.
 In `config/herdr/README.md`, add to the "Scrollback and popups" table (after the `prefix+e` row):
 
 ```markdown
-| `prefix+shift+l` | scrollback link picker, 95% × 95%        |
+| `prefix+shift+l` | scrollback link picker, 95% × 95% |
 ```
 
 In `rust/tmux_helper/CLAUDE.md`, add to the Commands list after the `third` bullet:

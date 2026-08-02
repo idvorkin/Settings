@@ -29,7 +29,7 @@ Cloned `github.com/herdrdev/herdr` at `d742e51` and read the relevant paths:
 
 1. **`herdr pane read` takes the pane id FIRST** (`src/cli/pane.rs:443-451`):
    `herdr pane read <pane_id> [--source visible|recent|recent-unwrapped]
-   [--lines N]`. An earlier session passed the args out of order, got
+[--lines N]`. An earlier session passed the args out of order, got
    `unknown option: recent`, and wrongly concluded the server was too old.
    Verified live on a 500-line shell pane: `--lines 400` returns 400 lines,
    and `--source recent-unwrapped` joins soft-wrapped lines. This is the
@@ -81,13 +81,13 @@ capture → detect → enrich → TUI → dispatch). Five touchpoints become
 backend-dispatched, each with a **pure argv/payload builder** that is unit
 tested, mirroring the `action_args` pattern from `herdr_third`:
 
-| Step | tmux (unchanged) | herdr |
-| --- | --- | --- |
-| Resolve pane | `TMUX_PANE`, else `display-message -p -t '#{client_active_pane}' '#{pane_id}'` | `HERDR_PANE_ID`, else `focused_pane_id` from `herdr pane layout` |
-| Capture | `capture-pane -p -J -S -300 -E - -t <pane>` | `pane read <pane> --source recent-unwrapped --lines 300` |
-| Yank | `tmux set-buffer -w <payload>` | write OSC 52 to `/dev/tty` |
-| Ssh | `tmux new-window` | not offered |
-| Swap to `pick-tui` | `execvp` | not offered |
+| Step               | tmux (unchanged)                                                               | herdr                                                            |
+| ------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Resolve pane       | `TMUX_PANE`, else `display-message -p -t '#{client_active_pane}' '#{pane_id}'` | `HERDR_PANE_ID`, else `focused_pane_id` from `herdr pane layout` |
+| Capture            | `capture-pane -p -J -S -300 -E - -t <pane>`                                    | `pane read <pane> --source recent-unwrapped --lines 300`         |
+| Yank               | `tmux set-buffer -w <payload>`                                                 | write OSC 52 to `/dev/tty`                                       |
+| Ssh                | `tmux new-window`                                                              | not offered                                                      |
+| Swap to `pick-tui` | `execvp`                                                                       | not offered                                                      |
 
 `SCROLLBACK_HISTORY_LINES = 300` stays one constant feeding both builders.
 

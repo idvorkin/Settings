@@ -142,13 +142,13 @@ call it out.
 
 ### Scrollback and popups
 
-| Keys            | Action                                      |
-| --------------- | ------------------------------------------- |
-| `prefix+v`      | copy mode (tmux `C-a v`, mode-keys vi)      |
-| `prefix+e`      | dump scrollback into `$EDITOR` — herdr-only |
-| `prefix+shift+l` | scrollback link picker, 95% × 95%        |
-| `prefix+ctrl+g` | lazygit popup, 90% × 90%                    |
-| `prefix+ctrl+t` | `tig status` popup, 90% × 90%               |
+| Keys             | Action                                      |
+| ---------------- | ------------------------------------------- |
+| `prefix+v`       | copy mode (tmux `C-a v`, mode-keys vi)      |
+| `prefix+e`       | dump scrollback into `$EDITOR` — herdr-only |
+| `prefix+shift+l` | scrollback link picker, 95% × 95%           |
+| `prefix+ctrl+g`  | lazygit popup, 90% × 90%                    |
+| `prefix+ctrl+t`  | `tig status` popup, 90% × 90%               |
 
 Popups mirror the `:tig` / `:gdiff` command aliases in `shared/.tmux.conf`.
 
