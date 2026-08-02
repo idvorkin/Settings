@@ -77,16 +77,6 @@ swap_pane_right = "prefix+}"          # tmux: } swap-pane -D
 swap_pane_up = "prefix+shift+k"
 swap_pane_down = "prefix+shift+j"
 
-# --- layout ------------------------------------------------------------------
-# tmux: C-a / -> rmux_helper third (toggle even <-> 1/3-2/3, split if 1 pane).
-# env HERDR_ENV=1 forces herdr detection: shell bindings run detached, so we
-# don't rely on herdr injecting pane env; rmux_helper then targets the
-# focused tab, which is the pane the keypress came from.
-[[keys.command]]
-key = "prefix+/"
-type = "shell"
-command = "env HERDR_ENV=1 rmux_helper third"
-
 # --- scrollback / copy -------------------------------------------------------
 copy_mode = "prefix+v"                # tmux: C-a v / V copy-mode (mode-keys vi)
 edit_scrollback = "prefix+e"          # herdr-only: dump scrollback into $EDITOR
@@ -101,6 +91,23 @@ navigate_pane_left = "h"
 navigate_pane_down = "j"
 navigate_pane_up = "k"
 navigate_pane_right = "l"
+
+# --- layout ------------------------------------------------------------------
+# tmux: C-a / -> rmux_helper third (toggle even <-> 1/3-2/3, split if 1 pane).
+# Detection checks TMUX_PANE first, then HERDR_PANE_ID/HERDR_ENV: `-u TMUX_PANE`
+# clears any TMUX_PANE this binding would otherwise inherit (e.g. if the herdr
+# server itself was launched from inside tmux), so detection falls through to
+# HERDR_ENV=1, which forces the herdr path -- rmux_helper then targets the
+# focused tab, the pane the keypress came from, instead of wrongly taking the
+# tmux path.
+#
+# NOTE: plain [keys] entries must stay above the FIRST [[keys.command]] block
+# in this file -- TOML scopes every bare key after an [[array.of.tables]]
+# header into that table, and `herdr config check` will NOT catch the mistake.
+[[keys.command]]
+key = "prefix+/"
+type = "shell"
+command = "env -u TMUX_PANE HERDR_ENV=1 rmux_helper third"
 
 # --- popups (mirrors the :tig / :gdiff tmux command aliases) ------------------
 [[keys.command]]

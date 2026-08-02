@@ -13,7 +13,7 @@ The spec documents the _what_ (behavior rules), not the _how_ (implementation). 
 - `pick-tui` - Native TUI picker for sessions/windows/panes
 - `rename-all` - Rename all windows based on running processes
 - `rotate` - Toggle between horizontal/vertical layouts
-- `third` - Toggle between even and 1/3-2/3 split. Works under tmux and herdr (auto-detected via TMUX_PANE / HERDR_PANE_ID+HERDR_ENV; bare toggle only under herdr — the `third "<cmd>"` form is tmux-only)
+- `third` - Toggle between even and 1/3-2/3 split. Works under tmux and herdr (auto-detected via TMUX_PANE, else HERDR_PANE_ID or HERDR_ENV; bare toggle only under herdr — the `third "<cmd>"` form is tmux-only)
 - `parent-pid-tree` - Resolve caller's owning tmux pane by walking the parent-PID chain (see below)
 - `agent-continue` - Scan the caller's pane for `claude --resume <UUID>` and exec it in place. See below.
 - `agent-yolo-continue` - Same, but launches through `yolo-claude` (container only).
@@ -27,7 +27,7 @@ cargo install --path . --force   # only when smoke-testing via tmux/herdr keybin
 
 With `CARGO_TARGET_DIR="$HOME/.cache/cargo-target"` exported (shared/zsh_include.sh),
 build output lands in `$CARGO_TARGET_DIR/debug/rmux_helper`, not `./target/`, and all
-worktrees share one dependency cache — fresh worktrees build in seconds.
+worktrees share one dependency cache — fresh worktrees build in well under a minute.
 The release profile uses thin LTO (fat LTO + codegen-units=1 was the old
 distribution profile; it made every rebuild minutes long for no perceptible
 runtime win in a subprocess-bound CLI).
