@@ -4,44 +4,8 @@
 //! pure decision function over the parsed `herdr pane layout` JSON; the shell
 //! functions that invoke the CLI live at the bottom and stay logic-free.
 
-use anyhow::{bail, Context, Result};
-use serde::Deserialize;
-use std::process::Command;
-
-#[derive(Deserialize, Debug)]
-pub struct LayoutResponse {
-    pub result: LayoutResult,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct LayoutResult {
-    pub layout: TabLayout,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct TabLayout {
-    pub panes: Vec<PaneEntry>,
-    #[serde(default)]
-    pub splits: Vec<SplitEntry>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct PaneEntry {
-    pub pane_id: String,
-    pub rect: Rect,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct SplitEntry {
-    pub direction: String,
-    pub ratio: f64,
-}
-
-#[derive(Deserialize, Debug, Clone, Copy)]
-pub struct Rect {
-    pub x: i64,
-    pub y: i64,
-}
+use crate::mux::{self, PaneEntry, TabLayout};
+use anyhow::{bail, Result};
 
 pub const THIRD_RATIO: f64 = 1.0 / 3.0;
 pub const EVEN_RATIO: f64 = 0.5;
@@ -103,33 +67,6 @@ pub fn plan_third(layout: &TabLayout) -> ThirdAction {
     }
 }
 
-fn herdr_cli(args: &[&str]) -> Result<String> {
-    let out = Command::new("herdr")
-        .args(args)
-        .output()
-        .context("failed to run `herdr` — is it installed and on PATH?")?;
-    if !out.status.success() {
-        bail!(
-            "herdr {:?} failed: {}",
-            args,
-            String::from_utf8_lossy(&out.stderr).trim()
-        );
-    }
-    Ok(String::from_utf8_lossy(&out.stdout).to_string())
-}
-
-fn fetch_layout(pane: Option<&str>) -> Result<TabLayout> {
-    let mut args = vec!["pane", "layout"];
-    if let Some(p) = pane {
-        args.extend(["--pane", p]);
-    }
-    // Without --pane, herdr reports the focused tab — correct for a keybinding.
-    let json = herdr_cli(&args)?;
-    let resp: LayoutResponse =
-        serde_json::from_str(&json).context("unexpected JSON from `herdr pane layout`")?;
-    Ok(resp.result.layout)
-}
-
 /// Map a planned action to the exact `herdr` CLI argument vector, or `None`
 /// for `Noop`. Pure and unit-tested independent of any I/O — mirrors
 /// `build_exec_argv` in `agent_continue.rs`.
@@ -176,11 +113,11 @@ pub fn cmd(command: &str) -> Result<()> {
         );
     }
     let caller = std::env::var("HERDR_PANE_ID").ok().filter(|s| !s.is_empty());
-    let layout = fetch_layout(caller.as_deref())?;
+    let layout = mux::fetch_layout(caller.as_deref())?;
     let action = plan_third(&layout);
     if let Some(args) = action_args(&action) {
         let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
-        herdr_cli(&arg_refs)?;
+        mux::herdr_cli(&arg_refs)?;
     }
     Ok(())
 }
@@ -188,13 +125,14 @@ pub fn cmd(command: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mux::{Rect, SplitEntry};
 
     // Captured verbatim from `herdr pane layout --pane w9:p1` on 2026-08-02.
     const SINGLE_PANE_JSON: &str = r#"{"id":"cli:pane:layout","result":{"layout":{"area":{"height":56,"width":170,"x":18,"y":1},"focused_pane_id":"w9:p1","panes":[{"focused":true,"pane_id":"w9:p1","rect":{"height":56,"width":170,"x":18,"y":1}}],"splits":[],"tab_id":"w9:t1","workspace_id":"w9","zoomed":false},"type":"pane_layout"}}"#;
     const TWO_PANE_THIRD_JSON: &str = r#"{"id":"cli:pane:layout","result":{"layout":{"area":{"height":56,"width":170,"x":18,"y":1},"focused_pane_id":"w9:p1","panes":[{"focused":true,"pane_id":"w9:p1","rect":{"height":56,"width":56,"x":18,"y":1}},{"focused":false,"pane_id":"w9:p2","rect":{"height":56,"width":114,"x":74,"y":1}}],"splits":[{"direction":"right","id":"split_0_root","ratio":0.33,"rect":{"height":56,"width":170,"x":18,"y":1}}],"tab_id":"w9:t1","workspace_id":"w9","zoomed":false},"type":"pane_layout"}}"#;
 
     fn parse(json: &str) -> TabLayout {
-        serde_json::from_str::<LayoutResponse>(json)
+        serde_json::from_str::<crate::mux::LayoutResponse>(json)
             .expect("layout JSON should parse")
             .result
             .layout
@@ -204,6 +142,7 @@ mod tests {
         // Rects only matter for left/top-first ordering; give pane 2 the larger x/y.
         let (x2, y2) = if direction == "right" { (100, 0) } else { (0, 30) };
         TabLayout {
+            focused_pane_id: "w9:p1".into(),
             panes: vec![
                 PaneEntry {
                     pane_id: "w9:p1".into(),
