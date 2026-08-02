@@ -4,7 +4,9 @@
 //! pure decision function over the parsed `herdr pane layout` JSON; the shell
 //! functions that invoke the CLI live at the bottom and stay logic-free.
 
+use anyhow::{bail, Context, Result};
 use serde::Deserialize;
+use std::process::Command;
 
 #[derive(Deserialize, Debug)]
 pub struct LayoutResponse {
@@ -101,6 +103,60 @@ pub fn plan_third(layout: &TabLayout) -> ThirdAction {
             reason: "third only handles 1 or 2 panes",
         },
     }
+}
+
+fn herdr_cli(args: &[&str]) -> Result<String> {
+    let out = Command::new("herdr")
+        .args(args)
+        .output()
+        .context("failed to run `herdr` — is it installed and on PATH?")?;
+    if !out.status.success() {
+        bail!(
+            "herdr {:?} failed: {}",
+            args,
+            String::from_utf8_lossy(&out.stderr).trim()
+        );
+    }
+    Ok(String::from_utf8_lossy(&out.stdout).to_string())
+}
+
+fn fetch_layout(pane: Option<&str>) -> Result<TabLayout> {
+    let mut args = vec!["pane", "layout"];
+    if let Some(p) = pane {
+        args.extend(["--pane", p]);
+    }
+    // Without --pane, herdr reports the focused tab — correct for a keybinding.
+    let json = herdr_cli(&args)?;
+    let resp: LayoutResponse =
+        serde_json::from_str(&json).context("unexpected JSON from `herdr pane layout`")?;
+    Ok(resp.result.layout)
+}
+
+pub fn cmd(command: &str) -> Result<()> {
+    if !command.is_empty() {
+        bail!(
+            "third \"<command>\" is not supported under herdr — use tmux, or herdr's \
+             popup bindings (prefix+ctrl+g lazygit, prefix+ctrl+t tig)"
+        );
+    }
+    let caller = std::env::var("HERDR_PANE_ID").ok().filter(|s| !s.is_empty());
+    let layout = fetch_layout(caller.as_deref())?;
+    match plan_third(&layout) {
+        ThirdAction::Split { source_pane } => {
+            herdr_cli(&[
+                "pane", "split", "--pane", &source_pane, "--direction", "right",
+                "--ratio", "0.33", "--focus",
+            ])?;
+        }
+        ThirdAction::Resize { pane, direction, amount } => {
+            herdr_cli(&[
+                "pane", "resize", "--pane", &pane, "--direction", direction,
+                "--amount", &format!("{amount:.4}"),
+            ])?;
+        }
+        ThirdAction::Noop { .. } => {}
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -207,5 +263,11 @@ mod tests {
         let mut layout = two_pane("right", 0.5);
         layout.splits.clear();
         assert!(matches!(plan_third(&layout), ThirdAction::Noop { .. }));
+    }
+
+    #[test]
+    fn command_arg_is_refused_under_herdr() {
+        let err = cmd("tig status").expect_err("command form must be rejected");
+        assert!(err.to_string().contains("not supported under herdr"));
     }
 }
