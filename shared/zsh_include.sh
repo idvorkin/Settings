@@ -772,6 +772,11 @@ function lg-presets() {
 
 export HOMEBREW_NO_AUTO_UPDATE=1
 
+# Shared cargo build cache: every repo/worktree reuses one dep-artifact dir,
+# so fresh (herdr) worktrees skip the cold all-deps rebuild. Note this means
+# build output lands in $CARGO_TARGET_DIR/{debug,release}/, not ./target/.
+export CARGO_TARGET_DIR="$HOME/.cache/cargo-target"
+
 # Setting this allows lip gloss to use truecolor
 # Man, what a PITA
 

@@ -21,9 +21,16 @@ The spec documents the _what_ (behavior rules), not the _how_ (implementation). 
 ## Building
 
 ```bash
-cargo build --release
-cargo install --path . --force
+cargo build            # dev profile — use this while iterating
+cargo install --path . --force   # only when smoke-testing via tmux/herdr keybindings
 ```
+
+With `CARGO_TARGET_DIR="$HOME/.cache/cargo-target"` exported (shared/zsh_include.sh),
+build output lands in `$CARGO_TARGET_DIR/debug/rmux_helper`, not `./target/`, and all
+worktrees share one dependency cache — fresh worktrees build in seconds.
+The release profile uses thin LTO (fat LTO + codegen-units=1 was the old
+distribution profile; it made every rebuild minutes long for no perceptible
+runtime win in a subprocess-bound CLI).
 
 ## Testing
 
@@ -33,7 +40,7 @@ cargo test
 
 ## Smoke testing against tmux
 
-`cargo build` updates `target/`, but tmux keybindings and `$PATH` resolve to `~/.cargo/bin/rmux_helper`. After any change you want to exercise live, run `cargo install --path . --force` before invoking `rmux_helper` from a tmux session.
+`cargo build` updates `$CARGO_TARGET_DIR` (or `target/` if unset), but tmux keybindings and `$PATH` resolve to `~/.cargo/bin/rmux_helper`. After any change you want to exercise live, run `cargo install --path . --force` before invoking `rmux_helper` from a tmux session.
 
 ## `parent-pid-tree`
 
