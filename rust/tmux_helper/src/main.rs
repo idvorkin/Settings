@@ -1,4 +1,5 @@
 mod agent_continue;
+mod herdr_third;
 mod link_picker;
 mod picker;
 
@@ -1045,6 +1046,9 @@ fn rotate() -> Result<()> {
 }
 
 fn third(command: &str) -> Result<()> {
+    if detect_multiplexer() == Multiplexer::Herdr {
+        return herdr_third::cmd(command);
+    }
     let caller_pane_id = std::env::var("TMUX_PANE").ok();
     let caller = caller_pane_id.as_deref();
     let cmd_opt = if command.is_empty() {
@@ -1152,6 +1156,26 @@ fn third(command: &str) -> Result<()> {
 /// Reliable even when the window is backgrounded.
 fn get_caller_pane_id() -> Option<String> {
     std::env::var("TMUX_PANE").ok().filter(|s| !s.is_empty())
+}
+
+#[derive(PartialEq, Debug)]
+enum Multiplexer {
+    Tmux,
+    Herdr,
+    Unknown,
+}
+
+/// TMUX_PANE wins when both are set: tmux running inside a herdr pane means
+/// tmux is the multiplexer the user is actually looking at.
+fn detect_multiplexer() -> Multiplexer {
+    let set = |k: &str| std::env::var(k).map(|v| !v.is_empty()).unwrap_or(false);
+    if set("TMUX_PANE") {
+        Multiplexer::Tmux
+    } else if set("HERDR_PANE_ID") || set("HERDR_ENV") {
+        Multiplexer::Herdr
+    } else {
+        Multiplexer::Unknown
+    }
 }
 
 /// Return all pane IDs in the window that contains `window_target`.
