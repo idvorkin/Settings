@@ -118,7 +118,7 @@ command = "env -u TMUX -u TMUX_PANE HERDR_ENV=1 rmux_helper third"
 [[keys.command]]
 key = "prefix+shift+l"
 type = "popup"
-command = "env -u TMUX -u TMUX_PANE rmux_helper pick-links"
+command = "env -u TMUX -u TMUX_PANE HERDR_ENV=1 rmux_helper pick-links"
 width = "95%"
 height = "95%"
 

@@ -13,7 +13,7 @@ The spec documents the _what_ (behavior rules), not the _how_ (implementation). 
 - `pick-tui` - Native TUI picker for sessions/windows/panes
 - `rename-all` - Rename all windows based on running processes
 - `rotate` - Toggle between horizontal/vertical layouts
-- `third` - Toggle between even and 1/3-2/3 split. Works under tmux and herdr (auto-detected via TMUX_PANE, else HERDR_PANE_ID or HERDR_ENV; bare toggle only under herdr — the `third "<cmd>"` form is tmux-only)
+- `third` - Toggle between even and 1/3-2/3 split. Works under tmux and herdr (auto-detected via TMUX_PANE or TMUX, else HERDR_PANE_ID or HERDR_ENV; bare toggle only under herdr — the `third "<cmd>"` form is tmux-only)
 - `pick-links` - Scrollback link/PR/host picker. Works under tmux and herdr (auto-detected); under herdr the ssh and F2-swap actions are not offered and yank goes out as OSC 52
 - `parent-pid-tree` - Resolve caller's owning tmux pane by walking the parent-PID chain (see below)
 - `agent-continue` - Scan the caller's pane for `claude --resume <UUID>` and exec it in place. See below.

@@ -87,7 +87,12 @@ Digit-only tokens match the `key` column only.
 
 ## OSC 52 timing
 
-Write sequence, in order: TUI exits → `disable_raw_mode` → `LeaveAlternateScreen` → drop `Terminal` → flush stdout/stderr → open `/dev/tty` → write `\e]52;c;<base64>\e\\` → flush tty → `exit(0)`.
+Common to both backends: TUI exits → `disable_raw_mode` → `LeaveAlternateScreen` → drop `Terminal` → flush stdout/stderr (all inside `tui::run`, before the action is dispatched).
+
+Backend-specific dispatch after that:
+
+- **tmux**: spawn `tmux set-buffer -w <payload>` (the raw payload, not a pre-built OSC 52 escape — tmux constructs and forwards the OSC 52 sequence to attached clients itself) → `exit(0)`.
+- **herdr**: open `/dev/tty` → write `\e]52;c;<base64>` terminated with **BEL** (`\x07`), not ST (`\e\\`) → flush tty → `exit(0)`.
 
 ## Empty state
 
