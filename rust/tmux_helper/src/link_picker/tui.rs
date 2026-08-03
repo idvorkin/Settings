@@ -730,23 +730,29 @@ pub fn run(rows: Vec<Row>, mux: Multiplexer, source: &Source) -> Result<Action> 
     // position, device attributes, focus events) shortly after the pty comes
     // up, and crossterm's parser can treat some of these as key events. Poll
     // with a longer window than picker.rs's 1ms to catch late arrivals.
-    let is_empty = app.rows.is_empty();
-    if is_empty {
-        terminal.draw(|f| draw_empty(f, source))?;
-    } else {
-        terminal.draw(|f| draw(f, &mut app))?;
-    }
-    for _ in 0..16 {
-        while event::poll(std::time::Duration::from_millis(5))? {
-            let _ = event::read();
+    // Everything between enable_raw_mode and the cleanup below runs inside
+    // this closure so that a `?` cannot escape with the terminal still in
+    // raw mode and the alternate screen. Bailing out there would hand the
+    // user back a pane that no longer echoes input — a worse failure than
+    // whatever caused the error. Do not unwrap this closure in a refactor.
+    let result: Result<Action> = (|| {
+        let is_empty = app.rows.is_empty();
+        if is_empty {
+            terminal.draw(|f| draw_empty(f, source))?;
+        } else {
+            terminal.draw(|f| draw(f, &mut app))?;
         }
-    }
-
-    let result = if is_empty {
-        empty_state_loop(&mut terminal, source)
-    } else {
-        event_loop(&mut app, &mut terminal)
-    };
+        for _ in 0..16 {
+            while event::poll(std::time::Duration::from_millis(5))? {
+                let _ = event::read();
+            }
+        }
+        if is_empty {
+            empty_state_loop(&mut terminal, source)
+        } else {
+            event_loop(&mut app, &mut terminal)
+        }
+    })();
 
     let _ = disable_raw_mode();
     let _ = execute!(io::stdout(), LeaveAlternateScreen);
