@@ -30,6 +30,46 @@ pub enum Action {
     SwapToPickTui,
 }
 
+/// Where the scrollback came from, for the empty-state message. Populated by
+/// the orchestrator so the user can tell WHICH pane was read when nothing
+/// turned up — the difference between "the tool is broken" and "that pane
+/// has no links in it."
+pub struct Source {
+    pub pane_id: String,
+    pub lines: usize,
+}
+
+/// Body of the empty-state panel. Pure so its content is unit-testable
+/// without a terminal.
+pub(crate) fn empty_state_lines(source: &Source) -> Vec<String> {
+    vec![
+        String::new(),
+        "No links, servers, or IPs found".to_string(),
+        String::new(),
+        format!(
+            "read {} — {} line{} of scrollback",
+            source.pane_id,
+            source.lines,
+            if source.lines == 1 { "" } else { "s" }
+        ),
+        String::new(),
+        "Esc / q to close".to_string(),
+    ]
+}
+
+/// Keys that dismiss the empty-state panel. Deliberately narrow: an escape
+/// sequence a multiplexer injects into a fresh popup pty must not dismiss
+/// the panel before it can be read — that is the exact flash this panel
+/// exists to fix.
+pub(crate) fn is_empty_state_dismiss(code: KeyCode, mods: KeyModifiers) -> bool {
+    match code {
+        KeyCode::Esc => true,
+        KeyCode::Char('q') if mods.is_empty() => true,
+        KeyCode::Char('c') if mods.contains(KeyModifiers::CONTROL) => true,
+        _ => false,
+    }
+}
+
 struct App {
     rows: Vec<Row>,
     filtered: Vec<usize>, // indices into rows in display order (including separators)
@@ -511,6 +551,70 @@ mod help_overlay_tests {
         );
     }
 
+    fn src() -> Source {
+        Source { pane_id: "w9:p1".into(), lines: 53 }
+    }
+
+    #[test]
+    fn empty_state_names_the_pane_and_line_count() {
+        // The whole point of the panel: distinguish "the tool is broken"
+        // from "that pane has no links in it."
+        let body = empty_state_lines(&src()).join("\n");
+        assert!(body.contains("No links, servers, or IPs found"), "{body}");
+        assert!(body.contains("w9:p1"), "must name the pane it read: {body}");
+        assert!(body.contains("53 lines"), "must report capture depth: {body}");
+        assert!(body.contains("Esc / q to close"), "must say how to dismiss: {body}");
+    }
+
+    #[test]
+    fn empty_state_pluralizes_single_line_capture() {
+        let one = Source { pane_id: "w9:p1".into(), lines: 1 };
+        assert!(empty_state_lines(&one).join("\n").contains("1 line of"));
+    }
+
+    #[test]
+    fn empty_state_dismiss_accepts_esc_q_and_ctrl_c() {
+        assert!(is_empty_state_dismiss(KeyCode::Esc, KeyModifiers::NONE));
+        assert!(is_empty_state_dismiss(KeyCode::Char('q'), KeyModifiers::NONE));
+        assert!(is_empty_state_dismiss(KeyCode::Char('c'), KeyModifiers::CONTROL));
+    }
+
+    #[test]
+    fn empty_state_ignores_keys_a_popup_might_inject() {
+        // Regression guard for the flash this panel fixes: a fresh popup pty
+        // gets cursor-position and device-attribute replies that crossterm can
+        // surface as key events. None may dismiss the panel.
+        for (code, mods) in [
+            (KeyCode::Enter, KeyModifiers::NONE),
+            (KeyCode::Char('R'), KeyModifiers::NONE),
+            (KeyCode::Char('0'), KeyModifiers::NONE),
+            (KeyCode::Char(';'), KeyModifiers::NONE),
+            (KeyCode::Char('q'), KeyModifiers::CONTROL),
+            (KeyCode::F(2), KeyModifiers::NONE),
+        ] {
+            assert!(!is_empty_state_dismiss(code, mods), "{code:?} must not dismiss");
+        }
+    }
+
+    #[test]
+    fn empty_state_panel_renders_with_picker_chrome() {
+        use ratatui::backend::TestBackend;
+        let backend = TestBackend::new(80, 20);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let source = src();
+        terminal.draw(|f| draw_empty(f, &source)).unwrap();
+        let painted: String = terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .map(|c| c.symbol())
+            .collect();
+        assert!(painted.contains("Links"), "keeps the picker's titled border");
+        assert!(painted.contains("No links, servers, or IPs found"), "{painted}");
+        assert!(painted.contains("w9:p1"), "{painted}");
+    }
+
     #[test]
     fn hint_bar_shows_f2_sess_under_tmux() {
         use ratatui::backend::TestBackend;
@@ -612,10 +716,7 @@ mod help_overlay_tests {
 
 // ----- Run loop + rendering -----
 
-pub fn run(rows: Vec<Row>, mux: Multiplexer) -> Result<Action> {
-    if rows.is_empty() {
-        return Ok(Action::Quit);
-    }
+pub fn run(rows: Vec<Row>, mux: Multiplexer, source: &Source) -> Result<Action> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
@@ -629,20 +730,61 @@ pub fn run(rows: Vec<Row>, mux: Multiplexer) -> Result<Action> {
     // position, device attributes, focus events) shortly after the pty comes
     // up, and crossterm's parser can treat some of these as key events. Poll
     // with a longer window than picker.rs's 1ms to catch late arrivals.
-    terminal.draw(|f| draw(f, &mut app))?;
+    let is_empty = app.rows.is_empty();
+    if is_empty {
+        terminal.draw(|f| draw_empty(f, source))?;
+    } else {
+        terminal.draw(|f| draw(f, &mut app))?;
+    }
     for _ in 0..16 {
         while event::poll(std::time::Duration::from_millis(5))? {
             let _ = event::read();
         }
     }
 
-    let result = event_loop(&mut app, &mut terminal);
+    let result = if is_empty {
+        empty_state_loop(&mut terminal, source)
+    } else {
+        event_loop(&mut app, &mut terminal)
+    };
 
     let _ = disable_raw_mode();
     let _ = execute!(io::stdout(), LeaveAlternateScreen);
     drop(terminal);
 
     result
+}
+
+/// Render the empty-state panel: same chrome as the picker, so a popup that
+/// found nothing still looks like the tool rather than a flash.
+fn draw_empty(f: &mut Frame, source: &Source) {
+    let area = f.area();
+    let block = Block::default().borders(Borders::ALL).title("Links");
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+    let body: Vec<Line> = empty_state_lines(source)
+        .into_iter()
+        .map(|l| Line::from(Span::raw(format!("   {l}"))))
+        .collect();
+    f.render_widget(Paragraph::new(body).wrap(Wrap { trim: false }), inner);
+}
+
+/// Hold the empty-state panel open until the user dismisses it. Redraws on
+/// resize so the panel survives a popup being resized under it.
+fn empty_state_loop<B: Backend>(terminal: &mut Terminal<B>, source: &Source) -> Result<Action> {
+    loop {
+        match event::read()? {
+            Event::Key(key) if key.kind == KeyEventKind::Press => {
+                if is_empty_state_dismiss(key.code, key.modifiers) {
+                    return Ok(Action::Quit);
+                }
+            }
+            Event::Resize(_, _) => {
+                terminal.draw(|f| draw_empty(f, source))?;
+            }
+            _ => {}
+        }
+    }
 }
 
 fn event_loop<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> Result<Action> {

@@ -44,12 +44,15 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
     // 4. Enrich (blocks inside tokio, then drops runtime before TUI)
     let rows = enrich::enrich_rows(rows, enrich_deadline_ms);
 
-    // 5. TUI
-    if rows.is_empty() {
-        eprintln!("pick-links: no links, servers, or IPs in scrollback");
-        return Ok(());
-    }
-    let action = tui::run(rows, mux)?;
+    // 5. TUI. An empty result still goes through the TUI: it renders an
+    // empty-state panel naming the pane it read. Returning early here
+    // instead printed to stderr and exited, which inside a popup is a
+    // flash the user cannot read — the popup dies with the message.
+    let source = tui::Source {
+        pane_id: pane_id.clone(),
+        lines: raw.lines().count(),
+    };
+    let action = tui::run(rows, mux, &source)?;
 
     // 6-7. Dispatch post-TUI (terminal already restored by tui::run).
     match action {
@@ -284,12 +287,30 @@ fn herdr_capture_pane(pane_id: &str) -> Result<String> {
 /// otherwise the focused pane. Popups get `HERDR_ENV` but not
 /// `HERDR_PANE_ID`, and `C-a L` is bound as a popup — so the fallback is
 /// the common path, not the edge case.
+/// Choose the herdr pane to capture from the two env vars herdr provides,
+/// in precedence order. Pure so the precedence is testable without env
+/// mutation, which races across cargo's parallel test threads.
+///
+/// `HERDR_PANE_ID` is set for a managed pane. Popups do not get it
+/// (herdr `src/app/popup.rs`, `without_pane_identity()`) but DO get
+/// `HERDR_ACTIVE_PANE_ID` naming the pane that was active when the popup
+/// opened — which is exactly the pane whose scrollback the user means.
+pub(crate) fn pick_herdr_pane(pane_id: Option<&str>, active_pane_id: Option<&str>) -> Option<String> {
+    [pane_id, active_pane_id]
+        .into_iter()
+        .flatten()
+        .find(|v| !v.is_empty())
+        .map(str::to_string)
+}
+
 fn resolve_herdr_pane_id() -> Result<String> {
-    if let Ok(p) = env::var("HERDR_PANE_ID") {
-        if !p.is_empty() {
-            return Ok(p);
-        }
+    if let Some(p) = pick_herdr_pane(
+        env::var("HERDR_PANE_ID").ok().as_deref(),
+        env::var("HERDR_ACTIVE_PANE_ID").ok().as_deref(),
+    ) {
+        return Ok(p);
     }
+    // Last resort: infer from the focused pane of the active workspace.
     let layout = crate::mux::fetch_layout(None)?;
     if layout.focused_pane_id.is_empty() {
         return Err(anyhow!(
@@ -388,6 +409,17 @@ mod orchestration_tests {
             !args.iter().any(|a| a == "-e"),
             "must NOT include ANSI escapes (they corrupt popup rendering)"
         );
+    }
+
+    #[test]
+    fn herdr_pane_prefers_pane_id_then_active_pane_id() {
+        assert_eq!(pick_herdr_pane(Some("w9:p1"), Some("w2:p3")).as_deref(), Some("w9:p1"));
+        // Popups get only HERDR_ACTIVE_PANE_ID — the pane the user pressed
+        // the key from, which is the one whose scrollback they mean.
+        assert_eq!(pick_herdr_pane(None, Some("w2:p3")).as_deref(), Some("w2:p3"));
+        assert_eq!(pick_herdr_pane(Some(""), Some("w2:p3")).as_deref(), Some("w2:p3"));
+        assert_eq!(pick_herdr_pane(None, None), None);
+        assert_eq!(pick_herdr_pane(Some(""), Some("")), None);
     }
 
     #[test]
