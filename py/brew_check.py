@@ -53,7 +53,7 @@ FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("LSPs", "lua-language-server typos-lsp pyright rust-analyzer universal-ctags".split()),
     ("System", "just cpulimit gdu ncdu duf openssl zip npm carapace atuin".split()),
     ("Image Viewers", "viu timg".split()),
-    ("AI Tools", "llm gemini-cli claude-code".split()),
+    ("AI Tools", "llm gemini-cli claude-code opencode".split()),
     ("Cloud/DB", "s3cmd pgcli fselect cloc 1password-cli gcloud-cli".split()),
 ]
 
