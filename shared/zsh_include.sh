@@ -416,6 +416,11 @@ function export_secrets()
     esecret_jq REPLICATE_API_TOKEN
     esecret_jq ELEVEN_API_KEY
     esecret_jq ONEBUSAWAY_API_KEY
+    esecret_jq CEREBUS_KEY
+    # secretBox stores this as CEREBUS_KEY, but opencode/crush/cline and the
+    # Cerebras SDK all read CEREBRAS_API_KEY. Alias rather than rename the
+    # secretBox entry, which other tools already reference by the old name.
+    export CEREBRAS_API_KEY="$CEREBUS_KEY"
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
 }
 #
