@@ -376,10 +376,6 @@ function pbfix()
 
 function esecret_jq() {
     export "$1"=$(jq -r .$1 ~/gits/igor2/secretBox.json)
-    # list the first 10 chars of the secret, which follows the = sign
-    export SCRATCH=`export | grep $1`
-    # Skip echo since too noisy
-    # echo ${SCRATCH:0:10},${SCRATCH:20:4}
 }
 
 function curl_md() {
@@ -393,6 +389,9 @@ function export_secrets()
         echo "No secretBox found at ~/gits/igor2/secretBox.json"
         return 0
     fi
+    # An older esecret_jq exported a self-matching SCRATCH var that snowballed
+    # across nested shells until exec failed with "argument list too long".
+    unset SCRATCH
     esecret_jq LANGCHAIN_API_KEY
     esecret_jq XAI_API_KEY
     esecret_jq ANTHROPIC_API_KEY
@@ -445,7 +444,7 @@ function safe_init()
     alias_if_exists ls eza
     alias_if_exists df duf
     alias_if_exists top btm
-    alias_if_exists ndcu gdu
+    alias_if_exists ndcu gdu-go # brew installs gdu as gdu-go (coreutils conflict)
     alias_if_exists du dua
     alias_if_exists neofetch fastfetch
     # Removed cd alias as it interferes with Claude
@@ -803,7 +802,7 @@ zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
 source <(carapace _carapace)
 
 
-unalias a # not sure why  a gets an alias
+unalias a 2>/dev/null # some plugin versions alias `a`; harmless if absent
 echo  --default_init
 }
 
