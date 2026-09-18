@@ -6,17 +6,23 @@
 """Tests for caff. Run directly: ./test_caff.py"""
 
 import json
+import os
+import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+import caff  # noqa: E402
 from caff import (  # noqa: E402
     SPARK_CHARS,
+    UNKNOWN_POWER,
     Agents,
+    Caffeinator,
     History,
     Mode,
     Power,
@@ -32,6 +38,7 @@ from caff import (  # noqa: E402
     sleep_eta,
     sparkline,
     status_line,
+    update_wake,
 )
 
 BATTERY = (
@@ -78,7 +85,7 @@ def test_parse_duration(text, expected):
     assert parse_duration(text) == expected
 
 
-@pytest.mark.parametrize("text", ["", "abc", "0m", "-5m", "4d", "h"])
+@pytest.mark.parametrize("text", ["", "abc", "0m", "-5m", "4d", "h", "99999999999h"])
 def test_parse_duration_rejects(text):
     with pytest.raises(ValueError):
         parse_duration(text)
@@ -109,10 +116,71 @@ def test_parse_pmset_desktop():
         (Power(False, 51, 100), Mode.IDLE),
         (Power(False, 50, 100), Mode.SLEEP),  # at the floor -> sleep
         (Power(False, 3, 100), Mode.SLEEP),
+        (UNKNOWN_POWER, Mode.SLEEP),  # can't see the floor: don't risk the battery
     ],
 )
 def test_desired_mode(power, expected):
     assert desired_mode(power, floor=50) is expected
+
+
+@pytest.mark.parametrize("output", ["", "pmset: error\n", "Now drawing from 'Batt"])
+def test_unreadable_pmset_never_keeps_the_mac_awake(output):
+    power = parse_pmset(output)
+    assert power.unknown
+    assert desired_mode(power, 50, Agents(3, 3)) is Mode.SLEEP
+    assert "unknown" in power.describe()
+
+
+def test_desktop_is_not_unknown_power():
+    assert not parse_pmset(DESKTOP).unknown
+
+
+class FakeRun:
+    """Stands in for subprocess.run: returns a result or raises."""
+
+    def __init__(self, stdout: str = "", returncode: int = 0, error=None) -> None:
+        self.stdout, self.stderr, self.returncode = stdout, "", returncode
+        self.error = error
+
+    def __call__(self, *args, **kwargs):
+        if self.error is not None:
+            raise self.error
+        return self
+
+
+@pytest.mark.parametrize(
+    "run",
+    [
+        FakeRun(BATTERY, returncode=1),
+        FakeRun(error=FileNotFoundError("pmset")),
+        FakeRun(error=subprocess.TimeoutExpired("pmset", 5)),
+    ],
+)
+def test_read_power_failures_are_unknown(monkeypatch, run):
+    monkeypatch.setattr(caff.subprocess, "run", run)
+    assert caff.read_power() == UNKNOWN_POWER
+
+
+def test_read_power_success(monkeypatch):
+    monkeypatch.setattr(caff.subprocess, "run", FakeRun(BATTERY))
+    assert caff.read_power() == Power(False, 90, 14 * 60 + 28)
+
+
+@pytest.mark.parametrize(
+    "run",
+    [
+        FakeRun(HERDR, returncode=1),
+        FakeRun(error=FileNotFoundError("herdr")),
+        FakeRun(error=subprocess.TimeoutExpired("herdr", 5)),
+        FakeRun("not json"),
+        FakeRun('{"result": {}}'),
+        FakeRun('{"result": {"agents": ["x"]}}'),  # entries aren't dicts
+        FakeRun('{"result": {"agents": {"a": 1}}}'),
+    ],
+)
+def test_read_agents_failures_are_unknown_not_a_crash(monkeypatch, run):
+    monkeypatch.setattr(caff.subprocess, "run", run)
+    assert caff.read_agents() is None
 
 
 def test_parse_agents_counts_only_working_as_busy():
@@ -163,12 +231,36 @@ def test_waker_arms_once_until_the_wake_fires():
 def test_waker_disarm_cancels_the_pending_wake():
     pmset = FakePmset()
     waker = Waker(timedelta(minutes=10), run=pmset)
-    waker.arm(datetime(2026, 1, 1, 12, 0))
-    waker.disarm()
-    waker.disarm()  # nothing pending: no-op
+    now = datetime(2026, 1, 1, 12, 0)
+    waker.arm(now)
+    waker.disarm(now)
+    waker.disarm(now)  # nothing pending: no-op
     assert pmset.calls[-1] == ["cancel", "wake", "01/01/26 12:10:00", "caff"]
     assert len(pmset.calls) == 2
     assert waker.at is None
+
+
+def test_waker_does_not_cancel_a_wake_that_already_fired():
+    pmset = FakePmset()
+    waker = Waker(timedelta(minutes=10), run=pmset)
+    now = datetime(2026, 1, 1, 12, 0)
+    waker.arm(now)
+    waker.disarm(now + timedelta(minutes=11))
+    assert pmset.calls == [["wake", "01/01/26 12:10:00", "caff"]]
+    assert waker.at is None
+
+
+def test_waker_survives_a_failed_cancel():
+    pmset = FakePmset()
+    waker = Waker(timedelta(minutes=10), run=pmset)
+    now = datetime(2026, 1, 1, 12, 0)
+    waker.arm(now)
+    pmset.ok = False
+    waker.disarm(now)
+    pmset.ok = True
+    waker.arm(now)
+    assert not waker.disabled
+    assert waker.at == datetime(2026, 1, 1, 12, 10)
 
 
 def test_waker_gives_up_after_sudo_fails():
@@ -179,6 +271,253 @@ def test_waker_gives_up_after_sudo_fails():
     assert waker.at is None
     assert waker.disabled
     assert len(pmset.calls) == 1  # warned once, then stopped trying
+
+
+@pytest.mark.parametrize(
+    "mode,power,armed",
+    [
+        (Mode.SLEEP, Power(False, 80, 100), True),  # idle agents above the floor
+        (Mode.SLEEP, Power(False, 50, 100), False),  # at the floor: sleep on
+        (Mode.SLEEP, UNKNOWN_POWER, False),
+        (Mode.IDLE, Power(False, 80, 100), False),  # agents busy
+        (Mode.FULL, Power(True, 80, None), False),
+    ],
+)
+def test_update_wake_only_arms_for_idle_agents_above_the_floor(mode, power, armed):
+    waker = Waker(timedelta(minutes=10), run=FakePmset())
+    update_wake(waker, mode, power, 50, NOW)
+    assert (waker.at is not None) is armed
+
+
+def test_update_wake_disarms_when_agents_get_busy():
+    pmset = FakePmset()
+    waker = Waker(timedelta(minutes=10), run=pmset)
+    update_wake(waker, Mode.SLEEP, Power(False, 80, 100), 50, NOW)
+    update_wake(waker, Mode.IDLE, Power(False, 80, 100), 50, NOW)
+    assert pmset.calls[-1][0] == "cancel"
+    update_wake(None, Mode.SLEEP, Power(False, 80, 100), 50, NOW)  # --wake off
+
+
+class FakeProc:
+    def __init__(self, args: list[str]) -> None:
+        self.args = args
+        self.alive = True
+        self.stubborn = False  # ignores terminate()
+        self.calls: list[str] = []
+
+    def poll(self) -> int | None:
+        return None if self.alive else 0
+
+    def terminate(self) -> None:
+        self.calls.append("terminate")
+        self.alive = self.stubborn
+
+    def kill(self) -> None:
+        self.calls.append("kill")
+        self.alive = False
+
+    def wait(self, timeout: float | None = None) -> int:
+        self.calls.append("wait")
+        if self.alive:
+            raise subprocess.TimeoutExpired(self.args, timeout or 0)
+        return 0
+
+
+class FakePopen:
+    def __init__(self) -> None:
+        self.procs: list[FakeProc] = []
+
+    def __call__(self, args: list[str]) -> FakeProc:
+        self.procs.append(FakeProc(args))
+        return self.procs[-1]
+
+
+def test_caffeinator_ties_the_child_to_our_pid():
+    popen = FakePopen()
+    Caffeinator(popen).ensure(Mode.FULL)
+    assert popen.procs[0].args == [
+        "caffeinate",
+        "-d",
+        "-i",
+        "-s",
+        "-w",
+        str(os.getpid()),
+    ]
+
+
+def test_caffeinator_replaces_the_child_on_a_mode_change():
+    popen = FakePopen()
+    caffeinator = Caffeinator(popen)
+    caffeinator.ensure(Mode.FULL)
+    caffeinator.ensure(Mode.FULL)  # same mode, child alive: nothing to do
+    assert len(popen.procs) == 1
+    caffeinator.ensure(Mode.IDLE)
+    assert not popen.procs[0].alive
+    assert popen.procs[1].args[:2] == ["caffeinate", "-i"]
+
+
+def test_caffeinator_sleep_runs_nothing():
+    popen = FakePopen()
+    caffeinator = Caffeinator(popen)
+    caffeinator.ensure(Mode.IDLE)
+    caffeinator.ensure(Mode.SLEEP)
+    assert not popen.procs[0].alive
+    assert len(popen.procs) == 1
+    assert not caffeinator.running
+
+
+def test_caffeinator_restarts_a_child_that_died():
+    popen = FakePopen()
+    caffeinator = Caffeinator(popen)
+    caffeinator.ensure(Mode.IDLE)
+    popen.procs[0].alive = False
+    caffeinator.ensure(Mode.IDLE)
+    assert len(popen.procs) == 2
+    assert caffeinator.running
+
+
+def test_caffeinator_kills_and_reaps_a_child_that_ignores_terminate():
+    popen = FakePopen()
+    caffeinator = Caffeinator(popen)
+    caffeinator.ensure(Mode.IDLE)
+    popen.procs[0].stubborn = True
+    caffeinator.stop()
+    assert popen.procs[0].calls == ["terminate", "wait", "kill", "wait"]
+
+
+@pytest.fixture
+def state_file(tmp_path, monkeypatch):
+    path = tmp_path / "state.json"
+    monkeypatch.setattr(caff, "STATE_FILE", path)
+    return path
+
+
+def test_state_round_trips_for_a_live_watcher(state_file):
+    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
+    state = caff.read_state(NOW + timedelta(seconds=45))
+    assert state is not None
+    assert (state["pid"], state["mode"], state["floor"]) == (os.getpid(), "idle", 50)
+    assert not state_file.with_suffix(".tmp").exists()
+
+
+def test_state_that_stopped_ticking_is_not_running(state_file):
+    # SIGKILLed watcher + recycled pid: the pid is alive but nothing ticks
+    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
+    assert caff.read_state(NOW + timedelta(minutes=5)) is None
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "not json",
+        "[]",
+        '{"mode": "idle"}',
+        '{"pid": "x", "updated": "", "interval": 1}',
+    ],
+)
+def test_bad_state_file_is_not_running(state_file, content):
+    state_file.write_text(content)
+    assert caff.read_state(NOW) is None
+
+
+def test_state_with_a_dead_pid_is_not_running(state_file):
+    dead = subprocess.Popen(["true"])
+    dead.wait()
+    state_file.write_text(
+        json.dumps({"pid": dead.pid, "updated": NOW.isoformat(), "interval": 30})
+    )
+    assert caff.read_state(NOW) is None
+
+
+def test_state_from_a_watcher_predating_interval_still_counts(state_file):
+    # an older caff is still running across the upgrade: don't start a second one
+    state_file.write_text(json.dumps({"pid": os.getpid(), "updated": NOW.isoformat()}))
+    assert caff.read_state(NOW + timedelta(seconds=45)) is not None
+
+
+def test_unwritable_cache_does_not_stop_the_watcher(tmp_path, monkeypatch):
+    blocker = tmp_path / "file"
+    blocker.write_text("")
+    monkeypatch.setattr(caff, "STATE_FILE", blocker / "state.json")  # parent is a file
+    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
+    history = History(blocker / "h.json")
+    assert history.record(Power(False, 80, None), NOW)  # kept in memory
+
+
+runner = CliRunner()
+
+
+@pytest.fixture
+def cli_env(state_file, monkeypatch):
+    monkeypatch.setattr(caff.sys, "platform", "darwin")
+    monkeypatch.setattr(caff.signal, "signal", lambda *args: None)  # keep pytest's
+    monkeypatch.setattr(caff, "read_power", lambda: Power(False, 80, 100))
+    monkeypatch.setattr(caff, "read_agents", lambda: Agents(1, 2))
+    monkeypatch.setattr(caff, "History", lambda: History(state_file.parent / "h.json"))
+
+
+@pytest.mark.parametrize("args", [["run", "4d"], ["run", "--wake", "soon"]])
+def test_run_rejects_bad_durations(cli_env, args):
+    assert runner.invoke(caff.app, args).exit_code == 2
+
+
+def test_run_refuses_off_macos(cli_env, monkeypatch):
+    monkeypatch.setattr(caff.sys, "platform", "linux")
+    assert runner.invoke(caff.app, ["run"]).exit_code == 1
+
+
+def test_run_refuses_a_second_watcher_and_leaves_its_state(cli_env, state_file):
+    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, datetime.now())
+    result = runner.invoke(caff.app, ["run"])
+    assert result.exit_code == 1
+    assert "already running" in result.output
+    assert state_file.exists()
+
+
+def test_run_cleans_up_however_the_loop_ends(cli_env, state_file, monkeypatch):
+    stopped: list[str] = []
+    monkeypatch.setattr(Caffeinator, "stop", lambda self: stopped.append("caffeinate"))
+    monkeypatch.setattr(Waker, "disarm", lambda self, now: stopped.append("wake"))
+
+    def loop(*args, **kwargs):
+        state_file.write_text("{}")
+        raise SystemExit(0)
+
+    monkeypatch.setattr(caff, "run_loop", loop)
+    runner.invoke(caff.app, ["run"])
+    assert stopped == ["caffeinate", "wake"]
+    assert not state_file.exists()
+
+
+def test_info_without_a_watcher(cli_env):
+    result = runner.invoke(caff.app, ["info"])
+    assert result.exit_code == 0
+    assert "not running" in result.output
+    assert "agents 1/2 busy" in result.output
+
+
+def test_info_with_a_watcher(cli_env):
+    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, datetime.now())
+    result = runner.invoke(caff.app, ["info"])
+    assert result.exit_code == 0
+    assert f"caff running (pid {os.getpid()}, floor 50%)" in result.output
+
+
+@pytest.mark.parametrize(
+    "argv,expected",
+    [
+        (["caff", "4h"], ["caff", "run", "4h"]),
+        (["caff"], ["caff", "run"]),
+        (["caff", "--floor", "40"], ["caff", "run", "--floor", "40"]),
+        (["caff", "info"], ["caff", "info"]),
+        (["caff", "--help"], ["caff", "--help"]),
+    ],
+)
+def test_cli_defaults_to_run(monkeypatch, argv, expected):
+    monkeypatch.setattr(caff.sys, "argv", list(argv))
+    monkeypatch.setattr(caff, "app", lambda: None)
+    caff.cli()
+    assert caff.sys.argv == expected
 
 
 def test_status_line_shows_agents_and_wake():

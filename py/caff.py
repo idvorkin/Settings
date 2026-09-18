@@ -12,6 +12,8 @@ Modes, re-evaluated every tick from `pmset -g batt` and `herdr agent list`:
   battery, all agents idle       -> nothing, plus a scheduled wake (--wake) so
                                     the Mac comes back to re-check the agents
   battery, at/below floor        -> nothing              (normal sleep)
+  pmset unreadable               -> nothing              (can't see the floor,
+                                                          so don't risk it)
 
 Scheduled wakes go through `sudo -n pmset schedule wake`, which needs the
 sudoers rule in mac/caff.sudoers (install instructions inside). Without it
@@ -54,6 +56,7 @@ STATE_FILE = CACHE_DIR / "state.json"
 HISTORY_FILE = CACHE_DIR / "history.json"
 DEFAULT_FLOOR = 50
 DEFAULT_WAKE = "10m"
+DEFAULT_INTERVAL = 30.0  # seconds between ticks
 BUSY_STATES = {"working"}  # Herdr agent_status values that keep the Mac up
 PMSET_DATE = "%m/%d/%y %H:%M:%S"  # the only format `pmset schedule` accepts
 WAKE_OWNER = "caff"
@@ -63,6 +66,8 @@ GRAPH_WIDTH = 60  # columns; samples are bucketed down to fit
 DRAIN_WINDOW = timedelta(hours=1)  # measured drain rate uses at most this
 DRAIN_MIN_SPAN = timedelta(minutes=5)  # ...and needs at least this much data
 SPARK_CHARS = "▁▂▃▄▅▆▇█"
+STALE_TICKS = 3  # state.json older than this many intervals = watcher is gone
+STALE_MIN_SECONDS = 60.0
 
 
 class Mode(str, Enum):
@@ -90,14 +95,24 @@ class Mode(str, Enum):
 @dataclass(frozen=True)
 class Power:
     plugged_in: bool
-    percent: int | None  # None = no battery (desktop)
+    percent: int | None  # None on AC = desktop; None off AC = pmset unreadable
     minutes_left: int | None  # pmset's time-to-empty; None on AC / no estimate
 
+    @property
+    def unknown(self) -> bool:
+        """pmset failed or made no sense: a desktop always reports AC."""
+        return not self.plugged_in and self.percent is None
+
     def describe(self) -> str:
-        source = "AC" if self.plugged_in else "battery"
+        if self.unknown:
+            return "[red]power unknown[/red]"
         if self.percent is None:
-            return f"{source}, no battery"
+            return "AC, no battery"
+        source = "AC" if self.plugged_in else "battery"
         return f"{source} {self.percent}%"
+
+
+UNKNOWN_POWER = Power(plugged_in=False, percent=None, minutes_left=None)
 
 
 _DURATION_RE = re.compile(
@@ -115,9 +130,12 @@ def parse_duration(text: str) -> timedelta:
     unit = (match.group(2) or "m").lower()
     if value <= 0:
         raise ValueError("Duration must be positive")
-    if unit.startswith("h"):
-        return timedelta(hours=value)
-    return timedelta(minutes=value)
+    try:
+        if unit.startswith("h"):
+            return timedelta(hours=value)
+        return timedelta(minutes=value)
+    except OverflowError:
+        raise ValueError(f"Duration {text!r} is too long") from None
 
 
 def parse_pmset(output: str) -> Power:
@@ -133,7 +151,15 @@ def parse_pmset(output: str) -> Power:
 
 
 def read_power() -> Power:
-    result = subprocess.run(["pmset", "-g", "batt"], capture_output=True, text=True)
+    """Current power state; UNKNOWN_POWER when pmset can't be asked."""
+    try:
+        result = subprocess.run(
+            ["pmset", "-g", "batt"], capture_output=True, text=True, timeout=5
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return UNKNOWN_POWER
+    if result.returncode != 0:
+        return UNKNOWN_POWER
     return parse_pmset(result.stdout)
 
 
@@ -162,19 +188,54 @@ def read_agents() -> Agents | None:
         if result.returncode != 0:
             return None
         return parse_agents(result.stdout)
-    except (OSError, subprocess.TimeoutExpired, ValueError, KeyError, TypeError):
+    except (
+        OSError,
+        subprocess.TimeoutExpired,
+        ValueError,
+        KeyError,
+        TypeError,
+        AttributeError,  # agents wasn't a list of dicts
+    ):
         return None
 
 
 def desired_mode(power: Power, floor: int, agents: Agents | None = None) -> Mode:
-    """Unknown agents (Herdr unreachable) are treated as busy: stay awake."""
-    if power.plugged_in or power.percent is None:
+    """Unknown agents (Herdr unreachable) are treated as busy: stay awake.
+
+    Unknown power goes the other way: we can't see the floor, so allow sleep
+    rather than risk running the battery flat.
+    """
+    if power.plugged_in:
         return Mode.FULL
+    if power.percent is None:
+        return Mode.SLEEP
     if power.percent <= floor:
         return Mode.SLEEP
     if agents is not None and agents.busy == 0:
         return Mode.SLEEP
     return Mode.IDLE
+
+
+_warned: set[str] = set()
+
+
+def warn_once(message: str) -> None:
+    if message in _warned:
+        return
+    _warned.add(message)
+    console.print(f"[yellow]{message}[/yellow]")
+
+
+def write_json(path: Path, data: object) -> None:
+    """Atomic, so `caff info` never reads half a file. The cache is cosmetic:
+    a full disk must not stop the watcher."""
+    tmp = path.with_suffix(".tmp")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(json.dumps(data))
+        os.replace(tmp, path)
+    except OSError as e:
+        warn_once(f"Can't write {path}: {e}")
 
 
 # --- battery history -------------------------------------------------------
@@ -209,21 +270,29 @@ class History:
     """Battery samples, at most one per wall-clock minute, persisted to disk."""
 
     def __init__(
-        self, path: Path = HISTORY_FILE, keep: timedelta = HISTORY_KEEP
+        self, path: Path | None = None, keep: timedelta = HISTORY_KEEP
     ) -> None:
-        self.path = path
+        self.path = path or HISTORY_FILE
         self.keep = keep
         self.samples = self._load()
 
     def _load(self) -> list[Sample]:
         try:
-            return [Sample.from_json(d) for d in json.loads(self.path.read_text())]
-        except (OSError, ValueError, KeyError, TypeError):
+            rows = json.loads(self.path.read_text())
+        except (OSError, ValueError):
             return []
+        if not isinstance(rows, list):
+            return []
+        samples: list[Sample] = []
+        for row in rows:  # one bad row must not cost the other 24h
+            try:
+                samples.append(Sample.from_json(row))
+            except (ValueError, KeyError, TypeError):
+                continue
+        return samples
 
     def save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps([s.to_json() for s in self.samples]))
+        write_json(self.path, [s.to_json() for s in self.samples])
 
     def record(self, power: Power, now: datetime, agents: Agents | None = None) -> bool:
         """Add a sample unless this minute already has one. True if added."""
@@ -343,7 +412,10 @@ def sleep_eta(
 class Caffeinator:
     """Owns the single caffeinate child process."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, popen: Callable[[list[str]], subprocess.Popen] = subprocess.Popen
+    ) -> None:
+        self.popen = popen
         self.proc: subprocess.Popen | None = None
         self.mode = Mode.SLEEP
 
@@ -354,10 +426,14 @@ class Caffeinator:
     def ensure(self, mode: Mode) -> None:
         if mode == self.mode and (mode == Mode.SLEEP or self.running):
             return
+        if mode == self.mode:
+            console.print("[yellow]caffeinate exited on its own[/yellow] - restarting")
         self.stop()
         args = mode.caffeinate_args
         if args is not None:
-            self.proc = subprocess.Popen(["caffeinate", *args])
+            # -w: caffeinate quits when we do, even if we're SIGKILLed and
+            # never reach stop() - otherwise it holds the Mac awake ownerless
+            self.proc = self.popen(["caffeinate", *args, "-w", str(os.getpid())])
         self.mode = mode
 
     def stop(self) -> None:
@@ -368,6 +444,7 @@ class Caffeinator:
                 self.proc.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 self.proc.kill()
+                self.proc.wait()
         self.proc = None
         self.mode = Mode.SLEEP
 
@@ -376,7 +453,8 @@ class Waker:
     """A one-shot `pmset schedule wake`, re-armed while the Mac is allowed to sleep.
 
     Needs root, so the calls go through `sudo -n` and the mac/caff.sudoers rule.
-    A failed sudo disables waking for the rest of the run (warned once).
+    A failed `wake` disables waking for the rest of the run (warned once); a
+    failed `cancel` doesn't, since a stray wake is harmless.
     """
 
     def __init__(
@@ -392,59 +470,70 @@ class Waker:
         result = subprocess.run(
             ["sudo", "-n", "pmset", "schedule", *args], capture_output=True, text=True
         )
+        if result.returncode != 0:
+            console.print(f"[dim]pmset schedule: {result.stderr.strip()}[/dim]")
         return result.returncode == 0
-
-    def _pmset(self, args: list[str]) -> bool:
-        if self.disabled:
-            return False
-        if self.run(args):
-            return True
-        self.disabled = True
-        console.print(
-            "[yellow]Can't schedule wakes[/yellow] - install mac/caff.sudoers "
-            "(see caff --help). Continuing without them."
-        )
-        return False
 
     def arm(self, now: datetime) -> None:
         """Make sure a wake is pending; re-arms after a fired wake."""
-        if self.at is not None and self.at > now:
+        if self.disabled or (self.at is not None and self.at > now):
             return
         when = now + self.every
-        if self._pmset(["wake", when.strftime(PMSET_DATE), WAKE_OWNER]):
+        if self.run(["wake", when.strftime(PMSET_DATE), WAKE_OWNER]):
             self.at = when
+            return
+        self.disabled = True
+        console.print(
+            "[yellow]Can't schedule wakes[/yellow] - is mac/caff.sudoers "
+            "installed? (see caff --help). Continuing without them."
+        )
 
-    def disarm(self) -> None:
+    def disarm(self, now: datetime) -> None:
         if self.at is None:
             return
-        self._pmset(["cancel", "wake", self.at.strftime(PMSET_DATE), WAKE_OWNER])
+        if self.at > now:  # a wake that already fired has nothing to cancel
+            self.run(["cancel", "wake", self.at.strftime(PMSET_DATE), WAKE_OWNER])
         self.at = None
 
 
 def write_state(
-    mode: Mode, power: Power, floor: int, deadline: datetime | None
+    mode: Mode,
+    power: Power,
+    floor: int,
+    deadline: datetime | None,
+    interval: float,
+    now: datetime,
 ) -> None:
-    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(
-        json.dumps(
-            {
-                "pid": os.getpid(),
-                "mode": mode.value,
-                "floor": floor,
-                "deadline": deadline.isoformat() if deadline else None,
-                "updated": datetime.now().isoformat(),
-                "power": power.describe(),
-            }
-        )
+    write_json(
+        STATE_FILE,
+        {
+            "pid": os.getpid(),
+            "mode": mode.value,
+            "floor": floor,
+            "deadline": deadline.isoformat() if deadline else None,
+            "updated": now.isoformat(),
+            "interval": interval,
+            "power": power.describe(),
+        },
     )
 
 
-def read_state() -> dict | None:
-    """The watcher's last tick, or None if it isn't running."""
+def read_state(now: datetime) -> dict | None:
+    """The watcher's last tick, or None if it isn't running.
+
+    A live pid isn't enough: after a SIGKILL the file stays behind and the pid
+    gets reused, so the tick must also be recent.
+    """
     try:
         state = json.loads(STATE_FILE.read_text())
         os.kill(state["pid"], 0)
-    except (OSError, ValueError, KeyError):
+        age = now - datetime.fromisoformat(state["updated"])
+        # .get: a watcher from before `interval` was recorded is still a watcher
+        interval = state.get("interval", DEFAULT_INTERVAL)
+        stale_after = max(STALE_TICKS * interval, STALE_MIN_SECONDS)
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    if age.total_seconds() > stale_after:
         return None
     return state
 
@@ -487,6 +576,18 @@ def render(
     return status, graph
 
 
+def update_wake(
+    waker: Waker | None, mode: Mode, power: Power, floor: int, now: datetime
+) -> None:
+    """Only wake to re-check agents; at/below the floor let the Mac sleep on."""
+    if waker is None:
+        return
+    if mode == Mode.SLEEP and power.percent is not None and power.percent > floor:
+        waker.arm(now)
+        return
+    waker.disarm(now)
+
+
 def run_loop(
     floor: int,
     interval: float,
@@ -506,18 +607,9 @@ def run_loop(
             agents = read_agents()
             mode = desired_mode(power, floor, agents)
             caff.ensure(mode)
-            if waker is not None:
-                # only wake to re-check agents; below the floor let it sleep on
-                if (
-                    mode == Mode.SLEEP
-                    and power.percent is not None
-                    and power.percent > floor
-                ):
-                    waker.arm(now)
-                else:
-                    waker.disarm()
+            update_wake(waker, mode, power, floor, now)
             history.record(power, now, agents)
-            write_state(mode, power, floor, deadline)
+            write_state(mode, power, floor, deadline, interval, now)
             wake_at = waker.at if waker is not None else None
             status, graph = render(
                 mode, power, floor, deadline, now, history, agents, wake_at
@@ -540,7 +632,9 @@ def run(
     floor: Annotated[
         int, typer.Option(help="On battery, allow sleep at or below this percent")
     ] = DEFAULT_FLOOR,
-    interval: Annotated[float, typer.Option(help="Seconds between power checks")] = 30,
+    interval: Annotated[
+        float, typer.Option(help="Seconds between power checks")
+    ] = DEFAULT_INTERVAL,
     wake: Annotated[
         str | None,
         typer.Option(
@@ -553,7 +647,7 @@ def run(
     if sys.platform != "darwin":
         console.print("[red]caff only works on macOS[/red]")
         raise typer.Exit(1)
-    if (state := read_state()) is not None:
+    if (state := read_state(datetime.now())) is not None:
         console.print(f"[red]caff is already running[/red] (pid {state['pid']})")
         raise typer.Exit(1)
 
@@ -586,7 +680,7 @@ def run(
     finally:
         caff.stop()
         if waker is not None:
-            waker.disarm()
+            waker.disarm(datetime.now())
         STATE_FILE.unlink(missing_ok=True)
         console.print("Stopped - letting the Mac sleep")
 
@@ -598,7 +692,7 @@ def info() -> None:
     agents = read_agents()
     now = datetime.now()
     history = History()
-    state = read_state()
+    state = read_state(now)
     if state is None:
         console.print("[yellow]caff is not running[/yellow]")
         mode = desired_mode(power, DEFAULT_FLOOR, agents)
@@ -611,7 +705,8 @@ def info() -> None:
         console.print(sleep_eta(power, DEFAULT_FLOOR, None, now, rate))
         console.print(graph_line(history.recent(GRAPH_WINDOW, now), rate))
         return
-    deadline = datetime.fromisoformat(state["deadline"]) if state["deadline"] else None
+    until = state.get("deadline")
+    deadline = datetime.fromisoformat(until) if until else None
     mode = Mode(state["mode"])
     console.print(f"caff running (pid {state['pid']}, floor {state['floor']}%)")
     status, graph = render(mode, power, state["floor"], deadline, now, history, agents)
