@@ -1,0 +1,9 @@
+# Let caff schedule (and cancel) wakes without a password, so a Mac that went
+# to sleep because every Herdr agent was idle comes back to re-check them.
+# Only `pmset schedule wake ...` and `pmset schedule cancel wake ...` are
+# allowed; nothing else in pmset. Install once:
+#
+#   sudo install -m 0440 -o root -g wheel mac/caff.sudoers /etc/sudoers.d/caff
+#   sudo visudo -cf /etc/sudoers.d/caff
+#
+idvorkin ALL=(root) NOPASSWD: /usr/bin/pmset schedule wake *, /usr/bin/pmset schedule cancel wake *
