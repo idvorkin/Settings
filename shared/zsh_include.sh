@@ -393,21 +393,12 @@ function export_secrets()
     # across nested shells until exec failed with "argument list too long".
     unset SCRATCH
     esecret_jq LANGCHAIN_API_KEY
-    # NOT exported on purpose: XAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY.
-    # A subscription CLI prefers the env key over its own login - grok prints
-    # "You are using XAI_API_KEY" and ignores grok.com, claude -p hangs or 401s -
-    # and all three keys were dead (no credits / invalid) when checked 2026-09-19.
-    # Tools that need one read secretBox.json in-process, or export it per call.
     esecret_jq IFTTT_WEBHOOK_KEY
     esecret_jq DEEPGRAM_API_KEY
     esecret_jq IFTTT_WEBHOOK_SMS_EVENT
-    esecret_jq TWILIO_ACCOUNT_SID
-    esecret_jq TWILIO_AUTH_TOKEN
-    esecret_jq TWILIO_FROM_NUMBER
     esecret_jq EXA_API_KEY
     esecret_jq GITHUB_PERSONAL_ACCESS_TOKEN
     esecret_jq VAPI_API_KEY
-    esecret_jq GOOGLE_API_KEY
     esecret_jq GROQ_API_KEY
     esecret_jq PPLX_API_KEY
     esecret_jq ZEP_API_KEY
