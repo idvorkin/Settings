@@ -393,9 +393,11 @@ function export_secrets()
     # across nested shells until exec failed with "argument list too long".
     unset SCRATCH
     esecret_jq LANGCHAIN_API_KEY
-    esecret_jq XAI_API_KEY
-    esecret_jq ANTHROPIC_API_KEY
-    esecret_jq OPENAI_API_KEY
+    # NOT exported on purpose: XAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY.
+    # A subscription CLI prefers the env key over its own login - grok prints
+    # "You are using XAI_API_KEY" and ignores grok.com, claude -p hangs or 401s -
+    # and all three keys were dead (no credits / invalid) when checked 2026-09-19.
+    # Tools that need one read secretBox.json in-process, or export it per call.
     esecret_jq IFTTT_WEBHOOK_KEY
     esecret_jq DEEPGRAM_API_KEY
     esecret_jq IFTTT_WEBHOOK_SMS_EVENT
