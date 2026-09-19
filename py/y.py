@@ -97,6 +97,7 @@ def load_cached_commands():
 
 # Parameter completions for commands that support them (defined early for fast path)
 PARAM_COMPLETIONS: dict[str, dict[str, list[str]]] = {
+    "focus": {"direction": ["right", "left", "up", "down"]},
     "p_foo": {
         "color": ["red", "green", "blue", "yellow", "purple"],
         "size": ["small", "medium", "large", "xlarge"],
@@ -108,7 +109,7 @@ PARAM_COMPLETIONS: dict[str, dict[str, list[str]]] = {
 }
 
 # Commands with dynamic completions (queried at runtime)
-DYNAMIC_COMPLETION_COMMANDS = {"ter"}
+DYNAMIC_COMPLETION_COMMANDS = {"terminal"}
 
 
 def _get_iterm_tabs() -> list[tuple[str, str, str]]:
@@ -158,6 +159,19 @@ def _get_iterm_tabs() -> list[tuple[str, str, str]]:
 def _get_ghostty_tabs() -> list[tuple[str, str, str]]:
     """Get Ghostty tabs via Window menu. Returns list of (title, 'Ghostty tab', 'ghostty:title')."""
     import subprocess as sp
+
+    # System Events may wait until timeout when the process is absent.
+    # Check without Apple Events before touching its accessibility menu.
+    try:
+        running = sp.run(
+            ["/usr/bin/pgrep", "-x", "Ghostty"],
+            capture_output=True,
+            timeout=0.5,
+        )
+        if running.returncode != 0:
+            return []
+    except (OSError, sp.TimeoutExpired):
+        return []
 
     script = """
     tell application "System Events"
@@ -275,16 +289,18 @@ def get_cached_commands_list() -> list[tuple[str, str]] | None:
 
 
 def _make_item(
-    title: str, subtitle: str, arg: str, autocomplete: str | None = None
+    title: str, subtitle: str, arg: str | list[str], autocomplete: str | None = None
 ) -> dict:
     """Build an Alfred item dict, excluding None values."""
     item = {"title": title, "subtitle": subtitle, "arg": arg}
     if autocomplete is not None:
         item["autocomplete"] = autocomplete
+    if arg in ("focus", "terminal"):
+        item["valid"] = False
     return item
 
 
-def fast_alfred_complete(query: str) -> str:
+def fast_alfred_complete(query: str, commands=None) -> str | None:
     """Fast path for alfred-complete using cached commands."""
     has_trailing_space = query.endswith(" ")
     query_stripped = query.strip()
@@ -294,21 +310,21 @@ def fast_alfred_complete(query: str) -> str:
     # These need to run even without cache since they query live data
     if len(parts) >= 1:
         cmd = parts[0].replace("-", "_")
-        if cmd in DYNAMIC_COMPLETION_COMMANDS:
+        if cmd == "ter":
+            cmd = "terminal"  # Accept the old name without listing it separately.
+        if cmd in DYNAMIC_COMPLETION_COMMANDS and (
+            has_trailing_space or len(parts) > 1
+        ):
             items = []
             param_values = parts[1:] if len(parts) > 1 else []
 
-            if cmd == "ter":
+            if cmd == "terminal":
                 terminal_windows = _get_terminal_windows_for_completion()
-                filter_text = (
-                    param_values[0].lower()
-                    if param_values and not has_trailing_space
-                    else ""
-                )
+                filter_text = " ".join(param_values).lower()
 
                 for title, description, identifier in terminal_windows:
                     if not filter_text or filter_text in title.lower():
-                        arg = f"ter {identifier}"
+                        arg = ["terminal", identifier]
                         items.append(
                             _make_item(
                                 title,
@@ -319,16 +335,23 @@ def fast_alfred_complete(query: str) -> str:
                         )
 
                 if not items:
-                    items.append(
-                        _make_item(
-                            "No terminal windows found", "Try opening a terminal", "ter"
-                        )
+                    item = _make_item(
+                        "No matching terminal tabs"
+                        if filter_text
+                        else "No terminal windows found",
+                        "Try another search"
+                        if filter_text
+                        else "Try opening a terminal",
+                        "terminal",
                     )
+                    item["valid"] = False
+                    items.append(item)
 
             return json.dumps({"items": items}, indent=2)
 
     # Now check cache for regular completions
-    commands = get_cached_commands_list()
+    if commands is None:
+        commands = get_cached_commands_list()
     if commands is None:
         return None  # Fall back to slow path
 
@@ -346,7 +369,15 @@ def fast_alfred_complete(query: str) -> str:
     elif len(parts) == 1 and not has_trailing_space:
         # Partial command - filter matching commands
         prefix = parts[0].lower()
-        for name, subtitle in commands:
+        # Put commands with a next step first, so `f<Tab>` drills into focus.
+        ranked_commands = sorted(
+            commands,
+            key=lambda command: (
+                not command[0].lower().startswith(prefix),
+                not has_completions(command[0].replace("-", "_")),
+            ),
+        )
+        for name, subtitle in ranked_commands:
             if name.lower().startswith(prefix) or prefix in name.lower():
                 cmd_key = name.replace("-", "_")
                 autocomplete = f"{name} " if has_completions(cmd_key) else name
@@ -382,21 +413,27 @@ def fast_alfred_complete(query: str) -> str:
 
                         next_param_idx = current_param_idx + 1
                         autocomplete = (
-                            f"{arg} " if next_param_idx < len(param_names) else None
+                            f"{arg} " if next_param_idx < len(param_names) else arg
                         )
 
                         items.append(
                             _make_item(
                                 option,
                                 f"{param_name} for {cmd_display}",
-                                arg,
+                                [cmd_display, *full_args],
                                 autocomplete,
                             )
                         )
             else:
                 cmd_display = cmd.replace("_", "-")
                 arg = f"{cmd_display} {' '.join(param_values)}"
-                items.append(_make_item(f"Run: {arg}", "Press Enter to execute", arg))
+                items.append(
+                    _make_item(
+                        f"Run: {arg}",
+                        "Press Enter to execute",
+                        [cmd_display, *param_values],
+                    )
+                )
         else:
             cmd_display = cmd.replace("_", "-")
             arg = query_stripped
@@ -580,6 +617,16 @@ def swest():
 def seast():
     """Switch to the space to the east (right) of current space (cycles around)"""
     _switch_space_on_display(1)
+
+
+@app.command()
+def focus(direction: Annotated[str, typer.Argument(help="right, left, up, or down")]):
+    """Focus a neighboring window: right, left, up, or down"""
+    directions = {"right": "east", "left": "west", "up": "north", "down": "south"}
+    target = directions.get(direction.lower())
+    if target is None:
+        raise typer.BadParameter("Choose right, left, up, or down.")
+    call_yabai(f"-m window --focus {target}")
 
 
 @app.command()
@@ -1182,24 +1229,11 @@ def ghimgpaste(
         print(f"[red]Error during git operations: {str(e)}[/red]")
 
 
-# Parameter completions for commands that support them
-PARAM_COMPLETIONS: dict[str, dict[str, list[str]]] = {
-    "p_foo": {
-        "color": ["red", "green", "blue", "yellow", "purple"],
-        "size": ["small", "medium", "large", "xlarge"],
-    },
-    "p_bar": {
-        "fruit": ["apple", "banana", "cherry", "date"],
-        "count": ["1", "2", "3", "5", "10"],
-    },
-}
-
-
 class AlfredItems(BaseModel):
     class Item(BaseModel):
         title: str
         subtitle: str
-        arg: str
+        arg: str | list[str]
         autocomplete: str | None = None
 
     items: List[Item]
@@ -1235,6 +1269,8 @@ def alfred():
     # If no valid cache, generate commands with docstrings
     items = []
     for cmd in app.registered_commands:
+        if cmd.hidden:
+            continue
         name = cmd.callback.__name__.replace("_", "-")  # type: ignore
         doc = cmd.callback.__doc__ or name  # type: ignore
         subtitle = doc.split("\n")[0] if doc else name
@@ -1261,7 +1297,7 @@ def alfred_ter():
             AlfredItems.Item(
                 title=title,
                 subtitle=description,
-                arg=f"ter {identifier}",
+                arg=["terminal", identifier],
             )
         )
 
@@ -2341,20 +2377,19 @@ def cliptofile():
 def _focus_iterm_tab(coords: str) -> bool:
     """Focus an iTerm2 tab by coordinates (win:tab:session). Returns True on success."""
     parts = coords.split(":")
-    if len(parts) != 3:
+    if len(parts) != 3 or not all(part.isdecimal() and int(part) > 0 for part in parts):
         return False
     win_idx, tab_idx, sess_idx = parts
 
     script = f"""
     tell application "iTerm2"
-        activate
         set targetWindow to window {win_idx}
-        tell targetWindow
-            select tab {tab_idx}
-            tell tab {tab_idx}
-                select session {sess_idx}
-            end tell
-        end tell
+        set targetTab to tab {tab_idx} of targetWindow
+        set targetSession to session {sess_idx} of targetTab
+        tell targetWindow to select
+        tell targetTab to select
+        tell targetSession to select
+        activate
     end tell
     """
     result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
@@ -2396,8 +2431,9 @@ def _ter_log(msg: str):
         pass
 
 
+@app.command("ter", hidden=True)
 @app.command()
-def ter(
+def terminal(
     target: Annotated[
         str, typer.Argument(help="Tab identifier, window ID, or title substring")
     ] = "",
@@ -2425,7 +2461,7 @@ def ter(
     Debug log: ~/tmp/y_ter.log
     """
     if debug:
-        _ter_log(f"ter called with target='{target}' list_only={list_only}")
+        _ter_log(f"terminal called with target='{target}' list_only={list_only}")
 
     terminal_apps = ["Ghostty", "iTerm2", "Terminal", "Warp", "Alacritty", "kitty"]
 
@@ -2445,7 +2481,7 @@ def ter(
             safe_title = escape(title)
             safe_id = escape(identifier)
             print(f"  {safe_title} [dim]({description})[/dim]")
-            print(f"    [dim]y ter {safe_id}[/dim]")
+            print(f"    [dim]y terminal {safe_id}[/dim]")
         return
 
     # Handle specific identifier formats
@@ -2566,6 +2602,8 @@ def _get_all_commands() -> list[tuple[str, str]]:
     """Get all registered commands with their docstrings."""
     commands = []
     for cmd in app.registered_commands:
+        if cmd.hidden:
+            continue
         name = cmd.callback.__name__.replace("_", "-")  # type: ignore
         doc = cmd.callback.__doc__ or ""  # type: ignore
         # Get first line of docstring
@@ -2587,114 +2625,8 @@ def alfred_complete(
     """
     import builtins  # Use standard print, not Rich's print (which interprets [...] as markup and wraps long lines)
 
-    # Don't strip - we need to detect trailing space for parameter completion
-    has_trailing_space = query.endswith(" ")
-    query_stripped = query.strip()
-    parts = query_stripped.split() if query_stripped else []
-
-    items: list[AlfredItems.Item] = []
-
-    if len(parts) == 0:
-        # Show all commands
-        for name, subtitle in _get_all_commands():
-            # Commands with params get autocomplete for drilling down
-            cmd_key = name.replace("-", "_")
-            autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else None
-            items.append(
-                AlfredItems.Item(
-                    title=name,
-                    subtitle=subtitle,
-                    arg=name,
-                    autocomplete=autocomplete,
-                )
-            )
-    elif len(parts) == 1 and not has_trailing_space:
-        # Partial command - filter matching commands
-        prefix = parts[0].lower()
-        for name, subtitle in _get_all_commands():
-            if name.lower().startswith(prefix) or prefix in name.lower():
-                cmd_key = name.replace("-", "_")
-                autocomplete = f"{name} " if cmd_key in PARAM_COMPLETIONS else None
-                items.append(
-                    AlfredItems.Item(
-                        title=name,
-                        subtitle=subtitle,
-                        arg=name,
-                        autocomplete=autocomplete,
-                    )
-                )
-    else:
-        # Command entered, show parameter completions
-        cmd = parts[0].replace("-", "_")
-        param_values = parts[1:] if len(parts) > 1 else []
-
-        if cmd in PARAM_COMPLETIONS:
-            param_names = list(PARAM_COMPLETIONS[cmd].keys())
-            current_param_idx = len(param_values)
-
-            # If we have a trailing space, we're ready for next param
-            if has_trailing_space:
-                current_param_idx = len(param_values)
-            else:
-                # Still typing current param, filter it
-                current_param_idx = max(0, len(param_values) - 1)
-
-            if current_param_idx < len(param_names):
-                param_name = param_names[current_param_idx]
-                options = PARAM_COMPLETIONS[cmd][param_name]
-
-                # Filter if user is typing
-                filter_text = ""
-                if not has_trailing_space and len(param_values) > current_param_idx:
-                    filter_text = param_values[current_param_idx].lower()
-
-                for option in options:
-                    if not filter_text or option.lower().startswith(filter_text):
-                        # Build the full arg with all previous params + this option
-                        cmd_display = cmd.replace("_", "-")
-                        full_args = param_values[:current_param_idx] + [option]
-                        arg = f"{cmd_display} {' '.join(full_args)}"
-
-                        # Autocomplete for drilling to next param
-                        next_param_idx = current_param_idx + 1
-                        if next_param_idx < len(param_names):
-                            autocomplete = f"{arg} "
-                        else:
-                            autocomplete = None
-
-                        items.append(
-                            AlfredItems.Item(
-                                title=option,
-                                subtitle=f"{param_name} for {cmd_display}",
-                                arg=arg,
-                                autocomplete=autocomplete,
-                            )
-                        )
-            else:
-                # All params filled, show final command
-                cmd_display = cmd.replace("_", "-")
-                arg = f"{cmd_display} {' '.join(param_values)}"
-                items.append(
-                    AlfredItems.Item(
-                        title=f"Run: {arg}",
-                        subtitle="Press Enter to execute",
-                        arg=arg,
-                    )
-                )
-        else:
-            # Command doesn't have param completions, just show it
-            cmd_display = cmd.replace("_", "-")
-            arg = query
-            items.append(
-                AlfredItems.Item(
-                    title=f"Run: {arg}",
-                    subtitle="Press Enter to execute",
-                    arg=arg,
-                )
-            )
-
-    alfred_items = AlfredItems(items=items)
-    builtins.print(alfred_items.model_dump_json(indent=2, exclude_none=True))
+    # Share the completion engine so cold and cached runs have identical behavior.
+    builtins.print(fast_alfred_complete(query, commands=_get_all_commands()))
 
 
 if __name__ == "__main__":
