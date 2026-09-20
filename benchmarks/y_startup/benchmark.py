@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
 """Benchmark fresh Y processes with warm OS caches and no desktop actions."""
 
 import argparse
@@ -241,7 +245,7 @@ def main():
         else None,
         "rust": run(["rustc", "--version"]).stdout.strip(),
         "go": run(["go", "version"]).stdout.strip(),
-        "uv": run(["uv", "--version"]).stdout.strip(),
+        "uv": run(["uv", "--version"]).stdout.strip() if args.uv else None,
         "arguments": vars(args),
         "source_sha256": hashes,
         "binary_bytes": {
