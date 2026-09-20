@@ -653,10 +653,8 @@ def fright():
     call_yabai("-m window --focus east")
 
 
-# yabai 7.1.18's --start/--stop/--restart-service look for a plist label
-# (com.asmvik.yabai) that doesn't match the installed com.koekeishiya.yabai,
-# so drive launchctl directly against the real label instead.
-YABAI_SERVICE_LABEL = "com.koekeishiya.yabai"
+# Match yabai's canonical launchd service label.
+YABAI_SERVICE_LABEL = "com.asmvik.yabai"
 
 
 def _launchctl_yabai(action: str) -> CompletedProcess:
