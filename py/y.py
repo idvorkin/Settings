@@ -879,6 +879,270 @@ def get_windows() -> Windows:
     return windows
 
 
+def _clockwise_visible_windows(
+    windows: list[Window], visible_spaces: set[int] | None = None
+) -> list[Window]:
+    """Return visible standard windows clockwise, beginning at the top-left.
+
+    Yabai uses screen coordinates whose Y axis grows downward, so increasing
+    screen-space angles move clockwise.
+    """
+    visible = [
+        window
+        for window in windows
+        if window.is_visible
+        and not window.is_minimized
+        and not window.is_hidden
+        and window.subrole == "AXStandardWindow"
+        and (visible_spaces is None or window.space in visible_spaces)
+    ]
+    if len(visible) < 2:
+        return visible
+
+    def center(window: Window) -> tuple[float, float]:
+        return (
+            window.frame.x + window.frame.w / 2,
+            window.frame.y + window.frame.h / 2,
+        )
+
+    centers = {window.id: center(window) for window in visible}
+    center_x = sum(point[0] for point in centers.values()) / len(centers)
+    center_y = sum(point[1] for point in centers.values()) / len(centers)
+
+    ordered = sorted(
+        visible,
+        key=lambda window: (
+            math.atan2(
+                centers[window.id][1] - center_y,
+                centers[window.id][0] - center_x,
+            )
+            % (2 * math.pi),
+            centers[window.id][1],
+            centers[window.id][0],
+            window.id,
+        ),
+    )
+
+    # Anchor the otherwise circular ordering at the upper-left-most window.
+    first_window = min(
+        visible,
+        key=lambda window: (
+            window.frame.y,
+            window.frame.x,
+            window.id,
+        ),
+    )
+    first_index = ordered.index(first_window)
+    return ordered[first_index:] + ordered[:first_index]
+
+
+def _numbered_window_entries(
+    windows: list[Window], visible_spaces: set[int] | None = None
+) -> list[dict]:
+    """Build the stable number-to-window snapshot shared by `number` and `f`."""
+    return [
+        {
+            "number": number,
+            "id": window.id,
+            "frame": {
+                "x": window.frame.x,
+                "y": window.frame.y,
+                "w": window.frame.w,
+                "h": window.frame.h,
+            },
+        }
+        for number, window in enumerate(
+            _clockwise_visible_windows(windows, visible_spaces), start=1
+        )
+    ]
+
+
+def _visible_space_indices() -> set[int]:
+    return {space["index"] for space in get_spaces() if space.get("is-visible", False)}
+
+
+def _window_number_cache_path() -> Path:
+    return Path("/tmp") / f"y_window_numbers_{os.getuid()}.json"
+
+
+def _save_window_numbers(entries: list[dict], seconds: int) -> None:
+    snapshot = {
+        "expires_at": time.time() + seconds + 5,
+        "windows": entries,
+    }
+    _window_number_cache_path().write_text(json.dumps(snapshot))
+
+
+def _load_window_numbers() -> list[dict] | None:
+    try:
+        snapshot = json.loads(_window_number_cache_path().read_text())
+        if snapshot["expires_at"] < time.time():
+            return None
+        return snapshot["windows"]
+    except (FileNotFoundError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def _overlay_application():
+    """Create a background AppKit application that is allowed to own windows."""
+    if AppKit is None:
+        typer.echo("Window badges require macOS and PyObjC", err=True)
+        raise typer.Exit(code=1)
+
+    app_instance = AppKit.NSApplication.sharedApplication()
+    # The prohibited policy explicitly disallows creating windows. It can make
+    # panels flash briefly before AppKit removes them. Accessory keeps the app
+    # out of the Dock while allowing its non-activating panels to stay visible.
+    app_instance.setActivationPolicy_(AppKit.NSApplicationActivationPolicyAccessory)
+    app_instance.finishLaunching()
+    return app_instance
+
+
+def _show_window_number_overlays(entries: list[dict], seconds: int) -> None:
+    """Show non-activating number badges centered over the supplied windows."""
+    import Foundation
+
+    app_instance = _overlay_application()
+
+    badge_size = 64
+    primary_screen_top = AppKit.NSScreen.screens()[0].frame().size.height
+    badges = []
+    for entry in entries:
+        frame = entry["frame"]
+        center_x = frame["x"] + frame["w"] / 2
+        quartz_center_y = frame["y"] + frame["h"] / 2
+        cocoa_center_y = primary_screen_top - quartz_center_y
+        badge_frame = Foundation.NSMakeRect(
+            center_x - badge_size / 2,
+            cocoa_center_y - badge_size / 2,
+            badge_size,
+            badge_size,
+        )
+
+        style = (
+            AppKit.NSWindowStyleMaskBorderless
+            | AppKit.NSWindowStyleMaskNonactivatingPanel
+        )
+        badge = AppKit.NSPanel.alloc().initWithContentRect_styleMask_backing_defer_(
+            badge_frame, style, AppKit.NSBackingStoreBuffered, False
+        )
+        badge.setLevel_(AppKit.NSFloatingWindowLevel + 1)
+        badge.setOpaque_(False)
+        badge.setBackgroundColor_(
+            AppKit.NSColor.colorWithCalibratedRed_green_blue_alpha_(
+                0.12, 0.12, 0.12, 0.92
+            )
+        )
+        # NSPanel hides when its application is inactive by default. This is a
+        # non-activating overlay, so explicitly keep it visible in the
+        # background for the requested duration.
+        badge.setHidesOnDeactivate_(False)
+        badge.setIgnoresMouseEvents_(True)
+        badge.setCollectionBehavior_(
+            AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces
+            | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary
+        )
+
+        label = AppKit.NSTextField.alloc().initWithFrame_(
+            Foundation.NSMakeRect(0, 8, badge_size, badge_size - 12)
+        )
+        label.setStringValue_(str(entry["number"]))
+        label.setBezeled_(False)
+        label.setDrawsBackground_(False)
+        label.setEditable_(False)
+        label.setSelectable_(False)
+        label.setAlignment_(AppKit.NSTextAlignmentCenter)
+        label.setFont_(AppKit.NSFont.boldSystemFontOfSize_(34))
+        label.setTextColor_(AppKit.NSColor.whiteColor())
+        badge.contentView().addSubview_(label)
+
+        badge.orderFrontRegardless()
+        badges.append(badge)
+
+    end_time = time.time() + seconds
+    while time.time() < end_time:
+        event = app_instance.nextEventMatchingMask_untilDate_inMode_dequeue_(
+            AppKit.NSAnyEventMask,
+            Foundation.NSDate.dateWithTimeIntervalSinceNow_(0.05),
+            Foundation.NSDefaultRunLoopMode,
+            True,
+        )
+        if event:
+            app_instance.sendEvent_(event)
+
+    for badge in badges:
+        badge.close()
+
+
+def _launch_window_number_overlay(seconds: int) -> None:
+    """Launch badges independently so they survive the invoking app exiting."""
+    command = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "number",
+        "--overlay",
+        "--seconds",
+        str(seconds),
+    ]
+
+    subprocess.Popen(
+        command,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        close_fds=True,
+        cwd="/",
+        start_new_session=True,
+    )
+
+
+@app.command()
+def number(
+    seconds: Annotated[
+        int, typer.Option("--seconds", "-s", help="How long to show the numbers")
+    ] = 5,
+    overlay: Annotated[bool, typer.Option("--overlay", hidden=True)] = False,
+):
+    """Show window numbers clockwise from the top-left."""
+    if overlay:
+        entries = _load_window_numbers()
+        if entries:
+            _show_window_number_overlays(entries, seconds)
+        return
+
+    if seconds <= 0:
+        raise typer.BadParameter("seconds must be greater than zero")
+
+    entries = _numbered_window_entries(
+        get_windows().windows,
+        _visible_space_indices(),
+    )
+    if not entries:
+        typer.echo("No visible windows found")
+        raise typer.Exit(code=1)
+
+    _save_window_numbers(entries, seconds)
+    _launch_window_number_overlay(seconds)
+
+
+@app.command()
+def f(
+    number: Annotated[int, typer.Argument(help="Window number shown by `y number`")],
+):
+    """Focus a window by the number shown by `y number`."""
+    entries = _load_window_numbers()
+    if entries is None:
+        entries = _numbered_window_entries(
+            get_windows().windows,
+            _visible_space_indices(),
+        )
+
+    if number < 1 or number > len(entries):
+        raise typer.BadParameter(f"Choose a window from 1 to {len(entries)}.")
+
+    call_yabai(f"-m window --focus {entries[number - 1]['id']}")
+
+
 def get_displays() -> Displays:
     disp_result = call_yabai("-m query --displays")
     if disp_result.returncode != 0:
