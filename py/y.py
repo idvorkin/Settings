@@ -53,10 +53,15 @@ def load_full_imports():
 
                 window_number = int(cmd_name)
                 actions = typer.Typer(
-                    help=f"Act on window {window_number} shown by `y number`.",
-                    no_args_is_help=True,
+                    help=f"Act on window {window_number} shown by `y number`. Defaults to focus.",
+                    no_args_is_help=False,
                     add_completion=False,
                 )
+
+                @actions.callback(invoke_without_command=True)
+                def default_window_action(ctx: typer.Context):
+                    if ctx.invoked_subcommand is None:
+                        _run_numbered_window_action(window_number, "focus")
 
                 @actions.command("focus")
                 def focus_numbered_window():
@@ -75,7 +80,7 @@ def load_full_imports():
         help="A Yabai helper - Window management and screenshot utilities",
         no_args_is_help=True,
         cls=WindowNumberGroup,
-        epilog="Numbered windows: run `y number`, then `y 3 focus` or `y 3 close`.",
+        epilog="Numbered windows: run `y number`, then `y 3` to focus or `y 3 close`.",
     )
 
 

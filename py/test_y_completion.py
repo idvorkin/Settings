@@ -97,6 +97,7 @@ class CompletionTests(unittest.TestCase):
         for query in ("3", "3 "):
             items = self.complete(query)
             self.assertEqual([i["title"] for i in items], ["focus", "close"])
+            self.assertTrue(items[0].get("valid", True))
             self.assertEqual(
                 [i["arg"] for i in items], [["3", "focus"], ["3", "close"]]
             )
