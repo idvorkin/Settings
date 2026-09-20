@@ -894,7 +894,9 @@ def _clockwise_visible_windows(
         and not window.is_minimized
         and not window.is_hidden
         and window.subrole == "AXStandardWindow"
-        and (visible_spaces is None or window.space in visible_spaces)
+        and (
+            visible_spaces is None or window.is_sticky or window.space in visible_spaces
+        )
     ]
     if len(visible) < 2:
         return visible
@@ -962,15 +964,30 @@ def _visible_space_indices() -> set[int]:
 
 
 def _window_number_cache_path() -> Path:
-    return Path("/tmp") / f"y_window_numbers_{os.getuid()}.json"
+    return Path.home() / ".cache" / "y" / "window_numbers.json"
 
 
 def _save_window_numbers(entries: list[dict], seconds: int) -> None:
+    import tempfile
+
     snapshot = {
         "expires_at": time.time() + seconds + 5,
         "windows": entries,
     }
-    _window_number_cache_path().write_text(json.dumps(snapshot))
+    cache_path = _window_number_cache_path()
+    cache_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    # A private temporary file plus replacement avoids following a destination
+    # symlink and prevents readers from seeing a partially written snapshot.
+    with tempfile.NamedTemporaryFile(
+        mode="w", dir=cache_path.parent, delete=False
+    ) as cache_file:
+        temporary_path = Path(cache_file.name)
+        try:
+            json.dump(snapshot, cache_file)
+            cache_file.close()
+            temporary_path.replace(cache_path)
+        finally:
+            temporary_path.unlink(missing_ok=True)
 
 
 def _load_window_numbers() -> list[dict] | None:
@@ -979,7 +996,7 @@ def _load_window_numbers() -> list[dict] | None:
         if snapshot["expires_at"] < time.time():
             return None
         return snapshot["windows"]
-    except (FileNotFoundError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+    except (OSError, KeyError, TypeError, ValueError):
         return None
 
 
@@ -1076,6 +1093,10 @@ def _show_window_number_overlays(entries: list[dict], seconds: int) -> None:
 
 def _launch_window_number_overlay(seconds: int) -> None:
     """Launch badges independently so they survive the invoking app exiting."""
+    if AppKit is None:
+        typer.echo("Window badges require macOS and PyObjC", err=True)
+        raise typer.Exit(code=1)
+
     command = [
         sys.executable,
         str(Path(__file__).resolve()),
@@ -1089,7 +1110,7 @@ def _launch_window_number_overlay(seconds: int) -> None:
         command,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=None,
         close_fds=True,
         cwd="/",
         start_new_session=True,

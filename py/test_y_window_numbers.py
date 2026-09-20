@@ -1,6 +1,29 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "pytest",
+#     "typer",
+#     "rich",
+#     "icecream",
+#     "pydantic",
+#     "pyperclip",
+#     "psutil",
+#     "pyobjc-framework-Quartz; sys_platform == 'darwin'",
+#     "pyobjc-framework-Cocoa; sys_platform == 'darwin'",
+# ]
+# ///
+"""Regression tests for window numbering; run ./py/test_y_window_numbers.py."""
+
+import json
+from pathlib import Path
+import sys
+import tempfile
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+
+import pytest
 
 import y
 
@@ -13,6 +36,7 @@ def window(
     visible=True,
     minimized=False,
     hidden=False,
+    sticky=False,
     space=1,
     subrole="AXStandardWindow",
 ):
@@ -22,6 +46,7 @@ def window(
         is_visible=visible,
         is_minimized=minimized,
         is_hidden=hidden,
+        is_sticky=sticky,
         space=space,
         subrole=subrole,
     )
@@ -46,6 +71,7 @@ class WindowNumberingTests(unittest.TestCase):
         app_instance.setActivationPolicy_.assert_called_once_with("accessory")
         app_instance.finishLaunching.assert_called_once_with()
 
+    @patch.object(y, "AppKit", new=Mock())
     @patch.object(y.subprocess, "Popen")
     def test_overlay_is_detached_from_the_invoking_app(self, popen):
         y._launch_window_number_overlay(9)
@@ -62,11 +88,21 @@ class WindowNumberingTests(unittest.TestCase):
             command,
             stdin=y.subprocess.DEVNULL,
             stdout=y.subprocess.DEVNULL,
-            stderr=y.subprocess.DEVNULL,
+            stderr=None,
             close_fds=True,
             cwd="/",
             start_new_session=True,
         )
+
+    @patch.object(y, "AppKit", new=None)
+    @patch.object(y.subprocess, "Popen")
+    def test_missing_appkit_fails_before_launch(self, popen):
+        with patch.object(y.typer, "echo") as echo:
+            with self.assertRaises(y.typer.Exit) as error:
+                y._launch_window_number_overlay(9)
+        self.assertEqual(error.exception.exit_code, 1)
+        echo.assert_called_once_with("Window badges require macOS and PyObjC", err=True)
+        popen.assert_not_called()
 
     def test_numbers_windows_clockwise_from_top_left(self):
         windows = [
@@ -110,6 +146,58 @@ class WindowNumberingTests(unittest.TestCase):
 
         self.assertEqual([item.id for item in ordered], [1, 2, 3])
 
+    def test_visible_sticky_windows_bypass_assigned_space_filter(self):
+        windows = [
+            window(1, 0, 0),
+            window(2, 100, 0, space=2, sticky=True),
+            window(3, 200, 0, space=2),
+            window(4, 300, 0, space=2, sticky=True, visible=False),
+            window(5, 400, 0, space=2, sticky=True, minimized=True),
+            window(6, 500, 0, space=2, sticky=True, hidden=True),
+        ]
+        entries = y._numbered_window_entries(windows, visible_spaces={1})
+        self.assertEqual([entry["id"] for entry in entries], [1, 2])
+        self.assertEqual([entry["number"] for entry in entries], [1, 2])
+
+    def test_snapshot_is_private_and_expires(self):
+        entries = [{"number": 1, "id": 101}]
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(y.Path, "home", return_value=Path(directory)):
+                cache_path = y._window_number_cache_path()
+                self.assertTrue(cache_path.is_relative_to(directory))
+                self.assertIsNone(y._load_window_numbers())
+                with patch.object(y.time, "time", return_value=100):
+                    y._save_window_numbers(entries, seconds=5)
+                    self.assertEqual(y._load_window_numbers(), entries)
+                self.assertEqual(cache_path.stat().st_mode & 0o777, 0o600)
+                self.assertEqual(cache_path.parent.stat().st_mode & 0o777, 0o700)
+                with patch.object(y.time, "time", return_value=111):
+                    self.assertIsNone(y._load_window_numbers())
+
+    def test_snapshot_replaces_symlink_without_overwriting_target(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache_path = Path(directory) / "snapshot.json"
+            target = Path(directory) / "important.txt"
+            target.write_text("keep me")
+            cache_path.symlink_to(target)
+            with patch.object(y, "_window_number_cache_path", return_value=cache_path):
+                y._save_window_numbers([{"number": 1, "id": 101}], seconds=5)
+            self.assertEqual(target.read_text(), "keep me")
+            self.assertFalse(cache_path.is_symlink())
+            self.assertEqual(
+                json.loads(cache_path.read_text())["windows"][0]["id"], 101
+            )
+
+    def test_failed_snapshot_write_preserves_previous_snapshot_and_cleans_up(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache_path = Path(directory) / "snapshot.json"
+            cache_path.write_text("previous snapshot")
+            with patch.object(y, "_window_number_cache_path", return_value=cache_path):
+                with self.assertRaises(TypeError):
+                    y._save_window_numbers([{"id": object()}], seconds=5)
+            self.assertEqual(cache_path.read_text(), "previous snapshot")
+            self.assertEqual(list(Path(directory).iterdir()), [cache_path])
+
     @patch.object(y, "call_yabai")
     @patch.object(
         y,
@@ -125,4 +213,4 @@ class WindowNumberingTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    sys.exit(pytest.main([__file__, "-v", *sys.argv[1:]]))
