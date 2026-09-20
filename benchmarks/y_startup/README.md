@@ -155,3 +155,9 @@ New regression tests confirm ordinary commands avoid GUI imports, frameworks
 load on demand, and missing frameworks fail before launching an overlay. Ruff
 lint/format, rustfmt, gofmt, native compilation, and `git diff --check` pass.
 GUI imports were exercised, but actual screenshots and overlays were not.
+
+After the Alfred migration, the candidate defaults to Igor Tools in
+`~/gits/alfred` (or `IGOR_Y_SCRIPT`). Use `--candidate /path/to/y/y.py` to override.
+The baseline still comes from settings Git history. Completion parity checks
+cover stable queries; the complete command list may grow. Recorded results
+above describe the original experiment, not the compatibility launcher's cost.

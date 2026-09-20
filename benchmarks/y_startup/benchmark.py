@@ -55,6 +55,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--python", default=sys.executable)
     parser.add_argument("--baseline-ref", default="6531346")
+    parser.add_argument(
+        "--candidate",
+        default=os.environ.get("IGOR_Y_SCRIPT")
+        or str(
+            Path.home()
+            / "gits/alfred/workflows/user.workflow.2859BD3B-9CA5-4360-A379-355F434F1908/y/y.py"
+        ),
+        help="Canonical Y implementation, not the settings launcher",
+    )
     parser.add_argument("--runs", type=int, default=25)
     parser.add_argument("--warmups", type=int, default=3)
     parser.add_argument("--uv", action="store_true", help="Include uv script launch")
@@ -74,7 +83,7 @@ def main():
         "baseline": run(
             ["git", "show", f"{args.baseline_ref}:py/y.py"], cwd=ROOT
         ).stdout,
-        "candidate": (ROOT / "py/y.py").read_text(),
+        "candidate": Path(args.candidate).expanduser().read_text(),
     }
     cases = []
     hashes = {}
@@ -190,7 +199,7 @@ def main():
             timeout=60,
         )
         assert result.returncode != 0
-    for query in ("", "f", "focus ", "focus r", "p-foo red ", "zoom", "ter"):
+    for query in ("f", "focus ", "focus r", "p-foo red ", "zoom", "ter"):
         outputs = [
             json.loads(run([*cmd, "alfred-complete", query], e).stdout)
             for cmd, e in full_programs
