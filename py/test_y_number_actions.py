@@ -16,12 +16,14 @@ class NumberActionTests(unittest.TestCase):
         self.runner = CliRunner()
         self.entries = [{"number": 3, "id": 303}, {"number": 1, "id": 101}]
 
-    def test_focus_and_close_use_displayed_numbers_not_list_positions(self):
+    def test_default_focus_and_explicit_actions_use_displayed_numbers(self):
         with (
             patch.object(y, "_load_window_numbers", return_value=self.entries),
             patch.object(y, "call_yabai") as call,
         ):
             for args, expected in (
+                (["3"], "-m window --focus 303"),
+                (["1"], "-m window --focus 101"),
                 (["3", "focus"], "-m window --focus 303"),
                 (["1", "close"], "-m window 101 --close"),
             ):
@@ -45,8 +47,8 @@ class NumberActionTests(unittest.TestCase):
                     if expired:
                         with patch.object(y.time, "time", return_value=0):
                             y._save_window_numbers(self.entries, seconds=5)
-                    for action in ("focus", "close"):
-                        result = self.runner.invoke(y.app, ["3", action])
+                    for suffix in ([], ["focus"], ["close"]):
+                        result = self.runner.invoke(y.app, ["3", *suffix])
                         self.assertEqual(result.exit_code, 1, result.output)
                         self.assertIn("Run `y number` again", result.output)
                 query.assert_not_called()
@@ -59,11 +61,12 @@ class NumberActionTests(unittest.TestCase):
         ):
             for args in (
                 ["0", "close"],
+                ["0"],
+                ["2"],
                 ["2", "focus"],
                 ["-1", "close"],
                 ["3", "delete"],
                 ["3", "close", "extra"],
-                ["3"],
             ):
                 result = self.runner.invoke(y.app, args)
                 self.assertNotEqual(result.exit_code, 0, (args, result.output))
@@ -92,7 +95,9 @@ class NumberActionTests(unittest.TestCase):
                 call.reset_mock()
 
     def test_number_help_lists_supported_actions(self):
-        result = self.runner.invoke(y.app, ["3", "--help"])
+        with patch.object(y, "call_yabai") as call:
+            result = self.runner.invoke(y.app, ["3", "--help"])
+            call.assert_not_called()
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertIn("focus", result.output)
         self.assertIn("close", result.output)
