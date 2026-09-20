@@ -90,6 +90,22 @@ class CompletionTests(unittest.TestCase):
         )
         self.assertEqual(self.complete("zoom")[0]["arg"], "zoom")
 
+    def test_numbered_actions_work_without_a_command_cache(self):
+        self.code["get_cached_commands_list"] = Mock(
+            side_effect=AssertionError("cache queried")
+        )
+        for query in ("3", "3 "):
+            items = self.complete(query)
+            self.assertEqual([i["title"] for i in items], ["focus", "close"])
+            self.assertEqual(
+                [i["arg"] for i in items], [["3", "focus"], ["3", "close"]]
+            )
+            self.assertEqual(items[1]["autocomplete"], "3 close")
+        for query in ("3 c", "3 close", "3 close "):
+            self.assertEqual(self.complete(query)[0]["arg"], ["3", "close"])
+        for query in ("0", "3 invalid", "3 close extra"):
+            self.assertEqual(self.complete(query), [])
+
     def test_focus_dispatch_and_invalid_input(self):
         call = self.code["call_yabai"] = Mock()
         for direction, target in (

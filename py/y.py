@@ -42,10 +42,40 @@ def load_full_imports():
     import pyperclip
     import math
     import psutil
+    from typer.core import TyperGroup
+
+    class WindowNumberGroup(TyperGroup):
+        def get_command(self, ctx, cmd_name):
+            if cmd_name.isascii() and cmd_name.isdecimal():
+                # Build the numbered group only when selected, keeping ordinary
+                # startup and the registered command/completion list unchanged.
+                from typer.main import get_command
+
+                window_number = int(cmd_name)
+                actions = typer.Typer(
+                    help=f"Act on window {window_number} shown by `y number`.",
+                    no_args_is_help=True,
+                    add_completion=False,
+                )
+
+                @actions.command("focus")
+                def focus_numbered_window():
+                    """Focus this numbered window."""
+                    _run_numbered_window_action(window_number, "focus")
+
+                @actions.command("close")
+                def close_numbered_window():
+                    """Close this numbered window."""
+                    _run_numbered_window_action(window_number, "close")
+
+                return get_command(actions)
+            return super().get_command(ctx, cmd_name)
 
     return typer.Typer(
         help="A Yabai helper - Window management and screenshot utilities",
         no_args_is_help=True,
+        cls=WindowNumberGroup,
+        epilog="Numbered windows: run `y number`, then `y 3 focus` or `y 3 close`.",
     )
 
 
@@ -312,6 +342,24 @@ def fast_alfred_complete(query: str, commands=None) -> str | None:
     has_trailing_space = query.endswith(" ")
     query_stripped = query.strip()
     parts = query_stripped.split() if query_stripped else []
+
+    # Numbered actions need no command cache or GUI imports. Forward separate
+    # argv entries so Alfred executes exactly the same syntax as the terminal.
+    if parts and parts[0].isascii() and parts[0].isdecimal():
+        items = []
+        if int(parts[0]) > 0 and len(parts) <= 2:
+            prefix = parts[1].lower() if len(parts) == 2 else ""
+            for action in ("focus", "close"):
+                if action.startswith(prefix):
+                    items.append(
+                        _make_item(
+                            action,
+                            f"{action.capitalize()} window {parts[0]} shown by y number",
+                            [parts[0], action],
+                            f"{parts[0]} {action}",
+                        )
+                    )
+        return json.dumps({"items": items}, indent=2)
 
     # Handle dynamic completions first (before cache check)
     # These need to run even without cache since they query live data
@@ -1169,6 +1217,34 @@ def f(
         raise typer.BadParameter(f"Choose a window from 1 to {len(entries)}.")
 
     call_yabai(f"-m window --focus {entries[number - 1]['id']}")
+
+
+def _run_numbered_window_action(number: int, action: str) -> None:
+    """Use the displayed snapshot without renumbering windows after a close."""
+    if action not in {"focus", "close"}:
+        raise typer.BadParameter("Choose focus or close.")
+    if number < 1:
+        raise typer.BadParameter("Window numbers start at 1.")
+
+    entries = _load_window_numbers()
+    if not entries:
+        typer.echo(
+            "Window numbers have expired or are missing. Run `y number` again.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    entry = next((entry for entry in entries if entry["number"] == number), None)
+    if entry is None:
+        raise typer.BadParameter(
+            f"Window {number} was not shown. Run `y number` again."
+        )
+
+    window_id = entry["id"]
+    if action == "focus":
+        call_yabai(f"-m window --focus {window_id}")
+    else:
+        call_yabai(f"-m window {window_id} --close")
 
 
 def get_displays() -> Displays:
