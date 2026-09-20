@@ -50,7 +50,7 @@ I use ish as my ssh client, with some minor tweaks:
 
 3. Clone settings (new admin window)
 
-   cd \
-   git clone https://github.com/idvorkin/settings
+    cd \
+    git clone https://github.com/idvorkin/settings
 
 Touching Ignore
