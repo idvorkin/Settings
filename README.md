@@ -2,6 +2,14 @@
 
 A place to store my settings/dotFiles/etc, my oldest repository, and wow have I had fun here.
 
+## Y lives in Alfred
+
+The macOS Y implementation and tests now live in
+[Igor Tools](https://github.com/idvorkin/alfred). Pull that repository into
+`~/gits/alfred` before updating settings. Install uv with `brew install uv`.
+The installed `y` command and `py/y.py` forward arguments to the bundled script.
+For another checkout or imported workflow, set `IGOR_Y_SCRIPT` to its `y/y.py`.
+
 ## Y window numbers
 
 Show numbered badges, then target a window by its displayed number:
@@ -11,10 +19,18 @@ y number
 y 3
 y 3 focus
 y 3 close
+y 3 zoom
+y 3 half
+y 3 third
+y 3 sixty
+y 3 move next
+y 3 screenshot
 ```
 
-Omitting the action defaults to `focus`: `y 3` and `y 3 focus` both activate
-window 3. `close` closes that window directly. Alfred also
+`half`, `third`, and `sixty` set one-half, one-third, and two-thirds of a tiled
+split. `move` accepts `next`, `prev`, or `recent`; `screenshot` copies the window.
+
+`y 3` defaults to focus. `focus` activates that window; `close` closes that window directly. Alfred also
 offers these actions after a number. The mapping lasts for the badge duration
 plus five seconds; use `y number --seconds 20` for more time. If the mapping has
 expired, run `y number` again. Numbers keep their original window targets even
@@ -52,7 +68,7 @@ I use ish as my ssh client, with some minor tweaks:
 
 3. Clone settings (new admin window)
 
-   cd \
-   git clone https://github.com/idvorkin/settings
+    cd \
+    git clone https://github.com/idvorkin/settings
 
 Touching Ignore
