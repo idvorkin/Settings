@@ -27,7 +27,7 @@ import pickle
 # Lazy loaded imports for full functionality
 def load_full_imports():
     global typer, print, subprocess, CompletedProcess, ic, List, BaseModel, Field
-    global pyperclip, Quartz, CG, AppKit, math, datetime, time, Annotated, psutil
+    global pyperclip, math, datetime, time, Annotated, psutil
 
     from datetime import datetime
     import time
@@ -43,21 +43,28 @@ def load_full_imports():
     import math
     import psutil
 
+    return typer.Typer(
+        help="A Yabai helper - Window management and screenshot utilities",
+        no_args_is_help=True,
+    )
+
+
+# Distinguish imports not attempted yet from unavailable optional frameworks.
+_GUI_NOT_LOADED = object()
+Quartz = CG = AppKit = _GUI_NOT_LOADED
+
+
+def _load_gui_imports():
+    """Load macOS frameworks only when a screenshot or overlay needs them."""
+    global Quartz, CG, AppKit
+    if AppKit is not _GUI_NOT_LOADED:
+        return
     try:
         import Quartz
         import Quartz.CoreGraphics as CG
         import AppKit
     except ImportError:
-        # These are optional, only needed for screenshot/windowing features not core to all commands
-        # print("Warning: pyobjc modules (Quartz, AppKit) not found. Some features might be unavailable.", file=sys.stderr)
-        Quartz = None
-        CG = None
-        AppKit = None
-
-    return typer.Typer(
-        help="A Yabai helper - Window management and screenshot utilities",
-        no_args_is_help=True,
-    )
+        Quartz = CG = AppKit = None
 
 
 def get_script_hash():
@@ -1000,6 +1007,7 @@ def _load_window_numbers() -> list[dict] | None:
 
 def _overlay_application():
     """Create a background AppKit application that is allowed to own windows."""
+    _load_gui_imports()
     if AppKit is None:
         typer.echo("Window badges require macOS and PyObjC", err=True)
         raise typer.Exit(code=1)
@@ -1091,6 +1099,7 @@ def _show_window_number_overlays(entries: list[dict], seconds: int) -> None:
 
 def _launch_window_number_overlay(seconds: int) -> None:
     """Launch badges independently so they survive the invoking app exiting."""
+    _load_gui_imports()
     if AppKit is None:
         typer.echo("Window badges require macOS and PyObjC", err=True)
         raise typer.Exit(code=1)
@@ -1231,6 +1240,7 @@ def debug():
 ## I'm going to add new helpful commands - tbd the right file for them
 def get_foreground_window_dimensions():
     # Get the list of all windows
+    _load_gui_imports()
     windows = Quartz.CGWindowListCopyWindowInfo(
         Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID
     )
@@ -1250,6 +1260,7 @@ def get_foreground_window_dimensions():
 
 def capture_foreground_window(save_path="screenshot.png"):
     # Get the dimensions of the foreground window
+    _load_gui_imports()
     ic(save_path)
     dimensions = get_foreground_window_dimensions()
     if not dimensions:
@@ -1397,6 +1408,7 @@ def ssa():
 
 
 def capture_foreground_window_to_memory():
+    _load_gui_imports()
     dimensions = get_foreground_window_dimensions()
     if not dimensions:
         return None
@@ -1423,6 +1435,7 @@ def jiggle_mouse():
     """
     Move the mouse cursor in a circular pattern and draw a yellow circle around it.
     """
+    _load_gui_imports()
     radius = 10  # Radius of the circle
     center_x, center_y = Quartz.CGEventGetLocation(Quartz.CGEventCreate(None))
 

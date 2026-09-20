@@ -1,0 +1,476 @@
+{
+	"metadata": {
+		"platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+		"python": "Python 3.14.7",
+		"rust": "rustc 1.98.1 (48a229cea 2026-09-01) (Homebrew)",
+		"go": "go version go1.27.1 darwin/arm64",
+		"uv": "uv 0.12.13 (Homebrew 2026-09-10 aarch64-apple-darwin)",
+		"arguments": {
+			"python": "/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+			"baseline_ref": "6531346",
+			"runs": 25,
+			"warmups": 3,
+			"uv": true,
+			"console_python": "/Users/idvorkin/.local/share/uv/tools/idvorkin-scripts/bin/python"
+		},
+		"source_sha256": {
+			"baseline": "c28283c915a102f950a80d8faa8694f6f530a3295af9236f63eaee16d11ce0f6",
+			"candidate": "9fe25caf2f582e55ef5625b3b623e1d87ac76b4022ec5adaeb96f3e8c6730451"
+		},
+		"binary_bytes": {
+			"rust": 478184,
+			"go": 2507090
+		},
+		"commands": {
+			"candidate/focus-fixture": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/candidate/y.py",
+				"focus",
+				"left"
+			],
+			"candidate/uv-test-command": [
+				"uv",
+				"run",
+				"--offline",
+				"--script",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/candidate/y.py",
+				"p-foo",
+				"red",
+				"small"
+			],
+			"baseline/focus-fixture": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/baseline/y.py",
+				"focus",
+				"left"
+			],
+			"candidate/test-command": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/candidate/y.py",
+				"p-foo",
+				"red",
+				"small"
+			],
+			"candidate/completion-hit": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/candidate/y.py",
+				"alfred-complete",
+				"f"
+			],
+			"baseline/uv-completion-hit": [
+				"uv",
+				"run",
+				"--offline",
+				"--script",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/baseline/y.py",
+				"alfred-complete",
+				"f"
+			],
+			"candidate/console-completion-hit": [
+				"/Users/idvorkin/.local/share/uv/tools/idvorkin-scripts/bin/python",
+				"-c",
+				"from y import app; app()",
+				"alfred-complete",
+				"f"
+			],
+			"baseline/console-test-command": [
+				"/Users/idvorkin/.local/share/uv/tools/idvorkin-scripts/bin/python",
+				"-c",
+				"from y import app; app()",
+				"p-foo",
+				"red",
+				"small"
+			],
+			"baseline/help": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/baseline/y.py",
+				"--help"
+			],
+			"baseline/test-command": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/baseline/y.py",
+				"p-foo",
+				"red",
+				"small"
+			],
+			"baseline/completion-hit": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/baseline/y.py",
+				"alfred-complete",
+				"f"
+			],
+			"probe-rust/focus-fixture": [
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/probe-rust",
+				"focus",
+				"left"
+			],
+			"probe-python/focus-fixture": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/probe.py",
+				"focus",
+				"left"
+			],
+			"candidate/uv-completion-hit": [
+				"uv",
+				"run",
+				"--offline",
+				"--script",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/candidate/y.py",
+				"alfred-complete",
+				"f"
+			],
+			"candidate/console-test-command": [
+				"/Users/idvorkin/.local/share/uv/tools/idvorkin-scripts/bin/python",
+				"-c",
+				"from y import app; app()",
+				"p-foo",
+				"red",
+				"small"
+			],
+			"probe-python/noop": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/probe.py",
+				"noop"
+			],
+			"probe-go/noop": [
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/probe-go",
+				"noop"
+			],
+			"process-floor": ["/usr/bin/true"],
+			"baseline/console-completion-hit": [
+				"/Users/idvorkin/.local/share/uv/tools/idvorkin-scripts/bin/python",
+				"-c",
+				"from y import app; app()",
+				"alfred-complete",
+				"f"
+			],
+			"probe-go/focus-fixture": [
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/probe-go",
+				"focus",
+				"left"
+			],
+			"baseline/completion-miss": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/baseline/y.py",
+				"alfred-complete",
+				"f"
+			],
+			"baseline/uv-test-command": [
+				"uv",
+				"run",
+				"--offline",
+				"--script",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/baseline/y.py",
+				"p-foo",
+				"red",
+				"small"
+			],
+			"candidate/completion-miss": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/candidate/y.py",
+				"alfred-complete",
+				"f"
+			],
+			"candidate/help": [
+				"/Users/idvorkin/.cache/uv/environments-v2/y-26d22e6fde54d364/bin/python",
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/candidate/y.py",
+				"--help"
+			],
+			"probe-rust/noop": [
+				"/private/tmp/settings-y-startup-perf/benchmarks/y_startup/out/probe-rust",
+				"noop"
+			]
+		}
+	},
+	"summary": {
+		"baseline/completion-hit": {
+			"median_ms": 35.297084,
+			"p95_ms": 38.645875,
+			"min_ms": 33.667125
+		},
+		"baseline/completion-miss": {
+			"median_ms": 222.84875,
+			"p95_ms": 241.969875,
+			"min_ms": 215.304125
+		},
+		"baseline/console-completion-hit": {
+			"median_ms": 22.939458,
+			"p95_ms": 24.238875,
+			"min_ms": 21.35925
+		},
+		"baseline/console-test-command": {
+			"median_ms": 204.665916,
+			"p95_ms": 234.849458,
+			"min_ms": 199.970791
+		},
+		"baseline/focus-fixture": {
+			"median_ms": 228.997833,
+			"p95_ms": 309.572167,
+			"min_ms": 222.169167
+		},
+		"baseline/help": {
+			"median_ms": 258.096875,
+			"p95_ms": 287.777875,
+			"min_ms": 245.546292
+		},
+		"baseline/test-command": {
+			"median_ms": 234.720167,
+			"p95_ms": 262.87075,
+			"min_ms": 224.1875
+		},
+		"baseline/uv-completion-hit": {
+			"median_ms": 43.614667,
+			"p95_ms": 46.766917,
+			"min_ms": 42.102
+		},
+		"baseline/uv-test-command": {
+			"median_ms": 247.033792,
+			"p95_ms": 291.000042,
+			"min_ms": 232.408542
+		},
+		"candidate/completion-hit": {
+			"median_ms": 35.451542,
+			"p95_ms": 44.97725,
+			"min_ms": 33.18625
+		},
+		"candidate/completion-miss": {
+			"median_ms": 127.354292,
+			"p95_ms": 140.671834,
+			"min_ms": 122.931916
+		},
+		"candidate/console-completion-hit": {
+			"median_ms": 22.607834,
+			"p95_ms": 24.507375,
+			"min_ms": 21.836416
+		},
+		"candidate/console-test-command": {
+			"median_ms": 115.000667,
+			"p95_ms": 132.237292,
+			"min_ms": 110.205584
+		},
+		"candidate/focus-fixture": {
+			"median_ms": 134.01375,
+			"p95_ms": 181.610917,
+			"min_ms": 126.979916
+		},
+		"candidate/help": {
+			"median_ms": 164.068708,
+			"p95_ms": 184.595834,
+			"min_ms": 157.902125
+		},
+		"candidate/test-command": {
+			"median_ms": 139.671333,
+			"p95_ms": 150.083458,
+			"min_ms": 131.830666
+		},
+		"candidate/uv-completion-hit": {
+			"median_ms": 44.143916,
+			"p95_ms": 52.163375,
+			"min_ms": 41.902584
+		},
+		"candidate/uv-test-command": {
+			"median_ms": 148.950291,
+			"p95_ms": 176.772791,
+			"min_ms": 142.162708
+		},
+		"probe-go/focus-fixture": {
+			"median_ms": 5.381292,
+			"p95_ms": 5.951458,
+			"min_ms": 4.376583
+		},
+		"probe-go/noop": {
+			"median_ms": 3.586791,
+			"p95_ms": 3.764875,
+			"min_ms": 3.1345
+		},
+		"probe-python/focus-fixture": {
+			"median_ms": 25.034625,
+			"p95_ms": 28.273542,
+			"min_ms": 23.930583
+		},
+		"probe-python/noop": {
+			"median_ms": 22.497458,
+			"p95_ms": 24.448625,
+			"min_ms": 21.006625
+		},
+		"probe-rust/focus-fixture": {
+			"median_ms": 4.168709,
+			"p95_ms": 4.809292,
+			"min_ms": 3.554625
+		},
+		"probe-rust/noop": {
+			"median_ms": 3.209917,
+			"p95_ms": 4.055208,
+			"min_ms": 2.524875
+		},
+		"process-floor": {
+			"median_ms": 2.42025,
+			"p95_ms": 2.999875,
+			"min_ms": 1.796667
+		}
+	},
+	"samples_ms": {
+		"baseline/test-command": [
+			243.36175, 245.359292, 259.3175, 224.1875, 239.739083, 236.024667,
+			312.557417, 231.828, 226.661125, 233.394875, 251.319083, 258.573208,
+			232.239833, 233.330958, 235.29225, 231.367875, 232.113417, 236.159584,
+			262.87075, 234.720167, 232.43275, 230.080291, 245.02675, 232.065083,
+			231.082083
+		],
+		"baseline/focus-fixture": [
+			252.054292, 309.572167, 234.35325, 252.108208, 235.269291, 232.137458,
+			227.886583, 248.28975, 222.169167, 223.358584, 352.29675, 227.50375,
+			229.770542, 229.842417, 226.809417, 226.164334, 226.503917, 226.839791,
+			237.715083, 227.711042, 226.638125, 223.660792, 229.668583, 228.103417,
+			228.997833
+		],
+		"baseline/help": [
+			256.913666, 259.018875, 259.688709, 287.777875, 276.075708, 258.096875,
+			264.667166, 245.964292, 245.546292, 264.885291, 264.910083, 260.824167,
+			257.87875, 254.969958, 259.087125, 257.653541, 258.175875, 258.518958,
+			341.360917, 252.4235, 255.820709, 257.226666, 256.413666, 253.403458,
+			253.0825
+		],
+		"baseline/completion-hit": [
+			40.840166, 35.593125, 36.962333, 35.479584, 35.316792, 35.669292,
+			34.917458, 38.645875, 33.667125, 34.245, 37.285042, 33.681083, 34.606292,
+			34.54, 38.363667, 33.747125, 34.837542, 34.235167, 36.171666, 35.683542,
+			34.634084, 35.074084, 35.45225, 34.978958, 35.297084
+		],
+		"baseline/completion-miss": [
+			221.185375, 231.138875, 229.112708, 285.162, 222.595875, 227.22375,
+			241.969875, 225.528458, 216.666666, 216.392125, 240.39675, 215.304125,
+			225.334417, 226.230916, 222.84875, 222.999958, 219.327791, 223.695125,
+			219.2955, 219.954584, 218.066334, 220.710542, 231.861208, 219.131542,
+			221.36275
+		],
+		"baseline/uv-test-command": [
+			275.83525, 241.308167, 262.789125, 249.952042, 239.65375, 248.678709,
+			266.655541, 236.378334, 232.408542, 265.177083, 291.000042, 276.01875,
+			247.746791, 240.687542, 242.427333, 242.436666, 240.606625, 247.715208,
+			291.1375, 237.422417, 246.908709, 247.033792, 262.177042, 241.586292,
+			241.82075
+		],
+		"baseline/uv-completion-hit": [
+			43.323209, 43.203709, 44.997292, 44.380208, 43.614667, 44.762458,
+			46.739333, 46.683041, 42.40125, 52.228042, 42.102, 43.9345, 44.464834,
+			43.333459, 42.909792, 46.766917, 43.731291, 42.773666, 42.788125, 42.662,
+			43.469583, 43.377209, 43.585625, 44.417958, 44.317167
+		],
+		"baseline/console-test-command": [
+			213.150125, 199.970791, 241.845708, 206.491084, 206.813959, 209.683583,
+			234.849458, 226.32675, 204.65525, 201.19275, 203.994625, 201.423542,
+			201.71525, 203.481583, 201.870292, 205.678459, 200.960125, 212.225208,
+			213.622833, 201.867958, 202.634708, 206.093125, 205.24575, 203.543125,
+			204.665916
+		],
+		"baseline/console-completion-hit": [
+			22.13675, 22.970042, 24.238875, 22.186125, 23.669792, 23.492167,
+			23.415375, 21.682417, 21.35925, 25.468959, 23.222583, 22.161542, 22.95125,
+			21.939125, 22.939458, 23.588834, 23.105292, 22.067458, 24.026917,
+			22.451292, 22.560125, 22.308042, 23.478375, 22.677875, 22.291125
+		],
+		"candidate/test-command": [
+			141.957458, 141.13875, 147.239167, 137.83725, 141.697042, 140.893417,
+			151.435917, 131.830666, 134.410042, 143.213417, 150.083458, 142.909792,
+			138.479417, 140.398167, 137.01, 138.419125, 137.490083, 136.154666,
+			139.817792, 137.686958, 139.353125, 140.65575, 139.671333, 139.198166,
+			138.060958
+		],
+		"candidate/focus-fixture": [
+			263.064166, 133.042875, 129.804291, 139.061833, 137.780667, 142.530167,
+			140.637708, 143.83, 126.979916, 142.368708, 134.01375, 131.498542,
+			130.862291, 168.081167, 133.943041, 140.872625, 130.104375, 181.610917,
+			132.599459, 134.864416, 129.917167, 132.286291, 146.069708, 132.995958,
+			131.89475
+		],
+		"candidate/help": [
+			163.992417, 164.128125, 321.15325, 168.137666, 168.105584, 165.842,
+			184.595834, 177.615875, 157.902125, 158.179833, 157.98525, 161.485208,
+			165.869208, 165.069042, 167.138791, 164.068708, 161.543625, 165.03125,
+			170.237792, 162.443542, 162.023209, 161.449584, 160.675125, 162.925416,
+			163.936167
+		],
+		"candidate/completion-hit": [
+			37.856709, 34.135959, 34.784375, 36.800208, 35.699333, 35.659125,
+			37.799834, 33.18625, 33.225084, 35.580125, 44.97725, 35.608208, 35.174042,
+			35.451542, 35.984917, 34.824916, 34.363584, 35.003166, 72.263083,
+			34.421292, 34.905959, 35.141833, 36.153209, 34.913958, 37.829083
+		],
+		"candidate/completion-miss": [
+			125.386667, 140.671834, 131.127542, 130.42275, 126.971459, 127.108375,
+			129.527959, 123.454583, 122.931916, 126.946166, 126.018291, 131.524083,
+			124.468292, 127.276, 128.842958, 131.417375, 127.354292, 126.618708,
+			310.116292, 132.353083, 126.845667, 129.49575, 126.542, 131.90225,
+			132.281667
+		],
+		"candidate/uv-test-command": [
+			145.5475, 150.975791, 205.129417, 154.580916, 147.10775, 160.223167,
+			161.714292, 160.35975, 142.162708, 142.575208, 176.772791, 148.624,
+			148.950291, 144.451209, 144.436291, 142.293917, 147.98775, 153.507334,
+			152.834167, 145.23075, 150.12975, 148.616833, 149.416875, 149.377834,
+			147.107792
+		],
+		"candidate/uv-completion-hit": [
+			79.005, 43.805083, 43.405041, 44.834417, 44.143916, 44.828334, 46.894541,
+			47.914292, 41.902584, 44.670792, 42.363958, 52.163375, 43.1555, 44.849042,
+			42.860041, 42.727917, 42.48275, 50.043375, 44.278917, 42.903542,
+			45.083917, 43.30575, 46.498625, 43.287083, 42.697541
+		],
+		"candidate/console-test-command": [
+			114.997792, 117.8265, 115.000667, 125.3545, 117.612791, 113.651458,
+			115.696458, 124.19975, 110.402209, 160.048584, 132.237292, 120.126833,
+			110.205584, 113.169417, 113.283833, 111.350917, 112.367333, 118.697958,
+			123.970208, 113.111792, 119.364459, 114.387458, 112.726916, 115.723167,
+			113.061708
+		],
+		"candidate/console-completion-hit": [
+			22.291041, 21.836416, 22.607834, 22.346625, 23.434834, 23.114333,
+			23.174958, 24.771375, 22.03725, 24.507375, 22.4745, 22.564417, 22.898541,
+			22.844791, 23.4655, 22.16925, 22.755292, 22.300167, 22.248792, 22.560334,
+			23.032625, 22.487584, 22.798708, 22.122041, 23.85975
+		],
+		"probe-python/noop": [
+			21.006625, 22.39125, 21.637958, 22.691541, 23.509542, 24.061292,
+			23.182875, 24.448625, 21.313, 22.832583, 22.497458, 22.230917, 24.164417,
+			22.160958, 21.932375, 22.657666, 22.146, 51.339667, 22.207458, 22.770041,
+			22.553708, 22.63775, 22.372792, 22.173708, 22.360333
+		],
+		"probe-python/focus-fixture": [
+			24.548583, 24.218666, 28.273542, 23.956834, 24.41425, 24.348334,
+			26.254625, 27.886125, 24.179125, 25.392667, 24.708208, 25.001208,
+			25.055792, 25.266083, 24.806167, 25.034625, 25.390625, 25.095166,
+			30.344417, 25.369208, 25.166917, 25.308917, 24.79625, 24.988459, 23.930583
+		],
+		"probe-rust/noop": [
+			2.524875, 3.209917, 3.775875, 3.569708, 3.381666, 2.894917, 3.531583,
+			2.592541, 2.942208, 3.231, 4.055208, 2.696417, 3.18575, 3.757584,
+			3.289666, 3.28825, 5.1815, 2.7835, 3.328541, 3.095667, 2.707375, 3.107709,
+			3.407709, 2.848375, 3.183542
+		],
+		"probe-rust/focus-fixture": [
+			4.58, 4.112541, 4.311458, 3.577583, 4.175292, 4.093875, 4.106375, 4.2205,
+			4.097666, 5.187333, 4.239041, 4.452417, 4.135417, 4.007542, 3.657166,
+			4.274875, 4.168709, 4.25175, 4.809292, 4.356209, 4.120375, 3.742958,
+			3.554625, 4.125709, 4.347167
+		],
+		"probe-go/noop": [
+			3.542625, 3.408625, 3.586791, 3.712333, 3.594917, 3.417625, 3.715084,
+			3.764875, 3.1345, 3.462292, 3.679667, 3.648875, 3.185708, 3.512917,
+			3.37575, 3.497417, 3.545166, 3.894, 3.283833, 3.681833, 3.629208,
+			3.591416, 3.603708, 3.758625, 3.37525
+		],
+		"probe-go/focus-fixture": [
+			4.376583, 5.295834, 5.326834, 5.219292, 5.58, 5.381875, 5.381292,
+			5.287042, 5.198917, 5.806958, 5.602625, 4.950208, 5.246167, 5.2335,
+			5.478958, 5.951458, 5.148084, 5.971375, 5.662417, 5.935666, 4.729,
+			5.577959, 5.386375, 5.57525, 5.126875
+		],
+		"process-floor": [
+			2.42025, 1.796667, 2.527792, 2.497375, 2.166917, 2.315834, 2.341709,
+			2.325, 2.403583, 2.492042, 3.435167, 2.121666, 2.736792, 2.551667,
+			2.938834, 2.261375, 1.815625, 2.243459, 2.858417, 2.999875, 2.381083,
+			2.618208, 2.61875, 2.580708, 2.227333
+		]
+	}
+}
