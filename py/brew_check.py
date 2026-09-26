@@ -33,7 +33,7 @@ IS_MACOS = platform.system() == "Darwin"
 # Taps required before installing certain packages (Mac only)
 MAC_TAPS = [
     "FelixKratz/formulae",  # borders
-    "koekeishiya/formulae",  # yabai
+    "koekeishiya/formulae",  # yabai, skhd
     "homebrew/cask-fonts",  # fonts
 ]
 
@@ -58,7 +58,7 @@ FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
 ]
 
 MAC_FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
-    ("Mac Window Mgmt", "borders jordanbaird-ice koekeishiya/formulae/yabai".split()),
+    ("Mac Window Mgmt", "borders jordanbaird-ice koekeishiya/formulae/yabai koekeishiya/formulae/skhd".split()),
     ("Mac Media", "iina pngpaste".split()),
 ]
 

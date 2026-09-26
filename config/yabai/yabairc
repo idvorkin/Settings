@@ -17,6 +17,11 @@ yabai -m config right_padding 2
 yabai -m config window_gap 4
 
 
+# Skip the macOS slide animation when cmd-tab or the Dock focuses a window on
+# another space. Only for setups WITHOUT the scripting addition (SIP on), which
+# is this config: there is no `sudo yabai --load-sa` here. Needs yabai >= 7.1.23.
+yabai -m config skip_window_focus_animation on
+
 # center mouse on window with focus
 yabai -m config mouse_follows_focus on
 

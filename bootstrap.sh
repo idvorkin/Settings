@@ -81,6 +81,7 @@ ln -s -f ~/settings/config/cursor ~/.cursor
 
 # Mac goodies
 ln -s -f ~/settings/config/yabai ~/.config/yabai
+ln -s -f ~/settings/config/skhd ~/.config/skhd
 mkdir ~/.config/borders
 ln -s -f ~/settings/config/borders/bordersrc ~/.config/borders/bordersrc
 ln -s -f ~/settings/shared/aerospace.toml ~/.aerospace.toml
