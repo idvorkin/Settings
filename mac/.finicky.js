@@ -56,8 +56,9 @@ export default {
 				/fb\.okta\.com/i,
 				/drive\.google\.com\/drive\/folders/i,
 				/fb\.quip\.com/i,
-				/ghe\.oculus-rep\.com/i,
-				/github\.com/i,
+				// By hostname: /github\.com/ would also catch any URL that merely
+				// mentions github.com, e.g. in a query string.
+				finicky.matchHostnames(["ghe.oculus-rep.com", "github.com"]),
 			],
 			browser: "Google Chrome",
 		},
