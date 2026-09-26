@@ -132,6 +132,18 @@ terminal discovery, accessibility timeouts, screenshot capture, and visible
 badge startup need separate end-to-end measurements. No first-launch-after-reboot
 or dependency-install measurements are included.
 
+Prerequisites: Git, Rust (`rustc`), and Go (`go`) on `PATH`, plus a Python
+interpreter with Y's dependencies installed. Both native toolchains are required
+because the harness always builds and compares their probes. uv is needed only
+when `--uv` is selected.
+
+The harness and minimal Python probe intentionally use only the standard
+library, with empty PEP 723 dependency declarations. These are benchmark
+fixtures rather than installed user CLI tools: adding Typer/Rich to the measured
+probe would eliminate the dependency-free comparison. They are not registered
+as commands in `py/pyproject.toml`; Y itself (now in the Alfred workflow) uses
+Typer and Rich.
+
 Reproduce from this worktree using an interpreter with Y's dependencies:
 
 ```sh

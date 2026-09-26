@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
 """Deliberately scoped dispatch probe, not a replacement for Y."""
 
 import os
