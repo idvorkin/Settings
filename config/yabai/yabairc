@@ -36,6 +36,7 @@ yabai -m rule --add app="^Calculator$" manage=off
 yabai -m rule --add app="^Karabiner-Elements$" manage=off
 yabai -m rule --add app="Alfred" manage=off
 yabai -m rule --add app="QuickRecorder" manage=off
+yabai -m rule --add app="^LCD Timer$" manage=off
 
 # --- Ghostty tab workaround ---
 # When a Ghostty window (tab) is created, re-apply bsp layout.
