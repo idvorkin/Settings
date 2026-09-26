@@ -714,6 +714,7 @@ alias airpods_audio='SwitchAudioSource -s "Igor's AirPods Pro" && SwitchAudioSou
 # https://github.com/waydabber/betterdisplaycli?tab=readme-ov-file
 alias lg-fix='betterdisplaycli set  --resolution=3840x2160 --refreshRate=59.94Hz '
 alias lg-show='betterdisplaycli get  --resolution --refreshRate'
+alias lg-watchdog='~/settings/mac/lg-watchdog.sh'  # check/install/status - auto lg-fix on drift
 
 # Function to select from display resolution presets
 function lg-presets() {
