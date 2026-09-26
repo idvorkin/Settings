@@ -5,7 +5,8 @@
 # ///
 """caff - a battery-aware wrapper around macOS `caffeinate`.
 
-Modes, re-evaluated every tick from `pmset -g batt` and `herdr agent list`:
+Modes, re-evaluated from `pmset -g batt` and `herdr agent list` every tick, and
+immediately when macOS posts a power event (plug/unplug, battery percent):
   plugged in                     -> caffeinate -d -i -s  (display + system on)
   battery, above floor, agents   -> caffeinate -i        (system up, screen may
     working (or Herdr unreachable)                        sleep)
@@ -28,10 +29,13 @@ a sparkline and a measured drain rate (used for the "floor in ~Xm" estimate).
     caff info     # what the watcher is doing, from any shell
 """
 
+import ctypes
+import ctypes.util
 import json
 import math
 import os
 import re
+import select
 import signal
 import subprocess
 import sys
@@ -68,6 +72,12 @@ DRAIN_MIN_SPAN = timedelta(minutes=5)  # ...and needs at least this much data
 SPARK_CHARS = "▁▂▃▄▅▆▇█"
 STALE_TICKS = 3  # state.json older than this many intervals = watcher is gone
 STALE_MIN_SECONDS = 60.0
+# notify(3) keys from IOPowerSources.h: AC <-> battery, and battery percent
+POWER_NOTIFY_KEYS = (
+    "com.apple.system.powersources.source",
+    "com.apple.system.powersources.percent",
+)
+NOTIFY_REUSE = 0x1  # notify.h: register another key on an existing fd
 
 
 class Mode(str, Enum):
@@ -409,6 +419,52 @@ def sleep_eta(
     return "sleep in " + ", ".join(parts)
 
 
+def _register_notify_fd(keys: tuple[str, ...]) -> int | None:
+    """One notify(3) file descriptor that becomes readable when any key posts.
+
+    None when libSystem or a registration fails.
+    """
+    try:
+        libsystem = ctypes.CDLL(ctypes.util.find_library("System"))
+        register = libsystem.notify_register_file_descriptor
+    except (OSError, AttributeError):
+        return None
+    fd, token = ctypes.c_int(-1), ctypes.c_int()
+    for i, key in enumerate(keys):
+        flags = NOTIFY_REUSE if i else 0  # later keys share the first key's fd
+        if register(key.encode(), ctypes.byref(fd), flags, ctypes.byref(token)):
+            return None
+    return fd.value
+
+
+class PowerEvents:
+    """Wakes the watcher the moment the power source or battery percent changes.
+
+    Without a notify fd (registration failed) it degrades to a plain sleep, so
+    the watcher still ticks every interval.
+    """
+
+    def __init__(
+        self,
+        keys: tuple[str, ...] = POWER_NOTIFY_KEYS,
+        register: Callable[[tuple[str, ...]], int | None] = _register_notify_fd,
+    ) -> None:
+        self.fd = register(keys)
+        if self.fd is None:
+            warn_once("Can't subscribe to power events - polling only")
+
+    def wait(self, timeout: float) -> bool:
+        """Sleep up to `timeout` seconds; True if a power event cut it short."""
+        if self.fd is None:
+            time.sleep(timeout)
+            return False
+        ready, _, _ = select.select([self.fd], [], [], timeout)
+        if not ready:
+            return False
+        os.read(self.fd, 4096)  # drain the queued tokens; one tick covers them all
+        return True
+
+
 class Caffeinator:
     """Owns the single caffeinate child process."""
 
@@ -595,7 +651,9 @@ def run_loop(
     caff: Caffeinator,
     history: History,
     waker: Waker | None = None,
+    events: PowerEvents | None = None,
 ) -> None:
+    wait = events.wait if events is not None else time.sleep
     last_mode: Mode | None = None
     with Live(console=console, transient=True) as live:
         while True:
@@ -618,7 +676,7 @@ def run_loop(
                 console.print(status)  # permanent log line on every transition
                 last_mode = mode
             live.update(Group(status, graph))
-            time.sleep(interval)
+            wait(interval)
 
 
 @app.command()
@@ -676,7 +734,7 @@ def run(
     signal.signal(signal.SIGTERM, shutdown)
 
     try:
-        run_loop(floor, interval, deadline, caff, History(), waker)
+        run_loop(floor, interval, deadline, caff, History(), waker, PowerEvents())
     finally:
         caff.stop()
         if waker is not None:
