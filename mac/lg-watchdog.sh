@@ -1,7 +1,8 @@
 #!/bin/bash
 # LG display watchdog: the LG Ultra HD sometimes comes back from display
-# sleep at 30Hz. On every display-on event this checks the current mode (what
-# `lg-show` prints) and re-applies `lg-fix` only when it has drifted.
+# sleep at 30Hz. On every display-on event this checks the refresh rate (what
+# `lg-show` prints) and re-applies `lg-fix` only when it has dropped. The
+# resolution is left alone, so a deliberately chosen preset survives wake.
 #
 # Display-on events come from powerd's unified-log line that backs the
 # "Display is turned on" entries in `pmset -g log` - no polling.
@@ -32,6 +33,7 @@ LOG="$HOME/Library/Logs/lg-watchdog.log"
 SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 
 log() {
+    mkdir -p "$(dirname "$LOG")"
     echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >>"$LOG"
 }
 
@@ -47,7 +49,8 @@ check() {
         return 0
     fi
 
-    if [[ "$res" == "$WANT_RES" ]] && awk -v hz="${hz%Hz}" -v min="$MIN_HZ" 'BEGIN { exit !(hz >= min) }'; then
+    # 60Hz and 59.94Hz are both fine; only the low-refresh fallback is the bug
+    if awk -v hz="${hz%Hz}" -v min="$MIN_HZ" 'BEGIN { exit !(hz >= min) }'; then
         return 0
     fi
 
@@ -76,7 +79,7 @@ watch() {
 }
 
 install() {
-    mkdir -p "$(dirname "$PLIST")" "$(dirname "$LOG")"
+    mkdir -p "$(dirname "$PLIST")"
     uninstall
     cat >"$PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -92,7 +95,10 @@ install() {
 </dict>
 </plist>
 EOF
-    launchctl bootstrap "gui/$(id -u)" "$PLIST"
+    if ! launchctl bootstrap "gui/$(id -u)" "$PLIST"; then
+        echo "launchctl bootstrap failed for $PLIST" >&2
+        return 1
+    fi
     echo "Installed $LABEL (log: $LOG)"
 }
 
@@ -114,7 +120,7 @@ install) install ;;
 uninstall) uninstall ;;
 status) status ;;
 *)
-    sed -n '2,14p' "$SCRIPT"
+    sed -n '2,15p' "$SCRIPT"
     exit 1
     ;;
 esac
