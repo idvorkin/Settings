@@ -43,7 +43,7 @@ def main(
     if response.status_code == 200:
         html_content = response.text
         text_maker = html2text.HTML2Text()
-        text_maker.ignore_links = True
+        text_maker.ignore_links = remove_links
         text_maker.body_width = 0
         markdown_output = text_maker.handle(html_content)
 
