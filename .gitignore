@@ -269,3 +269,7 @@ config/cursor/extensions/
 .beads/*
 !.beads/config.yaml
 !.beads/metadata.json
+.beads.gate.lock
+
+# Cursor CLI local state (~/.cursor symlinks here)
+config/cursor/cli-config.json
