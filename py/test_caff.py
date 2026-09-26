@@ -5,6 +5,8 @@
 # ///
 """Tests for caff. Run directly: ./test_caff.py"""
 
+import ctypes
+import ctypes.util
 import json
 import os
 import subprocess
@@ -26,6 +28,7 @@ from caff import (  # noqa: E402
     History,
     Mode,
     Power,
+    PowerEvents,
     Sample,
     Waker,
     desired_mode,
@@ -442,6 +445,51 @@ def test_unwritable_cache_does_not_stop_the_watcher(tmp_path, monkeypatch):
     caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
     history = History(blocker / "h.json")
     assert history.record(Power(False, 80, None), NOW)  # kept in memory
+
+
+def test_power_events_fall_back_to_sleeping(monkeypatch):
+    slept: list[float] = []
+    monkeypatch.setattr(caff.time, "sleep", slept.append)
+    events = PowerEvents(register=lambda keys: None)
+    assert events.wait(30) is False
+    assert slept == [30]
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="notify(3) is macOS-only")
+def test_power_events_wake_on_any_key_and_drain():
+    # Real notifyd round trip on private keys: com.apple.system.* needs root to post
+    keys = tuple(f"com.idvorkin.caff.test.{os.getpid()}.{n}" for n in (1, 2))
+    events = PowerEvents(keys)
+    assert events.fd is not None
+    assert events.wait(0) is False
+    notify_post = ctypes.CDLL(ctypes.util.find_library("System")).notify_post
+    assert notify_post(keys[1].encode()) == 0  # the second key shares the fd
+    assert events.wait(2) is True
+    assert events.wait(0) is False  # drained
+
+
+class StopLoop(Exception):
+    pass
+
+
+def test_run_loop_waits_on_power_events(state_file, monkeypatch):
+    monkeypatch.setattr(caff, "read_power", lambda: Power(True, 90, None))
+    monkeypatch.setattr(caff, "read_agents", lambda: Agents(0, 1))
+    waits: list[float] = []
+
+    class FakeEvents:
+        def wait(self, timeout: float) -> bool:
+            waits.append(timeout)
+            if len(waits) == 2:
+                raise StopLoop
+            return True  # a power event cut the first wait short
+
+    popen = FakePopen()
+    history = History(state_file.parent / "h.json")
+    with pytest.raises(StopLoop):
+        caff.run_loop(50, 30, None, Caffeinator(popen), history, None, FakeEvents())
+    assert waits == [30, 30]
+    assert len(popen.procs) == 1  # plugged in both ticks: one caffeinate
 
 
 runner = CliRunner()
