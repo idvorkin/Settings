@@ -1,7 +1,7 @@
 // ~/.finicky.js
 
 export default {
-	defaultBrowser: "Microsoft Edge",
+	defaultBrowser: "Google Chrome",
 
 	// Optional: Disable logging requests to disk
 	logRequests: false,
@@ -9,8 +9,8 @@ export default {
 	// Rewrite all http URLs to https
 	rewrite: [
 		{
-			match: ({ url }) => url.protocol === "http:",
-			url: ({ url }) => url.href.replace(/^http:/, "https:"),
+			match: (url) => url.protocol === "http:",
+			url: (url) => url.href.replace(/^http:/, "https:"),
 		},
 	],
 
@@ -48,6 +48,7 @@ export default {
 			match: [
 				/fburl\.com/i,
 				/internalfb\.com/i,
+				/internalmeta\.com/i,
 				/fb\.facebook\.com/i,
 				/fb\.workplace\.com/i,
 				/docs\.google\.com/i,
@@ -55,6 +56,9 @@ export default {
 				/fb\.okta\.com/i,
 				/drive\.google\.com\/drive\/folders/i,
 				/fb\.quip\.com/i,
+				// By hostname: /github\.com/ would also catch any URL that merely
+				// mentions github.com, e.g. in a query string.
+				finicky.matchHostnames(["ghe.oculus-rep.com", "github.com"]),
 			],
 			browser: "Google Chrome",
 		},
