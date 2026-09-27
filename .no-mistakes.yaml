@@ -1,10 +1,10 @@
 # no-mistakes gate config. commands, review, and no_ci are read only from main.
 
 commands:
-  test: "just fast-test"
+  test: "just test"
 
-# No .github/workflows (or any other CI config) in this repo; `just fast-test` (identical
-# to `just test`) is the whole check.
+# No .github/workflows (or any other CI config) in this repo; `just test` (nvim specs, the
+# py/ tests, and rmux_helper's cargo tests; seconds once cargo has built) is the whole check.
 no_ci: true
 
 # commands.lint intentionally left unset. .pre-commit-config.yaml's hooks (ruff --fix,
@@ -17,16 +17,17 @@ review:
   path_instructions:
     - path: "shared/**"
       instructions: |
-        Symlinked straight into $HOME by bootstrap.sh on every OS (mac, Alpine, WSL) - an
-        edit here is live on every machine the moment it's synced, no build step. Keep
-        cross-platform files portable across all three platforms rather than branching in
-        place. Some files here are macOS-only by design (aerospace.toml, the Homebrew
-        brew_packages.sh); do not flag those for being Mac-specific or ask to move them.
+        Many files here (gitconfig, .tmux.conf, atuin.toml, ...) are symlinked into $HOME,
+        so an edit to one is live on every machine that links it, with no build step; others
+        need a step (terminfo needs `tic`, zsh_include.sh needs a new shell). bootstrap.sh is
+        the Mac setup; Alpine and WSL link only selected files (README). Files other OSes use
+        must stay portable. Some are macOS-only by design (aerospace.toml, brew_packages.sh);
+        do not flag those for being Mac-specific.
     - path: "mac/**"
       instructions: |
-        macOS-only symlink targets (karabiner, hammerspoon, finicky) -
-        live on every Mac via bootstrap.sh symlinks. Do not assume these tools or paths
-        exist on Linux/WSL; cross-platform logic belongs in shared/, not here.
+        macOS-only. Selected files (hammerspoon/init.lua, .finicky.js, .inputrc, .xvimrc, the
+        karabiner config) are symlinked by bootstrap.sh and live on every Mac; the rest are
+        installers, scripts and assets. Cross-platform logic belongs in shared/, not here.
     - path: "nvim/**"
       instructions: |
         Whole directory is symlinked to ~/.config/nvim - live everywhere immediately, no
@@ -38,8 +39,9 @@ review:
         PEP 723 inline-dependency scripts run via `#!/usr/bin/env -S uv run --script`.
         Keep the `-S` (env splits the args into separate argv entries; drop it and the
         shebang breaks on both macOS and Linux) and the `# /// script` dependency block.
-        Test files mirror source 1:1 (py/foo.py -> py/test_foo.py) and must stay
-        standalone, pytest-runnable scripts (own inline deps, no shared venv).
+        Tests are standalone scripts next to the code (py/test_*.py), each run by `just test`:
+        uv-script pytest files with their own inline deps, except test_y_launcher.py, which
+        is a stdlib unittest run with python3. A new test must be added to `just test`.
     - path: "rust/tmux_helper/**"
       instructions: |
         Unlike the symlinked dotfiles above, a change here has no effect on the live

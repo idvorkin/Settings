@@ -434,8 +434,9 @@ def test_check_port_conflict_in_other_directory_is_reported(
     result = runner.invoke(app, ["check", str(target), "--port", "4000"])
     assert result.exit_code != 0, result.output
     # The conflicting holder's directory must appear so the caller understands
-    # why their server won't start on this port.
-    assert str(other) in result.output, result.output
+    # why their server won't start on this port. Rich wraps long paths at the
+    # terminal width, so compare against the unwrapped output.
+    assert str(other) in result.output.replace("\n", ""), result.output
     assert "4000" in result.output, result.output
 
 
