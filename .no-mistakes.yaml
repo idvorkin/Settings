@@ -1,0 +1,57 @@
+# no-mistakes gate config. commands, review, and no_ci are read only from main.
+
+commands:
+  test: "just fast-test"
+
+# No .github/workflows (or any other CI config) in this repo; `just fast-test` (identical
+# to `just test`) is the whole check.
+no_ci: true
+
+# commands.lint intentionally left unset. .pre-commit-config.yaml's hooks (ruff --fix,
+# ruff-format, stylua) mutate the whole tree rather than just the diff, need per-tool
+# environments provisioned over the network on first run, and its own local "test" hook
+# just re-runs `just fast-test`. Let no-mistakes' agent-driven lint (folded into the
+# document step) handle this instead.
+
+review:
+  path_instructions:
+    - path: "shared/**"
+      instructions: |
+        Symlinked straight into $HOME by bootstrap.sh on every OS (mac, Alpine, WSL) - an
+        edit here is live on every machine the moment it's synced, no build step. Keep it
+        portable across all three platforms; move OS-specific behavior to mac/ or alpine/
+        instead of branching in place.
+    - path: "mac/**"
+      instructions: |
+        macOS-only symlink targets (karabiner, hammerspoon, yabai, aerospace, finicky) -
+        live on every Mac via bootstrap.sh symlinks. Do not assume these tools or paths
+        exist on Linux/WSL; cross-platform logic belongs in shared/, not here.
+    - path: "nvim/**"
+      instructions: |
+        Whole directory is symlinked to ~/.config/nvim - live everywhere immediately, no
+        build step. Tests are mini.nvim specs named test_*.lua directly under
+        nvim/tests/, collected by nvim/tests/minit.lua; a new test must follow that
+        naming and location or it will silently not run.
+    - path: "py/*.py"
+      instructions: |
+        PEP 723 inline-dependency scripts run via `#!/usr/bin/env -S uv run --script`.
+        Keep the `-S` (env splits the args into separate argv entries; drop it and the
+        shebang breaks on both macOS and Linux) and the `# /// script` dependency block.
+        Test files mirror source 1:1 (py/foo.py -> py/test_foo.py) and must stay
+        standalone, pytest-runnable scripts (own inline deps, no shared venv).
+    - path: "rust/tmux_helper/**"
+      instructions: |
+        Unlike the symlinked dotfiles above, a change here has no effect on the live
+        rmux_helper binary until rebuilt and reinstalled (`just rinstall`, i.e.
+        `cargo install --path . --force`). Do not describe a source change as deployed.
+
+# Historical AI/editor session transcripts, tracked but not living source or docs.
+ignore_patterns:
+  - "chop-logs/**"
+  - "zz-chop-logs/**"
+  - "cursor-logs/**"
+
+# Igor's hand-curated SSH public-key inventory (one entry per device). Not a secret, but
+# no automated fix/format/lint pass should rewrite it.
+protected_paths:
+  - "pub_keys.txt"
