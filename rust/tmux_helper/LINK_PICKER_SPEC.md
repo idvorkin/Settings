@@ -102,9 +102,9 @@ When scrollback contains no detectable items, the TUI is not entered. `pick_link
 
 `pick-links` scans the current pane's scrollback only — no cross-pane, no cross-session, no external sources. The multiplexer is auto-detected and capture takes one of two paths:
 
-- **tmux**: the pane is resolved from `$TMUX_PANE`, falling back to `tmux display-message -p '#{client_active_pane}'`. Scrollback comes from `tmux capture-pane -J -S -300 -E -`.
-- **herdr**: the pane is resolved from `$HERDR_PANE_ID`, falling back to the layout's focused pane. Scrollback comes from `herdr pane read <id> --source recent-unwrapped --lines 300`.
+- **tmux**: the pane is resolved from `$TMUX_PANE`, falling back to `tmux display-message -p '#{client_active_pane}'`. Scrollback comes from `tmux capture-pane -e -J -S -300 -E -`.
+- **herdr**: the pane is resolved from `$HERDR_PANE_ID`, falling back to the layout's focused pane. Scrollback comes from `herdr pane read <id> --source recent-unwrapped --lines 300 --format ansi`.
 
 History depth is **capped at 300 lines above the visible pane top** on both backends. The visible pane content is always included in full; the cap only limits how deep into scrollback we go. This keeps results relevant to recent work — a 50 000-line `history-limit` buffer produces stale context from days-old sessions that drowns real results in noise. 300 lines is roughly several screens of recent scrollback.
 
-Both backends join soft-wrapped lines so URLs that wrapped across terminal rows read back whole (tmux's `-J`; herdr's `recent-unwrapped` source). ANSI escape bytes are NOT captured on either path — for tmux, `-e` is deliberately omitted because raw `\x1b` sequences leak through ratatui's cell rendering into the popup pty and corrupt the display.
+Both backends join soft-wrapped lines so URLs that wrapped across terminal rows read back whole (tmux's `-J`; herdr's `recent-unwrapped` source). Both capture with escapes so OSC 8 hyperlinks keep their target: an agent printing `#14` or `chop#14` as a link to a PR is detected as that PR, exactly what a click would open. `flatten_ansi` then rewrites each hyperlinked span to `text URL` (just `text` when it already shows the URL) and strips every other escape before detection — raw `\x1b` sequences leak through ratatui's cell rendering into the popup pty and corrupt the display. herdr 0.9.1 drops OSC 8 targets from `pane read` (requested upstream in herdrdev/herdr discussion #4235), so today only tmux recovers them.

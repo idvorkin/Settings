@@ -32,7 +32,9 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
         }
     };
 
-    // 3. Detect
+    // 3. Detect. Captures carry escapes so OSC 8 link targets survive;
+    // flatten them to plain text before anything downstream sees a raw ESC.
+    let raw = flatten_ansi(&raw);
     let rows = detect::parse(&raw);
 
     if json {
@@ -209,14 +211,15 @@ pub(crate) const SCROLLBACK_HISTORY_LINES: u32 = 300;
 ///
 /// `-S -N` starts N lines above the top of the visible pane; `-E -` ends at
 /// the bottom of the visible pane. `-J` joins soft-wrapped lines so URLs
-/// that wrapped across terminal rows read back whole.
+/// that wrapped across terminal rows read back whole. `-e` keeps escapes so
+/// OSC 8 hyperlinks (`#14` whose target is a PR URL) come back with their
+/// target; `flatten_ansi` strips them before the TUI — raw \x1b bytes in
+/// ratatui cells corrupt the popup.
 pub(crate) fn capture_pane_args(pane_id: &str) -> Vec<String> {
-    // NOTE: `-e` (include ANSI escapes) was intentionally dropped earlier —
-    // raw \x1b bytes leaked through ratatui's cell rendering into the popup
-    // pty and corrupted the display. Plain text is sufficient.
     vec![
         "capture-pane".to_string(),
         "-p".to_string(),
+        "-e".to_string(),
         "-J".to_string(),
         "-S".to_string(),
         format!("-{SCROLLBACK_HISTORY_LINES}"),
@@ -231,7 +234,10 @@ pub(crate) fn capture_pane_args(pane_id: &str) -> Vec<String> {
 /// come first — herdr rejects `pane read --source recent <id>` with
 /// "unknown option: <id>". `recent-unwrapped` is herdr's equivalent of
 /// tmux's `capture-pane -J`: it joins soft-wrapped lines so a URL that
-/// wrapped across terminal rows reads back whole.
+/// wrapped across terminal rows reads back whole. `--format ansi` mirrors
+/// tmux's `-e`: herdr 0.9.1 drops OSC 8 targets from reads, but once it
+/// keeps them (herdrdev/herdr discussion #4235) they flow through
+/// `flatten_ansi` with no change here.
 pub(crate) fn herdr_capture_args(pane_id: &str) -> Vec<String> {
     vec![
         "pane".to_string(),
@@ -241,7 +247,68 @@ pub(crate) fn herdr_capture_args(pane_id: &str) -> Vec<String> {
         "recent-unwrapped".to_string(),
         "--lines".to_string(),
         SCROLLBACK_HISTORY_LINES.to_string(),
+        "--format".to_string(),
+        "ansi".to_string(),
     ]
+}
+
+/// Strip terminal escapes from a capture, keeping OSC 8 link targets.
+///
+/// A hyperlinked span `ESC]8;;URL ST text ESC]8;; ST` becomes `text URL`
+/// (just `text` when it already contains the URL), so detection sees what a
+/// click would open — `#14` alone names no repo. Other OSC and CSI
+/// sequences (SGR colors) and two-byte escapes are dropped. ST is `ESC \`
+/// or BEL.
+pub(crate) fn flatten_ansi(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    let mut chars = raw.chars().peekable();
+    // Target of the open hyperlink, and where its visible text starts in `out`.
+    let mut link: Option<(String, usize)> = None;
+    while let Some(c) = chars.next() {
+        if c != '\x1b' {
+            out.push(c);
+            continue;
+        }
+        match chars.next() {
+            Some(']') => {
+                let mut body = String::new();
+                while let Some(b) = chars.next() {
+                    if b == '\x07' {
+                        break;
+                    }
+                    if b == '\x1b' {
+                        chars.next_if_eq(&'\\');
+                        break;
+                    }
+                    body.push(b);
+                }
+                let Some(rest) = body.strip_prefix("8;") else {
+                    continue;
+                };
+                // `8;params;URI` — params may be empty or `id=...`.
+                let uri = rest.split_once(';').map_or("", |(_, u)| u);
+                if let Some((target, start)) = link.take() {
+                    if !out[start..].contains(target.as_str()) {
+                        out.push(' ');
+                        out.push_str(&target);
+                    }
+                }
+                if !uri.is_empty() {
+                    link = Some((uri.to_string(), out.len()));
+                }
+            }
+            Some('[') => {
+                // CSI: parameter/intermediate bytes, then one final byte.
+                for b in chars.by_ref() {
+                    if ('\x40'..='\x7e').contains(&b) {
+                        break;
+                    }
+                }
+            }
+            _ => {} // two-byte escape (e.g. `ESC =`): drop both
+        }
+    }
+    out
 }
 
 /// Build the OSC 52 clipboard escape for `text`.
@@ -406,8 +473,48 @@ mod orchestration_tests {
         assert!(args.contains(&"-J".to_string()), "must join wrapped lines");
         assert!(args.contains(&"%42".to_string()), "must target the pane");
         assert!(
-            !args.iter().any(|a| a == "-e"),
-            "must NOT include ANSI escapes (they corrupt popup rendering)"
+            args.iter().any(|a| a == "-e"),
+            "must keep escapes so OSC 8 link targets survive capture"
+        );
+    }
+
+    #[test]
+    fn flatten_appends_hidden_link_target() {
+        let raw = "see \x1b]8;;https://github.com/o/r/pull/14\x1b\\#14\x1b]8;;\x1b\\ done";
+        assert_eq!(
+            flatten_ansi(raw),
+            "see #14 https://github.com/o/r/pull/14 done"
+        );
+    }
+
+    #[test]
+    fn flatten_accepts_bel_terminator_and_id_param() {
+        let raw = "\x1b]8;id=7;https://example.com/x\x07here\x1b]8;;\x07.";
+        assert_eq!(flatten_ansi(raw), "here https://example.com/x.");
+    }
+
+    #[test]
+    fn flatten_does_not_duplicate_visible_url() {
+        let url = "https://example.com/a";
+        let raw = format!("\x1b]8;;{url}\x1b\\{url}\x1b]8;;\x1b\\");
+        assert_eq!(flatten_ansi(&raw), url);
+    }
+
+    #[test]
+    fn flatten_strips_sgr_and_other_escapes() {
+        let raw = "\x1b[1;38;5;2mgreen\x1b[0m \x1b]0;title\x07x\x1b=y";
+        assert_eq!(flatten_ansi(raw), "green xy");
+    }
+
+    #[test]
+    fn hyperlinked_short_ref_is_detected_as_its_pr() {
+        let raw = "merged \x1b]8;;https://github.com/idvorkin/chop-conventions/pull/14\x1b\\chop#14\x1b]8;;\x1b\\\n";
+        let rows = detect::parse(&flatten_ansi(raw));
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].category, detect::Category::PullRequest);
+        assert_eq!(
+            rows[0].canonical,
+            "https://github.com/idvorkin/chop-conventions/pull/14"
         );
     }
 
