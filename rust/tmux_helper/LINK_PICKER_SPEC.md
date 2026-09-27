@@ -55,7 +55,7 @@ Categories: fixed order above. Within a category: most-recent line first (closes
 
 Default `Enter` (on leaf):
 
-- URL categories → OSC 52 yank + print URL to stdout
+- URL categories → **on macOS builds**: `open` (same as `o`), under both tmux and herdr. **Elsewhere** (e.g. the Linux devvm, which has no local browser): OSC 52 yank + print URL to stdout
 - Servers / IPs → **under tmux**: `tmux new-window -t "$pane_id" -c '#{pane_current_path}' "ssh <host>"`. **Under herdr**: `Ssh` is not offered (opening a tmux window isn't meaningful there), so these rows default to the same OSC 52 yank as URL categories — a dead `Enter` key would be worse than copying the host.
 
 Override keys (query must be empty — lowercase letters otherwise type into search):
