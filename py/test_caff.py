@@ -266,6 +266,61 @@ def test_waker_survives_a_failed_cancel():
     assert waker.at == datetime(2026, 1, 1, 12, 10)
 
 
+def test_waker_retries_a_failed_cancel_until_the_wake_fires():
+    pmset = FakePmset()
+    waker = Waker(timedelta(minutes=10), run=pmset)
+    now = datetime(2026, 1, 1, 12, 0)
+    waker.arm(now)
+    pmset.ok = False
+    waker.disarm(now)
+    assert waker.at == datetime(2026, 1, 1, 12, 10)  # still ours to cancel
+    pmset.ok = True
+    waker.disarm(now + timedelta(minutes=1))
+    assert waker.at is None
+    assert [c[0] for c in pmset.calls] == ["wake", "cancel", "cancel"]
+
+
+def test_waker_forgets_an_uncancelled_wake_once_it_fires():
+    pmset = FakePmset()
+    waker = Waker(timedelta(minutes=10), run=pmset)
+    now = datetime(2026, 1, 1, 12, 0)
+    waker.arm(now)
+    pmset.ok = False
+    waker.disarm(now)
+    waker.disarm(now + timedelta(minutes=11))
+    assert waker.at is None
+    assert len(pmset.calls) == 2  # no cancel for a wake that already fired
+
+
+SCHED = (
+    "Scheduled power events:\n"
+    " [0]  wake at 09/27/2026 17:25:22 by 'com.apple.alarm.user-invisible'\n"
+    " [1]  wake at 09/27/2026 18:10:00 by 'caff'\n"
+    " [2]  wake at 12/31/2026 23:59:59 by 'caff'\n"
+    " [3]  wake at 09/28/2026 07:00:00 by 'caffeine'\n"
+)
+
+
+def test_parse_owned_wakes_keeps_only_caff():
+    assert caff.parse_owned_wakes(SCHED) == [
+        datetime(2026, 9, 27, 18, 10),
+        datetime(2026, 12, 31, 23, 59, 59),
+    ]
+    assert caff.parse_owned_wakes("") == []
+
+
+def test_waker_sweep_cancels_each_orphaned_caff_wake():
+    pmset = FakePmset(ok=False)  # failed cancels are fine: a stray wake is harmless
+    waker = Waker(timedelta(minutes=10), run=pmset)
+    waker.sweep(SCHED)
+    assert pmset.calls == [
+        ["cancel", "wake", "09/27/26 18:10:00", "caff"],
+        ["cancel", "wake", "12/31/26 23:59:59", "caff"],
+    ]
+    assert waker.at is None
+    assert not waker.disabled
+
+
 def test_waker_gives_up_after_sudo_fails():
     pmset = FakePmset(ok=False)
     waker = Waker(timedelta(minutes=10), run=pmset)
@@ -502,6 +557,7 @@ def cli_env(state_file, monkeypatch):
     monkeypatch.setattr(caff, "read_power", lambda: Power(False, 80, 100))
     monkeypatch.setattr(caff, "read_agents", lambda: Agents(1, 2))
     monkeypatch.setattr(caff, "History", lambda: History(state_file.parent / "h.json"))
+    monkeypatch.setattr(caff, "read_sched", lambda: "")
 
 
 @pytest.mark.parametrize("args", [["run", "4d"], ["run", "--wake", "soon"]])
@@ -535,6 +591,16 @@ def test_run_cleans_up_however_the_loop_ends(cli_env, state_file, monkeypatch):
     runner.invoke(caff.app, ["run"])
     assert stopped == ["caffeinate", "wake"]
     assert not state_file.exists()
+
+
+@pytest.mark.parametrize("wake,swept", [("10m", ["caff sched"]), ("off", [])])
+def test_run_sweeps_orphaned_wakes_before_looping(cli_env, monkeypatch, wake, swept):
+    calls: list[str] = []
+    monkeypatch.setattr(caff, "read_sched", lambda: "caff sched")
+    monkeypatch.setattr(Waker, "sweep", lambda self, sched: calls.append(sched))
+    monkeypatch.setattr(caff, "run_loop", lambda *args: calls.append("loop"))
+    runner.invoke(caff.app, ["run", "--wake", wake])
+    assert calls == [*swept, "loop"]
 
 
 def test_info_without_a_watcher(cli_env):
