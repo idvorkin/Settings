@@ -18,12 +18,13 @@ review:
     - path: "shared/**"
       instructions: |
         Symlinked straight into $HOME by bootstrap.sh on every OS (mac, Alpine, WSL) - an
-        edit here is live on every machine the moment it's synced, no build step. Keep it
-        portable across all three platforms; move OS-specific behavior to mac/ or alpine/
-        instead of branching in place.
+        edit here is live on every machine the moment it's synced, no build step. Keep
+        cross-platform files portable across all three platforms rather than branching in
+        place. Some files here are macOS-only by design (aerospace.toml, the Homebrew
+        brew_packages.sh); do not flag those for being Mac-specific or ask to move them.
     - path: "mac/**"
       instructions: |
-        macOS-only symlink targets (karabiner, hammerspoon, yabai, aerospace, finicky) -
+        macOS-only symlink targets (karabiner, hammerspoon, finicky) -
         live on every Mac via bootstrap.sh symlinks. Do not assume these tools or paths
         exist on Linux/WSL; cross-platform logic belongs in shared/, not here.
     - path: "nvim/**"
