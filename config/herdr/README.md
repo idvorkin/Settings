@@ -107,6 +107,31 @@ entries marked ✱ override a herdr default to restore tmux muscle memory.
 | `prefix+shift+g` | new git worktree   | herdr-only                      |
 | `prefix+g`       | goto               | herdr-only                      |
 
+### Worktrees: the default for agents
+
+An agent making code changes works in a Herdr worktree, not the main clone. The
+main clone often carries Igor's own branch and untracked work, and an agent
+committing there moves the branch out from under him. `prefix+shift+g` is the
+interactive form; agents use the CLI:
+
+```bash
+herdr worktree create --cwd <repo> --branch <branch> --base origin/main \
+  --label <repo>-<topic> --no-focus
+# ... work, commit, PR ...
+herdr worktree remove --workspace <id>   # after the PR merges
+```
+
+`create` prints JSON; the workspace id is `.result.workspace.workspace_id`.
+
+- Use the worktree by absolute path. Never `cd` into it from the main session —
+  the harness adopts that directory as the session's working directory.
+- The checkout lands at `~/.herdr/worktrees/<repo>/<branch>`, with slashes in the
+  branch turned into dashes.
+- `create` opens a new workspace with an idle pane and, with `--no-focus`, doesn't
+  switch to it, so it's easy to miss in the sidebar.
+- Outside Herdr (`HERDR_ENV` unset), fall back to
+  `git worktree add <path> -b <branch> origin/main`.
+
 ### Agents
 
 | Keys       | Action           | tmux                          |
