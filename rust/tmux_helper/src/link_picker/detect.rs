@@ -1211,6 +1211,12 @@ pub(crate) fn truncate_to_width(s: &str, max: usize) -> String {
 /// Top-level detection: parse the whole scrollback and return deduped,
 /// recency-ordered rows.
 pub fn parse(raw: &str) -> Vec<Row> {
+    parse_with(raw, &|_, _| Vec::new())
+}
+
+/// `parse`, plus `extra` scanning each (wrap-joined) line for more items —
+/// used for herdr's short-ref guesses without touching the displayed line.
+pub fn parse_with(raw: &str, extra: &dyn Fn(&str, usize) -> Vec<Item>) -> Vec<Row> {
     // Re-join URLs hard-wrapped across line breaks (gist hashes, commit SHAs)
     // before line-by-line scanning. See `join_wrapped_urls` for the heuristic.
     let raw_joined = join_wrapped_urls(raw);
@@ -1219,7 +1225,7 @@ pub fn parse(raw: &str) -> Vec<Row> {
     let lines: Vec<&str> = raw.lines().collect();
     let mut items_by_key: HashMap<(Category, String), Vec<Item>> = HashMap::new();
     for (idx, line) in lines.iter().enumerate() {
-        for item in scan_line(line, idx) {
+        for item in scan_line(line, idx).into_iter().chain(extra(line, idx)) {
             items_by_key
                 .entry((item.category, item.canonical.clone()))
                 .or_default()

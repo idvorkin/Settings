@@ -3,6 +3,7 @@
 
 pub mod detect;
 pub mod enrich;
+pub mod shortref;
 pub mod tui;
 
 use anyhow::{anyhow, Result};
@@ -35,7 +36,15 @@ pub fn pick_links(json: bool, enrich_deadline_ms: u64) -> Result<()> {
     // 3. Detect. Captures carry escapes so OSC 8 link targets survive;
     // flatten them to plain text before anything downstream sees a raw ESC.
     let raw = flatten_ansi(&raw);
-    let rows = detect::parse(&raw);
+    let rows = match mux {
+        // herdr drops OSC 8 targets, so `#14` / `chop#14` arrive as bare
+        // text; guess their repo. tmux kept the real target above.
+        crate::mux::Multiplexer::Herdr => {
+            let refs = shortref::ShortRefs::new(&raw, herdr_ref_context(&pane_id));
+            detect::parse_with(&raw, &|line, idx| refs.scan(line, idx))
+        }
+        _ => detect::parse(&raw),
+    };
 
     if json {
         // --json short-circuit: skip enrich + TUI entirely.
@@ -341,6 +350,33 @@ fn yank_osc52(payload: &str) -> Result<()> {
     tty.flush()
         .map_err(|e| anyhow!("failed flushing OSC 52 to /dev/tty: {e}"))?;
     Ok(())
+}
+
+/// Repo hints for `shortref`: the pane's working-directory repo and `~/gits`.
+/// Failures just mean fewer refs resolve, never an error.
+fn herdr_ref_context(pane_id: &str) -> shortref::RefContext {
+    let cwd = crate::mux::herdr_cli(&["pane", "get", pane_id])
+        .ok()
+        .and_then(|out| serde_json::from_str::<serde_json::Value>(&out).ok())
+        .and_then(|v| {
+            let pane = &v["result"]["pane"];
+            pane["foreground_cwd"]
+                .as_str()
+                .or_else(|| pane["cwd"].as_str())
+                .map(String::from)
+        });
+    let cwd_repo = cwd.and_then(|dir| {
+        let out = Command::new("git")
+            .args(["-C", &dir, "remote", "get-url", "origin"])
+            .output()
+            .ok()?;
+        out.status.success().then_some(())?;
+        shortref::github_repo_from_remote(String::from_utf8_lossy(&out.stdout).trim())
+    });
+    shortref::RefContext {
+        cwd_repo,
+        gits_root: dirs::home_dir().map(|h| h.join("gits")),
+    }
 }
 
 /// Capture the recent scrollback of `pane_id` via `herdr pane read`.
