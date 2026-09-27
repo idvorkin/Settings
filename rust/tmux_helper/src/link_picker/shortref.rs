@@ -5,7 +5,9 @@
 //! ponytail: this guesses the repo. Delete it once herdr's `pane read`
 //! returns OSC 8 targets (herdrdev/herdr discussion #4235).
 
-use super::detect::{classify_github, url_regex, Category, Item};
+use super::detect::{
+    classify_github, is_github_noise_url, strip_trailing_punct, url_regex, Category, Item,
+};
 use regex::Regex;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -76,7 +78,11 @@ impl ShortRefs {
             let Some(repo) = resolve_repo(name, &self.ctx, &self.seen) else {
                 continue;
             };
-            let kind = if self.seen.prs.contains(&(repo.clone(), num.to_string())) {
+            let kind = if self
+                .seen
+                .prs
+                .contains(&(repo.to_ascii_lowercase(), num.to_string()))
+            {
                 "pull"
             } else {
                 "issues"
@@ -91,8 +97,9 @@ impl ShortRefs {
 /// GitHub repos and PR numbers named by full URLs in the scrollback.
 #[derive(Default)]
 struct ScrollbackRepos {
-    /// `owner/repo`, first-seen order, deduplicated.
+    /// `owner/repo`, first-seen order, deduplicated case-insensitively.
     repos: Vec<String>,
+    /// Lowercased `owner/repo` and PR number.
     prs: HashSet<(String, String)>,
 }
 
@@ -100,7 +107,11 @@ impl ScrollbackRepos {
     fn scan(raw: &str) -> Self {
         let mut me = Self::default();
         for m in url_regex().find_iter(raw) {
-            let Some(item) = classify_github(m.as_str(), 0) else {
+            let url = strip_trailing_punct(m.as_str());
+            if is_github_noise_url(url) {
+                continue;
+            }
+            let Some(item) = classify_github(url, 0) else {
                 continue;
             };
             let Some(repo) = item
@@ -112,9 +123,9 @@ impl ScrollbackRepos {
             };
             if item.category == Category::PullRequest {
                 let num = item.key.trim_start_matches('#').to_string();
-                me.prs.insert((repo.clone(), num));
+                me.prs.insert((repo.to_ascii_lowercase(), num));
             }
-            if !me.repos.contains(&repo) {
+            if !me.repos.iter().any(|r| r.eq_ignore_ascii_case(&repo)) {
                 me.repos.push(repo);
             }
         }
@@ -138,8 +149,12 @@ fn resolve_repo(name: Option<&str>, ctx: &RefContext, seen: &ScrollbackRepos) ->
     }
     let lower = name.to_ascii_lowercase();
     let repo_name = |r: &String| r.rsplit('/').next().unwrap_or("").to_ascii_lowercase();
-    let cwd = ctx.cwd_repo.iter();
-    let candidates: Vec<&String> = cwd.chain(seen.repos.iter()).collect();
+    let mut candidates: Vec<&String> = Vec::new();
+    for r in ctx.cwd_repo.iter().chain(seen.repos.iter()) {
+        if !candidates.iter().any(|c| c.eq_ignore_ascii_case(r)) {
+            candidates.push(r);
+        }
+    }
     if let Some(r) = unique(candidates.iter().filter(|r| repo_name(r) == lower)) {
         return Some((*r).clone());
     }
@@ -254,6 +269,36 @@ mod tests {
             refs(raw, ctx(None)),
             ["https://github.com/idvorkin/chop-conventions/issues/14"]
         );
+    }
+
+    #[test]
+    fn named_ref_resolves_when_cwd_repo_also_in_scrollback() {
+        let raw =
+            "https://github.com/idvorkin/chop-conventions/pull/5\nchop#14 and chop-conventions#15";
+        let want = [
+            "https://github.com/idvorkin/chop-conventions/issues/14",
+            "https://github.com/idvorkin/chop-conventions/issues/15",
+        ];
+        assert_eq!(refs(raw, ctx(Some("idvorkin/chop-conventions"))), want);
+        let raw = "https://github.com/idvorkin/settings/pull/5\nsett#14";
+        assert_eq!(
+            refs(raw, ctx(Some("idvorkin/Settings"))),
+            ["https://github.com/idvorkin/Settings/issues/14"]
+        );
+    }
+
+    #[test]
+    fn scrollback_urls_drop_trailing_punct_and_noise() {
+        let raw = "see https://github.com/o/r. and https://github.com/o/r/pull/14.\nr#14 then #9";
+        assert_eq!(
+            refs(raw, ctx(None)),
+            [
+                "https://github.com/o/r/pull/14",
+                "https://github.com/o/r/issues/9"
+            ]
+        );
+        let raw = "open https://github.com/x/y/pull/new\nhttps://github.com/o/r/pull/1\n#9";
+        assert_eq!(refs(raw, ctx(None)), ["https://github.com/o/r/issues/9"]);
     }
 
     #[test]
