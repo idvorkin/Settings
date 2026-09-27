@@ -109,24 +109,25 @@ entries marked ✱ override a herdr default to restore tmux muscle memory.
 
 ### Agents
 
-| Keys       | Action         | tmux       |
-| ---------- | -------------- | ---------- |
-| `prefix+[` | previous agent | herdr-only |
-| `prefix+]` | next agent     | herdr-only |
+| Keys       | Action           | tmux                          |
+| ---------- | ---------------- | ----------------------------- |
+| `prefix+p` | previous agent ✱ | `p` previous-window (swapped) |
+| `prefix+n` | next agent ✱     | `n` next-window (swapped)     |
 
-Both actions are unbound by default. They step through panes running a detected
-agent, across workspaces, in agent-panel order.
+Both actions are unbound by default; they take `n`/`p` because cycling agents is
+the common case, and tabs move to `[`/`]`. They step through panes running a
+detected agent, across workspaces, in agent-panel order.
 
 ### Tabs (tmux windows)
 
-| Keys             | Action       | tmux                     |
-| ---------------- | ------------ | ------------------------ |
-| `prefix+shift+n` | new tab ✱    | `c` new-window (swapped) |
-| `prefix+n`       | next tab     | `n` next-window          |
-| `prefix+p`       | previous tab | `p` previous-window      |
-| `prefix+1..9`    | switch tab   | `1-9` select-window      |
-| `prefix+,`       | rename tab ✱ | `,` rename-window        |
-| `prefix+&`       | close tab ✱  | `&` kill-window          |
+| Keys             | Action         | tmux                          |
+| ---------------- | -------------- | ----------------------------- |
+| `prefix+shift+n` | new tab ✱      | `c` new-window (swapped)      |
+| `prefix+]`       | next tab ✱     | `n` next-window (swapped)     |
+| `prefix+[`       | previous tab ✱ | `p` previous-window (swapped) |
+| `prefix+1..9`    | switch tab     | `1-9` select-window           |
+| `prefix+,`       | rename tab ✱   | `,` rename-window             |
+| `prefix+&`       | close tab ✱    | `&` kill-window               |
 
 ### Panes
 

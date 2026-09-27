@@ -47,13 +47,13 @@ goto = "prefix+g"
 # switch_workspace = "prefix+shift+1..9"   # optional direct workspace jump
 
 # --- agents (panes running a detected agent, in agent-panel order) ----------
-previous_agent = "prefix+["           # herdr-only: cycle agents backwards          (herdr default: unbound)
-next_agent = "prefix+]"               # herdr-only: cycle agents forwards           (herdr default: unbound)
+previous_agent = "prefix+p"           # swapped with previous_tab: cycle agents back (herdr default: unbound)
+next_agent = "prefix+n"               # swapped with next_tab: cycle agents forwards (herdr default: unbound)
 
 # --- tabs (tmux windows) -----------------------------------------------------
 new_tab = "prefix+shift+n"            # swapped with new_workspace (tmux: c new-window)
-next_tab = "prefix+n"                 # tmux: n next-window
-previous_tab = "prefix+p"             # tmux: p previous-window
+next_tab = "prefix+]"                 # swapped with next_agent (tmux: n next-window)
+previous_tab = "prefix+["             # swapped with previous_agent (tmux: p previous-window)
 switch_tab = "prefix+1..9"            # tmux: 1-9 select-window (base-index 1)
 rename_tab = "prefix+comma"           # tmux: , rename-window         (herdr default: prefix+shift+t)
 close_tab = "prefix+&"                # tmux: & kill-window           (herdr default: prefix+shift+x)
