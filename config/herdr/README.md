@@ -107,6 +107,16 @@ entries marked ✱ override a herdr default to restore tmux muscle memory.
 | `prefix+shift+g` | new git worktree   | herdr-only                      |
 | `prefix+g`       | goto               | herdr-only                      |
 
+### Agents
+
+| Keys       | Action         | tmux       |
+| ---------- | -------------- | ---------- |
+| `prefix+[` | previous agent | herdr-only |
+| `prefix+]` | next agent     | herdr-only |
+
+Both actions are unbound by default. They step through panes running a detected
+agent, across workspaces, in agent-panel order.
+
 ### Tabs (tmux windows)
 
 | Keys             | Action       | tmux                     |

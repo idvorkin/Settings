@@ -46,6 +46,10 @@ new_worktree = "prefix+shift+g"
 goto = "prefix+g"
 # switch_workspace = "prefix+shift+1..9"   # optional direct workspace jump
 
+# --- agents (panes running a detected agent, in agent-panel order) ----------
+previous_agent = "prefix+["           # herdr-only: cycle agents backwards          (herdr default: unbound)
+next_agent = "prefix+]"               # herdr-only: cycle agents forwards           (herdr default: unbound)
+
 # --- tabs (tmux windows) -----------------------------------------------------
 new_tab = "prefix+shift+n"            # swapped with new_workspace (tmux: c new-window)
 next_tab = "prefix+n"                 # tmux: n next-window
