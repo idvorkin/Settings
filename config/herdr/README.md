@@ -61,7 +61,7 @@ produces the confusing panel.
 
 Ways to fix it, best first:
 
-- **One workspace per repo** (`prefix+shift+n`). This is what the agent panel is
+- **One workspace per repo** (`prefix+c`). This is what the agent panel is
   designed around, and it makes the workspace column meaningful again.
   Note `herdr tab` has **no move command**, so a tab cannot be relocated wholesale.
   Individual panes can move, though — `herdr pane move <PANE_ID> --tab <TAB_ID>`,
@@ -102,21 +102,21 @@ entries marked ✱ override a herdr default to restore tmux muscle memory.
 | `prefix+(`       | previous workspace | `(` switch-client -p            |
 | `prefix+)`       | next workspace     | `)` switch-client -n            |
 | `prefix+$`       | rename workspace ✱ | `$` rename-session              |
-| `prefix+shift+n` | new workspace      | —                               |
+| `prefix+c`       | new workspace ✱    | `c` new-window (swapped)        |
 | `prefix+shift+d` | close workspace    | prompts, `confirm_close = true` |
 | `prefix+shift+g` | new git worktree   | herdr-only                      |
 | `prefix+g`       | goto               | herdr-only                      |
 
 ### Tabs (tmux windows)
 
-| Keys          | Action       | tmux                |
-| ------------- | ------------ | ------------------- |
-| `prefix+c`    | new tab      | `c` new-window      |
-| `prefix+n`    | next tab     | `n` next-window     |
-| `prefix+p`    | previous tab | `p` previous-window |
-| `prefix+1..9` | switch tab   | `1-9` select-window |
-| `prefix+,`    | rename tab ✱ | `,` rename-window   |
-| `prefix+&`    | close tab ✱  | `&` kill-window     |
+| Keys             | Action       | tmux                     |
+| ---------------- | ------------ | ------------------------ |
+| `prefix+shift+n` | new tab ✱    | `c` new-window (swapped) |
+| `prefix+n`       | next tab     | `n` next-window          |
+| `prefix+p`       | previous tab | `p` previous-window      |
+| `prefix+1..9`    | switch tab   | `1-9` select-window      |
+| `prefix+,`       | rename tab ✱ | `,` rename-window        |
+| `prefix+&`       | close tab ✱  | `&` kill-window          |
 
 ### Panes
 

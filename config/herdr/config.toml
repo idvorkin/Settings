@@ -40,14 +40,14 @@ workspace_picker = "prefix+w"         # tmux: C-a w -> rmux_helper pick-tui
 previous_workspace = "prefix+("       # tmux: ( switch-client -p
 next_workspace = "prefix+)"           # tmux: ) switch-client -n
 rename_workspace = "prefix+$"         # tmux: $ rename-session        (herdr default: prefix+shift+w)
-new_workspace = "prefix+shift+n"
+new_workspace = "prefix+c"            # tmux: c is new-window; here it makes a workspace
 close_workspace = "prefix+shift+d"    # prompts (ui.confirm_close = true)
 new_worktree = "prefix+shift+g"
 goto = "prefix+g"
 # switch_workspace = "prefix+shift+1..9"   # optional direct workspace jump
 
 # --- tabs (tmux windows) -----------------------------------------------------
-new_tab = "prefix+c"                  # tmux: c new-window
+new_tab = "prefix+shift+n"            # swapped with new_workspace (tmux: c new-window)
 next_tab = "prefix+n"                 # tmux: n next-window
 previous_tab = "prefix+p"             # tmux: p previous-window
 switch_tab = "prefix+1..9"            # tmux: 1-9 select-window (base-index 1)
