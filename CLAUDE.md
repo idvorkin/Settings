@@ -129,7 +129,7 @@ console.print("[green]Success![/green] Operation completed")
 - `if __name__ == "__main__": sys.exit(pytest.main([__file__, "-v"]))` at the bottom lets direct execution invoke pytest on the file.
 - For CLI commands, inject dependencies via ABC (see `PlatformAdapter` in `py/running_servers.py`) and test with a MockAdapter subclass + `typer.testing.CliRunner`.
 - Mock external dependencies; test both success and error cases.
-- `just test` runs nvim lua tests, **not** Python tests — run Python test files directly.
+- `just test` runs the nvim lua tests plus the Python test files listed in the `justfile` — a new Python test file must be added there.
 
 ## Shared Conventions
 
