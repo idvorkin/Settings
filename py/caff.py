@@ -510,7 +510,8 @@ class Waker:
 
     Needs root, so the calls go through `sudo -n` and the mac/caff.sudoers rule.
     A failed `wake` disables waking for the rest of the run (warned once); a
-    failed `cancel` doesn't, since a stray wake is harmless.
+    failed `cancel` doesn't, since a stray wake is harmless. Wakes that outlive
+    their run (crash, SIGKILL, reboot) are swept at the next startup.
     """
 
     def __init__(
@@ -545,11 +546,44 @@ class Waker:
         )
 
     def disarm(self, now: datetime) -> None:
+        """A failed cancel keeps `at`, so the next tick retries until it fires."""
         if self.at is None:
             return
-        if self.at > now:  # a wake that already fired has nothing to cancel
-            self.run(["cancel", "wake", self.at.strftime(PMSET_DATE), WAKE_OWNER])
+        if self.at > now and not self.run(
+            ["cancel", "wake", self.at.strftime(PMSET_DATE), WAKE_OWNER]
+        ):
+            return
         self.at = None
+
+    def sweep(self, sched: str) -> None:
+        """Cancel caff wakes left behind by a crashed, killed, or rebooted run."""
+        for when in parse_owned_wakes(sched):
+            self.run(["cancel", "wake", when.strftime(PMSET_DATE), WAKE_OWNER])
+
+
+_SCHED_WAKE_RE = re.compile(
+    r"wake at (\d\d/\d\d/\d{4} \d\d:\d\d:\d\d) by '" + re.escape(WAKE_OWNER) + "'"
+)
+
+
+def parse_owned_wakes(output: str) -> list[datetime]:
+    """caff-owned wakes in `pmset -g sched` output, e.g.
+    ` [0]  wake at 09/27/2026 17:25:22 by 'caff'`."""
+    return [
+        datetime.strptime(m.group(1), "%m/%d/%Y %H:%M:%S")
+        for m in _SCHED_WAKE_RE.finditer(output)
+    ]
+
+
+def read_sched() -> str:
+    """`pmset -g sched` output (no root needed); empty when pmset can't be asked."""
+    try:
+        result = subprocess.run(
+            ["pmset", "-g", "sched"], capture_output=True, text=True, timeout=5
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    return result.stdout if result.returncode == 0 else ""
 
 
 def write_state(
@@ -719,6 +753,8 @@ def run(
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
         raise typer.Exit(2)
+    if waker is not None:  # no other caff is running, so every caff wake is orphaned
+        waker.sweep(read_sched())
     until = f"until {deadline:%H:%M}" if deadline else "forever"
     console.print(
         f"Caffeinating {until}: plugged in, or on battery above {floor}% "
