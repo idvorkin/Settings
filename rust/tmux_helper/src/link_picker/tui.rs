@@ -686,6 +686,45 @@ mod help_overlay_tests {
         ));
     }
 
+    fn link_row() -> Row {
+        Row {
+            category: Category::OtherLink,
+            canonical: "https://example.com".into(),
+            key: "example.com".into(),
+            repo_or_host: "example.com".into(),
+            context: "see https://example.com".into(),
+            enriched: None,
+            count: 1,
+            most_recent_line: 0,
+        }
+    }
+
+    #[test]
+    fn link_row_defaults_to_open_on_mac() {
+        for mux in [Multiplexer::Tmux, Multiplexer::Herdr] {
+            assert!(matches!(
+                default_action_on(&link_row(), mux, true),
+                Action::Open(_)
+            ));
+        }
+    }
+
+    #[test]
+    fn link_row_defaults_to_yank_off_mac() {
+        assert!(matches!(
+            default_action_on(&link_row(), Multiplexer::Tmux, false),
+            Action::Yank(_)
+        ));
+    }
+
+    #[test]
+    fn server_row_never_opens_on_mac() {
+        assert!(matches!(
+            default_action_on(&server_row(), Multiplexer::Herdr, true),
+            Action::Yank(_)
+        ));
+    }
+
     #[test]
     fn s_key_types_into_the_query_under_herdr() {
         // Under tmux `s` fires Ssh; under herdr it must fall through to the
@@ -916,11 +955,13 @@ fn help_lines(mux: Multiplexer) -> Vec<Line<'static>> {
         Line::from(""),
         Line::from(Span::styled("Actions (empty query)", hdr)),
     ];
-    if is_tmux {
-        lines.push(kv("Enter", "default: yank URL / ssh server or IP"));
-    } else {
-        lines.push(kv("Enter", "default: yank URL / server / IP via OSC 52"));
-    }
+    let enter_help = match (cfg!(target_os = "macos"), is_tmux) {
+        (true, true) => "default: open URL / ssh server or IP",
+        (true, false) => "default: open URL / yank server or IP",
+        (false, true) => "default: yank URL / ssh server or IP",
+        (false, false) => "default: yank URL / server / IP via OSC 52",
+    };
+    lines.push(kv("Enter", enter_help));
     lines.push(kv("y", "yank canonical via OSC 52"));
     lines.push(kv("o", "open / xdg-open in browser"));
     lines.push(kv("g", "gh view --web (GitHub rows only)"));
@@ -1248,9 +1289,17 @@ impl App {
 /// Default Enter action per category (see spec §Actions → Default).
 /// Under herdr, Server/Ip rows fall back to Yank — the Ssh action is
 /// tmux-only, and a dead Enter key would be worse than copying the host.
+/// On macOS a browser is right there, so links open instead of yanking;
+/// elsewhere (e.g. the devvm) `open` has nowhere to go, so links yank.
 pub(crate) fn default_action(row: &Row, mux: Multiplexer) -> Action {
+    default_action_on(row, mux, cfg!(target_os = "macos"))
+}
+
+fn default_action_on(row: &Row, mux: Multiplexer, is_mac: bool) -> Action {
     match row.category {
         Category::Server | Category::Ip if mux == Multiplexer::Tmux => Action::Ssh(row.clone()),
+        Category::Server | Category::Ip => Action::Yank(row.clone()),
+        _ if is_mac => Action::Open(row.clone()),
         _ => Action::Yank(row.clone()),
     }
 }
