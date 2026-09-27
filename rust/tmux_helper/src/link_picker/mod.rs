@@ -481,7 +481,10 @@ mod orchestration_tests {
     #[test]
     fn flatten_appends_hidden_link_target() {
         let raw = "see \x1b]8;;https://github.com/o/r/pull/14\x1b\\#14\x1b]8;;\x1b\\ done";
-        assert_eq!(flatten_ansi(raw), "see #14 https://github.com/o/r/pull/14 done");
+        assert_eq!(
+            flatten_ansi(raw),
+            "see #14 https://github.com/o/r/pull/14 done"
+        );
     }
 
     #[test]
