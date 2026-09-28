@@ -30,7 +30,7 @@ Heuristics only, no model call. Tuned to how Claude Code draws into a pane: inli
 
 Lines starting with `⎿` (tool calls and their output) never yield commands. Every candidate must look like a command: its first word, past `VAR=x` assignments and `sudo`, starts with `/`, `.` or `~`, is a shell builtin (`cd`, `export`, `source`, …), or names a file on `PATH`. That check is what keeps prose after a cue line out.
 
-Hard-wrapped commands are joined back: a following line indented deeper than the command's line, or any line after a trailing `\`, is appended with one space.
+Hard-wrapped commands are joined back: up to 3 following lines indented deeper than the command's line, and any line after a trailing `\` (up to 8 lines in all), are appended with one space. A join stops at a blank line or a line starting with Claude Code's `⎿`, `⏺` or `❯`.
 
 Row columns: key = the marker (`!`, `$`, or `run` for a cue block), repo-or-host = `—`, title = the command itself (the whole command is the payload, so it is not stripped from its context line the way URLs are). The copied text is the command without its `!`/`$` marker. Detection runs under both tmux and herdr.
 

@@ -29,7 +29,8 @@ const CUE_WORDS: &[&str] = &["run", "paste", "type", "execute", "enter"];
 /// swallowing a screen of text.
 const MAX_BLOCK_LINES: usize = 8;
 
-/// Max continuation lines joined onto one command.
+/// Max hard-wrapped (deeper-indent) lines joined onto one command.
+/// Trailing-`\` continuations are bounded by `MAX_BLOCK_LINES` instead.
 const MAX_CONTINUATIONS: usize = 3;
 
 const BUILTINS: &[&str] = &[
@@ -130,20 +131,17 @@ fn join_continuations(first: &str, first_line: &str, rest: &[&str]) -> (String, 
     let base = indent(first_line);
     let mut cmd = first.to_string();
     let mut used = 0;
-    for next in rest.iter().take(MAX_CONTINUATIONS) {
-        if next
-            .trim_start()
-            .starts_with(|c: char| c == '⎿' || GUTTER.contains(&c))
-        {
+    let mut wrapped = 0;
+    for next in rest.iter().take(MAX_BLOCK_LINES) {
+        if next.trim_start().starts_with(['⎿', '⏺', '❯']) || next.trim().is_empty() {
             break;
         }
-        let deeper = indent(next) > base && !next.trim().is_empty();
-        let backslash = cmd.ends_with('\\');
-        if !(deeper || backslash) || next.trim().is_empty() {
-            break;
-        }
-        if backslash {
+        if cmd.ends_with('\\') {
             cmd.pop();
+        } else if indent(next) > base && wrapped < MAX_CONTINUATIONS {
+            wrapped += 1;
+        } else {
+            break;
         }
         cmd = format!("{} {}", cmd.trim_end(), next.trim());
         used += 1;
@@ -362,6 +360,18 @@ mod tests {
   ⎿  ○ settings-abc open
      ○ settings-def open";
         assert_eq!(cmds(raw), vec!["bd ready"]);
+    }
+
+    #[test]
+    fn long_backslash_continuation_is_joined_whole() {
+        let raw = "Run this:\n  cargo run \\\n  -v a:/a \\\n  -e B=1 \\\n  -p 80:80 \\\n  image";
+        assert_eq!(cmds(raw), vec!["cargo run -v a:/a -e B=1 -p 80:80 image"]);
+    }
+
+    #[test]
+    fn wrapped_redirect_stays_in_the_command() {
+        let raw = "  ! ls --flag\n     > /tmp/out.txt";
+        assert_eq!(cmds(raw), vec!["ls --flag > /tmp/out.txt"]);
     }
 
     #[test]
