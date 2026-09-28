@@ -6,29 +6,32 @@ use std::fmt;
 /// Categories in fixed display order. Numeric value doubles as the
 /// display position (1-indexed in the spec) and the 1-9 drill-down key.
 ///
-/// NOTE: `Ip = 10` no longer gets a single-digit drill-down key — the tui
-/// only binds 1-9. When all 10 categories are present at once, Ip must be
-/// reached via arrow keys or `ip:` search filter. This is an accepted
-/// tradeoff for adding `Gist = 6` near the GitHub group.
+/// NOTE: the tui only binds 1-9, and the key is the Nth *non-empty*
+/// category, so the trailing categories lose their digit only when nearly
+/// all are present at once. They stay reachable via arrow keys or their
+/// search tag. Accepted when `Gist` joined the GitHub group and again when
+/// `Command` took the top slot.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Category {
-    PullRequest = 1,
-    Issue = 2,
-    Commit = 3,
-    File = 4,
-    Repo = 5,
-    Gist = 6,
-    Blog = 7,
-    OtherLink = 8,
-    Server = 9,
-    Ip = 10,
+    Command = 1,
+    PullRequest = 2,
+    Issue = 3,
+    Commit = 4,
+    File = 5,
+    Repo = 6,
+    Gist = 7,
+    Blog = 8,
+    OtherLink = 9,
+    Server = 10,
+    Ip = 11,
 }
 
 impl Category {
     /// Short-name filter tag (see spec "Filtering semantics").
     pub fn tag(self) -> &'static str {
         match self {
+            Category::Command => "cmd",
             Category::PullRequest => "pr",
             Category::Issue => "issue",
             Category::Commit => "commit",
@@ -44,6 +47,7 @@ impl Category {
 
     pub fn display(self) -> &'static str {
         match self {
+            Category::Command => "Commands",
             Category::PullRequest => "Pull Requests",
             Category::Issue => "Issues",
             Category::Commit => "Commits",
@@ -60,6 +64,7 @@ impl Category {
     #[cfg(test)]
     pub fn all() -> &'static [Category] {
         &[
+            Category::Command,
             Category::PullRequest,
             Category::Issue,
             Category::Commit,
@@ -128,7 +133,7 @@ mod tests {
     #[test]
     fn category_all_is_in_display_order() {
         let nums: Vec<u8> = Category::all().iter().map(|c| *c as u8).collect();
-        assert_eq!(nums, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        assert_eq!(nums, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     }
 
     #[test]
@@ -1224,13 +1229,18 @@ pub fn parse_with(raw: &str, extra: &dyn Fn(&str, usize) -> Vec<Item>) -> Vec<Ro
     // Collect items + keep a reference to the line for context extraction.
     let lines: Vec<&str> = raw.lines().collect();
     let mut items_by_key: HashMap<(Category, String), Vec<Item>> = HashMap::new();
-    for (idx, line) in lines.iter().enumerate() {
-        for item in scan_line(line, idx).into_iter().chain(extra(line, idx)) {
-            items_by_key
-                .entry((item.category, item.canonical.clone()))
-                .or_default()
-                .push(item);
-        }
+    let per_line = lines
+        .iter()
+        .enumerate()
+        .flat_map(|(idx, line)| scan_line(line, idx).into_iter().chain(extra(line, idx)));
+    // Commands can span lines (a cue line, then a block), so they scan the
+    // whole capture rather than one line at a time.
+    let commands = super::commands::find(&lines, &super::commands::on_path);
+    for item in per_line.chain(commands) {
+        items_by_key
+            .entry((item.category, item.canonical.clone()))
+            .or_default()
+            .push(item);
     }
 
     // Build rows: most_recent_line = max line_index in the group.
@@ -1240,7 +1250,13 @@ pub fn parse_with(raw: &str, extra: &dyn Fn(&str, usize) -> Vec<Item>) -> Vec<Ro
             let count = group.len();
             let most_recent = group.iter().map(|i| i.line_index).max().unwrap_or(0);
             let exemplar = group.iter().find(|i| i.line_index == most_recent).unwrap();
-            let context = make_context(lines[most_recent], &canonical, 60);
+            // A command row's payload IS the thing to show; stripping it from
+            // its line (as for URLs) would leave just the `!` marker.
+            let context = if category == Category::Command {
+                truncate_to_width(&canonical, 100)
+            } else {
+                make_context(lines[most_recent], &canonical, 60)
+            };
             Row {
                 category,
                 canonical,
