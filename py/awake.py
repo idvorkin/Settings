@@ -54,6 +54,7 @@ from typing import Annotated
 import typer
 from rich.console import Console, Group
 from rich.live import Live
+from rich.markup import escape
 from rich.text import Text
 
 console = Console()
@@ -185,11 +186,12 @@ class Agents:
     blocked: tuple[str, ...] = ()  # waiting on a human (permission prompt etc.)
 
     def describe(self) -> str:
+        """Rich markup: agent names are escaped, they come from Herdr."""
         line = f"agents {len(self.busy)}/{self.total} busy"
         if self.busy:
-            line += f" ({', '.join(self.busy)})"
+            line += f" ({escape(', '.join(self.busy))})"
         if self.blocked:
-            line += f", {len(self.blocked)} blocked ({', '.join(self.blocked)})"
+            line += f", {len(self.blocked)} blocked ({escape(', '.join(self.blocked))})"
         return line
 
 

@@ -728,6 +728,22 @@ def test_info_with_a_watcher(cli_env):
     assert f"awake running (pid {os.getpid()}, floor 50%)" in result.output
 
 
+def test_info_shows_markup_like_agent_names_verbatim(cli_env, monkeypatch):
+    agents = Agents(busy=("w1:p1 [bold]",), total=2, blocked=("w2:p1 [/red]",))
+    monkeypatch.setattr(awake, "read_agents", lambda: agents)
+    result = runner.invoke(awake.app, ["info"])
+    assert result.exit_code == 0, result.output
+    assert "busy (w1:p1 [bold]), 1 blocked (w2:p1 [/red])" in " ".join(
+        result.output.split()
+    )
+    awake.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, datetime.now())
+    result = runner.invoke(awake.app, ["info"])
+    assert result.exit_code == 0, result.output
+    assert "busy (w1:p1 [bold]), 1 blocked (w2:p1 [/red])" in " ".join(
+        result.output.split()
+    )
+
+
 @pytest.mark.parametrize(
     "argv,expected",
     [
