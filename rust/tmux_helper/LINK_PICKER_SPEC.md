@@ -8,15 +8,31 @@
 
 ## Categories (fixed display order)
 
-1. Pull Requests — `github.com/OWNER/REPO/pull/N`
-2. Issues — `github.com/OWNER/REPO/issues/N`
-3. Commits — `github.com/OWNER/REPO/commit/SHA`
-4. Files — `github.com/OWNER/REPO/(blob|tree)/REF/PATH`
-5. Repos — `github.com/OWNER/REPO` (bare)
-6. Blog — host ∈ `BLOG_HOSTS` (v1: `idvorkin.github.io`)
-7. Other links — any `https?://` not matched above
-8. Servers — `ssh` context + Tailscale (`c-NNNN`, `*.ts.net`)
-9. IPs — IPv4 with version-string suppression
+1. Commands — commands an agent asked the human to run (see [Command detection](#command-detection))
+2. Pull Requests — `github.com/OWNER/REPO/pull/N`
+3. Issues — `github.com/OWNER/REPO/issues/N`
+4. Commits — `github.com/OWNER/REPO/commit/SHA`
+5. Files — `github.com/OWNER/REPO/(blob|tree)/REF/PATH`
+6. Repos — `github.com/OWNER/REPO` (bare)
+7. Gists — `gist.github.com/OWNER/ID`
+8. Blog — host ∈ `BLOG_HOSTS` (v1: `idvorkin.github.io`)
+9. Other links — any `https?://` not matched above
+10. Servers — `ssh` context + Tailscale (`c-NNNN`, `*.ts.net`)
+11. IPs — IPv4 with version-string suppression
+
+## Command detection
+
+Heuristics only, no model call. Tuned to how Claude Code draws into a pane: inline-code backticks are stripped, fenced code blocks lose their fences, and the agent's own tool calls render as `⎿  $ cmd`. A command is detected when:
+
+1. A line starts with `! cmd` or `$ cmd`, after skipping gutter glyphs (`⏺ ❯ ▎ │ >`), list markers (`- `, `* `, `• `, `1. `) and backticks wrapping the whole line. The prompt echo of a human's own `! cmd` counts too.
+2. `` `! cmd` `` appears anywhere in a line (agents that keep backticks).
+3. It is one of the lines right after a cue line: a line ending in `:` that contains `run`, `paste`, `type`, `execute` or `enter` ("Run this:", "type this in the prompt:"). One blank line may sit between the cue and the block. The block ends at a blank line or the first line that is not a command, and is capped at 8 lines.
+
+Lines starting with `⎿` (tool calls and their output) never yield commands. Every candidate must look like a command: its first word, past `VAR=x` assignments and `sudo`, starts with `/`, `.` or `~`, is a shell builtin (`cd`, `export`, `source`, …), or names a file on `PATH`. That check is what keeps prose after a cue line out.
+
+Hard-wrapped commands are joined back: a following line indented deeper than the command's line, or any line after a trailing `\`, is appended with one space.
+
+Row columns: key = the marker (`!`, `$`, or `run` for a cue block), repo-or-host = `—`, title = the command itself (the whole command is the payload, so it is not stripped from its context line the way URLs are). The copied text is the command without its `!`/`$` marker. Detection runs under both tmux and herdr.
 
 ## Dedup
 
@@ -55,13 +71,14 @@ Categories: fixed order above. Within a category: most-recent line first (closes
 
 Default `Enter` (on leaf):
 
+- Commands → OSC 52 yank, under every backend and OS. A command is copied to paste, never run and never opened.
 - URL categories → **on macOS builds**: `open` (same as `o`), under both tmux and herdr. **Elsewhere** (e.g. the Linux devvm, which has no local browser): OSC 52 yank + print URL to stdout
 - Servers / IPs → **under tmux**: `tmux new-window -t "$pane_id" -c '#{pane_current_path}' "ssh <host>"`. **Under herdr**: `Ssh` is not offered (opening a tmux window isn't meaningful there), so these rows default to the same OSC 52 yank as URL categories — a dead `Enter` key would be worse than copying the host.
 
 Override keys (query must be empty — lowercase letters otherwise type into search):
 
 - `y` — yank (OSC 52)
-- `o` — `open`/`xdg-open`
+- `o` — `open`/`xdg-open`. Inert on Commands rows.
 - `g` — `gh <kind> view --web -R OWNER/REPO <id>` (GitHub rows only)
 - `s` — force ssh. **tmux only** — under herdr the key guard requires tmux, so `s` falls through to the generic filter-query handler and types into the search field instead.
 
@@ -71,7 +88,7 @@ The OSC 52 yank mechanism itself differs by backend: under tmux the payload goes
 
 Token-based substring match. Tokens split on whitespace; letter/digit boundaries split once per transition (multi-digit tokens stay whole — Divergence 1 from `pick-tui`).
 
-Category tag `pr`/`issue`/`commit`/`file`/`repo`/`blog`/`link`/`server`/`ip` prefixes each row's search string with a `\x1f` separator (Divergence 2).
+Category tag `cmd`/`pr`/`issue`/`commit`/`file`/`repo`/`gist`/`blog`/`link`/`server`/`ip` prefixes each row's search string with a `\x1f` separator (Divergence 2).
 
 Digit-only tokens match the `key` column only.
 

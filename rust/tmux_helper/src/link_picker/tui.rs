@@ -44,7 +44,7 @@ pub struct Source {
 pub(crate) fn empty_state_lines(source: &Source) -> Vec<String> {
     vec![
         String::new(),
-        "No links, servers, or IPs found".to_string(),
+        "No commands, links, servers, or IPs found".to_string(),
         String::new(),
         format!(
             "read {} — {} line{} of scrollback",
@@ -155,16 +155,17 @@ fn sentinel_to_category(s: usize) -> Option<Category> {
         return None;
     }
     match s - SENTINEL_BASE {
-        1 => Some(Category::PullRequest),
-        2 => Some(Category::Issue),
-        3 => Some(Category::Commit),
-        4 => Some(Category::File),
-        5 => Some(Category::Repo),
-        6 => Some(Category::Gist),
-        7 => Some(Category::Blog),
-        8 => Some(Category::OtherLink),
-        9 => Some(Category::Server),
-        10 => Some(Category::Ip),
+        1 => Some(Category::Command),
+        2 => Some(Category::PullRequest),
+        3 => Some(Category::Issue),
+        4 => Some(Category::Commit),
+        5 => Some(Category::File),
+        6 => Some(Category::Repo),
+        7 => Some(Category::Gist),
+        8 => Some(Category::Blog),
+        9 => Some(Category::OtherLink),
+        10 => Some(Category::Server),
+        11 => Some(Category::Ip),
         _ => None,
     }
 }
@@ -560,7 +561,7 @@ mod help_overlay_tests {
         // The whole point of the panel: distinguish "the tool is broken"
         // from "that pane has no links in it."
         let body = empty_state_lines(&src()).join("\n");
-        assert!(body.contains("No links, servers, or IPs found"), "{body}");
+        assert!(body.contains("No commands, links, servers, or IPs found"), "{body}");
         assert!(body.contains("w9:p1"), "must name the pane it read: {body}");
         assert!(body.contains("53 lines"), "must report capture depth: {body}");
         assert!(body.contains("Esc / q to close"), "must say how to dismiss: {body}");
@@ -611,7 +612,7 @@ mod help_overlay_tests {
             .map(|c| c.symbol())
             .collect();
         assert!(painted.contains("Links"), "keeps the picker's titled border");
-        assert!(painted.contains("No links, servers, or IPs found"), "{painted}");
+        assert!(painted.contains("No commands, links, servers, or IPs found"), "{painted}");
         assert!(painted.contains("w9:p1"), "{painted}");
     }
 
@@ -723,6 +724,48 @@ mod help_overlay_tests {
             default_action_on(&server_row(), Multiplexer::Herdr, true),
             Action::Yank(_)
         ));
+    }
+
+    fn command_row() -> Row {
+        Row {
+            category: Category::Command,
+            canonical: "bash ~/gits/settings/apply.sh".into(),
+            key: "!".into(),
+            repo_or_host: "—".into(),
+            context: "bash ~/gits/settings/apply.sh".into(),
+            enriched: None,
+            count: 1,
+            most_recent_line: 0,
+        }
+    }
+
+    #[test]
+    fn command_row_always_defaults_to_yank() {
+        for mux in [Multiplexer::Tmux, Multiplexer::Herdr] {
+            for is_mac in [true, false] {
+                assert!(matches!(
+                    default_action_on(&command_row(), mux, is_mac),
+                    Action::Yank(_)
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn o_key_does_not_open_a_command() {
+        let mut app = App::new(vec![command_row()], Multiplexer::Herdr);
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Char('o'));
+        assert!(app.action.is_none());
+    }
+
+    #[test]
+    fn enter_on_command_row_yanks_it() {
+        let mut app = App::new(vec![command_row()], Multiplexer::Herdr);
+        handle_key(&mut app, KeyModifiers::NONE, KeyCode::Enter);
+        match app.action {
+            Some(Action::Yank(row)) => assert_eq!(row.canonical, "bash ~/gits/settings/apply.sh"),
+            other => panic!("expected Yank, got {other:?}"),
+        }
     }
 
     #[test]
@@ -962,8 +1005,9 @@ fn help_lines(mux: Multiplexer) -> Vec<Line<'static>> {
         (false, false) => "default: yank URL / server / IP via OSC 52",
     };
     lines.push(kv("Enter", enter_help));
+    lines.push(kv("", "commands: always copy, never run or open"));
     lines.push(kv("y", "yank canonical via OSC 52"));
-    lines.push(kv("o", "open / xdg-open in browser"));
+    lines.push(kv("o", "open / xdg-open in browser (not commands)"));
     lines.push(kv("g", "gh view --web (GitHub rows only)"));
     if is_tmux {
         lines.push(kv("s", "force ssh in new tmux window"));
@@ -1190,7 +1234,9 @@ fn handle_key(app: &mut App, mods: KeyModifiers, code: KeyCode) {
             }
         }
         KeyCode::Char('o') if mods.is_empty() && app.query.is_empty() => {
-            if let Some(row) = app.selected_leaf() {
+            // A command is text to paste, not a URL: `open` on it would hand
+            // `bash apply.sh` to Launch Services.
+            if let Some(row) = app.selected_leaf().filter(|r| r.category != Category::Command) {
                 app.action = Some(Action::Open(row));
             }
         }
@@ -1291,12 +1337,14 @@ impl App {
 /// tmux-only, and a dead Enter key would be worse than copying the host.
 /// On macOS a browser is right there, so links open instead of yanking;
 /// elsewhere (e.g. the devvm) `open` has nowhere to go, so links yank.
+/// Command rows always yank: the point is to paste them, never run them.
 pub(crate) fn default_action(row: &Row, mux: Multiplexer) -> Action {
     default_action_on(row, mux, cfg!(target_os = "macos"))
 }
 
 fn default_action_on(row: &Row, mux: Multiplexer, is_mac: bool) -> Action {
     match row.category {
+        Category::Command => Action::Yank(row.clone()),
         Category::Server | Category::Ip if mux == Multiplexer::Tmux => Action::Ssh(row.clone()),
         Category::Server | Category::Ip => Action::Yank(row.clone()),
         _ if is_mac => Action::Open(row.clone()),

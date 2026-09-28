@@ -1,6 +1,7 @@
 //! Scrollback link picker — top-level orchestration.
 //! See spec docs/superpowers/specs/2026-04-12-scrollback-link-picker-design.md §Execution Flow.
 
+pub mod commands;
 pub mod detect;
 pub mod enrich;
 pub mod shortref;
