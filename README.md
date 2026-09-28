@@ -10,6 +10,22 @@ The macOS Y implementation and tests now live in
 The installed `y` command and `py/y.py` forward arguments to the bundled script.
 For another checkout or imported workflow, set `IGOR_Y_SCRIPT` to its `y/y.py`.
 
+## Mac apps
+
+What a new Mac gets, each cloned into `~/gits/<repo>`:
+
+| App | What it is | Install |
+|---|---|---|
+| [Igor Tools](https://github.com/idvorkin/alfred) | Alfred workflows, including `y` | see above |
+| [yabai](https://github.com/idvorkin/yabai) (fork) | tiling window manager, with macOS 27 fixes | [build from the fork](https://github.com/idvorkin/alfred#yabai-space-focus-on-macos-27) |
+| [Window Sweaters](https://github.com/idvorkin/window-sweaters) (fork) | knitted window borders, plus Focused Window Only | `./scripts/build-app.sh && python3 scripts/install-local.py` |
+| [LCD Timer](https://github.com/idvorkin/lcd-timer) | countdown that looks like a gym's LED clock | `just install` |
+| [Magic Monitor](https://github.com/idvorkin/magic-monitor-native) | camera practice mirror with instant replay | `just install` |
+| [omnifocus_cli](https://github.com/idvorkin/omnifocus_cli) | OmniFocus from the command line | `just global-install` |
+
+`just install` copies the app into `/Applications`; `just live-install` links it to the checkout's build instead,
+so each rebuild is what opens.
+
 ## Y window numbers
 
 Show numbered badges, then target a window by its displayed number:
