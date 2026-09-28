@@ -113,7 +113,7 @@ Backend-specific dispatch after that:
 
 ## Empty state
 
-When scrollback contains no detectable items, the TUI is not entered. `pick_links` prints `pick-links: no links, servers, or IPs in scrollback` to stderr and exits 0.
+When scrollback contains no detectable items, the TUI shows a panel reading `No commands, links, servers, or IPs found`, naming the pane it read and how many lines of scrollback it captured. Only `Esc`, `q` or `Ctrl-C` dismiss it, so a stray escape sequence in a fresh popup can't close it before it's read.
 
 ## Scrollback capture
 
