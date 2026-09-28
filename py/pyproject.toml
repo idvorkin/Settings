@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = ["a", "y", "vim_python", "shorten", "tmux_helper", "gmail_reader", "chop", "ai_clip", "ux", "running_servers", "rbv", "caff"]
+py-modules = ["a", "y", "vim_python", "shorten", "tmux_helper", "gmail_reader", "chop", "ai_clip", "ux", "running_servers", "rbv", "awake"]
 
 [project.scripts]
 y = "y:app"
@@ -43,7 +43,7 @@ ai-clip = "ai_clip:app"
 ux = "ux:app"
 running-servers = "running_servers:app"
 rbv = "rbv:app"
-caff = "caff:cli"
+awake = "awake:cli"
 
 [dependency-groups]
 dev = ["ruff"]
