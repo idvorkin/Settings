@@ -9,7 +9,7 @@ fast-test:
 # All tests
 test:
     @nvim -l nvim/tests/minit.lua
-    ./py/test_caff.py -q
+    ./py/test_awake.py -q
     ./py/test_running_servers.py -q
     python3 py/test_y_launcher.py
     cd rust/tmux_helper && cargo test --quiet

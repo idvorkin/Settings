@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["pytest", "typer", "rich"]
 # ///
-"""Tests for caff. Run directly: ./test_caff.py"""
+"""Tests for awake. Run directly: ./test_awake.py"""
 
 import ctypes
 import ctypes.util
@@ -19,11 +19,12 @@ from typer.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-import caff  # noqa: E402
-from caff import (  # noqa: E402
+import awake  # noqa: E402
+from awake import (  # noqa: E402
     SPARK_CHARS,
     UNKNOWN_POWER,
     Agents,
+    BlockedAlert,
     Caffeinator,
     History,
     Mode,
@@ -70,6 +71,15 @@ HERDR = json.dumps(
         },
     }
 )
+
+
+def crew(busy: int, total: int, blocked: int = 0) -> Agents:
+    """Agents with placeholder pane names: `busy` working, `blocked` waiting."""
+    return Agents(
+        busy=tuple(f"w{i}:p1 claude" for i in range(busy)),
+        total=total,
+        blocked=tuple(f"b{i}:p1 claude" for i in range(blocked)),
+    )
 
 
 @pytest.mark.parametrize(
@@ -130,7 +140,7 @@ def test_desired_mode(power, expected):
 def test_unreadable_pmset_never_keeps_the_mac_awake(output):
     power = parse_pmset(output)
     assert power.unknown
-    assert desired_mode(power, 50, Agents(3, 3)) is Mode.SLEEP
+    assert desired_mode(power, 50, crew(3, 3)) is Mode.SLEEP
     assert "unknown" in power.describe()
 
 
@@ -144,8 +154,10 @@ class FakeRun:
     def __init__(self, stdout: str = "", returncode: int = 0, error=None) -> None:
         self.stdout, self.stderr, self.returncode = stdout, "", returncode
         self.error = error
+        self.args: list[str] | None = None
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, args, *rest, **kwargs):
+        self.args = args
         if self.error is not None:
             raise self.error
         return self
@@ -160,13 +172,13 @@ class FakeRun:
     ],
 )
 def test_read_power_failures_are_unknown(monkeypatch, run):
-    monkeypatch.setattr(caff.subprocess, "run", run)
-    assert caff.read_power() == UNKNOWN_POWER
+    monkeypatch.setattr(awake.subprocess, "run", run)
+    assert awake.read_power() == UNKNOWN_POWER
 
 
 def test_read_power_success(monkeypatch):
-    monkeypatch.setattr(caff.subprocess, "run", FakeRun(BATTERY))
-    assert caff.read_power() == Power(False, 90, 14 * 60 + 28)
+    monkeypatch.setattr(awake.subprocess, "run", FakeRun(BATTERY))
+    assert awake.read_power() == Power(False, 90, 14 * 60 + 28)
 
 
 @pytest.mark.parametrize(
@@ -182,31 +194,106 @@ def test_read_power_success(monkeypatch):
     ],
 )
 def test_read_agents_failures_are_unknown_not_a_crash(monkeypatch, run):
-    monkeypatch.setattr(caff.subprocess, "run", run)
-    assert caff.read_agents() is None
+    monkeypatch.setattr(awake.subprocess, "run", run)
+    assert awake.read_agents() is None
 
 
-def test_parse_agents_counts_only_working_as_busy():
-    assert parse_agents(HERDR) == Agents(busy=1, total=4)
+def test_parse_agents_names_busy_and_blocked_panes():
+    assert parse_agents(HERDR) == Agents(
+        busy=("w2:p1 claude",), total=4, blocked=("w3:p1 claude",)
+    )
 
 
 def test_parse_agents_empty():
-    assert parse_agents('{"result": {"agents": []}}') == Agents(0, 0)
+    assert parse_agents('{"result": {"agents": []}}') == Agents((), 0)
+
+
+def test_agents_describe_names_who_keeps_the_mac_up():
+    agents = parse_agents(HERDR)
+    assert agents.describe() == (
+        "agents 1/4 busy (w2:p1 claude), 1 blocked (w3:p1 claude)"
+    )
+    assert crew(0, 2).describe() == "agents 0/2 busy"
 
 
 @pytest.mark.parametrize(
     "power,agents,expected",
     [
-        (Power(True, 90, None), Agents(0, 3), Mode.FULL),  # AC ignores agents
-        (Power(False, 90, 100), Agents(1, 3), Mode.IDLE),  # someone is busy
-        (Power(False, 90, 100), Agents(0, 3), Mode.SLEEP),  # everyone idle
-        (Power(False, 90, 100), Agents(0, 0), Mode.SLEEP),  # no agents at all
+        (Power(True, 90, None), crew(0, 3), Mode.FULL),  # AC ignores agents
+        (Power(False, 90, 100), crew(1, 3), Mode.IDLE),  # someone is busy
+        (Power(False, 90, 100), crew(0, 3), Mode.SLEEP),  # everyone idle
+        (Power(False, 90, 100), crew(0, 3, 2), Mode.SLEEP),  # blocked isn't busy
+        (Power(False, 90, 100), crew(0, 0), Mode.SLEEP),  # no agents at all
         (Power(False, 90, 100), None, Mode.IDLE),  # Herdr unreachable: stay up
-        (Power(False, 40, 100), Agents(2, 3), Mode.SLEEP),  # floor beats agents
+        (Power(False, 40, 100), crew(2, 3), Mode.SLEEP),  # floor beats agents
     ],
 )
 def test_desired_mode_with_agents(power, agents, expected):
     assert desired_mode(power, 50, agents) is expected
+
+
+class FakeNotify:
+    def __init__(self) -> None:
+        self.messages: list[str] = []
+
+    def __call__(self, message: str) -> None:
+        self.messages.append(message)
+
+
+def test_blocked_alert_notifies_once_per_newly_blocked_agent():
+    notify = FakeNotify()
+    alert = BlockedAlert(notify)
+    alert.update(Mode.SLEEP, crew(0, 2, 1))
+    alert.update(Mode.SLEEP, crew(0, 2, 1))  # same prompt after a --wake: quiet
+    assert notify.messages == [
+        "Mac may sleep while 1 agent(s) wait on you: b0:p1 claude"
+    ]
+    alert.update(Mode.SLEEP, crew(0, 3, 2))  # a second agent got blocked
+    assert len(notify.messages) == 2
+    assert notify.messages[-1].endswith("b0:p1 claude, b1:p1 claude")
+    alert.update(Mode.SLEEP, crew(0, 3, 1))  # one answered: nothing new
+    assert len(notify.messages) == 2
+
+
+@pytest.mark.parametrize(
+    "mode,agents",
+    [
+        (Mode.IDLE, crew(1, 2, 1)),  # someone's working: the Mac stays up
+        (Mode.FULL, crew(0, 1, 1)),  # plugged in
+        (Mode.SLEEP, crew(0, 1)),  # nobody blocked
+        (Mode.SLEEP, None),  # Herdr unreachable
+    ],
+)
+def test_blocked_alert_quiet_unless_sleeping_with_a_blocked_agent(mode, agents):
+    notify = FakeNotify()
+    BlockedAlert(notify).update(mode, agents)
+    assert notify.messages == []
+
+
+def test_blocked_alert_renotifies_after_the_mac_stayed_up():
+    notify = FakeNotify()
+    alert = BlockedAlert(notify)
+    alert.update(Mode.SLEEP, crew(0, 2, 1))
+    alert.update(Mode.IDLE, crew(1, 2, 1))
+    alert.update(Mode.SLEEP, crew(0, 2, 1))
+    assert len(notify.messages) == 2
+
+
+def test_osascript_notify_passes_the_message_as_an_argument(monkeypatch):
+    run = FakeRun()
+    monkeypatch.setattr(awake.subprocess, "run", run)
+    awake._osascript_notify('pane "w1" \\ claude')
+    assert run.args is not None
+    assert run.args[0] == "osascript"
+    assert run.args[-1] == 'pane "w1" \\ claude'  # never spliced into the script
+
+
+@pytest.mark.parametrize(
+    "run", [FakeRun(returncode=1), FakeRun(error=FileNotFoundError("osascript"))]
+)
+def test_osascript_notify_failure_does_not_stop_the_watcher(monkeypatch, run):
+    monkeypatch.setattr(awake.subprocess, "run", run)
+    awake._osascript_notify("hello")
 
 
 class FakePmset:
@@ -225,10 +312,10 @@ def test_waker_arms_once_until_the_wake_fires():
     now = datetime(2026, 1, 1, 12, 0)
     waker.arm(now)
     waker.arm(now + timedelta(minutes=5))  # still pending: no second call
-    assert pmset.calls == [["wake", "01/01/26 12:10:00", "caff"]]
+    assert pmset.calls == [["wake", "01/01/26 12:10:00", "awake"]]
     assert waker.at == datetime(2026, 1, 1, 12, 10)
     waker.arm(now + timedelta(minutes=10))  # fired: re-arm for 10 more
-    assert pmset.calls[-1] == ["wake", "01/01/26 12:20:00", "caff"]
+    assert pmset.calls[-1] == ["wake", "01/01/26 12:20:00", "awake"]
 
 
 def test_waker_disarm_cancels_the_pending_wake():
@@ -238,7 +325,7 @@ def test_waker_disarm_cancels_the_pending_wake():
     waker.arm(now)
     waker.disarm(now)
     waker.disarm(now)  # nothing pending: no-op
-    assert pmset.calls[-1] == ["cancel", "wake", "01/01/26 12:10:00", "caff"]
+    assert pmset.calls[-1] == ["cancel", "wake", "01/01/26 12:10:00", "awake"]
     assert len(pmset.calls) == 2
     assert waker.at is None
 
@@ -249,7 +336,7 @@ def test_waker_does_not_cancel_a_wake_that_already_fired():
     now = datetime(2026, 1, 1, 12, 0)
     waker.arm(now)
     waker.disarm(now + timedelta(minutes=11))
-    assert pmset.calls == [["wake", "01/01/26 12:10:00", "caff"]]
+    assert pmset.calls == [["wake", "01/01/26 12:10:00", "awake"]]
     assert waker.at is None
 
 
@@ -295,27 +382,28 @@ def test_waker_forgets_an_uncancelled_wake_once_it_fires():
 SCHED = (
     "Scheduled power events:\n"
     " [0]  wake at 09/27/2026 17:25:22 by 'com.apple.alarm.user-invisible'\n"
-    " [1]  wake at 09/27/2026 18:10:00 by 'caff'\n"
-    " [2]  wake at 12/31/2026 23:59:59 by 'caff'\n"
-    " [3]  wake at 09/28/2026 07:00:00 by 'caffeine'\n"
+    " [1]  wake at 09/27/2026 18:10:00 by 'awake'\n"
+    " [2]  wake at 12/31/2026 23:59:59 by 'awake'\n"
+    " [3]  wake at 09/28/2026 07:00:00 by 'awakener'\n"
+    " [4]  wake at 09/28/2026 08:00:00 by 'caff'\n"
 )
 
 
-def test_parse_owned_wakes_keeps_only_caff():
-    assert caff.parse_owned_wakes(SCHED) == [
+def test_parse_owned_wakes_keeps_only_awake():
+    assert awake.parse_owned_wakes(SCHED) == [
         datetime(2026, 9, 27, 18, 10),
         datetime(2026, 12, 31, 23, 59, 59),
     ]
-    assert caff.parse_owned_wakes("") == []
+    assert awake.parse_owned_wakes("") == []
 
 
-def test_waker_sweep_cancels_each_orphaned_caff_wake():
+def test_waker_sweep_cancels_each_orphaned_awake_wake():
     pmset = FakePmset(ok=False)  # failed cancels are fine: a stray wake is harmless
     waker = Waker(timedelta(minutes=10), run=pmset)
     waker.sweep(SCHED)
     assert pmset.calls == [
-        ["cancel", "wake", "09/27/26 18:10:00", "caff"],
-        ["cancel", "wake", "12/31/26 23:59:59", "caff"],
+        ["cancel", "wake", "09/27/26 18:10:00", "awake"],
+        ["cancel", "wake", "12/31/26 23:59:59", "awake"],
     ]
     assert waker.at is None
     assert not waker.disabled
@@ -446,13 +534,13 @@ def test_caffeinator_kills_and_reaps_a_child_that_ignores_terminate():
 @pytest.fixture
 def state_file(tmp_path, monkeypatch):
     path = tmp_path / "state.json"
-    monkeypatch.setattr(caff, "STATE_FILE", path)
+    monkeypatch.setattr(awake, "STATE_FILE", path)
     return path
 
 
 def test_state_round_trips_for_a_live_watcher(state_file):
-    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
-    state = caff.read_state(NOW + timedelta(seconds=45))
+    awake.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
+    state = awake.read_state(NOW + timedelta(seconds=45))
     assert state is not None
     assert (state["pid"], state["mode"], state["floor"]) == (os.getpid(), "idle", 50)
     assert not state_file.with_suffix(".tmp").exists()
@@ -460,8 +548,8 @@ def test_state_round_trips_for_a_live_watcher(state_file):
 
 def test_state_that_stopped_ticking_is_not_running(state_file):
     # SIGKILLed watcher + recycled pid: the pid is alive but nothing ticks
-    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
-    assert caff.read_state(NOW + timedelta(minutes=5)) is None
+    awake.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
+    assert awake.read_state(NOW + timedelta(minutes=5)) is None
 
 
 @pytest.mark.parametrize(
@@ -475,7 +563,7 @@ def test_state_that_stopped_ticking_is_not_running(state_file):
 )
 def test_bad_state_file_is_not_running(state_file, content):
     state_file.write_text(content)
-    assert caff.read_state(NOW) is None
+    assert awake.read_state(NOW) is None
 
 
 def test_state_with_a_dead_pid_is_not_running(state_file):
@@ -484,27 +572,33 @@ def test_state_with_a_dead_pid_is_not_running(state_file):
     state_file.write_text(
         json.dumps({"pid": dead.pid, "updated": NOW.isoformat(), "interval": 30})
     )
-    assert caff.read_state(NOW) is None
+    assert awake.read_state(NOW) is None
 
 
 def test_state_from_a_watcher_predating_interval_still_counts(state_file):
-    # an older caff is still running across the upgrade: don't start a second one
+    # an older awake is still running across the upgrade: don't start a second one
     state_file.write_text(json.dumps({"pid": os.getpid(), "updated": NOW.isoformat()}))
-    assert caff.read_state(NOW + timedelta(seconds=45)) is not None
+    assert awake.read_state(NOW + timedelta(seconds=45)) is not None
 
 
 def test_unwritable_cache_does_not_stop_the_watcher(tmp_path, monkeypatch):
     blocker = tmp_path / "file"
     blocker.write_text("")
-    monkeypatch.setattr(caff, "STATE_FILE", blocker / "state.json")  # parent is a file
-    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
+    monkeypatch.setattr(awake, "STATE_FILE", blocker / "state.json")  # parent is a file
+    awake.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, NOW)
     history = History(blocker / "h.json")
     assert history.record(Power(False, 80, None), NOW)  # kept in memory
 
 
+def test_history_records_the_busy_count(tmp_path):
+    history = History(tmp_path / "h.json")
+    history.record(Power(False, 80, None), NOW, crew(2, 3))
+    assert History(tmp_path / "h.json").samples[0].busy == 2
+
+
 def test_power_events_fall_back_to_sleeping(monkeypatch):
     slept: list[float] = []
-    monkeypatch.setattr(caff.time, "sleep", slept.append)
+    monkeypatch.setattr(awake.time, "sleep", slept.append)
     events = PowerEvents(register=lambda keys: None)
     assert events.wait(30) is False
     assert slept == [30]
@@ -513,7 +607,7 @@ def test_power_events_fall_back_to_sleeping(monkeypatch):
 @pytest.mark.skipif(sys.platform != "darwin", reason="notify(3) is macOS-only")
 def test_power_events_wake_on_any_key_and_drain():
     # Real notifyd round trip on private keys: com.apple.system.* needs root to post
-    keys = tuple(f"com.idvorkin.caff.test.{os.getpid()}.{n}" for n in (1, 2))
+    keys = tuple(f"com.idvorkin.awake.test.{os.getpid()}.{n}" for n in (1, 2))
     events = PowerEvents(keys)
     assert events.fd is not None
     assert events.wait(0) is False
@@ -528,8 +622,8 @@ class StopLoop(Exception):
 
 
 def test_run_loop_waits_on_power_events(state_file, monkeypatch):
-    monkeypatch.setattr(caff, "read_power", lambda: Power(True, 90, None))
-    monkeypatch.setattr(caff, "read_agents", lambda: Agents(0, 1))
+    monkeypatch.setattr(awake, "read_power", lambda: Power(True, 90, None))
+    monkeypatch.setattr(awake, "read_agents", lambda: crew(0, 1))
     waits: list[float] = []
 
     class FakeEvents:
@@ -542,9 +636,26 @@ def test_run_loop_waits_on_power_events(state_file, monkeypatch):
     popen = FakePopen()
     history = History(state_file.parent / "h.json")
     with pytest.raises(StopLoop):
-        caff.run_loop(50, 30, None, Caffeinator(popen), history, None, FakeEvents())
+        awake.run_loop(50, 30, None, Caffeinator(popen), history, None, FakeEvents())
     assert waits == [30, 30]
     assert len(popen.procs) == 1  # plugged in both ticks: one caffeinate
+
+
+def test_run_loop_alerts_when_sleeping_with_a_blocked_agent(state_file, monkeypatch):
+    monkeypatch.setattr(awake, "read_power", lambda: Power(False, 80, 100))
+    monkeypatch.setattr(awake, "read_agents", lambda: crew(0, 2, 1))
+
+    def stop(timeout: float) -> None:
+        raise StopLoop
+
+    monkeypatch.setattr(awake.time, "sleep", stop)
+    notify = FakeNotify()
+    history = History(state_file.parent / "h.json")
+    with pytest.raises(StopLoop):
+        awake.run_loop(
+            50, 30, None, Caffeinator(FakePopen()), history, alert=BlockedAlert(notify)
+        )
+    assert len(notify.messages) == 1
 
 
 runner = CliRunner()
@@ -552,27 +663,27 @@ runner = CliRunner()
 
 @pytest.fixture
 def cli_env(state_file, monkeypatch):
-    monkeypatch.setattr(caff.sys, "platform", "darwin")
-    monkeypatch.setattr(caff.signal, "signal", lambda *args: None)  # keep pytest's
-    monkeypatch.setattr(caff, "read_power", lambda: Power(False, 80, 100))
-    monkeypatch.setattr(caff, "read_agents", lambda: Agents(1, 2))
-    monkeypatch.setattr(caff, "History", lambda: History(state_file.parent / "h.json"))
-    monkeypatch.setattr(caff, "read_sched", lambda: "")
+    monkeypatch.setattr(awake.sys, "platform", "darwin")
+    monkeypatch.setattr(awake.signal, "signal", lambda *args: None)  # keep pytest's
+    monkeypatch.setattr(awake, "read_power", lambda: Power(False, 80, 100))
+    monkeypatch.setattr(awake, "read_agents", lambda: crew(1, 2))
+    monkeypatch.setattr(awake, "History", lambda: History(state_file.parent / "h.json"))
+    monkeypatch.setattr(awake, "read_sched", lambda: "")
 
 
 @pytest.mark.parametrize("args", [["run", "4d"], ["run", "--wake", "soon"]])
 def test_run_rejects_bad_durations(cli_env, args):
-    assert runner.invoke(caff.app, args).exit_code == 2
+    assert runner.invoke(awake.app, args).exit_code == 2
 
 
 def test_run_refuses_off_macos(cli_env, monkeypatch):
-    monkeypatch.setattr(caff.sys, "platform", "linux")
-    assert runner.invoke(caff.app, ["run"]).exit_code == 1
+    monkeypatch.setattr(awake.sys, "platform", "linux")
+    assert runner.invoke(awake.app, ["run"]).exit_code == 1
 
 
 def test_run_refuses_a_second_watcher_and_leaves_its_state(cli_env, state_file):
-    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, datetime.now())
-    result = runner.invoke(caff.app, ["run"])
+    awake.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, datetime.now())
+    result = runner.invoke(awake.app, ["run"])
     assert result.exit_code == 1
     assert "already running" in result.output
     assert state_file.exists()
@@ -587,51 +698,51 @@ def test_run_cleans_up_however_the_loop_ends(cli_env, state_file, monkeypatch):
         state_file.write_text("{}")
         raise SystemExit(0)
 
-    monkeypatch.setattr(caff, "run_loop", loop)
-    runner.invoke(caff.app, ["run"])
+    monkeypatch.setattr(awake, "run_loop", loop)
+    runner.invoke(awake.app, ["run"])
     assert stopped == ["caffeinate", "wake"]
     assert not state_file.exists()
 
 
-@pytest.mark.parametrize("wake,swept", [("10m", ["caff sched"]), ("off", [])])
+@pytest.mark.parametrize("wake,swept", [("10m", ["awake sched"]), ("off", [])])
 def test_run_sweeps_orphaned_wakes_before_looping(cli_env, monkeypatch, wake, swept):
     calls: list[str] = []
-    monkeypatch.setattr(caff, "read_sched", lambda: "caff sched")
+    monkeypatch.setattr(awake, "read_sched", lambda: "awake sched")
     monkeypatch.setattr(Waker, "sweep", lambda self, sched: calls.append(sched))
-    monkeypatch.setattr(caff, "run_loop", lambda *args: calls.append("loop"))
-    runner.invoke(caff.app, ["run", "--wake", wake])
+    monkeypatch.setattr(awake, "run_loop", lambda *args: calls.append("loop"))
+    runner.invoke(awake.app, ["run", "--wake", wake])
     assert calls == [*swept, "loop"]
 
 
 def test_info_without_a_watcher(cli_env):
-    result = runner.invoke(caff.app, ["info"])
+    result = runner.invoke(awake.app, ["info"])
     assert result.exit_code == 0
     assert "not running" in result.output
-    assert "agents 1/2 busy" in result.output
+    assert "agents 1/2 busy (w0:p1 claude)" in result.output
 
 
 def test_info_with_a_watcher(cli_env):
-    caff.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, datetime.now())
-    result = runner.invoke(caff.app, ["info"])
+    awake.write_state(Mode.IDLE, Power(False, 80, 100), 50, None, 30, datetime.now())
+    result = runner.invoke(awake.app, ["info"])
     assert result.exit_code == 0
-    assert f"caff running (pid {os.getpid()}, floor 50%)" in result.output
+    assert f"awake running (pid {os.getpid()}, floor 50%)" in result.output
 
 
 @pytest.mark.parametrize(
     "argv,expected",
     [
-        (["caff", "4h"], ["caff", "run", "4h"]),
-        (["caff"], ["caff", "run"]),
-        (["caff", "--floor", "40"], ["caff", "run", "--floor", "40"]),
-        (["caff", "info"], ["caff", "info"]),
-        (["caff", "--help"], ["caff", "--help"]),
+        (["awake", "4h"], ["awake", "run", "4h"]),
+        (["awake"], ["awake", "run"]),
+        (["awake", "--floor", "40"], ["awake", "run", "--floor", "40"]),
+        (["awake", "info"], ["awake", "info"]),
+        (["awake", "--help"], ["awake", "--help"]),
     ],
 )
 def test_cli_defaults_to_run(monkeypatch, argv, expected):
-    monkeypatch.setattr(caff.sys, "argv", list(argv))
-    monkeypatch.setattr(caff, "app", lambda: None)
-    caff.cli()
-    assert caff.sys.argv == expected
+    monkeypatch.setattr(awake.sys, "argv", list(argv))
+    monkeypatch.setattr(awake, "app", lambda: None)
+    awake.cli()
+    assert awake.sys.argv == expected
 
 
 def test_status_line_shows_agents_and_wake():
@@ -642,7 +753,7 @@ def test_status_line_shows_agents_and_wake():
         50,
         None,
         now,
-        agents=Agents(0, 4),
+        agents=crew(0, 4),
         wake_at=now + timedelta(minutes=10),
     ).plain
     assert "agents 0/4 busy" in line

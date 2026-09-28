@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["typer", "rich"]
 # ///
-"""caff - a battery-aware wrapper around macOS `caffeinate`.
+"""awake - a battery-aware wrapper around macOS `caffeinate`.
 
 Modes, re-evaluated from `pmset -g batt` and `herdr agent list` every tick, and
 immediately when macOS posts a power event (plug/unplug, battery percent):
@@ -16,17 +16,21 @@ immediately when macOS posts a power event (plug/unplug, battery percent):
   pmset unreadable               -> nothing              (can't see the floor,
                                                           so don't risk it)
 
-Scheduled wakes go through `sudo -n pmset schedule wake`, which needs the
-sudoers rule in mac/caff.sudoers (install instructions inside). Without it
-caff warns once and just doesn't wake.
+Blocked agents (waiting on a permission prompt) don't count as working. When
+awake lets the Mac sleep while one is blocked, it posts a macOS notification
+naming the panes, so the prompt doesn't sit unanswered until morning.
 
-One battery sample a minute is kept in ~/.cache/caff/history.json, which feeds
+Scheduled wakes go through `sudo -n pmset schedule wake`, which needs the
+sudoers rule in mac/awake.sudoers (install instructions inside). Without it
+awake warns once and just doesn't wake.
+
+One battery sample a minute is kept in ~/.cache/awake/history.json, which feeds
 a sparkline and a measured drain rate (used for the "floor in ~Xm" estimate).
 
-    caff          # watch forever, Ctrl-C to stop
-    caff 60m      # same rule, but give up after 60 minutes
-    caff 4h --wake 5m
-    caff info     # what the watcher is doing, from any shell
+    awake          # watch forever, Ctrl-C to stop
+    awake 60m      # same rule, but give up after 60 minutes
+    awake 4h --wake 5m
+    awake info     # what the watcher is doing, from any shell
 """
 
 import ctypes
@@ -55,15 +59,16 @@ from rich.text import Text
 console = Console()
 app = typer.Typer(pretty_exceptions_enable=False, add_completion=False)
 
-CACHE_DIR = Path.home() / ".cache" / "caff"
+CACHE_DIR = Path.home() / ".cache" / "awake"
 STATE_FILE = CACHE_DIR / "state.json"
 HISTORY_FILE = CACHE_DIR / "history.json"
 DEFAULT_FLOOR = 50
 DEFAULT_WAKE = "10m"
 DEFAULT_INTERVAL = 30.0  # seconds between ticks
 BUSY_STATES = {"working"}  # Herdr agent_status values that keep the Mac up
+BLOCKED_STATES = {"blocked"}  # waiting on a human: worth a notification
 PMSET_DATE = "%m/%d/%y %H:%M:%S"  # the only format `pmset schedule` accepts
-WAKE_OWNER = "caff"
+WAKE_OWNER = "awake"
 HISTORY_KEEP = timedelta(hours=24)  # samples older than this are dropped
 GRAPH_WINDOW = timedelta(hours=3)  # how far back the sparkline looks
 GRAPH_WIDTH = 60  # columns; samples are bucketed down to fit
@@ -175,18 +180,35 @@ def read_power() -> Power:
 
 @dataclass(frozen=True)
 class Agents:
-    busy: int
+    busy: tuple[str, ...]  # "w2:p1 claude" per working agent
     total: int
+    blocked: tuple[str, ...] = ()  # waiting on a human (permission prompt etc.)
 
     def describe(self) -> str:
-        return f"agents {self.busy}/{self.total} busy"
+        line = f"agents {len(self.busy)}/{self.total} busy"
+        if self.busy:
+            line += f" ({', '.join(self.busy)})"
+        if self.blocked:
+            line += f", {len(self.blocked)} blocked ({', '.join(self.blocked)})"
+        return line
 
 
 def parse_agents(output: str) -> Agents:
     """Parse `herdr agent list` JSON."""
     agents = json.loads(output)["result"]["agents"]
-    busy = sum(a.get("agent_status") in BUSY_STATES for a in agents)
-    return Agents(busy=busy, total=len(agents))
+
+    def named(states: set[str]) -> tuple[str, ...]:
+        return tuple(
+            sorted(
+                f"{a.get('pane_id', '?')} {a.get('agent', '?')}"
+                for a in agents
+                if a.get("agent_status") in states
+            )
+        )
+
+    return Agents(
+        busy=named(BUSY_STATES), total=len(agents), blocked=named(BLOCKED_STATES)
+    )
 
 
 def read_agents() -> Agents | None:
@@ -221,7 +243,7 @@ def desired_mode(power: Power, floor: int, agents: Agents | None = None) -> Mode
         return Mode.SLEEP
     if power.percent <= floor:
         return Mode.SLEEP
-    if agents is not None and agents.busy == 0:
+    if agents is not None and not agents.busy:
         return Mode.SLEEP
     return Mode.IDLE
 
@@ -237,7 +259,7 @@ def warn_once(message: str) -> None:
 
 
 def write_json(path: Path, data: object) -> None:
-    """Atomic, so `caff info` never reads half a file. The cache is cosmetic:
+    """Atomic, so `awake info` never reads half a file. The cache is cosmetic:
     a full disk must not stop the watcher."""
     tmp = path.with_suffix(".tmp")
     try:
@@ -312,7 +334,7 @@ class History:
             second=0, microsecond=0
         ) == now.replace(second=0, microsecond=0):
             return False
-        busy = agents.busy if agents is not None else None
+        busy = len(agents.busy) if agents is not None else None
         self.samples.append(Sample(now, power.percent, power.plugged_in, busy))
         self.samples = [s for s in self.samples if now - s.at <= self.keep]
         self.save()
@@ -505,10 +527,61 @@ class Caffeinator:
         self.mode = Mode.SLEEP
 
 
+def _osascript_notify(message: str) -> None:
+    """macOS banner, best effort. The message goes in via argv, not the script
+    source, so pane names never need AppleScript quoting."""
+    try:
+        result = subprocess.run(
+            [
+                "osascript",
+                "-e",
+                "on run argv",
+                "-e",
+                'display notification (item 1 of argv) with title "awake"',
+                "-e",
+                "end run",
+                message,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        warn_once(f"Can't post notifications: {e}")
+        return
+    if result.returncode != 0:
+        warn_once(f"Can't post notifications: {result.stderr.strip()}")
+
+
+class BlockedAlert:
+    """Notifies when the Mac is allowed to sleep while an agent waits on a human.
+
+    Only newly blocked agents re-notify, so a Mac woken every --wake to re-check
+    doesn't repeat the same banner. Leaving sleep mode resets it: the next time
+    sleep is allowed with a blocked agent, that's news again.
+    """
+
+    def __init__(self, notify: Callable[[str], None] = _osascript_notify) -> None:
+        self.notify = notify
+        self.shown: set[str] = set()
+
+    def update(self, mode: Mode, agents: Agents | None) -> None:
+        if mode != Mode.SLEEP or agents is None:
+            self.shown = set()
+            return
+        blocked = set(agents.blocked)
+        if blocked - self.shown:
+            self.notify(
+                f"Mac may sleep while {len(blocked)} agent(s) wait on you: "
+                + ", ".join(sorted(blocked))
+            )
+        self.shown = blocked
+
+
 class Waker:
     """A one-shot `pmset schedule wake`, re-armed while the Mac is allowed to sleep.
 
-    Needs root, so the calls go through `sudo -n` and the mac/caff.sudoers rule.
+    Needs root, so the calls go through `sudo -n` and the mac/awake.sudoers rule.
     A failed `wake` disables waking for the rest of the run (warned once); a
     failed `cancel` doesn't, since a stray wake is harmless. Wakes that outlive
     their run (crash, SIGKILL, reboot) are swept at the next startup.
@@ -541,8 +614,8 @@ class Waker:
             return
         self.disabled = True
         console.print(
-            "[yellow]Can't schedule wakes[/yellow] - is mac/caff.sudoers "
-            "installed? (see caff --help). Continuing without them."
+            "[yellow]Can't schedule wakes[/yellow] - is mac/awake.sudoers "
+            "installed? (see awake --help). Continuing without them."
         )
 
     def disarm(self, now: datetime) -> None:
@@ -556,7 +629,7 @@ class Waker:
         self.at = None
 
     def sweep(self, sched: str) -> None:
-        """Cancel caff wakes left behind by a crashed, killed, or rebooted run."""
+        """Cancel awake wakes left behind by a crashed, killed, or rebooted run."""
         for when in parse_owned_wakes(sched):
             self.run(["cancel", "wake", when.strftime(PMSET_DATE), WAKE_OWNER])
 
@@ -567,8 +640,8 @@ _SCHED_WAKE_RE = re.compile(
 
 
 def parse_owned_wakes(output: str) -> list[datetime]:
-    """caff-owned wakes in `pmset -g sched` output, e.g.
-    ` [0]  wake at 09/27/2026 17:25:22 by 'caff'`."""
+    """awake-owned wakes in `pmset -g sched` output, e.g.
+    ` [0]  wake at 09/27/2026 17:25:22 by 'awake'`."""
     return [
         datetime.strptime(m.group(1), "%m/%d/%Y %H:%M:%S")
         for m in _SCHED_WAKE_RE.finditer(output)
@@ -686,6 +759,7 @@ def run_loop(
     history: History,
     waker: Waker | None = None,
     events: PowerEvents | None = None,
+    alert: BlockedAlert | None = None,
 ) -> None:
     wait = events.wait if events is not None else time.sleep
     last_mode: Mode | None = None
@@ -700,6 +774,8 @@ def run_loop(
             mode = desired_mode(power, floor, agents)
             caff.ensure(mode)
             update_wake(waker, mode, power, floor, now)
+            if alert is not None:
+                alert.update(mode, agents)
             history.record(power, now, agents)
             write_state(mode, power, floor, deadline, interval, now)
             wake_at = waker.at if waker is not None else None
@@ -731,16 +807,16 @@ def run(
         str | None,
         typer.Option(
             help="When asleep with idle agents, wake this often to re-check "
-            "(needs mac/caff.sudoers). 'off' to disable."
+            "(needs mac/awake.sudoers). 'off' to disable."
         ),
     ] = DEFAULT_WAKE,
 ) -> None:
     """Keep the Mac awake while plugged in, or on battery while Herdr agents work."""
     if sys.platform != "darwin":
-        console.print("[red]caff only works on macOS[/red]")
+        console.print("[red]awake only works on macOS[/red]")
         raise typer.Exit(1)
     if (state := read_state(datetime.now())) is not None:
-        console.print(f"[red]caff is already running[/red] (pid {state['pid']})")
+        console.print(f"[red]awake is already running[/red] (pid {state['pid']})")
         raise typer.Exit(1)
 
     deadline: datetime | None = None
@@ -753,11 +829,11 @@ def run(
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
         raise typer.Exit(2)
-    if waker is not None:  # no other caff is running, so every caff wake is orphaned
+    if waker is not None:  # no other awake is running, so every awake wake is orphaned
         waker.sweep(read_sched())
     until = f"until {deadline:%H:%M}" if deadline else "forever"
     console.print(
-        f"Caffeinating {until}: plugged in, or on battery above {floor}% "
+        f"Staying awake {until}: plugged in, or on battery above {floor}% "
         f"while agents are busy. Ctrl-C to stop."
     )
 
@@ -770,7 +846,16 @@ def run(
     signal.signal(signal.SIGTERM, shutdown)
 
     try:
-        run_loop(floor, interval, deadline, caff, History(), waker, PowerEvents())
+        run_loop(
+            floor,
+            interval,
+            deadline,
+            caff,
+            History(),
+            waker,
+            PowerEvents(),
+            BlockedAlert(),
+        )
     finally:
         caff.stop()
         if waker is not None:
@@ -788,7 +873,7 @@ def info() -> None:
     history = History()
     state = read_state(now)
     if state is None:
-        console.print("[yellow]caff is not running[/yellow]")
+        console.print("[yellow]awake is not running[/yellow]")
         mode = desired_mode(power, DEFAULT_FLOOR, agents)
         who = agents.describe() if agents is not None else "agents unknown"
         console.print(
@@ -802,7 +887,7 @@ def info() -> None:
     until = state.get("deadline")
     deadline = datetime.fromisoformat(until) if until else None
     mode = Mode(state["mode"])
-    console.print(f"caff running (pid {state['pid']}, floor {state['floor']}%)")
+    console.print(f"awake running (pid {state['pid']}, floor {state['floor']}%)")
     status, graph = render(mode, power, state["floor"], deadline, now, history, agents)
     console.print(status)
     console.print(graph)
@@ -812,7 +897,7 @@ SUBCOMMANDS = {"run", "info"}
 
 
 def cli() -> None:
-    """`caff 4h` / `caff --floor 40` mean `caff run ...`; keep `caff info` as is."""
+    """`awake 4h` / `awake --floor 40` mean `awake run ...`; keep `awake info` as is."""
     args = sys.argv[1:]
     if not args or (args[0] not in SUBCOMMANDS and args[0] != "--help"):
         sys.argv.insert(1, "run")
