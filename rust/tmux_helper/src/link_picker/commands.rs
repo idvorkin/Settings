@@ -29,6 +29,9 @@ const CUE_WORDS: &[&str] = &["run", "paste", "type", "execute", "enter"];
 /// swallowing a screen of text.
 const MAX_BLOCK_LINES: usize = 8;
 
+/// Max continuation lines joined onto one command.
+const MAX_CONTINUATIONS: usize = 3;
+
 const BUILTINS: &[&str] = &[
     ".", "alias", "cd", "eval", "exec", "export", "popd", "pushd", "set", "source", "unset",
 ];
@@ -65,11 +68,18 @@ pub(crate) fn find(lines: &[&str], is_exe: &dyn Fn(&str) -> bool) -> Vec<Item> {
 /// Real `is_exe`: `word` is a file in some `PATH` directory.
 /// ponytail: ignores the executable bit and shell aliases/functions; a
 /// false positive only means one extra row after a cue line.
+/// The name must match exactly: macOS filesystems are case-insensitive, so
+/// `What` would otherwise hit `/usr/bin/what`.
 pub(crate) fn on_path(word: &str) -> bool {
-    let Some(path) = std::env::var_os("PATH") else {
-        return false;
-    };
-    std::env::split_paths(&path).any(|dir| dir.join(word).is_file())
+    std::env::var_os("PATH").is_some_and(|path| in_dirs(word, &path))
+}
+
+fn in_dirs(word: &str, path: &std::ffi::OsStr) -> bool {
+    std::env::split_paths(path).any(|dir| {
+        dir.join(word).is_file()
+            && std::fs::read_dir(&dir)
+                .is_ok_and(|entries| entries.flatten().any(|e| e.file_name() == word))
+    })
 }
 
 fn inline_regex() -> &'static Regex {
@@ -98,7 +108,9 @@ fn strip_prefix(line: &str) -> &str {
 /// `! cmd` / `$ cmd` at the start of the line → (marker, cmd).
 fn marked_command(line: &str) -> Option<(&'static str, &str)> {
     let s = strip_prefix(line);
-    let s = s.strip_prefix('`').map_or(s, |inner| inner.strip_suffix('`').unwrap_or(inner));
+    let s = s
+        .strip_prefix('`')
+        .map_or(s, |inner| inner.strip_suffix('`').unwrap_or(inner));
     for marker in ["!", "$"] {
         if let Some(rest) = s.strip_prefix(marker) {
             if rest.starts_with(' ') && !rest.trim().is_empty() {
@@ -118,7 +130,13 @@ fn join_continuations(first: &str, first_line: &str, rest: &[&str]) -> (String, 
     let base = indent(first_line);
     let mut cmd = first.to_string();
     let mut used = 0;
-    for next in rest {
+    for next in rest.iter().take(MAX_CONTINUATIONS) {
+        if next
+            .trim_start()
+            .starts_with(|c: char| c == '⎿' || GUTTER.contains(&c))
+        {
+            break;
+        }
         let deeper = indent(next) > base && !next.trim().is_empty();
         let backslash = cmd.ends_with('\\');
         if !(deeper || backslash) || next.trim().is_empty() {
@@ -150,7 +168,12 @@ fn is_cue(line: &str) -> bool {
 /// Take command lines after a cue at `start`, allowing one blank line
 /// before the block. Stops at a blank line or the first non-command.
 /// Returns the number of lines consumed.
-fn take_block(lines: &[&str], start: usize, is_exe: &dyn Fn(&str) -> bool, out: &mut Vec<Item>) -> usize {
+fn take_block(
+    lines: &[&str],
+    start: usize,
+    is_exe: &dyn Fn(&str) -> bool,
+    out: &mut Vec<Item>,
+) -> usize {
     let mut i = start;
     if lines.get(i).is_some_and(|l| l.trim().is_empty()) {
         i += 1;
@@ -173,7 +196,13 @@ fn take_block(lines: &[&str], start: usize, is_exe: &dyn Fn(&str) -> bool, out: 
 }
 
 /// Push `cmd` if it looks like a command. Returns whether it did.
-fn push(out: &mut Vec<Item>, cmd: &str, marker: &str, line_index: usize, is_exe: &dyn Fn(&str) -> bool) -> bool {
+fn push(
+    out: &mut Vec<Item>,
+    cmd: &str,
+    marker: &str,
+    line_index: usize,
+    is_exe: &dyn Fn(&str) -> bool,
+) -> bool {
     let cmd = cmd.trim();
     if !looks_like_command(cmd, is_exe) {
         return false;
@@ -215,7 +244,10 @@ mod tests {
 
     fn cmds(raw: &str) -> Vec<String> {
         let lines: Vec<&str> = raw.lines().collect();
-        find(&lines, &exe).into_iter().map(|i| i.canonical).collect()
+        find(&lines, &exe)
+            .into_iter()
+            .map(|i| i.canonical)
+            .collect()
     }
 
     #[test]
@@ -258,7 +290,10 @@ mod tests {
     #[test]
     fn cue_block_takes_command_lines_and_stops_at_prose() {
         let raw = "Export before running iOS native commands:\n\n  export PATH=\"/opt/x:$PATH\"\n  cargo build\n  Then it works.";
-        assert_eq!(cmds(raw), vec!["export PATH=\"/opt/x:$PATH\"", "cargo build"]);
+        assert_eq!(
+            cmds(raw),
+            vec!["export PATH=\"/opt/x:$PATH\"", "cargo build"]
+        );
     }
 
     #[test]
@@ -293,8 +328,12 @@ mod tests {
 
     #[test]
     fn hard_wrapped_continuation_is_joined() {
-        let raw = "  ! bash ~/gits/settings/very/long/path/apply.sh --one\n     --two\n  Next paragraph.";
-        assert_eq!(cmds(raw), vec!["bash ~/gits/settings/very/long/path/apply.sh --one --two"]);
+        let raw =
+            "  ! bash ~/gits/settings/very/long/path/apply.sh --one\n     --two\n  Next paragraph.";
+        assert_eq!(
+            cmds(raw),
+            vec!["bash ~/gits/settings/very/long/path/apply.sh --one --two"]
+        );
     }
 
     #[test]
@@ -305,13 +344,56 @@ mod tests {
 
     #[test]
     fn list_markers_are_stripped() {
-        assert_eq!(cmds("  - $ just test\n  2. ! git pull"), vec!["just test", "git pull"]);
+        assert_eq!(
+            cmds("  - $ just test\n  2. ! git pull"),
+            vec!["just test", "git pull"]
+        );
     }
 
     #[test]
     fn prompt_echo_of_a_bang_command_counts() {
         // The user's own `! cmd` echoed at Claude Code's prompt — worth re-running.
         assert_eq!(cmds("❯ ! bd ready"), vec!["bd ready"]);
+    }
+
+    #[test]
+    fn prompt_echo_output_is_not_joined() {
+        let raw = "❯ ! bd ready
+  ⎿  ○ settings-abc open
+     ○ settings-def open";
+        assert_eq!(cmds(raw), vec!["bd ready"]);
+    }
+
+    #[test]
+    fn continuations_are_capped() {
+        let raw = "! ls
+  a
+  b
+  c
+  d
+  e";
+        assert_eq!(cmds(raw), vec!["ls a b c"]);
+    }
+
+    #[test]
+    fn on_path_requires_exact_case() {
+        let dir = std::env::temp_dir().join(format!("commands-on-path-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("what"), "").unwrap();
+        let path = dir.clone().into_os_string();
+        assert!(in_dirs("what", &path));
+        assert!(!in_dirs("What", &path));
+        let lines = [
+            "Run this:",
+            "  what -h",
+            "  What this does: refreshes the db",
+        ];
+        let found: Vec<String> = find(&lines, &|w| in_dirs(w, &path))
+            .into_iter()
+            .map(|i| i.canonical)
+            .collect();
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(found, vec!["what -h"]);
     }
 
     #[test]
