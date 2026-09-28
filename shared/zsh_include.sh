@@ -1,5 +1,26 @@
 #!/bin/zsh
-autoload -Uz compinit && compinit
+
+# Startup trace/diagnostic output; silent unless ZSH_INIT_DEBUG is set.
+function init_debug() {
+    [[ -n $ZSH_INIT_DEBUG ]] && echo "$@"
+    return 0
+}
+
+# oh-my-zsh already ran compinit (it defines $_comps); a second full compinit
+# re-scans fpath and re-validates the dump on every shell. Without oh-my-zsh,
+# do a full check at most once a day and trust the dump (-C) otherwise.
+if (( ! ${+_comps} )); then
+    () {
+        setopt local_options extended_glob
+        autoload -Uz compinit
+        local dump=${ZDOTDIR:-$HOME}/.zcompdump
+        if [[ ! -s $dump || -n $dump(#qN.mh+24) ]]; then
+            compinit && touch "$dump"
+        else
+            compinit -C
+        fi
+    }
+fi
 
 
 function source_if_exists() {
@@ -13,6 +34,31 @@ function eval_w_param_if_exists() {
         # echo "Error: '$1' is neither a valid file nor a recognized command."
         return 0
     fi
+}
+
+# Like eval_w_param_if_exists, but caches the generated script. The cache key
+# is the resolved binary path + its mtime + args, so any upgrade (brew Cellar
+# dir or in-place apt/dpkg) regenerates it. Only for output that depends solely
+# on the binary + args (not brew shellenv, which varies with $PATH).
+# ponytail: stale caches from old versions pile up in the cache dir; `rm -rf
+# ~/.cache/zsh-init` clears them, add pruning if it ever matters.
+function eval_cached_if_exists() {
+    local bin=${commands[$1]:-$1}
+    [[ -x $bin ]] || return 0
+    zmodload -F zsh/stat b:zstat
+    local -a mtime
+    zstat -A mtime +mtime -- "$bin" || return 0
+    local dir=${XDG_CACHE_HOME:-$HOME/.cache}/zsh-init
+    local key="${bin:A} $mtime ${@:2}"
+    local cache=$dir/${key//[^A-Za-z0-9._-]/_}.zsh
+    if [[ ! -s $cache ]]; then
+        mkdir -p "$dir"
+        "$bin" "${@:2}" >| "$cache.$$" && mv -f "$cache.$$" "$cache" || {
+            rm -f "$cache.$$"
+            return 0
+        }
+    fi
+    source "$cache"
 }
 
 function charge() {
@@ -247,7 +293,7 @@ function alias_if_exists() {
     if [[ $? -eq 0 ]] ; then
         alias $1=$2
     else
-        echo "program $2 not found"
+        init_debug "program $2 not found"
 
     fi
 }
@@ -260,7 +306,7 @@ function alias_if_other_exists() {
     if [[ $? -eq 0 ]] ; then
         alias $1=$2
     else
-        echo "program $2 not found"
+        init_debug "program $2 not found"
 
     fi
 }
@@ -386,29 +432,35 @@ function export_secrets()
 {
     # Check if secretBox.json exists
     if [[ ! -f ~/gits/igor2/secretBox.json ]]; then
-        echo "No secretBox found at ~/gits/igor2/secretBox.json"
+        init_debug "No secretBox found at ~/gits/igor2/secretBox.json"
         return 0
     fi
     # An older esecret_jq exported a self-matching SCRATCH var that snowballed
     # across nested shells until exec failed with "argument list too long".
     unset SCRATCH
-    esecret_jq LANGCHAIN_API_KEY
-    esecret_jq IFTTT_WEBHOOK_KEY
-    esecret_jq DEEPGRAM_API_KEY
-    esecret_jq IFTTT_WEBHOOK_SMS_EVENT
-    esecret_jq EXA_API_KEY
-    esecret_jq GITHUB_PERSONAL_ACCESS_TOKEN
-    esecret_jq VAPI_API_KEY
-    esecret_jq GROQ_API_KEY
-    esecret_jq PPLX_API_KEY
-    esecret_jq ZEP_API_KEY
-    esecret_jq TONY_STORAGE_SERVER_API_KEY
-    esecret_jq TONY_API_KEY
-    esecret_jq ASSEMBLYAI_API_KEY
-    esecret_jq REPLICATE_API_TOKEN
-    esecret_jq ELEVEN_API_KEY
-    esecret_jq ONEBUSAWAY_API_KEY
-    esecret_jq CEREBUS_KEY
+    # One jq for all keys instead of one process per key. Same output as
+    # esecret_jq: raw value, or the string "null" for a missing key.
+    local keys=(
+        LANGCHAIN_API_KEY
+        IFTTT_WEBHOOK_KEY
+        DEEPGRAM_API_KEY
+        IFTTT_WEBHOOK_SMS_EVENT
+        EXA_API_KEY
+        GITHUB_PERSONAL_ACCESS_TOKEN
+        VAPI_API_KEY
+        GROQ_API_KEY
+        PPLX_API_KEY
+        ZEP_API_KEY
+        TONY_STORAGE_SERVER_API_KEY
+        TONY_API_KEY
+        ASSEMBLYAI_API_KEY
+        REPLICATE_API_TOKEN
+        ELEVEN_API_KEY
+        ONEBUSAWAY_API_KEY
+        CEREBUS_KEY
+    )
+    eval "$(jq -r '$ARGS.positional[] as $k | "export \($k)=\(.[$k] | if type == "string" then . else tojson end | @sh)"' \
+        ~/gits/igor2/secretBox.json --args $keys)"
     # secretBox stores this as CEREBUS_KEY, but opencode/crush/cline and the
     # Cerebras SDK all read CEREBRAS_API_KEY. Alias rather than rename the
     # secretBox entry, which other tools already reference by the old name.
@@ -423,7 +475,7 @@ diff-so-fancy() {
 
 function safe_init()
 {
-    echo ++safe_init
+    init_debug ++safe_init
 
     export EDITOR=nvim
     PATH+=:~/.local/bin:~/.cargo/bin
@@ -560,22 +612,23 @@ function safe_init()
     set -o vi
     set nobell
 
-    echo "++zfunc"
-    if [ -d ~/.zfunc ] && [ "$(ls -A ~/.zfunc)" ]; then
-      for func in ~/.zfunc/*; do
+    init_debug "++zfunc"
+    local zfuncs=(~/.zfunc/*(N))
+    if (( $#zfuncs )); then
+      for func in $zfuncs; do
         source $func
       done
     else
-      echo "No functions found in ~/.zfunc"
+      init_debug "No functions found in ~/.zfunc"
     fi
-    echo "--zfunc"
+    init_debug "--zfunc"
 
     # Can't activate it in the directory or won't work?
     # Some reason need to activate it outside the script -not worth figuring out
     alias activate_env=". .venv/bin/activate"
     alias nbdiffcode="nbdiff --ignore-metadata --ignore-details --ignore-output"
 
-    echo "++eval"
+    init_debug "++eval"
 
     # TODO: consider doing this in a loop as it's really annoying to have 3 configurations
     eval_w_param_if_exists ~/homebrew/bin/brew shellenv
@@ -585,31 +638,27 @@ function safe_init()
     eval_w_param_if_exists /opt/homebrew/.linuxbrew/bin/brew shellenv
     eval_w_param_if_exists /brew shellenv
     export STARSHIP_CONFIG=~/settings/shared/starship.toml
-    eval_w_param_if_exists zoxide init zsh
-    eval_w_param_if_exists starship init zsh
+    eval_cached_if_exists zoxide init zsh
+    eval_cached_if_exists starship init zsh
     # unset MCFLY_DEBUG=
     # eval "$(mcfly init zsh)"
-    eval_w_param_if_exists atuin init zsh --disable-up-arrow
-    eval_w_param_if_exists thefuck --alias
-    eval_w_param_if_exists rbenv init -
-    eval_w_param_if_exists dasel completion zsh
-    eval_w_param_if_exists gh completion -s zsh
+    eval_cached_if_exists atuin init zsh --disable-up-arrow
+    eval_cached_if_exists thefuck --alias
+    eval_cached_if_exists rbenv init -
+    eval_cached_if_exists dasel completion zsh
+    eval_cached_if_exists gh completion -s zsh
 
-    echo "--eval"
+    init_debug "--eval"
 
-    echo --safe_init
+    init_debug --safe_init
 
 } # end safe init
 
 
 function default_init() {
 
-echo  ++default_init
+init_debug ++default_init
 
-
-# C-T search Files Fuzzy
-# C-R Search History fuzzy
-source_if_exists ~/.fzf.zsh
 
 alias ghg-md-sink='gh gist create --filename=out.md -- '
 
@@ -696,7 +745,7 @@ if [[ "$(uname -a)" =~ "microsoft" ]]; then
 fi
 
 
-echo "Random"
+init_debug "Random"
 
 # Some useful work aliases
 alias chh='wchat messages'
@@ -788,16 +837,18 @@ export CARGO_TARGET_DIR="$HOME/.cache/cargo-target"
 bindkey -M viins 'fj' vi-cmd-mode
 
 source ~/settings/shared/fzf_git_keybindings.zsh
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# C-T search Files Fuzzy
+# C-R Search History fuzzy
+source_if_exists ~/.fzf.zsh
 
 
 export CARAPACE_BRIDGES='zsh'
 zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
-source <(carapace _carapace)
+eval_cached_if_exists carapace _carapace
 
 
 unalias a 2>/dev/null # some plugin versions alias `a`; harmless if absent
-echo  --default_init
+init_debug --default_init
 }
 
 

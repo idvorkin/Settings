@@ -90,9 +90,12 @@ mkdir ~/.config/karabiner/
 ln -s -f ~/settings/mac/karabiner.json ~/.config/karabiner/karabiner.json
 ln -s -f ~/settings/mac/multi_keyboard_sync.json ~/.config/karabiner/assets/complex_modifications/multi_keyboard_sync.json
 
-(echo '# Added by bootstrap.sh') >> ~/.zshrc
-(echo 'plugins=(git macos lol vi-mode web-search wd fasd httpie tig tmux fzf)') >> ~/.zshrc
-(echo '. ~/settings/shared/zsh_include.sh') >> ~/.zshrc
+# No plugins= line here: appended after `source $ZSH/oh-my-zsh.sh` it is dead
+# code. Set plugins in ~/.zshrc before oh-my-zsh is sourced.
+if ! grep -qF '. ~/settings/shared/zsh_include.sh' ~/.zshrc 2>/dev/null; then
+    echo '# Added by bootstrap.sh' >> ~/.zshrc
+    echo '. ~/settings/shared/zsh_include.sh' >> ~/.zshrc
+fi
 
 # Install UV and pipx first (required for Python package management)
 echo "Installing UV and pipx..."
