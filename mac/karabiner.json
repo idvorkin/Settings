@@ -4,7 +4,7 @@
 			"complex_modifications": {
 				"rules": [
 					{
-						"description": "D06 Pro mouse: click to C-PageDown, other buttons to Enter",
+						"description": "D06 Pro mouse: click to PageDown, other buttons to Enter",
 						"manipulators": [
 							{
 								"conditions": [
@@ -17,9 +17,7 @@
 									"modifiers": { "optional": ["any"] },
 									"pointing_button": "button1"
 								},
-								"to": [
-									{ "key_code": "page_down", "modifiers": ["left_control"] }
-								],
+								"to": [{ "key_code": "page_down" }],
 								"type": "basic"
 							},
 							{
