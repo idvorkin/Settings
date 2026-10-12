@@ -4,12 +4,15 @@
 			"complex_modifications": {
 				"rules": [
 					{
-						"description": "D06 Pro mouse: click to RCtrl-PageDown (Wispr Flow hands-free toggle), right to Enter, middle to left-click",
+						"description": "D06 Pro mouse (Bluetooth 9354/257 or its 2.4G TK receiver 9354/1025): click to Right-Ctrl+PageDown (Wispr Flow hands-free toggle; must be RIGHT ctrl to match Wispr keybind [121,62]), right to Enter, middle to left-click",
 						"manipulators": [
 							{
 								"conditions": [
 									{
-										"identifiers": [{ "product_id": 257, "vendor_id": 9354 }],
+										"identifiers": [
+											{ "product_id": 257, "vendor_id": 9354 },
+											{ "product_id": 1025, "vendor_id": 9354 }
+										],
 										"type": "device_if"
 									}
 								],
@@ -25,7 +28,10 @@
 							{
 								"conditions": [
 									{
-										"identifiers": [{ "product_id": 257, "vendor_id": 9354 }],
+										"identifiers": [
+											{ "product_id": 257, "vendor_id": 9354 },
+											{ "product_id": 1025, "vendor_id": 9354 }
+										],
 										"type": "device_if"
 									}
 								],
@@ -39,7 +45,10 @@
 							{
 								"conditions": [
 									{
-										"identifiers": [{ "product_id": 257, "vendor_id": 9354 }],
+										"identifiers": [
+											{ "product_id": 257, "vendor_id": 9354 },
+											{ "product_id": 1025, "vendor_id": 9354 }
+										],
 										"type": "device_if"
 									}
 								],
@@ -2958,6 +2967,14 @@
 					},
 					"ignore": false,
 					"manipulate_caps_lock_led": false
+				},
+				{
+					"identifiers": {
+						"is_pointing_device": true,
+						"product_id": 1025,
+						"vendor_id": 9354
+					},
+					"ignore": false
 				}
 			],
 			"fn_function_keys": [
