@@ -4,7 +4,7 @@
 			"complex_modifications": {
 				"rules": [
 					{
-						"description": "D06 Pro mouse: click to PageDown, other buttons to Enter",
+						"description": "D06 Pro mouse: click to RCtrl-PageDown (Wispr Flow hands-free toggle), other buttons to Enter",
 						"manipulators": [
 							{
 								"conditions": [
@@ -17,7 +17,9 @@
 									"modifiers": { "optional": ["any"] },
 									"pointing_button": "button1"
 								},
-								"to": [{ "key_code": "page_down" }],
+								"to": [
+									{ "key_code": "page_down", "modifiers": ["right_control"] }
+								],
 								"type": "basic"
 							},
 							{
@@ -180,7 +182,9 @@
 									"key_code": "f",
 									"modifiers": { "mandatory": ["left_command"] }
 								},
-								"to": [{ "key_code": "page_down" }],
+								"to": [
+									{ "key_code": "page_down", "modifiers": ["right_control"] }
+								],
 								"type": "basic"
 							}
 						]
