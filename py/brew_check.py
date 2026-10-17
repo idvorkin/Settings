@@ -40,20 +40,19 @@ MAC_TAPS = [
 # fmt: off
 FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Essential", "git tmux zsh neovim python3 uv".split()),
-    ("Modern CLI", "zoxide bat eza procs starship yazi television bottom ripgrep fastfetch".split()),
+    ("Modern CLI", "zoxide bat eza procs starship yazi bottom ripgrep".split()),
     ("Languages", "rust go ruby".split()),
-    ("File Search", "fd fzf the_silver_searcher".split()),
-    ("Git Tools", "lazygit gh git-extras git-delta difftastic tig pre-commit prek act".split()),
-    ("Data Tools", "jq yq dasel fx pup".split()),
-    ("Network", "httpie wget w3m nmap autossh mosh et".split()),
-    ("Containers", "docker docker-compose lazydocker".split()),
-    ("Media", "ffmpeg yt-dlp imagemagick optipng pngquant mpv".split()),
-    ("Docs", "pandoc glow grip markdownlint-cli lychee".split()),
+    ("File Search", "fd fzf".split()),
+    ("Git Tools", "lazygit gh git-extras git-delta difftastic tig pre-commit prek".split()),
+    ("Data Tools", "jq yq dasel".split()),
+    ("Network", "httpie mosh et".split()),
+    ("Containers", "docker docker-compose".split()),
+    ("Media", "ffmpeg yt-dlp imagemagick".split()),
+    ("Docs", "pandoc grip markdownlint-cli lychee".split()),
     ("LSPs", "lua-language-server typos-lsp pyright pyrefly marksman rust-analyzer universal-ctags".split()),
-    ("System", "just cpulimit gdu ncdu duf openssl zip sevenzip npm carapace atuin".split()),
-    ("Image Viewers", "viu timg".split()),
+    ("System", "just gdu duf openssl npm carapace atuin".split()),
     ("AI Tools", "llm gemini-cli claude-code opencode herdr beads".split()),
-    ("Cloud/DB", "s3cmd pgcli fselect cloc 1password-cli gcloud-cli awscli rclone".split()),
+    ("Cloud/DB", "s3cmd pgcli 1password-cli gcloud-cli awscli rclone".split()),
 ]
 
 MAC_FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
