@@ -62,9 +62,6 @@ pip3 install seashells
 # git config --global core.autocrlf true
 git config --global receive.denyCurrentBranch updateInstead
 
-# Config git-so-fancy
-# https://github.com/so-fancy/diff-so-fancy
-git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
 
 
 # Now I run jekyll in a container -- w00t!
