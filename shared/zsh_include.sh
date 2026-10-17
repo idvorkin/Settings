@@ -637,6 +637,11 @@ function safe_init()
     eval_w_param_if_exists /home/linuxbrew/.linuxbrew/bin/brew shellenv
     eval_w_param_if_exists /opt/homebrew/.linuxbrew/bin/brew shellenv
     eval_w_param_if_exists /brew shellenv
+    # Homebrew's ruby is keg-only, so shellenv leaves it (and its gem executables) off PATH
+    if [[ -d /opt/homebrew/opt/ruby/bin ]]; then
+        export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+        for gem_bin in /opt/homebrew/lib/ruby/gems/*/bin(N); do export PATH="$gem_bin:$PATH"; done
+    fi
     export STARSHIP_CONFIG=~/settings/shared/starship.toml
     eval_cached_if_exists zoxide init zsh
     eval_cached_if_exists starship init zsh
@@ -644,7 +649,6 @@ function safe_init()
     # eval "$(mcfly init zsh)"
     eval_cached_if_exists atuin init zsh --disable-up-arrow
     eval_cached_if_exists thefuck --alias
-    eval_cached_if_exists rbenv init -
     eval_cached_if_exists dasel completion zsh
     eval_cached_if_exists gh completion -s zsh
 
