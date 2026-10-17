@@ -644,7 +644,6 @@ function safe_init()
     # eval "$(mcfly init zsh)"
     eval_cached_if_exists atuin init zsh --disable-up-arrow
     eval_cached_if_exists thefuck --alias
-    eval_cached_if_exists rbenv init -
     eval_cached_if_exists dasel completion zsh
     eval_cached_if_exists gh completion -s zsh
 

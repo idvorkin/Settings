@@ -32,7 +32,6 @@ IS_MACOS = platform.system() == "Darwin"
 
 # Taps required before installing certain packages (Mac only)
 MAC_TAPS = [
-    "FelixKratz/formulae",  # borders
     "koekeishiya/formulae",  # yabai
     "homebrew/cask-fonts",  # fonts
 ]
@@ -41,25 +40,25 @@ MAC_TAPS = [
 # fmt: off
 FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Essential", "git tmux zsh neovim python3 uv".split()),
-    ("Modern CLI", "zoxide bat eza procs starship yazi television bottom ripgrep fastfetch".split()),
-    ("Rust", ["rust"]),
+    ("Modern CLI", "zoxide bat eza procs starship yazi bottom ripgrep".split()),
+    ("Languages", "rust go ruby".split()),
     ("File Search", "fd fzf the_silver_searcher".split()),
-    ("Git Tools", "lazygit gh git-extras git-delta diff-so-fancy difftastic tig pre-commit".split()),
-    ("Data Tools", "jq yq dasel fx pup".split()),
-    ("Network", "curlie httpie xh wget w3m nmap autossh mosh".split()),
-    ("Containers", "docker docker-compose lazydocker".split()),
-    ("Media", "ffmpeg yt-dlp imagemagick optipng pngquant mpv".split()),
-    ("Docs", "pandoc glow grip".split()),
-    ("LSPs", "lua-language-server typos-lsp pyright rust-analyzer universal-ctags".split()),
-    ("System", "just cpulimit gdu ncdu duf openssl zip npm carapace atuin".split()),
-    ("Image Viewers", "viu timg".split()),
-    ("AI Tools", "llm gemini-cli claude-code opencode herdr".split()),
-    ("Cloud/DB", "s3cmd pgcli fselect cloc 1password-cli gcloud-cli".split()),
+    ("Git Tools", "lazygit gh git-extras git-delta difftastic tig pre-commit prek".split()),
+    ("Data Tools", "jq yq dasel".split()),
+    ("Network", "httpie mosh et".split()),
+    ("Containers", "docker docker-compose".split()),
+    ("Media", "ffmpeg yt-dlp imagemagick mpv timg".split()),
+    ("Docs", "pandoc grip markdownlint-cli lychee".split()),
+    ("LSPs", "lua-language-server typos-lsp pyright pyrefly marksman rust-analyzer universal-ctags".split()),
+    ("System", "just gdu duf openssl npm carapace atuin".split()),
+    ("AI Tools", "llm gemini-cli claude-code opencode herdr beads".split()),
+    ("Cloud/DB", "s3cmd pgcli 1password-cli gcloud-cli awscli rclone".split()),
 ]
 
 MAC_FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
-    ("Mac Window Mgmt", "borders jordanbaird-ice koekeishiya/formulae/yabai".split()),
+    ("Mac Window Mgmt", "jordanbaird-ice koekeishiya/formulae/yabai".split()),
     ("Mac Media", "iina pngpaste".split()),
+    ("Mac iOS Dev", "xcodegen swiftlint xcbeautify libimobiledevice".split()),
 ]
 
 CASK_CATEGORIES: list[tuple[str, list[str]]] = [
@@ -67,9 +66,9 @@ CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Terminal", "iterm2 ghostty".split()),
     ("Productivity", "alfred 1password meetingbar finicky".split()),
     ("Window Mgmt", "alt-tab karabiner-elements".split()),
+    ("Dev", "codex orbstack".split()),
     ("Video", "losslesscut capcut qlvideo".split()),
-    ("Communication", "signal tailscale".split()),
-    ("Display", ["betterdisplay"]),
+    ("Communication", "signal tailscale-app".split()),
     ("Utilities", "the-unarchiver keycastr kindavim".split()),
     ("Fonts", ["font-hack-nerd-font"]),
 ]
