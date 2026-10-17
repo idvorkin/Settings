@@ -58,6 +58,7 @@ FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
 MAC_FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Mac Window Mgmt", "jordanbaird-ice koekeishiya/formulae/yabai".split()),
     ("Mac Media", "iina pngpaste".split()),
+    ("Mac Display", ["betterdisplaycli"]),  # lg-watchdog.sh and the lg-* helpers
     ("Mac iOS Dev", "xcodegen swiftlint xcbeautify libimobiledevice".split()),
 ]
 
@@ -69,6 +70,7 @@ CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Dev", "codex orbstack".split()),
     ("Video", "losslesscut capcut qlvideo".split()),
     ("Communication", "signal tailscale-app".split()),
+    ("Display", ["betterdisplay"]),
     ("Utilities", "the-unarchiver keycastr kindavim".split()),
     ("Fonts", ["font-hack-nerd-font"]),
 ]
