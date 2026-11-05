@@ -68,7 +68,7 @@ CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Productivity", "alfred 1password meetingbar finicky".split()),
     ("Window Mgmt", "alt-tab karabiner-elements".split()),
     ("Dev", "codex orbstack".split()),
-    ("Video", "losslesscut capcut qlvideo".split()),
+    ("Video", "losslesscut capcut cap qlvideo".split()),  # Cap: screen recorder, screen + camera as separate files
     ("Communication", "signal tailscale-app".split()),
     ("Display", ["betterdisplay"]),
     ("Utilities", "the-unarchiver keycastr kindavim".split()),
