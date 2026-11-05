@@ -18,15 +18,15 @@ Run the bootstrap script to install all dependencies:
 
 Key installation files:
 
-- **Brew packages**: `shared/brew_packages.sh` - Contains all Homebrew packages including development tools, LSPs, and utilities
-- **Mac-specific setup**: `mac/install.sh` - macOS-specific configurations and cask applications
+- **Brew packages**: `py/brew_check.py` - every Homebrew formula and cask, by category (Mac-only lists are gated on macOS)
+- **Mac-specific setup**: `mac/install.sh` - macOS `defaults` and other non-brew setup
 - **Shared setup**: `shared/shared_install.sh` - Cross-platform configurations
 
 ### Homebrew Package Management
 
-- **Non-cask packages**: Add to `shared/brew_packages.sh` using format `brew_packages="$brew_packages package_name"`
-- **Cask applications**: Add to `mac/install.sh` using format `brew install --cask app-name`
-- See `.cursor/rules/104-brew-packages.mdc` for detailed package management guidelines
+- **Formulae**: add to a category in `FORMULA_CATEGORIES` (or `MAC_FORMULA_CATEGORIES` for Mac-only) in `py/brew_check.py`
+- **Cask applications**: add to a category in `CASK_CATEGORIES` in `py/brew_check.py`
+- Run `./py/brew_check.py check` to see what's missing
 
 ### Required Packages
 
