@@ -27,6 +27,7 @@ setup:
     ln -sf ../../shared/settings-git-hooks/post-merge .git/hooks/post-merge
     just global-install
     just rinstall
+    just treehouse-install
 
 # Install rust tmux helper (skips rebuild if already up-to-date)
 rinstall:
@@ -44,3 +45,13 @@ rinstall:
         cargo install --path . --force
     fi
 
+# Pre-warmed worktree pool for parallel agents (github.com/kunchenguid/treehouse).
+# Not in brew; the upstream installer drops one binary in ~/.local/bin. `treehouse update` upgrades it.
+treehouse-install:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v treehouse >/dev/null; then
+        echo "treehouse $(treehouse --version) already installed"
+    else
+        curl -fsSL https://kunchenguid.github.io/treehouse/install.sh | sh
+    fi
