@@ -30,7 +30,10 @@ console = Console()
 
 IS_MACOS = platform.system() == "Darwin"
 
-# Taps required before installing certain packages (Mac only)
+# Taps required before installing certain packages
+TAPS = [
+    "idvorkin/tap",  # treehouse, no-mistakes, lavish-axi (macOS + Linux)
+]
 MAC_TAPS = [
     "koekeishiya/formulae",  # yabai
     "homebrew/cask-fonts",  # fonts
@@ -52,6 +55,7 @@ FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("LSPs", "lua-language-server typos-lsp pyright pyrefly marksman rust-analyzer universal-ctags".split()),
     ("System", "just gdu duf openssl npm carapace atuin".split()),
     ("AI Tools", "llm gemini-cli claude-code opencode herdr beads".split()),
+    ("Agent Tools", "idvorkin/tap/treehouse idvorkin/tap/no-mistakes idvorkin/tap/lavish-axi".split()),
     ("Cloud/DB", "s3cmd pgcli 1password-cli gcloud-cli awscli rclone".split()),
 ]
 
@@ -285,12 +289,15 @@ def pick_and_install(
     install_packages(formulae, casks, verbose)
 
 
+def get_all_taps() -> list[str]:
+    """Taps for this platform."""
+    return TAPS + (MAC_TAPS if IS_MACOS else [])
+
+
 def ensure_taps():
     """Ensure all required taps are added."""
-    if not IS_MACOS:
-        return
     console.print("[bold]Checking taps...[/bold]")
-    for tap in MAC_TAPS:
+    for tap in get_all_taps():
         result = subprocess.run(["brew", "tap", tap], capture_output=True, text=True)
         if result.returncode == 0:
             console.print(f"  [green]✓[/green] {tap}")
@@ -343,15 +350,11 @@ def bootstrap():
     console.print(
         '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
     )
-    if IS_MACOS:
-        taps = " && ".join(f"brew tap {t}" for t in MAC_TAPS)
-        console.print("\n[cyan]# 2. Add taps (macOS)[/cyan]")
-        console.print(taps)
-        console.print("\n[cyan]# 3. Install essentials[/cyan]")
-    else:
-        console.print("\n[cyan]# 2. Install essentials[/cyan]")
+    console.print("\n[cyan]# 2. Add taps[/cyan]")
+    console.print(" && ".join(f"brew tap {t}" for t in get_all_taps()))
+    console.print("\n[cyan]# 3. Install essentials[/cyan]")
     console.print(f"brew install {essentials}")
-    console.print(f"\n[cyan]# {'4' if IS_MACOS else '3'}. Then run this script[/cyan]")
+    console.print("\n[cyan]# 4. Then run this script[/cyan]")
     console.print("./brew_check.py check")
 
 
