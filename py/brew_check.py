@@ -73,10 +73,22 @@ CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Video", "losslesscut capcut cap".split()),  # Cap: screen recorder, screen + camera as separate files
     ("Communication", "signal tailscale-app".split()),
     ("Display", ["betterdisplay"]),
-    ("Utilities", "the-unarchiver keycastr kindavim".split()),
+    ("Utilities", "the-unarchiver keycastr kindavim calibre".split()),
     ("Fonts", ["font-hack-nerd-font"]),
 ]
 
+# Mac App Store apps - (name, App Store id). Find an id with:
+#   mdls -raw -name kMDItemAppStoreAdamID /Applications/<App>.app
+MAS_APPS: list[tuple[str, int]] = [
+    ("Xcode", 497799835),
+    ("OmniFocus", 1542143627),
+    ("Goodnotes", 1444383602),
+    ("WhatsApp", 310633997),
+    ("Telegram Lite", 946399090),
+    ("TestFlight", 899247664),
+    ("CapCut", 1500855883),
+    ("Flow", 1423210932),
+]
 # fmt: on
 
 # Repos with no brew package (Mac only) come from install_repos.py, the one list of them:
@@ -398,6 +410,63 @@ def install_packages(
     console.print("\n[green]Done![/green]")
     if had_failures and not verbose:
         console.print("[dim]Some packages failed. Use -v to see error output.[/dim]")
+
+
+def parse_mas_list(output: str) -> set[int]:
+    """App Store ids from `mas list` output (lines start with the id)."""
+    ids = set()
+    for line in output.splitlines():
+        first = line.split(maxsplit=1)[0] if line.strip() else ""
+        if first.isdigit():
+            ids.add(int(first))
+    return ids
+
+
+def missing_mas_apps(installed_ids: set[int]) -> list[tuple[str, int]]:
+    return [(name, app_id) for name, app_id in MAS_APPS if app_id not in installed_ids]
+
+
+@app.command()
+def mas(
+    install: bool = typer.Option(
+        False, "--install", "-i", help="Install missing App Store apps"
+    ),
+):
+    """Check (and optionally install) Mac App Store apps via `mas`."""
+    if not IS_MACOS:
+        console.print("[dim]Mac App Store apps are macOS only[/dim]")
+        return
+    try:
+        result = subprocess.run(
+            ["mas", "list"], capture_output=True, text=True, check=True
+        )
+    except FileNotFoundError:
+        console.print("[red]mas not installed:[/red] brew install mas")
+        raise typer.Exit(1)
+    except subprocess.CalledProcessError as e:
+        console.print(f"[red]mas list failed:[/red] {e.stderr.strip()}")
+        raise typer.Exit(1)
+
+    missing = missing_mas_apps(parse_mas_list(result.stdout))
+    if not missing:
+        console.print("[green]All App Store apps are installed![/green]")
+        return
+
+    for name, app_id in missing:
+        console.print(f"  [yellow]missing[/yellow] {name} ({app_id})")
+    if not install:
+        console.print("\nRun with --install (sign in to the App Store first).")
+        return
+
+    failed = []
+    for name, app_id in missing:
+        console.print(f"  [cyan]{name}[/cyan]...")
+        if subprocess.run(["mas", "install", str(app_id)]).returncode != 0:
+            failed.append(name)
+    if failed:
+        console.print(f"[red]Failed:[/red] {', '.join(failed)}")
+        raise typer.Exit(1)
+    console.print("[green]Done![/green]")
 
 
 @app.command()
