@@ -101,3 +101,7 @@ brew install uv
 echo "Installing Python tools..."
 ~/settings/py/install_packages.py install
 
+# Clone active repos into ~/gits and run their installers (needs gh auth login for private repos)
+echo "Installing repos..."
+~/settings/py/install_repos.py install || echo "Some repos failed; rerun ~/settings/py/install_repos.py install"
+
