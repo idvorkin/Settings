@@ -79,13 +79,6 @@ def install(
         f"\n[bold cyan]Installing Python tools with {install_flag} flag ({mode})...[/bold cyan]\n"
     )
 
-    # Install pipxu first (pipx upgrade tool)
-    console.print("[yellow]Installing pipxu via pipx...[/yellow]")
-    try:
-        run_command(["pipx", "install", "pipxu"], check=False)
-    except Exception as e:
-        console.print(f"[yellow]Warning: Could not install pipxu: {e}[/yellow]")
-
     # Install Python tools
     failed_tools = []
     for tool_name, extra_args, description in track(

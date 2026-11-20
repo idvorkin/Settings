@@ -34,7 +34,7 @@ Essential packages are installed via Homebrew from `shared/brew_packages.sh`:
 
 - Development tools: `git`, `tmux`, `zsh`, `neovim`
 - Language servers: `lua-language-server`, `typos-lsp`
-- Python tools: `uv`, `pipx`, `ruff`
+- Python tools: `uv`, `ruff`
 - CLI utilities: `bat`, `eza`, `fzf`, `ripgrep`, `fd`
 - Git enhancements: `gh`, `lazygit`, `git-delta`
 
@@ -51,8 +51,8 @@ export PATH="/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH"
 Python tools are managed via UV for speed and consistency:
 
 ```bash
-# Install UV and pipx
-brew install uv pipx
+# Install UV
+brew install uv
 
 # Install Python development tools
 uv tool install --force ruff

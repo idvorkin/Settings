@@ -724,7 +724,7 @@ alias dgc='pushd ~/gits/settings && python3 -c "from vim_python import * ;GitCom
 alias asl='autossh -M 20000 lightsail_no_forward'
 alias slnf='ssh lightsail_no_forward'
 alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
-alias xuilocal=" pipxu install -f . --editable"
+alias xuilocal=" uv tool install --force --editable ."
 
 alias ghe="gh copilot explain"
 alias ghs="gh copilot suggest"

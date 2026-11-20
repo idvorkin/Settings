@@ -97,9 +97,9 @@ if ! grep -qF '. ~/settings/shared/zsh_include.sh' ~/.zshrc 2>/dev/null; then
     echo '. ~/settings/shared/zsh_include.sh' >> ~/.zshrc
 fi
 
-# Install UV and pipx first (required for Python package management)
-echo "Installing UV and pipx..."
-brew install uv pipx
+# Install UV first (required for Python package management)
+echo "Installing UV..."
+brew install uv
 
 # Install Python packages via our Python script
 echo "Installing Python tools..."
