@@ -26,6 +26,7 @@ Key installation files:
 
 - **Formulae**: add to a category in `FORMULA_CATEGORIES` (or `MAC_FORMULA_CATEGORIES` for Mac-only) in `py/brew_check.py`
 - **Cask applications**: add to a category in `CASK_CATEGORIES` in `py/brew_check.py`
+- **Taps**: `TAPS` (all platforms) or `MAC_TAPS` (Mac-only); list tap formulae fully qualified, e.g. `idvorkin/tap/treehouse`
 - Run `./py/brew_check.py check` to see what's missing
 
 ### Required Packages
