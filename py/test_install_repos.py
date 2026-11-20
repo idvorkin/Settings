@@ -73,6 +73,16 @@ def test_install_reports_failure_and_continues(env, monkeypatch):
     assert any(cmd[-1] == "idvorkin/app" for cmd, _ in mock.calls)
 
 
+def test_clone_uses_repo_owner(env, monkeypatch):
+    mock, gits = env
+    monkeypatch.setattr(
+        install_repos, "REPOS", [Repo(name="tool", owner="someone-else")]
+    )
+    result = cli.invoke(install_repos.app, ["clone"])
+    assert result.exit_code == 0
+    assert mock.calls == [(["gh", "repo", "clone", "someone-else/tool"], gits)]
+
+
 def test_unknown_repo_exits(env):
     mock, _ = env
     result = cli.invoke(install_repos.app, ["install", "nope"])

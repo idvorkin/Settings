@@ -36,6 +36,7 @@ GH_OWNER = "idvorkin"
 
 class Repo(BaseModel):
     name: str
+    owner: str = Field(GH_OWNER, description="GitHub account that holds the repo")
     install: list[str] = Field(
         default_factory=list, description="Shell commands run in the checkout"
     )
@@ -65,6 +66,10 @@ REPOS: list[Repo] = [
     Repo(name="browser-tab-helper", install=["node tools/host.js install"],
          note="browser-tab-helper: edge://extensions → Developer mode → Load unpacked → ~/gits/browser-tab-helper"),
     Repo(name="igsnap", install=["just install"]),
+    # The larry CLI that Alfred's Agent Send (`w`) shells out to
+    Repo(name="cockpit", owner="idvorkin-ai-tools",
+         install=["mkdir -p ~/.local/bin && ln -sfn \"$PWD/larry.py\" ~/.local/bin/larry"],
+         note="larry: put {\"url\": ..., \"token\": <COCKPIT_CONTROL_TOKEN>} in ~/.config/larry/config.json (chmod 600)"),
     # Alfred's `sw` keyword drives the fork's raccoon, which the brew cask lacks
     Repo(name="window-sweaters", install=["./scripts/build-app.sh", "python3 scripts/install-local.py"]),
     # Native Swift apps: Mac ones install to /Applications, iOS/watch ones are clone only
@@ -113,7 +118,7 @@ def clone_repo(repo: Repo, gits: Path) -> bool:
         return True
     gits.mkdir(parents=True, exist_ok=True)
     console.print(f"  [yellow]Cloning {repo.name}...[/yellow]")
-    return runner.run(["gh", "repo", "clone", f"{GH_OWNER}/{repo.name}"], cwd=gits)
+    return runner.run(["gh", "repo", "clone", f"{repo.owner}/{repo.name}"], cwd=gits)
 
 
 def install_repo(repo: Repo, gits: Path) -> bool:
