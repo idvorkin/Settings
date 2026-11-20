@@ -71,5 +71,16 @@ def test_only_idvorkin_and_yabai_taps():
     assert brew_check.MAC_TAPS == ["asmvik/formulae", "idvorkin/tap"]
 
 
+def test_stale_tools_are_not_reinstalled():
+    tracked = {
+        f
+        for _, pkgs in brew_check.FORMULA_CATEGORIES + brew_check.MAC_FORMULA_CATEGORIES
+        for f in pkgs
+    }
+    stale = {"go", "httpie", "docker", "docker-compose", "mpv", "lychee", "llm"}
+    stale |= {"opencode", "s3cmd", "pgcli", "the_silver_searcher", "iina"}
+    assert not stale & tracked
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

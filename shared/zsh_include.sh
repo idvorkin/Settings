@@ -95,11 +95,6 @@ function trim_file_after_marker_to_new_file() {
     }' "$input_file" > "$output_file"
 }
 
-function ghg-aider() {
-    trim_file_after_marker_to_new_file '.aider.chat.history.md' '# aider chat started at' '.aider.last.chat.md'
-    gh gist create -w .aider.last.chat.md
-    echo v0.1
-}
 
 function gist-create() {
     # Ensure gh is installed
@@ -731,8 +726,6 @@ alias slnf='ssh lightsail_no_forward'
 alias ytsub='youtube-dl --write-sub --sub-format srt --skip-download'
 alias xuilocal=" uv tool install --force --editable ."
 
-alias ghe="gh copilot explain"
-alias ghs="gh copilot suggest"
 
 
 # Looks like pbcopy just works over ssh/mosh now!
@@ -860,41 +853,6 @@ unalias a 2>/dev/null # some plugin versions alias `a`; harmless if absent
 init_debug --default_init
 }
 
-
-function blog_think() {
-    # Ensure the API key is set
-    if [[ -z "$TONY_API_KEY" ]]; then
-        echo "Error: TONY_API_KEY is not set."
-        return 1
-    fi
-
-    # Define the temporary file for the raw response
-    local response_file="$HOME/tmp/random_blog_response.json"
-
-    http POST https://idvorkin--modal-blog-server-blog-handler.modal.run \
-        x-vapi-secret:$TONY_API_KEY \
-        action="random_blog_url_only" > $response_file
-
-    # Check if the request was successful
-    if [[ $? -ne 0 ]]; then
-        echo "Error: Failed to fetch blog."
-        return 1
-    fi
-
-    # Extract the `result` field from the response
-    local url=`sed -n "s/.*'url': '\([^']*\)'.*/\1/p" $response_file`
-
-
-    # Check if content and URL were extracted
-    if [[ -z "$url" ]]; then
-        echo "Error: Failed to extract blog content or URL."
-        return 1
-    fi
-
-    # Use the trailing path from the URL as the filename
-    echo "$url"
-    think $url
-}
 
 function SshMasterDevBox()
 {

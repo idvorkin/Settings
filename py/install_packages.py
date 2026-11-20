@@ -45,16 +45,13 @@ def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProce
 
 # Python tools to install via UV
 PYTHON_TOOLS = [
-    ("aider-chat", ["--python", "python3.12"], "Code Writing helper"),
     ("ruff", [], "Fast Python linter"),
     ("httpx", [], "HTTP client with CLI"),
     ("pre-commit", [], "Git pre-commit hooks framework"),
-    ("jupyterlab", [], "Jupyter notebook interface"),
     ("rich-cli", [], "Terminal formatting tool"),
     ("claude-code-log", [], "Claude Code conversation logger"),
     ("black", [], "Code formatter"),
     ("mypy", [], "Static type checker"),
-    ("poetry", [], "Python package manager"),
     ("uvicorn", [], "ASGI server"),
     ("pudb", [], "Console-based visual debugger"),
 ]
