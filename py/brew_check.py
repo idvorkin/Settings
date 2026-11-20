@@ -34,8 +34,8 @@ IS_MACOS = platform.system() == "Darwin"
 
 # Taps required before installing certain packages (Mac only)
 MAC_TAPS = [
-    "koekeishiya/formulae",  # yabai
-    "homebrew/cask-fonts",  # fonts
+    "asmvik/formulae",  # yabai
+    "idvorkin/tap",  # Igor's tools
 ]
 
 # Package categories - each is (category_name, package_list)
@@ -58,7 +58,8 @@ FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
 ]
 
 MAC_FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
-    ("Mac Window Mgmt", "jordanbaird-ice koekeishiya/formulae/yabai".split()),
+    ("Mac Window Mgmt", "jordanbaird-ice asmvik/formulae/yabai".split()),
+    ("Igor's Tools", "idvorkin/tap/no-mistakes idvorkin/tap/lavish-axi idvorkin/tap/treehouse".split()),
     ("Mac Media", "iina pngpaste".split()),
     ("Mac Display", ["betterdisplaycli"]),  # lg-watchdog.sh and the lg-* helpers
     ("Mac iOS Dev", "xcodegen swiftlint xcbeautify libimobiledevice mas xcodes aria2 watchman".split()),
@@ -89,6 +90,14 @@ MAS_APPS: list[tuple[str, int]] = [
     ("CapCut", 1500855883),
     ("Flow", 1423210932),
 ]
+
+# Global npm packages
+NPM_GLOBALS: list[str] = [
+    "@xai-official/grok",
+]
+
+# Claude Code uses its native installer (self-updating), not the brew formula.
+CLAUDE_CODE_INSTALL = "curl -fsSL https://claude.ai/install.sh | bash"
 # fmt: on
 
 # Repos with no brew package (Mac only) come from install_repos.py, the one list of them:
@@ -469,6 +478,40 @@ def mas(
     console.print("[green]Done![/green]")
 
 
+def parse_npm_globals(ls_json: str) -> set[str]:
+    """Package names from `npm ls -g --depth=0 --json`."""
+    return set(json.loads(ls_json or "{}").get("dependencies", {}))
+
+
+@app.command()
+def npm(
+    install: bool = typer.Option(
+        False, "--install", "-i", help="Install missing global npm packages"
+    ),
+):
+    """Check (and optionally install) global npm packages."""
+    try:
+        result = subprocess.run(
+            ["npm", "ls", "-g", "--depth=0", "--json"], capture_output=True, text=True
+        )
+    except FileNotFoundError:
+        console.print("[red]npm not installed:[/red] brew install npm")
+        raise typer.Exit(1)
+
+    missing = [p for p in NPM_GLOBALS if p not in parse_npm_globals(result.stdout)]
+    if not missing:
+        console.print("[green]All global npm packages are installed![/green]")
+        return
+
+    console.print(f"  [yellow]missing[/yellow] {' '.join(missing)}")
+    if not install:
+        console.print("\nRun with --install.")
+        return
+    if subprocess.run(["npm", "install", "-g", *missing]).returncode != 0:
+        raise typer.Exit(1)
+    console.print("[green]Done![/green]")
+
+
 @app.command()
 def bootstrap():
     """Print bootstrap commands (run before Python exists)."""
@@ -486,8 +529,15 @@ def bootstrap():
     else:
         console.print("\n[cyan]# 2. Install essentials[/cyan]")
     console.print(f"brew install {essentials}")
-    console.print(f"\n[cyan]# {'4' if IS_MACOS else '3'}. Then run this script[/cyan]")
-    console.print("./brew_check.py check")
+    console.print(
+        f"\n[cyan]# {'4' if IS_MACOS else '3'}. Claude Code (native installer)[/cyan]"
+    )
+    console.print(CLAUDE_CODE_INSTALL)
+    console.print(f"\n[cyan]# {'5' if IS_MACOS else '4'}. Then run this script[/cyan]")
+    console.print(
+        "./brew_check.py check && ./brew_check.py npm -i"
+        + (" && ./brew_check.py mas -i" if IS_MACOS else "")
+    )
 
 
 @app.command()

@@ -49,5 +49,27 @@ def test_calibre_is_a_tracked_cask():
     assert "calibre" in casks
 
 
+def test_parse_npm_globals_reads_package_names():
+    out = '{"dependencies": {"@xai-official/grok": {"version": "1.0.77"}, "npm": {}}}'
+    assert brew_check.parse_npm_globals(out) == {"@xai-official/grok", "npm"}
+
+
+def test_parse_npm_globals_handles_empty_output():
+    assert brew_check.parse_npm_globals("") == set()
+
+
+def test_grok_is_a_tracked_npm_global():
+    assert "@xai-official/grok" in brew_check.NPM_GLOBALS
+
+
+def test_claude_code_not_installed_via_brew():
+    formulae = [f for _, pkgs in brew_check.FORMULA_CATEGORIES for f in pkgs]
+    assert "claude-code" not in formulae
+
+
+def test_only_idvorkin_and_yabai_taps():
+    assert brew_check.MAC_TAPS == ["asmvik/formulae", "idvorkin/tap"]
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
