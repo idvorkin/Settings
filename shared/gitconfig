@@ -65,13 +65,10 @@
 	br = branch
 	ci = commit
 	st = status
-	logc = log
+	logc = log master..
 	logp = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate
 	fr = pull --rebase
-	logc = log
-
-[credential]
-	helper = store
+	logc = log master..
 
 [color]
 	ui = true
@@ -128,3 +125,8 @@
 	required = true
 [beads]
 	role = maintainer
+
+# Per-machine settings (credential helpers, etc.) live outside the repo, last so they win.
+# Git skips a missing include. Write to it with: git config --file ~/.gitconfig.local <key> <value>
+[include]
+	path = ~/.gitconfig.local

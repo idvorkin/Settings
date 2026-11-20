@@ -5,34 +5,7 @@
 git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
-# shared git stetup
-# Hymn, maybe i have this in a git config file instead?
-git config --global user.email "idvorkin@gmail.com"
-git config --global user.name "Igor Dvorkin"
-git config --global push.default simple
-git config --global color.ui true
-
-git config --global color.diff-highlight.oldNormal    "red bold"
-git config --global color.diff-highlight.oldHighlight "red bold 52"
-git config --global color.diff-highlight.newNormal    "green bold"
-git config --global color.diff-highlight.newHighlight "green bold 22"
-
-git config --global color.diff.meta       "yellow"
-git config --global color.diff.frag       "magenta bold"
-git config --global color.diff.commit     "yellow bold"
-git config --global color.diff.old        "red bold"
-git config --global color.diff.new        "green bold"
-git config --global color.diff.whitespace "red reverse"
-git config --global push.default simple
-git config --global alias.co checkout
-git config --global alias.com "checkout master"
-git config --global alias.fr "pull --rebase"
-git config --global alias.br branch
-git config --global alias.ci commit
-git config --global alias.st status
-git config --global push.autoSetupRemote 1
-git config --global alias.logc log master..
-git config --global alias.logp "log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s %C(yellow)[%cn] %C(green)(%ar)' --decorate"
+# ~/.gitconfig is a link to shared/gitconfig; per-machine settings go in ~/.gitconfig.local
 ln -s -f ~/settings/shared/gitconfig ~/.gitconfig
 ln -s -f ~/settings/shared/tigrc ~/.tigrc
 ln -s -f ~/settings/shared/bottomrc.toml ~/.config/bottom/bottom.toml
@@ -100,6 +73,9 @@ brew install uv
 # Install Python packages via our Python script
 echo "Installing Python tools..."
 ~/settings/py/install_packages.py install
+
+# GitHub HTTPS auth via gh for plain git, SwiftPM and xcodebuild; written to the per-machine file
+gh auth status >/dev/null 2>&1 && GIT_CONFIG_GLOBAL=~/.gitconfig.local gh auth setup-git
 
 # Clone active repos into ~/gits and run their installers (needs gh auth login for private repos)
 echo "Installing repos..."

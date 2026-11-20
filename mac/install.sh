@@ -19,4 +19,4 @@ defaults write com.apple.dock largesize -int 80
 killall Dock
 
 # Mac only git setup
-git config --global credential.helper osxkeychain
+git config --file ~/.gitconfig.local credential.helper osxkeychain
