@@ -12,16 +12,16 @@ mkdir ~/homebrew && curl -L https://github.com/Homebrew/brew/tarball/master | ta
 
 # Some private dot files
 mkdir ~/.ssh
-ln -s -f ~/settings/shared/ssh_config ~/.ssh/config
+ln -sfn ~/settings/shared/ssh_config ~/.ssh/config
 
 # Not quite ready to dick iwith it.
 # ln -s -f ~/settings/shared/gitconfig ~/.gitconfig
 
 # link git aliases
-ln -s -f ~/gits/jupyter ~/ghju
-ln -s -f ~/gits/igor2/750words ~/750
-ln -s -f ~/gits/igor2/ ~/igor2
-ln -s -f ~/gits/idvorkin.github.io ~/blog
+ln -sfn ~/gits/jupyter ~/ghju
+ln -sfn ~/gits/igor2/750words ~/750
+ln -sfn ~/gits/igor2/ ~/igor2
+ln -sfn ~/gits/idvorkin.github.io ~/blog
 
 
 
