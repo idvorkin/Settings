@@ -75,10 +75,6 @@ ln -s -f ~/settings/config/ghostty ~/.config/ghostty
 mkdir -p ~/.config/herdr
 ln -s -f ~/settings/config/herdr/config.toml ~/.config/herdr/config.toml
 
-# Cursor config (official location is ~/.cursor but also link to ~/.config/cursor for consistency)
-ln -s -f ~/settings/config/cursor ~/.config/cursor
-ln -s -f ~/settings/config/cursor ~/.cursor
-
 # Mac goodies
 ln -s -f ~/settings/config/yabai ~/.config/yabai
 mkdir ~/.config/borders
