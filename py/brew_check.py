@@ -65,7 +65,7 @@ MAC_FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
 CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Browsers", "google-chrome microsoft-edge".split()),
     ("Terminal", "iterm2 ghostty".split()),
-    ("Productivity", "alfred 1password meetingbar finicky".split()),
+    ("Productivity", "alfred 1password meetingbar finicky wispr-flow".split()),
     ("Window Mgmt", "alt-tab karabiner-elements".split()),
     ("Dev", "codex orbstack".split()),
     ("Video", "losslesscut capcut cap qlvideo".split()),  # Cap: screen recorder, screen + camera as separate files
