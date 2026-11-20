@@ -59,7 +59,7 @@ MAC_FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Mac Window Mgmt", "jordanbaird-ice koekeishiya/formulae/yabai".split()),
     ("Mac Media", "iina pngpaste".split()),
     ("Mac Display", ["betterdisplaycli"]),  # lg-watchdog.sh and the lg-* helpers
-    ("Mac iOS Dev", "xcodegen swiftlint xcbeautify libimobiledevice".split()),
+    ("Mac iOS Dev", "xcodegen swiftlint xcbeautify libimobiledevice mas xcodes aria2 watchman".split()),
 ]
 
 CASK_CATEGORIES: list[tuple[str, list[str]]] = [
