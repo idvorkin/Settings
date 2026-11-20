@@ -458,6 +458,7 @@ function export_secrets()
         ELEVEN_API_KEY
         ONEBUSAWAY_API_KEY
         CEREBUS_KEY
+        OPEN_ROUTER_KEY
     )
     eval "$(jq -r '$ARGS.positional[] as $k | "export \($k)=\(.[$k] | if type == "string" then . else tojson end | @sh)"' \
         ~/gits/igor2/secretBox.json --args $keys)"
@@ -466,6 +467,10 @@ function export_secrets()
     # secretBox entry, which other tools already reference by the old name.
     export CEREBRAS_API_KEY="$CEREBUS_KEY"
     export BING_SEARCH_URL='https://api.bing.microsoft.com/v7.0/search'
+    # Skills (gen-image, cartoonist) read OPEN_ROUTER_KEY or OPENROUTER_API_KEY,
+    # and fall back to the file named by SECRET_BOX for anything not exported.
+    export OPENROUTER_API_KEY="$OPEN_ROUTER_KEY"
+    export SECRET_BOX=~/gits/igor2/secretBox.json
 }
 #
 # Use diff so fancy without needing to be in git
