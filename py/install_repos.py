@@ -79,7 +79,7 @@ REPOS: list[Repo] = [
     Repo(name="bug-kit"),
     Repo(name="think-a-card-trainer"),
     Repo(name="lcd-timer", install=["just install"]),
-    Repo(name="audio-debugger", install=["just live-install"]),
+    Repo(name="audio-debugger", install=["just install"]),
 ]
 # fmt: on
 
