@@ -55,6 +55,15 @@ ln -s "$PWD" "$prefs"
 open -b com.runningwithcrayons.Alfred
 """
 
+# The larry CLI's config, written once; a token goes in only if the Cockpit ever sets COCKPIT_CONTROL_TOKEN.
+LARRY_CONFIG = """
+cfg=~/.config/larry/config.json
+[ -e "$cfg" ] && exit 0
+mkdir -p "$(dirname "$cfg")"
+printf '{"url": "%s"}\\n' "https://c-5004.squeaker-teeth.ts.net" > "$cfg"
+chmod 600 "$cfg"
+"""
+
 # fmt: off
 REPOS: list[Repo] = [
     # Tools
@@ -67,9 +76,11 @@ REPOS: list[Repo] = [
          note="browser-tab-helper: edge://extensions → Developer mode → Load unpacked → ~/gits/browser-tab-helper"),
     Repo(name="igsnap", install=["just install"]),
     # The larry CLI that Alfred's Agent Send (`w`) shells out to
-    Repo(name="cockpit", owner="idvorkin-ai-tools",
-         install=["mkdir -p ~/.local/bin && ln -sfn \"$PWD/larry.py\" ~/.local/bin/larry"],
-         note="larry: put {\"url\": ..., \"token\": <COCKPIT_CONTROL_TOKEN>} in ~/.config/larry/config.json (chmod 600)"),
+    Repo(name="cockpit", owner="idvorkin-ai-tools", install=[
+        'mkdir -p ~/.local/bin && ln -sfn "$PWD/larry.py" ~/.local/bin/larry',
+        # The Cockpit sets no control token, so the tailnet address is the whole config
+        LARRY_CONFIG,
+    ]),
     # Alfred's `sw` keyword drives the fork's raccoon, which the brew cask lacks
     Repo(name="window-sweaters", install=["./scripts/build-app.sh", "python3 scripts/install-local.py"]),
     # Native Swift apps: Mac ones install to /Applications, iOS/watch ones are clone only
