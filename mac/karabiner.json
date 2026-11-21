@@ -62,6 +62,27 @@
 						]
 					},
 					{
+						"description": "RK keyboard (vendor 9610): M3 sends Right-Ctrl+PageDown from its firmware; run the Wispr hands-free toggle instead (mac/wispr_hands_free.sh)",
+						"manipulators": [
+							{
+								"conditions": [
+									{
+										"identifiers": [{ "vendor_id": 9610 }],
+										"type": "device_if"
+									}
+								],
+								"from": {
+									"key_code": "page_down",
+									"modifiers": { "mandatory": ["right_control"] }
+								},
+								"to": [
+									{ "shell_command": "$HOME/settings/mac/wispr_hands_free.sh" }
+								],
+								"type": "basic"
+							}
+						]
+					},
+					{
 						"description": "Remap Capslock+Space to Command+Space in iTerm - post transform",
 						"manipulators": [
 							{
