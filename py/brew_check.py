@@ -51,7 +51,7 @@ FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Docs", "pandoc grip markdownlint-cli lychee".split()),
     ("LSPs", "lua-language-server typos-lsp pyright pyrefly marksman rust-analyzer universal-ctags".split()),
     ("System", "just gdu duf openssl npm carapace atuin".split()),
-    ("AI Tools", "llm gemini-cli claude-code opencode herdr beads".split()),
+    ("AI Tools", "llm gemini-cli opencode herdr beads".split()),
     ("Cloud/DB", "s3cmd pgcli 1password-cli gcloud-cli awscli rclone".split()),
 ]
 
@@ -67,7 +67,7 @@ CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Terminal", "iterm2 ghostty".split()),
     ("Productivity", "alfred 1password meetingbar finicky wispr-flow".split()),
     ("Window Mgmt", "alt-tab karabiner-elements".split()),
-    ("Dev", "codex orbstack".split()),
+    ("Dev", "claude-code@latest codex orbstack".split()),
     ("Video", "losslesscut capcut cap".split()),  # Cap: screen recorder, screen + camera as separate files
     ("Communication", "signal tailscale-app".split()),
     ("Display", ["betterdisplay"]),
