@@ -13,8 +13,10 @@ Bootstrap (before Python exists):
   brew install git tmux zsh neovim python3 uv
 """
 
+import json
 import platform
 import subprocess
+from pathlib import Path
 
 import questionary
 import typer
@@ -74,7 +76,33 @@ CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Utilities", "the-unarchiver keycastr kindavim".split()),
     ("Fonts", ["font-hack-nerd-font"]),
 ]
+
 # fmt: on
+
+# Repos with no brew package (Mac only) come from install_repos.py, the one list of them:
+# it clones, updates and installs them. They are picked here after the brew packages.
+INSTALL_REPOS = Path(__file__).resolve().parent / "install_repos.py"
+
+
+def get_git_repos() -> list[dict]:
+    """install_repos.py's repos: name, kind, title, about, installed (macOS only)."""
+    if not IS_MACOS:
+        return []
+    result = subprocess.run(
+        [str(INSTALL_REPOS), "list", "--json"], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        console.print("[yellow]Warning: could not list git repos[/yellow]")
+        return []
+    return json.loads(result.stdout)
+
+
+def by_title(repos: list[dict]) -> list[tuple[str, list[str]]]:
+    """Repo names grouped by category title, in order."""
+    cats: dict[str, list[str]] = {}
+    for r in repos:
+        cats.setdefault(r["title"], []).append(r["name"])
+    return list(cats.items())
 
 
 def get_all_formulae() -> list[str]:
@@ -208,9 +236,15 @@ def check(
     missing_formula_cats, missing_cask_cats = get_missing_by_category(
         installed_formulae_norm, installed_casks_norm
     )
+    repos = get_git_repos()
+    missing_build_cats = by_title([r for r in repos if not r["installed"]])
 
-    if not missing_formula_cats and not missing_cask_cats:
-        console.print("[green]All packages are installed![/green]")
+    if not missing_formula_cats and not missing_cask_cats and not missing_build_cats:
+        console.print("[green]All packages and git repos are installed![/green]")
+        if install:  # still update the repos
+            install_packages([], [], verbose, [r["name"] for r in repos])
+        elif pick:
+            pick_and_install([], [], verbose, repos)
         return
 
     # Display missing by category
@@ -227,27 +261,33 @@ def check(
     for cat, pkgs in missing_cask_cats:
         table.add_row(cat, "cask", " ".join(pkgs))
         total_casks += len(pkgs)
+    total_builds = 0
+    for cat, repos in missing_build_cats:
+        table.add_row(cat, "git repo", " ".join(repos))
+        total_builds += len(repos)
 
     console.print(table)
     console.print(
-        f"\n[bold]Missing:[/bold] {total_formulae} formulae, {total_casks} casks"
+        f"\n[bold]Missing:[/bold] {total_formulae} formulae, {total_casks} casks,"
+        f" {total_builds} git repos"
     )
 
     # Handle installation
     if install:
         all_formulae = [p for _, pkgs in missing_formula_cats for p in pkgs]
         all_casks = [p for _, pkgs in missing_cask_cats for p in pkgs]
-        install_packages(all_formulae, all_casks, verbose)
-    elif pick:
-        pick_and_install(missing_formula_cats, missing_cask_cats, verbose)
-    elif typer.confirm("\nInstall packages?"):
-        pick_and_install(missing_formula_cats, missing_cask_cats, verbose)
+        # Every repo: missing ones are cloned and installed, the rest updated
+        all_repos = [r["name"] for r in repos]
+        install_packages(all_formulae, all_casks, verbose, all_repos)
+    elif pick or typer.confirm("\nInstall packages?"):
+        pick_and_install(missing_formula_cats, missing_cask_cats, verbose, repos)
 
 
 def pick_and_install(
     formula_cats: list[tuple[str, list[str]]],
     cask_cats: list[tuple[str, list[str]]],
     verbose: bool = False,
+    repos: list[dict] | None = None,
 ):
     """Interactive picker to select packages to install."""
     choices = []
@@ -267,6 +307,17 @@ def pick_and_install(
                 questionary.Choice(f"  {pkg}", value=("cask", pkg), checked=True)
             )
 
+    # Every repo, missing ones checked; an installed one picked is updated
+    for cat, names in by_title(repos or []):
+        choices.append(questionary.Separator(f"── {cat} ──"))
+        for r in (r for r in repos or [] if r["name"] in names):
+            state = "update" if r["installed"] else "install"
+            label = f"  {r['name']} [{state}] — {r['about']}"
+            checked = not r["installed"]
+            choices.append(
+                questionary.Choice(label, value=("build", r["name"]), checked=checked)
+            )
+
     if not choices:
         return
 
@@ -281,8 +332,9 @@ def pick_and_install(
 
     formulae = [pkg for kind, pkg in selected if kind == "formula"]
     casks = [pkg for kind, pkg in selected if kind == "cask"]
+    builds = [pkg for kind, pkg in selected if kind == "build"]
 
-    install_packages(formulae, casks, verbose)
+    install_packages(formulae, casks, verbose, builds)
 
 
 def ensure_taps():
@@ -298,8 +350,13 @@ def ensure_taps():
             console.print(f"  [red]✗[/red] {tap}")
 
 
-def install_packages(formulae: list[str], casks: list[str], verbose: bool = False):
-    """Install the given packages."""
+def install_packages(
+    formulae: list[str],
+    casks: list[str],
+    verbose: bool = False,
+    builds: list[str] | None = None,
+):
+    """Install the given packages, then clone and build the given repos."""
     ensure_taps()
     had_failures = False
 
@@ -328,6 +385,15 @@ def install_packages(formulae: list[str], casks: list[str], verbose: bool = Fals
                 console.print("    [red]Failed[/red]")
                 if verbose:
                     console.print(f"    [dim]{result.stderr.strip()}[/dim]")
+
+    if builds:
+        # After the formulae: the builds need just (and Swift from the Command Line Tools).
+        console.print(f"\n[bold]Git repos: {len(builds)} to clone or update...[/bold]")
+        # Output streams: a build takes minutes and may ask for the keychain.
+        result = subprocess.run([str(INSTALL_REPOS), "install", *builds])
+        if result.returncode != 0:
+            had_failures = True
+            console.print("    [red]Some builds failed (output above)[/red]")
 
     console.print("\n[green]Done![/green]")
     if had_failures and not verbose:
@@ -375,6 +441,9 @@ def list_all():
         for cat, pkgs in CASK_CATEGORIES:
             table.add_row(cat, "cask", " ".join(pkgs))
             total += len(pkgs)
+        for cat, names in by_title(get_git_repos()):
+            table.add_row(cat, "git repo", " ".join(names))
+            total += len(names)
 
     console.print(table)
     console.print(f"\n[bold]Total:[/bold] {total} packages")
