@@ -4,18 +4,21 @@
 # dependencies = ["typer", "rich", "pydantic"]
 # ///
 """
-Clone Igor's active repos into ~/gits and run their install steps.
+Clone Igor's active repos into ~/gits, update them, and run their install steps.
 
 Cloning uses `gh repo clone`, so private repos need `gh auth login` first.
-Install steps are shell commands run inside the checkout; each is meant to be
-safe to re-run.
+An existing checkout is updated with `git pull --ff-only`; a dirty or diverged
+one is left as it is and reported. Install steps are shell commands run inside
+the checkout; they run after a clone, when the pull moved HEAD, or when the
+repo's marker (what the install leaves behind) is missing.
 """
 
+import json
 import subprocess
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import typer
 from pydantic import BaseModel, Field
@@ -34,13 +37,32 @@ GITS = Path.home() / "gits"
 GH_OWNER = "idvorkin"
 
 
+Kind = Literal["os", "mac", "ios"]
+KIND_TITLES: dict[str, str] = {
+    "os": "Git Repos: OS",
+    "mac": "Git Repos: OSX Apps",
+    "ios": "Git Repos: iOS Apps",
+}
+
+
 class Repo(BaseModel):
     name: str
+    kind: Kind = Field("os", description="os (tools), mac (Mac app) or ios (iOS app)")
+    about: str = Field("", description="One line: what it is")
     owner: str = Field(GH_OWNER, description="GitHub account that holds the repo")
     install: list[str] = Field(
         default_factory=list, description="Shell commands run in the checkout"
     )
+    marker: str = Field(
+        "", description="Path (~ ok) that exists once installed; empty: the checkout"
+    )
     note: str = Field("", description="Manual follow-up printed after install")
+
+    def installed(self, gits: Path) -> bool:
+        if not self.marker:
+            return (gits / self.name).exists()
+        # exists() follows symlinks: a live-install link to a deleted build is missing
+        return Path(self.marker).expanduser().exists()
 
 
 # Link the checkout as Alfred's preferences, backing up whatever was there.
@@ -56,30 +78,44 @@ open -b com.runningwithcrayons.Alfred
 """
 
 # fmt: off
+# iOS/watch apps are clone and update only: a device build needs the signing lock and an unlocked phone (just iphone).
 REPOS: list[Repo] = [
-    # Tools
-    Repo(name="alfred", install=[ALFRED_LINK_PREFS],
+    # OS: what the Mac runs on
+    Repo(name="alfred", about="Alfred workflows (Igor Tools), including y", install=[ALFRED_LINK_PREFS],
+         marker="~/Library/Application Support/Alfred/Alfred.alfredpreferences",
          note="Alfred: confirm Igor Tools under Workflows and activate the Powerpack"),
     # yabai is built from the fork by alfred's recipe, so alfred must come first
-    Repo(name="yabai", install=["just -f ../alfred/justfile -d ../alfred yabai-install"],
-         note="yabai: re-grant Accessibility if macOS prompts"),
-    Repo(name="browser-tab-helper", install=["node tools/host.js install"],
+    Repo(name="yabai", about="tiling window manager (fork, with macOS 27 fixes)",
+         install=["just -f ../alfred/justfile -d ../alfred yabai-install"],
+         marker="~/.local/share/yabai-macos27", note="yabai: re-grant Accessibility if macOS prompts"),
+    Repo(name="browser-tab-helper", about="Edge extension and native host: tabs from the command line",
+         install=["node tools/host.js install"],
+         marker="~/Library/Application Support/Microsoft Edge/NativeMessagingHosts/browser_tab_helper.json",
          note="browser-tab-helper: edge://extensions → Developer mode → Load unpacked → ~/gits/browser-tab-helper"),
-    Repo(name="igsnap", install=["just install"]),
     # The larry CLI that Alfred's Agent Send (`w`) shells out to
-    Repo(name="cockpit", owner="idvorkin-ai-tools",
+    Repo(name="cockpit", owner="idvorkin-ai-tools", about="larry CLI: send to an agent from Alfred",
          install=["mkdir -p ~/.local/bin && ln -sfn \"$PWD/larry.py\" ~/.local/bin/larry"],
+         marker="~/.local/bin/larry",
          note="larry: put {\"url\": ..., \"token\": <COCKPIT_CONTROL_TOKEN>} in ~/.config/larry/config.json (chmod 600)"),
+    Repo(name="bug-kit", about="shared Swift package: in-app bug reports and what's new, for the native apps"),
+    # OSX apps: install to /Applications (window-sweaters to ~/Applications)
     # Alfred's `sw` keyword drives the fork's raccoon, which the brew cask lacks
-    Repo(name="window-sweaters", install=["./scripts/build-app.sh", "python3 scripts/install-local.py"]),
-    # Native Swift apps: Mac ones install to /Applications, iOS/watch ones are clone only
-    Repo(name="magic-monitor-native", install=["just install"]),
-    Repo(name="context-grabber", install=["just setup"]),
-    Repo(name="exercise-analyzer"),
-    Repo(name="bug-kit"),
-    Repo(name="think-a-card-trainer"),
-    Repo(name="lcd-timer", install=["just install"]),
-    Repo(name="audio-debugger", install=["just install"]),
+    Repo(name="window-sweaters", kind="mac", about="knitted window borders, plus Focused Window Only (fork)",
+         install=["./scripts/build-app.sh", "python3 scripts/install-local.py"],
+         marker="~/Applications/Window Sweaters.app"),
+    Repo(name="igsnap", kind="mac", about="screenshot tool", install=["just install"],
+         marker="/Applications/IgSnap.app"),
+    Repo(name="magic-monitor-native", kind="mac", about="camera practice mirror with instant replay",
+         install=["just install"], marker="/Applications/Magic Monitor.app"),
+    Repo(name="lcd-timer", kind="mac", about="countdown that looks like a gym's LED clock",
+         install=["just install"], marker="/Applications/LCD Timer.app"),
+    Repo(name="audio-debugger", kind="mac", about="see and hear how a mic sounds, with 20 s replay (also iPhone)",
+         install=["just install"], marker="/Applications/Audio Debugger.app"),
+    # iOS apps
+    Repo(name="context-grabber", kind="ios", about="a humane mirror of the week: health, places, gym timer",
+         install=["just setup"]),
+    Repo(name="exercise-analyzer", kind="ios", about="iPhone and Watch exercise analyzer"),
+    Repo(name="think-a-card-trainer", kind="ios", about="iPhone and Watch card-memory trainer"),
 ]
 # fmt: on
 
@@ -90,10 +126,18 @@ class Runner(ABC):
     @abstractmethod
     def run(self, cmd: list[str], cwd: Path | None = None) -> bool: ...
 
+    @abstractmethod
+    def output(self, cmd: list[str], cwd: Path | None = None) -> str | None:
+        """The command's stdout, stripped, or None when it fails."""
+
 
 class ShellRunner(Runner):
     def run(self, cmd: list[str], cwd: Path | None = None) -> bool:
         return subprocess.run(cmd, check=False, cwd=cwd).returncode == 0
+
+    def output(self, cmd: list[str], cwd: Path | None = None) -> str | None:
+        r = subprocess.run(cmd, check=False, cwd=cwd, capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else None
 
 
 runner: Runner = ShellRunner()
@@ -119,6 +163,19 @@ def clone_repo(repo: Repo, gits: Path) -> bool:
     gits.mkdir(parents=True, exist_ok=True)
     console.print(f"  [yellow]Cloning {repo.name}...[/yellow]")
     return runner.run(["gh", "repo", "clone", f"{repo.owner}/{repo.name}"], cwd=gits)
+
+
+def update_repo(repo: Repo, gits: Path) -> bool | None:
+    """Fast-forward the checkout. True: HEAD moved; False: no change; None: not updated."""
+    cwd = gits / repo.name
+    before = runner.output(["git", "rev-parse", "HEAD"], cwd)
+    if not runner.run(["git", "pull", "--ff-only", "--no-autostash", "--quiet"], cwd):
+        console.print(
+            f"  [yellow]! {repo.name} not updated (dirty, diverged or offline)[/yellow]"
+        )
+        return None
+    after = runner.output(["git", "rev-parse", "HEAD"], cwd)
+    return before != after
 
 
 def install_repo(repo: Repo, gits: Path) -> bool:
@@ -157,12 +214,24 @@ def install(
     names: Annotated[
         list[str] | None, typer.Argument(help="Repos to install (default: all)")
     ] = None,
+    force: Annotated[
+        bool, typer.Option("--force", "-f", help="Run install steps even if up to date")
+    ] = False,
 ):
-    """Clone repos, then run each one's install steps."""
+    """Clone or update repos, then run install steps where needed."""
     failed: list[str] = []
     notes: list[str] = []
     for repo in select_repos(names or []):
-        if not clone_repo(repo, GITS) or not install_repo(repo, GITS):
+        fresh = not (GITS / repo.name).exists()
+        if not clone_repo(repo, GITS):
+            failed.append(repo.name)
+            continue
+        moved = True if fresh else update_repo(repo, GITS)
+        if not (moved or force or not repo.installed(GITS)):
+            if moved is False:
+                console.print(f"  [dim]✓ {repo.name} up to date[/dim]")
+            continue
+        if not install_repo(repo, GITS):
             failed.append(repo.name)
             continue
         if repo.note:
@@ -171,12 +240,23 @@ def install(
 
 
 @app.command("list")
-def list_repos():
-    """List the repos and whether each is cloned."""
-    for repo in REPOS:
-        mark = "[green]✓[/green]" if (GITS / repo.name).exists() else "[red]✗[/red]"
-        steps = "install steps" if repo.install else "clone only"
-        console.print(f"  {mark} {repo.name} [dim]({steps})[/dim]")
+def list_repos(
+    as_json: Annotated[bool, typer.Option("--json", help="Machine-readable")] = False,
+):
+    """List the repos by kind and whether each is installed."""
+    if as_json:
+        rows = [
+            {"name": r.name, "kind": r.kind, "title": KIND_TITLES[r.kind],
+             "about": r.about, "installed": r.installed(GITS)}
+            for r in REPOS
+        ]  # fmt: skip
+        print(json.dumps(rows))
+        return
+    for kind, title in KIND_TITLES.items():
+        console.print(f"[bold]{title}[/bold]")
+        for repo in (r for r in REPOS if r.kind == kind):
+            mark = "[green]✓[/green]" if repo.installed(GITS) else "[red]✗[/red]"
+            console.print(f"  {mark} {repo.name} [dim]— {repo.about}[/dim]")
 
 
 if __name__ == "__main__":
