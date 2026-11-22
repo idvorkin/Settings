@@ -62,12 +62,12 @@
 						]
 					},
 					{
-						"description": "RK keyboard (vendor 9610): M3 sends Right-Ctrl+PageDown from its firmware; run the Wispr hands-free toggle instead (mac/wispr_hands_free.sh)",
+						"description": "RK keyboard (wired vendor 9610, or its 2.4G Compx receiver 9639/64112): M3 sends Right-Ctrl+PageDown from its firmware; run the Wispr hands-free toggle instead (mac/wispr_hands_free.sh)",
 						"manipulators": [
 							{
 								"conditions": [
 									{
-										"identifiers": [{ "vendor_id": 9610 }],
+										"identifiers": [{ "vendor_id": 9610 }, { "vendor_id": 9639, "product_id": 64112 }],
 										"type": "device_if"
 									}
 								],
