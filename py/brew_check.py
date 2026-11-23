@@ -69,7 +69,7 @@ CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Terminal", "iterm2 ghostty".split()),
     ("Productivity", "alfred 1password meetingbar finicky wispr-flow".split()),
     ("Window Mgmt", "alt-tab karabiner-elements".split()),
-    ("Dev", "claude-code@latest codex orbstack".split()),
+    ("Dev", "codex orbstack".split()),  # Claude Code: native installer (CLAUDE_CODE_INSTALL)
     ("Video", "losslesscut capcut cap".split()),  # Cap: screen recorder, screen + camera as separate files
     ("Communication", "signal tailscale-app".split()),
     ("Display", ["betterdisplay"]),

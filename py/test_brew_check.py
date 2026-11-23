@@ -64,7 +64,8 @@ def test_grok_is_a_tracked_npm_global():
 
 def test_claude_code_not_installed_via_brew():
     formulae = [f for _, pkgs in brew_check.FORMULA_CATEGORIES for f in pkgs]
-    assert "claude-code" not in formulae
+    casks = [c for _, pkgs in brew_check.CASK_CATEGORIES for c in pkgs]
+    assert not [p for p in formulae + casks if p.startswith("claude-code")]
 
 
 def test_only_idvorkin_and_yabai_taps():
