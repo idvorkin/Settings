@@ -116,6 +116,15 @@ REPOS: list[Repo] = [
          install=["just setup"]),
     Repo(name="exercise-analyzer", kind="ios", about="iPhone and Watch exercise analyzer"),
     Repo(name="think-a-card-trainer", kind="ios", about="iPhone and Watch card-memory trainer"),
+    # Runs from its checkout: the login item points at build/Usage Analytics.app
+    Repo(name="usage-analytics", kind="mac", about="private usage tracker, a menu-bar agent",
+         install=["just app"], marker="~/gits/usage-analytics/build/Usage Analytics.app",
+         note="Usage Analytics: add ~/gits/usage-analytics/build/Usage Analytics.app as a login item"),
+    # Python CLIs installed as editable uv tools, so edits in the checkout take effect
+    Repo(name="nlp", about="NLP explorations and CLIs (editable uv tool)", install=["uv tool install --force --editable ."]),
+    Repo(name="kludge-cli", about="remap Royal Kludge keyboard keys (editable uv tool)", install=["uv tool install --force --editable ."]),
+    Repo(name="omnifocus_cli", about="OmniFocus from the command line (editable uv tool)", install=["uv tool install --force --editable ."]),
+    Repo(name="tony_tesla", about="Tony the Tesla, deployed to modal (editable uv tool)", install=["uv tool install --force --editable ."]),
 ]
 # fmt: on
 

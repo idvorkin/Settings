@@ -34,8 +34,8 @@ IS_MACOS = platform.system() == "Darwin"
 
 # Taps required before installing certain packages (Mac only)
 MAC_TAPS = [
-    "koekeishiya/formulae",  # yabai
-    "homebrew/cask-fonts",  # fonts
+    "asmvik/formulae",  # yabai
+    "idvorkin/tap",  # Igor's tools
 ]
 
 # Package categories - each is (category_name, package_list)
@@ -43,23 +43,23 @@ MAC_TAPS = [
 FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Essential", "git tmux zsh neovim python3 uv".split()),
     ("Modern CLI", "zoxide bat eza procs starship yazi bottom ripgrep".split()),
-    ("Languages", "rust go ruby".split()),
-    ("File Search", "fd fzf the_silver_searcher".split()),
+    ("Languages", "rust ruby".split()),
+    ("File Search", "fd fzf".split()),
     ("Git Tools", "lazygit gh git-extras git-delta difftastic tig pre-commit prek".split()),
     ("Data Tools", "jq yq dasel".split()),
-    ("Network", "httpie mosh et".split()),
-    ("Containers", "docker docker-compose".split()),
-    ("Media", "ffmpeg yt-dlp imagemagick mpv timg".split()),
-    ("Docs", "pandoc grip markdownlint-cli lychee".split()),
+    ("Network", "mosh et".split()),
+    ("Media", "ffmpeg yt-dlp imagemagick timg".split()),
+    ("Docs", "pandoc grip markdownlint-cli".split()),
     ("LSPs", "lua-language-server typos-lsp pyright pyrefly marksman rust-analyzer universal-ctags".split()),
     ("System", "just gdu duf openssl npm carapace atuin".split()),
-    ("AI Tools", "llm gemini-cli opencode herdr beads".split()),
-    ("Cloud/DB", "s3cmd pgcli 1password-cli gcloud-cli awscli rclone".split()),
+    ("AI Tools", "gemini-cli herdr beads".split()),
+    ("Cloud/DB", "1password-cli gcloud-cli awscli rclone".split()),
 ]
 
 MAC_FORMULA_CATEGORIES: list[tuple[str, list[str]]] = [
-    ("Mac Window Mgmt", "jordanbaird-ice koekeishiya/formulae/yabai".split()),
-    ("Mac Media", "iina pngpaste".split()),
+    ("Mac Window Mgmt", "jordanbaird-ice asmvik/formulae/yabai".split()),
+    ("Igor's Tools", "idvorkin/tap/no-mistakes idvorkin/tap/lavish-axi idvorkin/tap/treehouse".split()),
+    ("Mac Media", ["pngpaste"]),
     ("Mac Display", ["betterdisplaycli"]),  # lg-watchdog.sh and the lg-* helpers
     ("Mac iOS Dev", "xcodegen swiftlint xcbeautify libimobiledevice mas xcodes aria2 watchman".split()),
 ]
@@ -69,14 +69,34 @@ CASK_CATEGORIES: list[tuple[str, list[str]]] = [
     ("Terminal", "iterm2 ghostty".split()),
     ("Productivity", "alfred 1password meetingbar finicky wispr-flow".split()),
     ("Window Mgmt", "alt-tab karabiner-elements".split()),
-    ("Dev", "claude-code@latest codex orbstack".split()),
+    ("Dev", "codex orbstack".split()),  # Claude Code: native installer (CLAUDE_CODE_INSTALL)
     ("Video", "losslesscut capcut cap".split()),  # Cap: screen recorder, screen + camera as separate files
     ("Communication", "signal tailscale-app".split()),
     ("Display", ["betterdisplay"]),
-    ("Utilities", "the-unarchiver keycastr kindavim".split()),
+    ("Utilities", "the-unarchiver keycastr kindavim calibre".split()),
     ("Fonts", ["font-hack-nerd-font"]),
 ]
 
+# Mac App Store apps - (name, App Store id). Find an id with:
+#   mdls -raw -name kMDItemAppStoreAdamID /Applications/<App>.app
+MAS_APPS: list[tuple[str, int]] = [
+    ("Xcode", 497799835),
+    ("OmniFocus", 1542143627),
+    ("Goodnotes", 1444383602),
+    ("WhatsApp", 310633997),
+    ("Telegram Lite", 946399090),
+    ("TestFlight", 899247664),
+    ("CapCut", 1500855883),
+    ("Flow", 1423210932),
+]
+
+# Global npm packages
+NPM_GLOBALS: list[str] = [
+    "@xai-official/grok",
+]
+
+# Claude Code uses its native installer (self-updating), not the brew formula.
+CLAUDE_CODE_INSTALL = "curl -fsSL https://claude.ai/install.sh | bash"
 # fmt: on
 
 # Repos with no brew package (Mac only) come from install_repos.py, the one list of them:
@@ -400,6 +420,97 @@ def install_packages(
         console.print("[dim]Some packages failed. Use -v to see error output.[/dim]")
 
 
+def parse_mas_list(output: str) -> set[int]:
+    """App Store ids from `mas list` output (lines start with the id)."""
+    ids = set()
+    for line in output.splitlines():
+        first = line.split(maxsplit=1)[0] if line.strip() else ""
+        if first.isdigit():
+            ids.add(int(first))
+    return ids
+
+
+def missing_mas_apps(installed_ids: set[int]) -> list[tuple[str, int]]:
+    return [(name, app_id) for name, app_id in MAS_APPS if app_id not in installed_ids]
+
+
+@app.command()
+def mas(
+    install: bool = typer.Option(
+        False, "--install", "-i", help="Install missing App Store apps"
+    ),
+):
+    """Check (and optionally install) Mac App Store apps via `mas`."""
+    if not IS_MACOS:
+        console.print("[dim]Mac App Store apps are macOS only[/dim]")
+        return
+    try:
+        result = subprocess.run(
+            ["mas", "list"], capture_output=True, text=True, check=True
+        )
+    except FileNotFoundError:
+        console.print("[red]mas not installed:[/red] brew install mas")
+        raise typer.Exit(1)
+    except subprocess.CalledProcessError as e:
+        console.print(f"[red]mas list failed:[/red] {e.stderr.strip()}")
+        raise typer.Exit(1)
+
+    missing = missing_mas_apps(parse_mas_list(result.stdout))
+    if not missing:
+        console.print("[green]All App Store apps are installed![/green]")
+        return
+
+    for name, app_id in missing:
+        console.print(f"  [yellow]missing[/yellow] {name} ({app_id})")
+    if not install:
+        console.print("\nRun with --install (sign in to the App Store first).")
+        return
+
+    failed = []
+    for name, app_id in missing:
+        console.print(f"  [cyan]{name}[/cyan]...")
+        if subprocess.run(["mas", "install", str(app_id)]).returncode != 0:
+            failed.append(name)
+    if failed:
+        console.print(f"[red]Failed:[/red] {', '.join(failed)}")
+        raise typer.Exit(1)
+    console.print("[green]Done![/green]")
+
+
+def parse_npm_globals(ls_json: str) -> set[str]:
+    """Package names from `npm ls -g --depth=0 --json`."""
+    return set(json.loads(ls_json or "{}").get("dependencies", {}))
+
+
+@app.command()
+def npm(
+    install: bool = typer.Option(
+        False, "--install", "-i", help="Install missing global npm packages"
+    ),
+):
+    """Check (and optionally install) global npm packages."""
+    try:
+        result = subprocess.run(
+            ["npm", "ls", "-g", "--depth=0", "--json"], capture_output=True, text=True
+        )
+    except FileNotFoundError:
+        console.print("[red]npm not installed:[/red] brew install npm")
+        raise typer.Exit(1)
+
+    missing = [p for p in NPM_GLOBALS if p not in parse_npm_globals(result.stdout)]
+    if not missing:
+        console.print("[green]All global npm packages are installed![/green]")
+        return
+
+    console.print(f"  [yellow]missing[/yellow] {' '.join(missing)}")
+    if not install:
+        console.print("\nRun with --install.")
+        return
+    if subprocess.run(["npm", "install", "-g", *missing]).returncode != 0:
+        raise typer.Exit(1)
+    console.print("[green]Done![/green]")
+
+
 @app.command()
 def bootstrap():
     """Print bootstrap commands (run before Python exists)."""
@@ -417,8 +528,15 @@ def bootstrap():
     else:
         console.print("\n[cyan]# 2. Install essentials[/cyan]")
     console.print(f"brew install {essentials}")
-    console.print(f"\n[cyan]# {'4' if IS_MACOS else '3'}. Then run this script[/cyan]")
-    console.print("./brew_check.py check")
+    console.print(
+        f"\n[cyan]# {'4' if IS_MACOS else '3'}. Claude Code (native installer)[/cyan]"
+    )
+    console.print(CLAUDE_CODE_INSTALL)
+    console.print(f"\n[cyan]# {'5' if IS_MACOS else '4'}. Then run this script[/cyan]")
+    console.print(
+        "./brew_check.py check && ./brew_check.py npm -i"
+        + (" && ./brew_check.py mas -i" if IS_MACOS else "")
+    )
 
 
 @app.command()
