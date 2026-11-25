@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<dict>
+		<key>AdapterDetails</key>
+		<dict>
+			<key>AdapterVoltage</key>
+			<integer>20000</integer>
+			<key>Current</key>
+			<integer>4700</integer>
+			<key>Description</key>
+			<string>pd charger</string>
+			<key>IsWireless</key>
+			<false/>
+			<key>Watts</key>
+			<integer>94</integer>
+		</dict>
+		<key>Amperage</key>
+		<integer>2408</integer>
+		<key>CurrentCapacity</key>
+		<integer>79</integer>
+		<key>ExternalConnected</key>
+		<true/>
+		<key>FullyCharged</key>
+		<false/>
+		<key>InstantAmperage</key>
+		<integer>2408</integer>
+		<key>IsCharging</key>
+		<true/>
+		<key>MaxCapacity</key>
+		<integer>100</integer>
+		<key>Voltage</key>
+		<integer>12748</integer>
+	</dict>
+</array>
+</plist>
