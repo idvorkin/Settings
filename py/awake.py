@@ -24,6 +24,10 @@ Scheduled wakes go through `sudo -n pmset schedule wake`, which needs the
 sudoers rule in mac/awake.sudoers (install instructions inside). Without it
 awake warns once and just doesn't wake.
 
+While plugged in, `ioreg -rn AppleSmartBattery -a` adds the charge rate, the
+adapter's watts and the percent gained since the plug went in (read-only, no
+sudo; it never changes the mode).
+
 One battery sample a minute is kept in ~/.cache/awake/history.json, which feeds
 a sparkline and a measured drain rate (used for the "floor in ~Xm" estimate).
 
@@ -38,6 +42,7 @@ import ctypes.util
 import json
 import math
 import os
+import plistlib
 import re
 import select
 import signal
@@ -398,6 +403,85 @@ def graph_line(samples: list[Sample], rate: float | None) -> Text:
     return line
 
 
+# --- charging stats ----------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Charge:
+    battery_watts: float  # into the battery; negative = the battery is draining
+    adapter_watts: int | None  # what the charger offers; None = none reported
+
+
+def _signed64(value: int) -> int:
+    """ioreg prints SMC currents as unsigned 64-bit: -1500 mA arrives as 2**64-1500."""
+    return value - 2**64 if value >= 2**63 else value
+
+
+def parse_ioreg(data: bytes) -> Charge | None:
+    """Parse `ioreg -rn AppleSmartBattery -a`; None on a desktop or bad output."""
+    try:
+        entries = plistlib.loads(data)
+        battery = entries[0]
+        millivolts = int(battery["Voltage"])
+        milliamps = _signed64(int(battery["InstantAmperage"]))
+    except (plistlib.InvalidFileException, ValueError, IndexError, KeyError, TypeError):
+        return None
+    adapter = battery.get("AdapterDetails")
+    watts = adapter.get("Watts") if isinstance(adapter, dict) else None
+    return Charge(
+        millivolts * milliamps / 1e6, watts if isinstance(watts, int) else None
+    )
+
+
+def read_charge() -> Charge | None:
+    """Live charging stats; None when ioreg can't be asked or has no battery."""
+    try:
+        result = subprocess.run(
+            ["ioreg", "-rn", "AppleSmartBattery", "-a"],
+            capture_output=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    return parse_ioreg(result.stdout)
+
+
+def percent_gained(samples: list[Sample], power: Power) -> int | None:
+    """Percent gained since the plug went in. The baseline is the last battery
+    sample before the latest plugged-in run (the oldest of that run when history
+    starts plugged in). None on battery or with no history."""
+    if not power.plugged_in or power.percent is None:
+        return None
+    baseline: Sample | None = None
+    for sample in reversed(samples):
+        baseline = sample
+        if not sample.plugged_in:
+            break
+    # ponytail: history keeps 24h and a watcher-off gap hides an unplug, so the
+    # baseline is "since awake last saw the plug go in", capped at a day
+    return None if baseline is None else power.percent - baseline.percent
+
+
+def charge_describe(charge: Charge | None, gained: int | None) -> str | None:
+    """`charging 30.7 W (adapter 94 W) · +9% since plugged in`, or None."""
+    if charge is None:
+        return None
+    watts = charge.battery_watts
+    if watts > 0.05:
+        parts = [f"[green]charging {watts:.1f} W[/green]"]
+    elif watts < -0.05:
+        parts = [f"battery draining {-watts:.1f} W"]
+    else:
+        parts = ["not charging"]
+    if charge.adapter_watts is not None:
+        parts[0] += f" (adapter {charge.adapter_watts} W)"
+    if gained is not None:
+        parts.append(f"{gained:+d}% since plugged in")
+    return " · ".join(parts)
+
+
 # --- estimates and display -------------------------------------------------
 
 
@@ -712,16 +796,25 @@ def status_line(
     rate: float | None = None,
     agents: Agents | None = None,
     wake_at: datetime | None = None,
+    charge: str | None = None,
 ) -> Text:
     parts = [
         f"{now:%H:%M} {mode.label}",
         power.describe(),
+        *([charge] if charge else []),
         agents.describe() if agents is not None else "agents unknown",
         sleep_eta(power, floor, deadline, now, rate),
     ]
     if wake_at is not None:
         parts.append(f"wake {wake_at:%H:%M}")
     return Text.from_markup(" · ".join(parts))
+
+
+def charging_text(power: Power, history: History) -> str | None:
+    """Charging stats while plugged in; ioreg is only asked on AC."""
+    if not power.plugged_in or power.percent is None:
+        return None
+    return charge_describe(read_charge(), percent_gained(history.samples, power))
 
 
 def render(
@@ -736,7 +829,10 @@ def render(
 ) -> tuple[Text, Text]:
     """(status line, graph line) for the current tick."""
     rate = drain_rate(history.samples, now)
-    status = status_line(mode, power, floor, deadline, now, rate, agents, wake_at)
+    charge = charging_text(power, history)
+    status = status_line(
+        mode, power, floor, deadline, now, rate, agents, wake_at, charge
+    )
     graph = graph_line(history.recent(GRAPH_WINDOW, now), rate)
     return status, graph
 
@@ -878,9 +974,10 @@ def info() -> None:
         console.print("[yellow]awake is not running[/yellow]")
         mode = desired_mode(power, DEFAULT_FLOOR, agents)
         who = agents.describe() if agents is not None else "agents unknown"
+        charge = charging_text(power, history)
         console.print(
-            f"{power.describe()} · {who} · would be {mode.label} "
-            f"at floor {DEFAULT_FLOOR}%"
+            f"{power.describe()}{f' · {charge}' if charge else ''} · {who} "
+            f"· would be {mode.label} at floor {DEFAULT_FLOOR}%"
         )
         rate = drain_rate(history.samples, now)
         console.print(sleep_eta(power, DEFAULT_FLOOR, None, now, rate))

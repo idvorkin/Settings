@@ -26,19 +26,24 @@ from awake import (  # noqa: E402
     Agents,
     BlockedAlert,
     Caffeinator,
+    Charge,
     History,
     Mode,
     Power,
     PowerEvents,
     Sample,
     Waker,
+    charge_describe,
     desired_mode,
     drain_rate,
     graph_line,
     minutes_to_floor,
     parse_agents,
     parse_duration,
+    parse_ioreg,
     parse_pmset,
+    percent_gained,
+    read_charge,
     sleep_eta,
     sparkline,
     status_line,
@@ -58,6 +63,15 @@ AC_CHARGING = (
     " -InternalBattery-0 (id=35389539)\t60%; charging; 1:23 remaining present: true\n"
 )
 DESKTOP = "Now drawing from 'AC Power'\n"
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(autouse=True)
+def no_real_ioreg(monkeypatch):
+    """Display paths ask ioreg on AC; tests that want it call read_charge directly."""
+    monkeypatch.setattr(awake, "read_charge", lambda: None)
+
+
 HERDR = json.dumps(
     {
         "id": "cli:agent:list",
@@ -895,6 +909,110 @@ def test_sleep_eta_mentions_floor_and_timer():
 def test_sleep_eta_plugged_in_no_timer():
     assert sleep_eta(Power(True, 80, None), 50, None, datetime.now()) == (
         "no sleep scheduled"
+    )
+
+
+# --- charging stats ------------------------------------------------------------
+
+
+def test_parse_ioreg_charging_fixture():
+    charge = parse_ioreg((FIXTURES / "awake_ioreg_charging.plist").read_bytes())
+    assert charge == Charge(pytest.approx(12.748 * 2.408), 94)
+
+
+def test_parse_ioreg_reads_unsigned_amperage_as_signed():
+    # ioreg writes -1500 mA as 2**64-1500; unplugged there is no adapter Watts
+    charge = parse_ioreg((FIXTURES / "awake_ioreg_discharging.plist").read_bytes())
+    assert charge == Charge(pytest.approx(-12.748 * 1.5), None)
+
+
+@pytest.mark.parametrize(
+    "data", [b"", b"not a plist", b'<?xml version="1.0"?><plist><array/></plist>']
+)
+def test_parse_ioreg_desktop_or_garbage_is_none(data):
+    assert parse_ioreg(data) is None
+
+
+@pytest.mark.parametrize(
+    "run",
+    [
+        lambda *a, **k: (_ for _ in ()).throw(OSError("no ioreg")),
+        lambda *a, **k: (_ for _ in ()).throw(subprocess.TimeoutExpired("ioreg", 5)),
+        lambda *a, **k: subprocess.CompletedProcess(a[0], 1, b"", b""),
+    ],
+)
+def test_read_charge_failures_are_none(monkeypatch, run):
+    monkeypatch.setattr(awake.subprocess, "run", run)
+    assert read_charge() is None
+
+
+def test_read_charge_success(monkeypatch):
+    data = (FIXTURES / "awake_ioreg_charging.plist").read_bytes()
+    monkeypatch.setattr(
+        awake.subprocess,
+        "run",
+        lambda args, **k: subprocess.CompletedProcess(args, 0, data, b""),
+    )
+    assert read_charge().adapter_watts == 94
+
+
+def plug_history(*rows: tuple[int, bool]) -> list[Sample]:
+    return [
+        Sample(NOW - timedelta(minutes=len(rows) - i), pct, ac)
+        for i, (pct, ac) in enumerate(rows)
+    ]
+
+
+def test_percent_gained_since_the_latest_plug_in():
+    history = plug_history((60, True), (55, False), (50, False), (52, True), (58, True))
+    assert percent_gained(history, Power(True, 61, None)) == 11
+
+
+def test_percent_gained_plugged_in_since_the_last_sample():
+    assert percent_gained(plug_history((50, False)), Power(True, 51, None)) == 1
+    assert percent_gained(plug_history((40, True)), Power(True, 45, None)) == 5
+
+
+@pytest.mark.parametrize(
+    "history,power",
+    [
+        (plug_history((50, True)), Power(False, 49, 100)),  # unplugged
+        ([], Power(True, 51, None)),  # no history
+        (plug_history((50, True)), Power(True, None, None)),  # desktop
+    ],
+)
+def test_percent_gained_none_without_a_baseline(history, power):
+    assert percent_gained(history, power) is None
+
+
+def test_charge_describe():
+    assert charge_describe(Charge(30.66, 94), 9) == (
+        "[green]charging 30.7 W[/green] (adapter 94 W) · +9% since plugged in"
+    )
+    assert charge_describe(Charge(-19.1, None), None) == "battery draining 19.1 W"
+    assert charge_describe(Charge(0.0, 94), 0) == (
+        "not charging (adapter 94 W) · +0% since plugged in"
+    )
+    assert charge_describe(None, 5) is None
+
+
+def test_info_shows_charging_stats_on_ac(cli_env, monkeypatch):
+    monkeypatch.setattr(awake, "read_power", lambda: Power(True, 80, None))
+    monkeypatch.setattr(awake, "read_charge", lambda: Charge(30.7, 94))
+    result = runner.invoke(awake.app, ["info"])
+    assert "charging 30.7 W (adapter 94 W)" in result.output
+    awake.write_state(Mode.FULL, Power(True, 80, None), 50, None, 30, datetime.now())
+    result = runner.invoke(awake.app, ["info"])
+    assert "charging 30.7 W (adapter 94 W)" in " ".join(result.output.split())
+
+
+def test_charging_stats_skip_ioreg_on_battery(tmp_path, monkeypatch):
+    def boom():
+        raise AssertionError("ioreg asked on battery")
+
+    monkeypatch.setattr(awake, "read_charge", boom)
+    assert (
+        awake.charging_text(Power(False, 80, 100), History(tmp_path / "h.json")) is None
     )
 
 
