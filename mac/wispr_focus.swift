@@ -4,7 +4,7 @@
 //   <bundle id>|<focused element role>|<focused window subrole>
 //
 // Prints nothing and exits 1 without Accessibility access, so the caller falls
-// back to System Events. Built on demand into ~/.cache by the caller.
+// back to System Events; why goes to stderr, which the caller logs. Built on demand into ~/.cache by the caller.
 
 import AppKit
 import ApplicationServices
@@ -19,8 +19,15 @@ func string(_ element: CFTypeRef?, _ name: String) -> String {
     return attribute(element as! AXUIElement, name) as? String ?? "none"
 }
 
-guard AXIsProcessTrusted() else { exit(1) }
-guard let front = NSWorkspace.shared.frontmostApplication else { exit(1) }
+func fail(_ why: String) -> Never {
+    FileHandle.standardError.write("wispr_focus: \(why)\n".data(using: .utf8)!)
+    exit(1)
+}
+
+guard AXIsProcessTrusted() else {
+    fail("no Accessibility access for this process (or the app that launched it)")
+}
+guard let front = NSWorkspace.shared.frontmostApplication else { fail("no frontmost app") }
 let app = AXUIElementCreateApplication(front.processIdentifier)
 let role = string(attribute(app, kAXFocusedUIElementAttribute), kAXRoleAttribute)
 let subrole = string(attribute(app, kAXFocusedWindowAttribute), kAXSubroleAttribute)

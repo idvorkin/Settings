@@ -11,8 +11,13 @@
 # page, or which window to screenshot) and opens mac/wispr_dialog.js for the
 # dictation, set to send it to Larry with that. Sending goes through the Alfred
 # Agent Send workflow's agent.py, as `w l p` (page) or `w l ssa` (window) does.
-# With a dialog already on top (this one, an Agent Send popup, any app's
-# dialog), Wispr just starts.
+# With an Agent Send popup or any app's dialog on top, Wispr just starts.
+# With the Wispr dialog already open, the click brings that one back to the
+# front and dictates into it: there is only ever one.
+#
+# Clicks are serialized by a lock, and a click within DEBOUNCE_MS of the last
+# one is dropped, so a double click or a bouncing switch can't start two
+# dictations or flip the state twice.
 #
 # Every decision goes to ~/Library/Logs/wispr-hands-free.log; Agent Send keeps
 # its own in ~/Library/Logs/agent-send.log.
@@ -22,6 +27,9 @@ here=$(cd "$(dirname "$0")" && pwd)
 state="$HOME/.cache/wispr-hands-free-on" # holds "dialog" or "passthrough": what this dictation is for
 dialog_lock="$HOME/.cache/wispr-hands-free-dialog.pid" # "<osascript pid> <yabai space>" of the open dialog
 log_file="$HOME/Library/Logs/wispr-hands-free.log"
+click_lock="$HOME/.cache/wispr-hands-free.lock"  # a directory: mkdir is the atomic test-and-set
+last_click="$HOME/.cache/wispr-hands-free-last-click" # ms of the last click handled
+DEBOUNCE_MS=400
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
 
 now_ms() {
@@ -43,7 +51,7 @@ front_state() {
 		swiftc -O "$here/wispr_focus.swift" -o "$focus_helper" 2>>"$log_file" && log "built $focus_helper"
 	fi
 	"$focus_helper" 2>>"$log_file" && return
-	log "focus helper failed; asking System Events"
+	log "focus helper failed (exit $?, reason above if it gave one); asking System Events"
 	osascript -e 'tell application "System Events"
 		set p to first process whose frontmost is true
 		set b to bundle identifier of p
@@ -63,6 +71,29 @@ dialog_open() {
 	[ -e "$dialog_lock" ] && kill -0 "$(cut -d' ' -f1 "$dialog_lock")" 2>/dev/null
 }
 
+# Bring the open dialog to the front, so Wispr pastes into it.
+raise_dialog() {
+	read -r dialog_pid dialog_space <"$dialog_lock"
+	osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $dialog_pid) to true" 2>>"$log_file"
+}
+
+# Take the click lock, or say why not. A lock older than a few seconds is
+# left over from a click that died and is taken over.
+take_click_lock() {
+	mkdir "$click_lock" 2>/dev/null && return 0
+	age=$(($(date +%s) - $(stat -f %m "$click_lock" 2>/dev/null || date +%s)))
+	if [ "$age" -ge 5 ]; then
+		log "click: taking over a lock left ${age}s ago"
+		rm -rf "$click_lock"
+		mkdir "$click_lock" 2>/dev/null && return 0
+	fi
+	return 1
+}
+
+release_click_lock() {
+	rm -rf "$click_lock"
+}
+
 current_space() {
 	yabai -m query --spaces --space 2>>"$log_file" | jq -r '.index // empty'
 }
@@ -71,10 +102,6 @@ current_space() {
 skip_reason() {
 	if [ "$(scutil --get LocalHostName 2>/dev/null)" != "ig-mbp-home" ]; then
 		echo "not the home laptop"
-		return
-	fi
-	if dialog_open; then
-		echo "the Wispr dialog is already open"
 		return
 	fi
 	if pgrep -f 'ux.py center' >/dev/null; then
@@ -141,7 +168,9 @@ dictate_into_dialog() {
 		capture_pid=$!
 	fi
 	reply_file=$(mktemp -t wispr-reply)
-	osascript -l JavaScript "$here/wispr_dialog.js" "$attached" "$clicked_ms" >"$reply_file" 2>>"$log_file" &
+	# The dialog gets the state file: a key pressed while Wispr still listens
+	# stops Wispr and waits for its text, rather than leaving it listening.
+	osascript -l JavaScript "$here/wispr_dialog.js" "$attached" "$clicked_ms" "$state" >"$reply_file" 2>>"$log_file" &
 	echo "$! $(current_space)" >"$dialog_lock"
 	wait "$!"
 	rm -f "$dialog_lock"
@@ -160,6 +189,20 @@ dictate_into_dialog() {
 	[ -n "$page_file" ] && rm -f "$page_file"
 }
 
+mkdir -p "$(dirname "$state")"
+if ! take_click_lock; then
+	log "click: ignored, another click is still being handled"
+	exit 0
+fi
+trap release_click_lock EXIT
+since_last=$((clicked_ms - $(cat "$last_click" 2>/dev/null || echo 0)))
+if [ "$since_last" -lt "$DEBOUNCE_MS" ]; then
+	log "click: ignored, ${since_last} ms after the last one"
+	exit 0
+fi
+echo "$clicked_ms" >"$last_click"
+log "click: state=$(cat "$state" 2>/dev/null || echo off)"
+
 if [ -e "$state" ]; then
 	mode=$(cat "$state" 2>/dev/null)
 	rm -f "$state"
@@ -169,7 +212,7 @@ if [ -e "$state" ]; then
 		read -r dialog_pid dialog_space <"$dialog_lock"
 		space=$(current_space)
 		if [ "$space" = "$dialog_space" ]; then
-			osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $dialog_pid) to true" 2>>"$log_file"
+			raise_dialog
 			log "stop: brought the dialog to the front (space $space)"
 		else
 			log "stop: dialog is on space $dialog_space, you are on $space: focus left alone"
@@ -183,8 +226,13 @@ fi
 # Wispr first, so dictation never waits on the checks below. The dialog, if
 # one opens, comes up after Wispr's own window and so ends up in front.
 open -g "wispr-flow://start-hands-free" &
-mkdir -p "$(dirname "$state")"
 touch "$state"
+if dialog_open; then
+	echo dialog >"$state"
+	raise_dialog
+	log "start: the Wispr dialog is already open: brought it to the front to dictate into"
+	exit 0
+fi
 IFS='|' read -r front_app focus_role window_subrole <<EOF
 $(front_state)
 EOF
@@ -204,5 +252,7 @@ else
 	[ -n "$window_id" ] || attached="nothing: no front window to screenshot"
 fi
 log "capture: kind=$kind window=$window_id ($attached)"
-# Backgrounded so the dialog waiting on you never holds up Karabiner.
+# Backgrounded so the dialog waiting on you never holds up Karabiner, and
+# after letting go of the click lock, so the next click is handled meanwhile.
+release_click_lock
 dictate_into_dialog "$kind" "$window_id" "$attached" </dev/null >/dev/null 2>&1 &
