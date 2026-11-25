@@ -126,7 +126,8 @@ send_to_larry() {
 		osascript -e 'display notification "Could not send to Larry; copied to the clipboard" with title "Wispr"'
 		return 1
 	fi
-	(cd "$(agent_send_dir)" && ./agent.py run "$arg") >>"$log_file" 2>&1
+	# The Cockpit files a send as Igor only when its client starts with "Alfred".
+	(cd "$(agent_send_dir)" && LARRY_CLIENT="Alfred on Mac" ./agent.py run "$arg") >>"$log_file" 2>&1
 	log "send: agent.py run exited $?"
 }
 
